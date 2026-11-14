@@ -14,6 +14,7 @@ import { diaDoTimestamp } from "@/lib/cotacaoConvite";
 import { formatValorToInput } from "@/lib/currencyUtils";
 import { consultarCotacao, enviarProposta, type CotacaoPublica } from "./cotarApi";
 import { lerProposta, type CamposProposta, type ErrosProposta } from "./cotarSchema";
+import { AvisoPrivacidadeConvidado } from "@/components/legal/AvisoPrivacidadeConvidado";
 
 const VAZIOS: CamposProposta = {
   valor: "",
@@ -233,6 +234,7 @@ function Formulario({
           </form>
         </CardContent>
       </Card>
+      <AvisoPrivacidadeConvidado escritorio={cotacao.empresa_nome} />
     </div>
   );
 }

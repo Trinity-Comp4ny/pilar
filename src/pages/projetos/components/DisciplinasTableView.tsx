@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,7 +163,7 @@ export function DisciplinasTableView({
                 <span className="text-sm font-medium">{disc.disciplina}</span>
               )}
               {atrasada && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                <span className="text-3xs px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                   <AlertTriangle size={10} /> Atrasada
                 </span>
               )}
@@ -174,7 +175,7 @@ export function DisciplinasTableView({
                       : "Revisões já concluídas nesta disciplina"
                   }
                   className={cn(
-                    "text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
+                    "text-3xs px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
                     revisoes.abertas > 0 ? "bg-warning-soft text-warning-strong" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -217,7 +218,7 @@ export function DisciplinasTableView({
                 </SelectContent>
               </Select>
             ) : dpc ? (
-              <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", dpc.bgColor, dpc.color)}>
+              <span className={cn("text-3xs px-2 py-0.5 rounded-full font-medium", dpc.bgColor, dpc.color)}>
                 {dpc.label}
               </span>
             ) : (
@@ -351,8 +352,8 @@ export function DisciplinasTableView({
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
+                  size="xs"
+                  className="px-2"
                   aria-label={obsCount > 0 ? `Observações (${obsCount})` : "Observações"}
                   onClick={() => setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))}
                 >
@@ -390,9 +391,8 @@ export function DisciplinasTableView({
                         className="h-8 text-xs"
                       />
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="brand"
-                        className="h-8"
                         disabled={!(obsDrafts[dbDisc?.id ?? idx] ?? "").trim()}
                         onClick={() => {
                           const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
@@ -423,17 +423,12 @@ export function DisciplinasTableView({
             cell: (r: LinhaDisciplina) => {
               const { idx } = derivar(r);
               return (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-danger-mid"
-                    onClick={() => setDeleteDiscIdx(idx)}
-                    aria-label="Excluir disciplina"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
+                <RowActions
+                  label={r.disc.disciplina}
+                  actions={[
+                    { label: "Excluir", icon: Trash2, destructive: true, onClick: () => setDeleteDiscIdx(idx) },
+                  ]}
+                />
               );
             },
           },
@@ -560,14 +555,13 @@ export function DisciplinasTableView({
               onChange={(v) => setConcludingDate(v || "")}
               maxDate={new Date().toISOString().split("T")[0]}
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Use a data em que o trabalho foi de fato entregue, não a data administrativa de hoje.
             </p>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-positive hover:bg-positive/90"
               disabled={!concludingDate}
               onClick={async () => {
                 if (concludingIdx === null || !concludingDate) return;
@@ -668,7 +662,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs justify-start max-w-full">
+        <Button variant="ghost" size="xs" className="px-2 justify-start max-w-full">
           <User className="h-3.5 w-3.5 mr-1.5 shrink-0" />
           <span className="truncate">{display}</span>
         </Button>
@@ -717,9 +711,8 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
               </SelectContent>
             </Select>
             <Button
-              size="icon"
+              size="icon-sm"
               variant="brand"
-              className="h-8 w-8"
               disabled={!selectedToAdd}
               onClick={async () => {
                 await onAdd(discIdx, selectedToAdd);

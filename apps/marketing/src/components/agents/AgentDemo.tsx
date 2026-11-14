@@ -134,10 +134,9 @@ export function AgentDemo() {
             {/* 4 e 5. O aval, e o botão vira confirmação. */}
             <div className="mt-3.5 flex gap-2">
               <m.span
-                className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-[11.5px] font-medium"
+                className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-[11.5px] font-medium text-ink-on-brand"
                 animate={{
-                  backgroundColor: p >= 5 ? "hsl(var(--positive-strong))" : "hsl(var(--brand-accent))",
-                  color: p >= 5 ? "#ffffff" : "hsl(var(--text-on-brand))",
+                  backgroundColor: p >= 5 ? "hsl(var(--brand-accent-soft))" : "hsl(var(--brand-accent))",
                   scale: p === 4 ? [1, 0.96, 1] : 1,
                 }}
                 transition={{ duration: 0.35, ease: EASE.out }}

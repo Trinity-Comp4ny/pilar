@@ -29,6 +29,7 @@ const FETCH_CRU_PERMITIDO = new Set([
 // nova de usuário final NÃO entra aqui: usa limitarOuResponder (_shared/db-rate-limit.ts).
 const SEM_RATE_LIMIT: Record<string, string> = {
   "auth-email-hook": "chamada pelo Supabase Auth, autenticada por segredo do hook",
+  "aviso-legal-admins": "só ultra admin com MFA; conteúdo fixo do catálogo",
   "aviso-ultra-admin-email": "trigger via pg_net, autenticado por segredo",
   "excluir-dados-titular": "só ultra admin (fila LGPD)",
   "exportar-dados-titular": "trigger via pg_net, autenticado por segredo",
@@ -42,6 +43,7 @@ const SEM_RATE_LIMIT: Record<string, string> = {
   "pilar-checkout-webhook": "webhook da Asaas, autenticado por token",
   "reconciliar-assinaturas": "cron (cronAutorizado)",
   "registro-audio-limpar": "cron (cronAutorizado)",
+  "release-rascunho": "GitHub Actions por token próprio (cronAutorizado), só grava rascunho de release",
   "resend-webhook": "webhook do Resend, assinatura Svix",
   "retencao-pos-trial": "cron (cronAutorizado)",
   "reverificar-documentos-pendentes": "cron (cronAutorizado)",
@@ -99,6 +101,19 @@ describe("padrão das Edge Functions (ADR 0056)", () => {
       (f) => !funcoes.includes(f) || TEM_RATE_LIMIT.test(readFileSync(join(RAIZ, f, "index.ts"), "utf8"))
     );
     expect(obsoletas, "Tire da lista quem foi removida ou ganhou rate limit").toEqual([]);
+  });
+
+  // SPEC 151: o token que ChatGPT/Claude recebem pelo OAuth vale como o usuário em qualquer
+  // função. Só a `mcp` o aceita (só leitura); toda outra que autentica usuário o recusa.
+  it("função que autentica usuário recusa token de app externo (só a mcp aceita)", () => {
+    const ACEITA_APP_EXTERNO = new Set(["mcp"]);
+    const sem = funcoes.filter((f) => {
+      if (ACEITA_APP_EXTERNO.has(f)) return false;
+      const codigo = readFileSync(join(RAIZ, f, "index.ts"), "utf8");
+      if (/authenticateUser\(/.test(codigo)) return false; // o helper de cors.ts já recusa
+      return /\.auth\.getUser\(/.test(codigo) && !/recusarAppExterno\(/.test(codigo);
+    });
+    expect(sem, "Chame recusarAppExterno(req) (cors.ts) logo após o getUser").toEqual([]);
   });
 
   it("ninguém usa o corsHeaders estático", () => {

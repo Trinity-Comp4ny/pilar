@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { type PeriodoPreset, detectPreset, labelForPreset, rangeForPreset } from "@/lib/periodo";
+import { mascararData, parseDataDigitada } from "@/lib/data-digitada";
 import { makeMonthYearCaption } from "./CalendarCaption";
 import { filterTriggerClass } from "./filterStyles";
 
@@ -64,6 +65,7 @@ export function FiltroPeriodo({
   // entrar no "Personalizado" começa limpo (1º clique = início, 2º = fim) em vez
   // de herdar o intervalo do preset e travar o início.
   const [draft, setDraft] = useState<DateRange | undefined>();
+  const [mes, setMes] = useState<Date>(from ?? new Date());
 
   const preset = useMemo(() => detectPreset(from, to), [from, to]);
   const currentYear = new Date().getFullYear();
@@ -86,6 +88,7 @@ export function FiltroPeriodo({
       const isCustom = detectPreset(from, to) === "custom";
       setShowCalendar(isCustom);
       setDraft(isCustom && from ? { from, to } : undefined);
+      setMes(from ?? new Date());
     }
   };
 
@@ -120,9 +123,32 @@ export function FiltroPeriodo({
               <ChevronLeft size={15} />
               Voltar aos períodos
             </button>
+            <div className="flex gap-2 px-1.5 pb-1 pt-2">
+              <CampoDataDigitada
+                rotulo="De"
+                valor={draft?.from}
+                onConfirmar={(d) => {
+                  const r = { from: d, to: draft?.to && d && draft.to < d ? undefined : draft?.to };
+                  setDraft(r);
+                  if (d) setMes(d);
+                  onChange(r.from, r.to);
+                }}
+              />
+              <CampoDataDigitada
+                rotulo="Até"
+                valor={draft?.to}
+                onConfirmar={(d) => {
+                  const r = { from: draft?.from && d && d < draft.from ? d : draft?.from, to: d };
+                  setDraft(r);
+                  onChange(r.from, r.to);
+                }}
+              />
+            </div>
             <Calendar
               mode="range"
               selected={draft}
+              month={mes}
+              onMonthChange={setMes}
               onSelect={(r) => {
                 // Aplica na hora, mas não fecha: o usuário ajusta o intervalo à
                 // vontade e fecha clicando fora (ou no botão do filtro).
@@ -130,7 +156,6 @@ export function FiltroPeriodo({
                 onChange(r?.from, r?.to);
               }}
               numberOfMonths={numberOfMonths}
-              defaultMonth={from ?? undefined}
               components={{ MonthCaption: MonthYearCaption, Nav: () => <span className="sr-only" /> }}
               locale={ptBR}
               autoFocus
@@ -157,5 +182,55 @@ export function FiltroPeriodo({
         {footer && <div className="border-t border-black/5">{footer}</div>}
       </PopoverContent>
     </Popover>
+  );
+}
+
+/**
+ * Data digitável do intervalo personalizado (dd/mm/aaaa, com máscara). Confirma ao sair
+ * do campo ou com Enter; data inválida volta ao que estava.
+ */
+function CampoDataDigitada({
+  rotulo,
+  valor,
+  onConfirmar,
+}: {
+  rotulo: string;
+  valor: Date | undefined;
+  onConfirmar: (d: Date | undefined) => void;
+}) {
+  const [rascunho, setRascunho] = useState<string | null>(null);
+  const exibido = valor ? format(valor, "dd/MM/yyyy") : "";
+  const texto = rascunho ?? exibido;
+
+  const confirmar = () => {
+    setRascunho(null);
+    if (rascunho === null || rascunho === exibido) return;
+    if (!rascunho.trim()) return onConfirmar(undefined);
+    const d = parseDataDigitada(rascunho);
+    if (d) onConfirmar(d);
+  };
+
+  return (
+    <label className="min-w-0 flex-1 space-y-0.5">
+      <span className="block text-2xs text-muted-foreground">{rotulo}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="dd/mm/aaaa"
+        maxLength={10}
+        size={10}
+        value={texto}
+        onChange={(e) => setRascunho(mascararData(e.target.value))}
+        onBlur={confirmar}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            confirmar();
+          }
+        }}
+        className="h-8 w-full rounded-md border border-input bg-background px-2 text-[13px] outline-hidden placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      />
+    </label>
   );
 }

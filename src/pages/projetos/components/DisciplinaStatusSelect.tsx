@@ -42,7 +42,7 @@ export function DisciplinaStatusSelect({ status, canEdit, disciplina, onChange }
 
   if (!canEdit) {
     return (
-      <span className="flex shrink-0 items-center gap-1.5 px-2 text-[11px] text-muted-foreground">
+      <span className="flex shrink-0 items-center gap-1.5 px-2 text-2xs text-muted-foreground">
         {ponto}
         {atual}
       </span>
@@ -54,7 +54,7 @@ export function DisciplinaStatusSelect({ status, canEdit, disciplina, onChange }
     <Select value={atual} onValueChange={onChange} disabled={atual === "Pausada"}>
       <SelectTrigger
         aria-label={`Status de ${disciplina}`}
-        className="h-7 w-auto shrink-0 gap-1.5 border-0 bg-transparent px-2 text-[11px] text-muted-foreground shadow-none hover:bg-muted"
+        className="h-7 w-auto shrink-0 gap-1.5 border-0 bg-transparent px-2 text-2xs text-muted-foreground shadow-none hover:bg-muted"
       >
         {ponto}
         <SelectValue />

@@ -84,7 +84,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                     <div className="text-right space-y-1.5">
                       <p className="text-sm font-bold">{formatCurrency(r.valor)}</p>
                       <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                        <StatusBadge domain="financeiro" status={statusKey} className="text-[10px]" />
+                        <StatusBadge domain="financeiro" status={statusKey} className="text-3xs" />
                       </div>
                     </div>
                   </div>

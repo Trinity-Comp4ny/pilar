@@ -1,6 +1,6 @@
 // SPEC 137 / ADR 0064: adicionais e itens do catálogo da estimativa, cada linha com a origem do preço.
 //
-// Ordem do preço: valor do usuário, valor da empresa, SINAPI, referência provisória do Pilar, a definir.
+// Ordem do preço: valor do usuário, valor da empresa, SINAPI, referência provisória da Pilar, a definir.
 // Nunca sai valor sem origem. Funções puras, em centavos, chamadas pelo motor (estimativaObra.ts).
 import {
   ADICIONAIS_IDS,
@@ -58,7 +58,7 @@ export function mesclarAjustes(
     let adicional = base;
     let ajustado = valorUnitario !== null;
     if (Object.keys(resto).length > 0) {
-      // O ajuste só muda valores: tipo e fase seguem os parâmetros do Pilar.
+      // O ajuste só muda valores: tipo e fase seguem os parâmetros da Pilar.
       const mesclado = adicionalSchema.safeParse({ ...base, ...resto, tipo: base.tipo, fase: base.fase });
       if (mesclado.success) {
         adicional = mesclado.data;
@@ -102,7 +102,7 @@ export interface ContextoLinha {
 }
 
 const UNIDADE_INVARIAVEL = new Set(["kWp", "m²", "un"]);
-const ITENS_DE_CLIMATIZACAO = ["ac9", "ac12", "ac18", "ac24"] as const;
+const ITENS_DE_CLIMATIZACAO = ["ac9", "ac12", "ac18", "ac24", "ac36"] as const;
 
 /** Quantidade do item na ficha. null = o item não se aplica a esta obra; 0 = aplica, mas falta a medida. */
 function quantidadeDoItem(id: AdicionalId, ficha: Ficha): number | null {
@@ -146,7 +146,7 @@ function precoSinapi(precos: PrecoSinapi[], codigo: number, uf: Uf, regime: Regi
 
 /**
  * Qual item entra na ficha, quanto vale e de onde vem o preço (ADR 0064). Ordem: valor do usuário, valor da
- * empresa, SINAPI, referência provisória do Pilar, a definir. Nunca devolve valor sem origem.
+ * empresa, SINAPI, referência provisória da Pilar, a definir. Nunca devolve valor sem origem.
  */
 export function linhaDoAdicional(
   id: AdicionalId,

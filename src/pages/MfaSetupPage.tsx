@@ -372,8 +372,8 @@ export default function MfaSetupPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        size="icon"
-                        className="shrink-0 h-8 w-8"
+                        size="icon-sm"
+                        className="shrink-0"
                         onClick={handleCopy}
                         aria-label={copied ? "Copiado" : "Copiar chave"}
                       >
@@ -462,7 +462,7 @@ export default function MfaSetupPage() {
                 className="w-full h-11 font-medium"
                 onClick={() => navigate("/inicio", { replace: true })}
               >
-                Já salvei — acessar o Pilar
+                Já salvei — acessar a Pilar
               </Button>
             </div>
           )}

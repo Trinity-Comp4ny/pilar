@@ -95,7 +95,7 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm text-muted-foreground">Valor restante</p>
-                    <p className="text-lg font-bold">{formatCurrency(fatura.valor_total - fatura.valor_pago)}</p>
+                    <p className="text-base font-semibold">{formatCurrency(fatura.valor_total - fatura.valor_pago)}</p>
                   </div>
                   <Button variant="brand" className="rounded-full px-5 py-2.5 text-sm" onClick={() => onPagar(fatura)}>
                     <DollarSign className="h-4 w-4 mr-2" />

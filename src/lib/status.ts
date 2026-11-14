@@ -70,8 +70,11 @@ export type StatusDomain =
   | "empresa_situacao"
   | "feedback"
   | "pedido_lgpd"
+  | "release"
+  | "novidade"
   | "ops_agente"
-  | "saude_cliente";
+  | "saude_cliente"
+  | "disciplina_fluxo";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -183,6 +186,14 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     atencao: { label: "Atenção", tone: "warning" },
     risco: { label: "Em risco", tone: "danger" },
   },
+  // Status visual de uma disciplina no grafo do fluxo (SPEC 162).
+  disciplina_fluxo: {
+    concluido: { label: "Concluída", tone: "done" },
+    em_andamento: { label: "Em andamento", tone: "info" },
+    atrasado: { label: "Atrasada", tone: "danger" },
+    nao_iniciado: { label: "Aguardando", tone: "neutral" },
+    pausado: { label: "Pausada", tone: "warning" },
+  },
   // Triagem de feedback do app (SPEC 112/116).
   feedback: {
     novo: { label: "Novo", tone: "brand" },
@@ -190,6 +201,16 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     planejado: { label: "Planejado", tone: "highlight" },
     resolvido: { label: "Resolvido", tone: "positive" },
     descartado: { label: "Descartado", tone: "neutral" },
+  },
+  // Novidades do produto (SPEC 152): situação da release no Ultra admin e impacto do item.
+  release: {
+    rascunho: { label: "Rascunho", tone: "warning" },
+    publicada: { label: "Publicada", tone: "positive" },
+  },
+  novidade: {
+    fluxo: { label: "Mudou o caminho", tone: "attention" },
+    melhoria: { label: "Novo", tone: "brand" },
+    correcao: { label: "Correção", tone: "info" },
   },
   pedido_lgpd: {
     pending: { label: "Aguardando", tone: "warning" },

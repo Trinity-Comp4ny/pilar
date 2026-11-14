@@ -290,9 +290,7 @@ export function CheckoutForm({
               <Label htmlFor="ccNumber" className="flex items-center justify-between">
                 Número do cartão
                 {cardBrand && (
-                  <span className="text-[11px] font-medium text-ink-disabled uppercase tracking-wider">
-                    {cardBrand}
-                  </span>
+                  <span className="text-2xs font-medium text-ink-disabled uppercase tracking-wider">{cardBrand}</span>
                 )}
               </Label>
               <Input
@@ -434,7 +432,7 @@ export function CheckoutForm({
           )}
         </Button>
 
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-ink-disabled">
+        <div className="flex items-center justify-center gap-1.5 text-2xs text-ink-disabled">
           <ShieldCheck className="w-3.5 h-3.5 text-ink-disabled" />
           Pagamento 100% seguro · Criptografia SSL
         </div>

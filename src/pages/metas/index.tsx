@@ -15,8 +15,9 @@ export default function MetasPage() {
 
   return (
     <div
-      className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: sidebarOffset(state, isMobile) }}
+      className="fixed right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
+      // Desce pela altura das faixas de aviso do topo (Layout), como o PageLayout.
+      style={{ left: sidebarOffset(state, isMobile), top: "var(--faixas-h, 0px)" }}
     >
       <div className="sticky top-0 z-20 w-full bg-background border-b">
         <PageHeader title="Metas">
@@ -34,7 +35,7 @@ export default function MetasPage() {
       {/* Área com rolagem própria: precisa receber foco para rolar pelo teclado (axe
           scrollable-region-focusable) quando o conteúdo não tem nada focável. */}
       <div
-        className="flex-1 overflow-y-auto w-full bg-background p-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:p-8"
+        className="flex-1 overflow-y-auto w-full bg-background p-4 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:px-6 md:pt-6 md:pb-8"
         tabIndex={0}
         role="region"
         aria-label="Painel de metas"

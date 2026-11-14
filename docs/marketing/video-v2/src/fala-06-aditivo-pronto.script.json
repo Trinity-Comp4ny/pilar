@@ -1,0 +1,32 @@
+{
+  "id": "fala-06-aditivo-pronto",
+  "hook": "O aditivo que chega *pronto*",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Pedir aditivo é a parte mais chata do projeto. Ninguém gosta."
+    },
+    {
+      "id": "l02",
+      "text": "Na Pilar, quando o projeto passa do orçamento de horas, o aditivo já chega montado.",
+      "show": {
+        "type": "tela",
+        "tela": "aditivo",
+        "legenda": "Aditivo pronto para aprovar"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "Ele cita as despesas e os apontamentos que sustentam cada valor."
+    },
+    {
+      "id": "l04",
+      "text": "Você revisa, aprova e manda para o cliente com a base na mão."
+    },
+    {
+      "id": "l05",
+      "text": "Aditivo com base não parece cobrança. Parece profissionalismo."
+    }
+  ]
+}

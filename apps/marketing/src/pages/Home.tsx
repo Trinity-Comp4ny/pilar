@@ -18,7 +18,7 @@ export function Home() {
   // Restaura as metas do index.html ao voltar de outra rota (SPA: a última
   // página visitada teria deixado as dela penduradas no head).
   usePageMeta({
-    titulo: "Pilar | Gestão com agentes de IA para engenharia e arquitetura",
+    titulo: "Pilar: gestão com IA para escritório de engenharia e arquitetura",
     descricao:
       "Gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, com a aprovação da equipe.",
     caminho: "/",

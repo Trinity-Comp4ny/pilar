@@ -176,7 +176,7 @@ export default function ChatPage() {
       <AbaAgentesBtn ativo={aba === "pendencias"} onClick={() => setAba("pendencias")}>
         Pendências
         {numPendencias > 0 && (
-          <span className="ml-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-ink">
+          <span className="ml-1.5 rounded-full bg-brand px-1.5 py-0.5 text-2xs font-semibold text-ink">
             {numPendencias}
           </span>
         )}
@@ -200,8 +200,9 @@ export default function ChatPage() {
 
   return (
     <div
-      className="fixed inset-y-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
-      style={{ left }}
+      className="fixed bottom-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
+      // Desce pela altura das faixas de aviso do topo (Layout), como o PageLayout.
+      style={{ left, top: "var(--faixas-h, 0px)" }}
     >
       {/* Header padrão da casa (spec 002 via PageHeader), sempre visível. */}
       <div className="border-b border-border">
@@ -384,7 +385,7 @@ export default function ChatPage() {
                 </button>
               )}
               {inputPanel}
-              <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              <p className="mt-2 text-center text-2xs text-muted-foreground">
                 Os agentes respondem e executam ações com sua confirmação. Confira os valores antes de aprovar.
               </p>
             </div>

@@ -5,7 +5,7 @@
 ## 1. O nome
 
 - **Pilar**, com P maiúsculo e o resto minúsculo. Nunca "PILAR", "pilar" no meio de frase ou "PiLar".
-- **Artigo em aberto:** o `messaging.md` escreve "o Pilar" e o plano de presença social escreve "a Pilar". Até a decisão, escreva sem artigo ("Pilar mostra o lucro de cada projeto") e use o mesmo em toda a peça.
+- **Artigo feminino:** "a Pilar", "da Pilar", "na Pilar", "à Pilar" (DECISOES.md, 2026-11-12). O app de campo segue "o Pilar Campo" (o app).
 - Não vire verbo nem adjetivo ("pilarizar", "projeto pilar").
 - Sempre "Pilar" sozinho no nome do produto. A descrição vem depois ("Pilar, gestão para escritórios de
   engenharia e arquitetura"), nunca dentro do nome.

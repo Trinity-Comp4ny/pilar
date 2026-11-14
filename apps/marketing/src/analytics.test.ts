@@ -16,6 +16,9 @@ const posthog = vi.hoisted(() => ({
 
 vi.mock("posthog-js", () => ({ default: posthog }));
 
+/** O PostHog chega por import dinâmico: deixa a fila de promessas andar antes de conferir. */
+const esperar = () => new Promise((r) => setTimeout(r, 0));
+
 async function carregar(key: string | undefined, host?: string) {
   vi.resetModules();
   vi.stubEnv("VITE_POSTHOG_KEY", key as string);
@@ -42,6 +45,7 @@ describe("analytics da landing", () => {
     a.initAnalytics();
     a.trackCta("agende_demo", "hero");
 
+    await esperar();
     expect(posthog.init).not.toHaveBeenCalled();
     expect(posthog.capture).not.toHaveBeenCalled();
   });
@@ -53,6 +57,7 @@ describe("analytics da landing", () => {
     a.initAnalytics();
     a.trackCta("agende_demo", "hero");
 
+    await esperar();
     expect(a.getCookieConsent()?.analytics).toBe(false);
     expect(posthog.init).not.toHaveBeenCalled();
     expect(posthog.capture).not.toHaveBeenCalled();
@@ -66,6 +71,7 @@ describe("analytics da landing", () => {
     a.initAnalytics();
     a.trackCta("agende_demo", "planos_pro");
 
+    await esperar();
     expect(posthog.init).toHaveBeenCalledTimes(1);
     expect(posthog.init).toHaveBeenCalledWith(
       "phc_teste",
@@ -76,12 +82,16 @@ describe("analytics da landing", () => {
         person_profiles: "identified_only",
       })
     );
-    expect(posthog.capture).toHaveBeenCalledWith("landing_cta_clicked", { cta: "agende_demo", location: "planos_pro" });
+    expect(posthog.capture).toHaveBeenCalledWith(
+      "landing_cta_clicked",
+      expect.objectContaining({ cta: "agende_demo", location: "planos_pro", canal: "direto", pagina: "/" })
+    );
   });
 
   it("respeita o host configurado", async () => {
     const a = await carregar("phc_teste", "https://eu.i.posthog.com");
     a.applyCookieConsent(true);
+    await esperar();
     expect(posthog.init).toHaveBeenCalledWith(
       "phc_teste",
       expect.objectContaining({ api_host: "https://eu.i.posthog.com" })
@@ -93,6 +103,7 @@ describe("analytics da landing", () => {
     a.saveCookieConsent(true);
 
     a.initAnalytics();
+    await esperar();
     expect(posthog.init).toHaveBeenCalledTimes(1);
   });
 
@@ -103,12 +114,14 @@ describe("analytics da landing", () => {
     a.applyCookieConsent(false);
     a.trackCta("agende_demo", "hero");
 
+    await esperar();
     expect(posthog.opt_out_capturing).toHaveBeenCalledTimes(1);
     expect(posthog.reset).toHaveBeenCalledTimes(1);
     expect(posthog.capture).not.toHaveBeenCalled();
 
     // Aceitar de novo volta a iniciar.
     a.applyCookieConsent(true);
+    await esperar();
     expect(posthog.init).toHaveBeenCalledTimes(2);
   });
 
@@ -120,6 +133,7 @@ describe("analytics da landing", () => {
     a.trackCta("agende_demo", "hero");
     a.applyCookieConsent(false);
 
+    await esperar();
     expect(posthog.init).not.toHaveBeenCalled();
     expect(posthog.capture).not.toHaveBeenCalled();
     expect(posthog.opt_out_capturing).not.toHaveBeenCalled();

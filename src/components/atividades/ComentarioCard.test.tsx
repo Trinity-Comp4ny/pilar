@@ -89,4 +89,18 @@ describe("ComentarioCard", () => {
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
     expect(container.querySelector('[data-comentario-id="c1"]')?.className).toContain("border-brand");
   });
+
+  it("sem onExcluir não mostra a lixeira", () => {
+    renderCard();
+    expect(screen.queryByRole("button", { name: "Apagar comentário" })).not.toBeInTheDocument();
+  });
+
+  it("apaga só depois de confirmar", async () => {
+    const onExcluir = vi.fn();
+    renderCard({ onExcluir });
+    fireEvent.click(screen.getByRole("button", { name: "Apagar comentário" }));
+    expect(onExcluir).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Apagar" }));
+    await waitFor(() => expect(onExcluir).toHaveBeenCalledTimes(1));
+  });
 });

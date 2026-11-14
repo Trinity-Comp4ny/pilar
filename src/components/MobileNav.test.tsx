@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   navigate: vi.fn(),
   nav: {} as Record<string, unknown>,
   pendencias: [] as unknown[] | undefined,
+  novidadesDestaque: false,
   visivel: true,
   auth: {
     user: { email: "dev@local.test" } as Record<string, unknown> | null,
@@ -29,6 +30,9 @@ vi.mock("react-router-dom", async (orig) => ({
 }));
 vi.mock("@/hooks/useModuleNav", () => ({ useModuleNav: () => h.nav }));
 vi.mock("@/hooks/useEscopos", () => ({ usePendenciasAgentes: () => ({ data: h.pendencias }) }));
+vi.mock("@/hooks/useNovidades", () => ({
+  useNovidades: () => ({ pendentes: { comFluxo: [], temDestaque: h.novidadesDestaque } }),
+}));
 vi.mock("@/hooks/useBarraVisivel", () => ({ useBarraVisivel: () => h.visivel }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => h.auth }));
 vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings: h.openSettings }) }));
@@ -50,6 +54,7 @@ const item = (title: string, url: string, disabled = false, dica = "") => ({
 beforeEach(() => {
   vi.clearAllMocks();
   h.pendencias = [];
+  h.novidadesDestaque = false;
   h.visivel = true;
   h.perms = { isAdmin: false, isUltraAdmin: false };
   h.ocultos = false;
@@ -82,9 +87,31 @@ describe("BottomNav", () => {
   it("mostra os pilares na ordem fixa e marca o ativo", () => {
     renderNav();
     const botoes = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"));
-    expect(botoes).toEqual(["Projetos", "Obras", "Gestão", "Menu"]);
+    expect(botoes).toEqual(["Gestão", "Projetos", "Obras", "Menu"]);
     expect(screen.getByRole("button", { name: "Projetos" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: /Início/ })).toHaveClass("bg-brand");
+    expect(screen.getByRole("link", { name: /Início/ })).toHaveAttribute("data-ativo", "true");
+    expect(screen.getByRole("button", { name: "Projetos" })).toHaveAttribute("data-ativo", "false");
+  });
+
+  it("lente de vidro fica sob a aba ativa e vai para o Menu quando ele abre", async () => {
+    renderNav();
+    const lente = screen.getByTestId("lente-ativa");
+    expect(lente).toHaveAttribute("data-ativa", "true");
+    expect(lente.style.getPropertyValue("--lente-i")).toBe("0");
+    await userEvent.setup().click(screen.getByRole("button", { name: "Menu" }));
+    expect(lente.style.getPropertyValue("--lente-i")).toBe("4");
+    // Com o MoreSheet aberto a barra fica aria-hidden (modal), por isso o hidden: true.
+    expect(screen.getByRole("button", { name: "Menu", hidden: true })).toHaveAttribute("data-ativo", "true");
+  });
+
+  it("rota fora da barra esconde a lente", () => {
+    h.nav = { ...h.nav, routeModule: null };
+    render(
+      <MemoryRouter initialEntries={["/agentes"]}>
+        <BottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("lente-ativa")).toHaveAttribute("data-ativa", "false");
   });
 
   it("selecionar pilar delega ao useModuleNav", async () => {
@@ -166,6 +193,14 @@ describe("MoreSheet", () => {
     expect(h.toggle).toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Feedback" }));
     expect(screen.getByTestId("feedback-aberto")).toBeInTheDocument();
+  });
+
+  it("Novidades com ponto quando há algo novo (SPEC 152)", async () => {
+    h.novidadesDestaque = true;
+    const user = renderSheet();
+    expect(screen.getByLabelText("Há novidades")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Novidades/ }));
+    expect(h.navigate).toHaveBeenCalledWith("/novidades");
   });
 
   it("admin vê Portal Admin", async () => {

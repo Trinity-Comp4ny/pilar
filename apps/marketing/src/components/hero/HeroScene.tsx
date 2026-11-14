@@ -17,9 +17,12 @@ function useEscala(alvo: React.RefObject<HTMLDivElement>) {
     if (!el) return;
 
     const aplicar = (largura: number) => el.style.setProperty("--escala", String(largura / PALCO.largura));
-    aplicar(el.getBoundingClientRect().width);
-
-    if (typeof ResizeObserver === "undefined") return;
+    // O ResizeObserver dispara já na primeira observação, antes da pintura: ler
+    // getBoundingClientRect aqui só forçava um reflow síncrono (Lighthouse).
+    if (typeof ResizeObserver === "undefined") {
+      aplicar(el.getBoundingClientRect().width);
+      return;
+    }
     const ro = new ResizeObserver(([entrada]) => aplicar(entrada.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();
@@ -27,7 +30,7 @@ function useEscala(alvo: React.RefObject<HTMLDivElement>) {
 }
 
 /**
- * A cena da hero: uma sessão contínua no Pilar conduzida por um agente, em loop
+ * A cena da hero: uma sessão contínua na Pilar conduzida por um agente, em loop
  * de ~20 segundos, sem aba nem clique do visitante (SPEC 072). Passa pelos três
  * módulos: Gestão (agente, funil, caixa), Projetos (margem e cronograma) e Obras.
  *
@@ -115,7 +118,7 @@ export function HeroScene() {
       {/* Equivalente textual: a cena é decorativa para quem enxerga, mas a
           história precisa chegar em quem usa leitor de tela. */}
       <p className="sr-only">
-        Demonstração do Pilar: um agente de IA recebe o pedido em português "recebi 128 mil do centro cirúrgico,
+        Demonstração da Pilar: um agente de IA recebe o pedido em português "recebi 128 mil do centro cirúrgico,
         primeira de três parcelas", monta o lançamento financeiro como rascunho para aprovação, move o lead para ganho
         no funil e o converte em projeto, registra a receita no financeiro do mês, mostra a margem do projeto em 31,4% e
         o cronograma das disciplinas, e termina na obra, com o diário de hoje chegando do campo e o avanço das frentes.

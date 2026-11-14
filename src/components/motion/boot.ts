@@ -16,12 +16,6 @@ export const bootIsShowing = (): boolean => {
   return Boolean(el && !el.dataset.leaving);
 };
 
-/** Troca a legenda do boot (ex.: "Abrindo VRZ Engenharia") sem tirar o anel. */
-export const setBootCaption = (text: string): void => {
-  const caption = document.getElementById("boot-caption");
-  if (caption) caption.textContent = text;
-};
-
 /** Tira o boot com fade de 360ms e para o anel. Chamar mais de uma vez é seguro. */
 export const dismissBoot = (): void => {
   const el = document.getElementById(BOOT_ID);

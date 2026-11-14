@@ -70,7 +70,7 @@ describe("PrazoCell", () => {
     rerender(<PrazoCell prazo={iso(1)} atrasado={false} editavel={false} onChange={vi.fn()} />);
     expect(screen.getByText("Amanhã")).toBeInTheDocument();
     rerender(<PrazoCell prazo={iso(-1)} atrasado editavel={false} onChange={vi.fn()} />);
-    expect(screen.getByText("Ontem")).toHaveClass("text-destructive");
+    expect(screen.getByText("Ontem")).toHaveClass("text-negative-strong");
     rerender(<PrazoCell prazo="2020-02-12" atrasado editavel={false} onChange={vi.fn()} />);
     expect(screen.getByText(/12 fev 2020/)).toBeInTheDocument();
   });

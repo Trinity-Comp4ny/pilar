@@ -24,7 +24,7 @@ import {
   PASSO_ROTULO,
   errosDaFicha,
   errosDoPasso,
-  mesPadraoDeInicio,
+  dataPadraoDeInicio,
   type ErrosDaFicha,
   type Passo,
 } from "./lib";
@@ -61,7 +61,7 @@ function Passos({ passo, indice }: { passo: Passo; indice: number }) {
             <span
               className={cn(
                 "grid h-6 w-6 place-items-center rounded-full border text-xs font-semibold",
-                atual && "border-ink bg-ink text-white",
+                atual && "border-brand bg-brand text-ink",
                 feito && "border-brand bg-brand text-ink",
                 !atual && !feito && "bg-card text-ink-soft"
               )}
@@ -356,7 +356,7 @@ export default function NovaEstimativa() {
       <PilarPage title="Nova estimativa" breadcrumbs={BREADCRUMB}>
         <EmptyState
           icon={FileSpreadsheet}
-          title="O Pilar ainda não tem a tabela do CUB"
+          title="A Pilar ainda não tem a tabela do CUB"
           description="Sem o CUB não dá para calcular. Fale com o time para importar a tabela do mês."
         />
       </PilarPage>
@@ -390,7 +390,7 @@ export default function NovaEstimativa() {
   const doLead = lead.data ?? null;
   const daProposta = proposta.data ?? null;
   const cliente = daProposta?.nomeCliente || doLead?.nomeCompleto || "";
-  const fichaBase = fichaInicial(mesPadraoDeInicio(new Date()));
+  const fichaBase = fichaInicial(dataPadraoDeInicio(new Date()));
   return (
     <Assistente
       insumos={insumos}

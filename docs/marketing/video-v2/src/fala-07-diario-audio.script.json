@@ -1,0 +1,41 @@
+{
+  "id": "fala-07-diario-audio",
+  "hook": "Diário de obra *falado*",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "O mestre de obras não vai digitar relatório. E tudo bem."
+    },
+    {
+      "id": "l02",
+      "text": "Ele grava um áudio contando o dia, e a Pilar organiza o registro.",
+      "show": {
+        "type": "tela",
+        "tela": "diario",
+        "legenda": "O áudio vira o registro do dia"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "O que avançou, o que ficou pendente, quantas pessoas, o clima.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "O que avançou",
+          "O que ficou pendente",
+          "Efetivo e clima"
+        ],
+        "icone": "notebook-pen"
+      }
+    },
+    {
+      "id": "l04",
+      "text": "O registro nasce interno e só vai para o cliente quando você liberar."
+    },
+    {
+      "id": "l05",
+      "text": "Menos grupo de WhatsApp, mais obra documentada."
+    }
+  ]
+}

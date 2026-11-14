@@ -18,7 +18,10 @@ export function OnboardingTourController() {
 
   const candidate = useMemo(() => {
     if (loading || state.dismissed) return null;
-    const passo = steps.find((s) => s.rota === pathname && !s.done && !state.tours_seen.includes(s.key));
+    const passo = steps.find(
+      // Passo bloqueado não ganha tour: a pessoa ainda não deve estar fazendo isso (SPEC 165).
+      (s) => s.rota === pathname && !s.done && s.bloqueadoPor.length === 0 && !state.tours_seen.includes(s.key)
+    );
     return passo?.tour ? { ...passo, tour: passo.tour } : null;
   }, [loading, state.dismissed, state.tours_seen, steps, pathname]);
 

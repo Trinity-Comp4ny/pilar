@@ -52,7 +52,8 @@ import { mensagemDaPausa, comEstadoDaDisciplina, type EstadoDaDisciplina } from 
 import { PausarDialog } from "./PausarDialog";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
-import { ComentarioCard } from "@/components/atividades/ComentarioCard";
+import { ComentariosLista } from "@/components/atividades/ComentariosLista";
+import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -162,6 +163,7 @@ function DisciplinaDetailBody({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const persistida = !!disciplina.id;
   const comentarios = disciplina.comentarios ?? [];
+  const { autorId } = useComentarioAutoria(autorNome);
   const temAtividades = persistida && !!onUpdateComentarios;
   const checklist = useDisciplinaChecklist(persistida ? disciplina.id : undefined);
   const checklistItens = checklist.data ?? [];
@@ -238,6 +240,7 @@ function DisciplinaDetailBody({
         id,
         texto,
         autor: autorNome,
+        autorId,
         data: new Date().toISOString(),
         mencionados: mencionados.length ? mencionados : undefined,
       },
@@ -248,9 +251,9 @@ function DisciplinaDetailBody({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho */}
-      <div className="shrink-0 border-b px-8 pt-6 pb-4">
+      <div className="shrink-0 border-b px-4 pt-3 pb-4 md:px-8 md:pt-6">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             <Layers className="h-3 w-3" /> {disciplina.codigo || "Disciplina"}
           </span>
         </div>
@@ -277,7 +280,7 @@ function DisciplinaDetailBody({
         primaryLabel="Detalhes"
         secondaryLabel="Atividades"
         primary={
-          <div className="h-full space-y-7 overflow-y-auto px-8 py-6">
+          <div className="h-full space-y-7 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={CircleDot} label="Status" className="md:col-span-2">
@@ -628,18 +631,14 @@ function DisciplinaDetailBody({
             {temAtividades ? (
               <>
                 <div className="flex-1 min-h-0 space-y-2 overflow-y-auto px-5 py-4">
-                  {comentarios.length === 0 ? (
-                    <p className="py-8 text-center text-xs text-muted-foreground">Nenhum comentário ainda</p>
-                  ) : (
-                    comentarios.map((c) => (
-                      <ComentarioCard
-                        key={c.id}
-                        comentario={c}
-                        pessoas={pessoas}
-                        destacado={c.id === comentarioDestacado}
-                      />
-                    ))
-                  )}
+                  <ComentariosLista
+                    comentarios={comentarios}
+                    pessoas={pessoas}
+                    autorNome={autorNome}
+                    destacadoId={comentarioDestacado}
+                    onExcluir={(id) => onUpdateComentarios?.(comentarios.filter((x) => x.id !== id))}
+                    entidade={disciplina.id ? { tipo: "disciplina", id: disciplina.id } : undefined}
+                  />
                 </div>
                 <div className="shrink-0 border-t bg-background/60 p-4">
                   <AtividadeComposer pessoas={pessoas} onSubmit={adicionarComentario} />

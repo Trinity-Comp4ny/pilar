@@ -1,0 +1,51 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Geist;src:url(assets/geist-variable.woff2) format('woff2');font-weight:100 900}
+html,body{margin:0;width:1080px;height:1920px;background:transparent;overflow:hidden;font-family:Geist,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute;left:0;right:0}
+#hook{top:230px;text-align:center;display:flex;flex-direction:column;align-items:center}
+#hook .box{background:rgba(26,26,26,.84);border-radius:36px;padding:34px 48px 40px}
+.hl{font-weight:500;font-size:88px;line-height:1.06;letter-spacing:-0.035em;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.45);opacity:0}
+.pill{position:relative;display:inline-block;padding:0 22px;color:#1A1A1A;text-shadow:none}
+.pill::before{content:"";position:absolute;inset:6px 0 2px 0;background:#A4EC86;border-radius:999px;transform-origin:left;transform:scaleX(var(--s,0));z-index:-1}
+.pill span{position:relative}
+#chip{top:1330px;display:flex;justify-content:center}
+.chipbox{background:rgba(26,26,26,.82);border-radius:28px;padding:22px 34px;display:flex;align-items:center;gap:22px;opacity:0;backdrop-filter:blur(6px)}
+.num{font-weight:600;font-size:40px;color:#1A1A1A;background:#A4EC86;border-radius:999px;padding:4px 18px;letter-spacing:-0.02em}
+.lab{display:flex;flex-direction:column}
+.t1{font-weight:500;font-size:58px;color:#fff;letter-spacing:-0.03em;line-height:1.05}
+.t2{font-weight:400;font-size:32px;color:#D1D5DB;margin-top:4px}
+#end{inset:0;background:#1A1A1A;opacity:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px}
+.logo{width:520px;height:auto}
+.tag{font-weight:500;font-size:56px;line-height:1.12;letter-spacing:-0.03em;color:#fff;text-align:center;max-width:880px;opacity:0}
+.cta{font-weight:500;font-size:40px;color:#1A1A1A;background:#A4EC86;border-radius:999px;padding:22px 44px;opacity:0}
+.url{font-weight:400;font-size:34px;color:#9EA3AE;opacity:0;margin-top:-28px}
+</style></head><body>
+<div id="hook" class="abs"><div class="box" id="hb"><div class="hl" id="h1">Do traço no papel</div><div class="hl" id="h2"><span class="pill" id="p1"><span>à casa pronta.</span></span></div></div></div>
+<div id="chip" class="abs"><div class="chipbox" id="cb"><div class="num" id="cn">01</div><div class="lab"><div class="t1" id="c1"></div><div class="t2" id="c2"></div></div></div></div>
+<div id="end" class="abs"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 396.181 120.700" class="logo" role="img" aria-label="Pilar"><title>Pilar</title><g stroke="#FFFFFF" stroke-width="8.545" stroke-linecap="round" fill="none"><path d="M4.273 4.273H143.131"/><path d="M14.954 25.635H132.45" stroke-opacity="0.85"/><path d="M36.317 41.658V116.427"/><path d="M73.702 41.658V116.427"/><path d="M111.087 41.658V116.427"/></g><path d="M8.6 0V-71H35.08Q47.28 -71 54.09 -65.14Q60.9 -59.28 60.9 -48.94Q60.9 -42.02 57.81 -36.97Q54.72 -31.92 48.95 -29.25Q43.18 -26.58 35.08 -26.58H19.4V0ZM19.4 -36.44H34.78Q42.1 -36.44 45.9 -39.59Q49.7 -42.74 49.7 -48.94Q49.7 -54.98 45.91 -58.06Q42.12 -61.14 34.78 -61.14H19.4Z M70.72 0V-53.2H81.32V0ZM70.5 -60.92V-71.48H81.54V-60.92Z M105.42 0Q100.18 0 97 -2.7Q93.82 -5.4 93.82 -11.32V-71H104.42V-12.32Q104.42 -10.48 105.36 -9.57Q106.3 -8.66 108.06 -8.66H112.32V0Z M134.38 1.2Q126.12 1.2 121.14 -2.62Q116.16 -6.44 116.16 -13.28Q116.16 -20.16 120.31 -24.05Q124.46 -27.94 133.18 -29.6L151.46 -33.08Q151.46 -39.28 148.58 -42.36Q145.7 -45.44 140.02 -45.44Q134.94 -45.44 132.01 -43.15Q129.08 -40.86 128.02 -36.54L117.06 -37.22Q118.58 -45.18 124.56 -49.79Q130.54 -54.4 140.02 -54.4Q150.82 -54.4 156.44 -48.66Q162.06 -42.92 162.06 -32.52V-11.84Q162.06 -9.88 162.75 -9.12Q163.44 -8.36 164.94 -8.36H166.84V0Q166.34 0.14 165.22 0.23Q164.1 0.32 162.92 0.32Q159.46 0.32 157.04 -0.8Q154.62 -1.92 153.4 -4.45Q152.18 -6.98 152.18 -11.28L153.26 -10.8Q152.48 -7.34 149.82 -4.6Q147.16 -1.86 143.15 -0.33Q139.14 1.2 134.38 1.2ZM136.1 -7.16Q140.88 -7.16 144.31 -9.02Q147.74 -10.88 149.6 -14.17Q151.46 -17.46 151.46 -21.68V-25.08L135.94 -22.08Q131.12 -21.16 129.15 -19.25Q127.18 -17.34 127.18 -14.28Q127.18 -10.9 129.54 -9.03Q131.9 -7.16 136.1 -7.16Z M173.52 0V-53.2H183.2L183.64 -39.08L182.72 -39.36Q183.82 -46.6 187.16 -49.9Q190.5 -53.2 196.18 -53.2H201.26V-43.72H196.22Q192.16 -43.72 189.49 -42.39Q186.82 -41.06 185.47 -38.36Q184.12 -35.66 184.12 -31.38V0Z" transform="translate(194.881 95.850)" fill="#FFFFFF"/></svg><div class="tag" id="tag">Gestão com agentes de IA para escritórios de engenharia e arquitetura.</div><div class="cta" id="cta">Planos e demonstração no link da bio</div><div class="url" id="url">pilarsoft.com.br</div></div>
+<script>
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)), lin=(t,a,b)=>clamp((t-a)/(b-a));
+const expo=x=>x>=1?1:1-Math.pow(2,-10*x), quint=x=>1-Math.pow(1-x,5);
+const STAGES=[[0.6,'01','Locação e baldrame','marcação e fundação'],[1.9,'02','Pilares','armadura de aço e concreto'],[2.75,'03','Alvenaria','bloco cerâmico, fiada por fiada'],
+ [4.9,'04','Vigas e contrapiso','cinta de amarração e base do piso'],[6.1,'05','Reboco e esquadrias','paredes, portas e janelas'],[7.3,'06','Telhado','tesoura, terça e telha'],[8.55,'07','Paisagismo','jardim e calçada'],[9.2,'','Casa pronta.','']];
+const enter=(el,t,t0,dy=40)=>{const k=expo(lin(t,t0,t0+0.5));el.style.opacity=k;el.style.transform='translateY('+((1-k)*dy)+'px)';};
+const svg=document.querySelector('.logo'); const strokes=[...svg.querySelectorAll('g path')]; const fills=[...svg.querySelectorAll(':scope > path')];
+strokes.forEach(p=>{const L=p.getTotalLength();p.style.strokeDasharray=L;p.dataset.L=L;});
+window.render=(t)=>{
+  // gancho
+  const hk=document.getElementById('hook'); hk.style.display=t<2.5?'flex':'none'; document.getElementById('hb').style.opacity=1;
+  enter(document.getElementById('h1'),t,-1); enter(document.getElementById('h2'),t,-1);
+  document.getElementById('p1').style.setProperty('--s',1);
+  // etapas
+  const cb=document.getElementById('cb'); let cur=-1; STAGES.forEach((s,i)=>{if(t>=s[0])cur=i;});
+  if(cur<0||t>=10.25){cb.style.opacity=0;} else { const s=STAGES[cur]; document.getElementById('cn').style.display=s[1]?'block':'none';
+    document.getElementById('cn').textContent=s[1]; document.getElementById('c1').textContent=s[2]; document.getElementById('c2').textContent=s[3]; document.getElementById('c2').style.display=s[3]?'block':'none';
+    const k=expo(lin(t,s[0],s[0]+0.35)); cb.style.opacity=k; cb.style.transform='translateY('+((1-k)*24)+'px)'; }
+  // fechamento
+  const e=document.getElementById('end'); e.style.opacity=lin(t,10.25,10.55);
+  strokes.forEach((p,i)=>{const d=[0,0.16,0.34,0.42,0.5][i]||0; const k=quint(lin(t,10.5+d,10.5+d+0.55)); p.style.strokeDashoffset=(1-k)*p.dataset.L;});
+  fills.forEach(p=>p.style.opacity=expo(lin(t,10.9,11.3)));
+  enter(document.getElementById('tag'),t,11.0,24); enter(document.getElementById('cta'),t,11.3,24); enter(document.getElementById('url'),t,11.45,16);
+};
+document.fonts.ready.then(()=>{window.ready=true;});
+</script></body></html>

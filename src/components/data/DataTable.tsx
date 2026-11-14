@@ -258,7 +258,7 @@ export function DataTable<T>({
         key={col.key}
         aria-sort={isActive ? (sortState!.desc ? "descending" : "ascending") : undefined}
         className={cn(
-          compact && "h-9 text-[11px] uppercase tracking-wide",
+          compact && "h-9 text-2xs uppercase tracking-wide",
           col.align && alignClass[col.align],
           col.stickyLeft && "sticky left-0 z-20 bg-muted/50",
           stickyHeader && "sticky top-0 z-10 bg-card",

@@ -1,0 +1,58 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 48.0,
+  "lines": [
+    {
+      "t": 0.1,
+      "say": "Proposta no Word, controle no Excel, obra no WhatsApp."
+    },
+    {
+      "t": 3.9,
+      "say": "E o prejuízo só aparece no fim."
+    },
+    {
+      "t": 6.1,
+      "say": "Pilar. Gestão com agentes de IA para engenharia e arquitetura."
+    },
+    {
+      "t": 10.7,
+      "say": "Do primeiro contato ao dinheiro na conta."
+    },
+    {
+      "t": 13.6,
+      "say": "O funil comercial, com valor em cada etapa."
+    },
+    {
+      "t": 17.1,
+      "say": "O lucro de cada projeto, antes do fim."
+    },
+    {
+      "t": 20.6,
+      "say": "Passou do orçamento? A IA prepara o aditivo, e você aprova."
+    },
+    {
+      "t": 25.6,
+      "say": "Chuva na concretagem? Você sabe antes."
+    },
+    {
+      "t": 29.1,
+      "say": "O canteiro fala, e o diário chega pronto."
+    },
+    {
+      "t": 32.6,
+      "say": "Quanto sobrou este mês? Está na tela."
+    },
+    {
+      "t": 36.1,
+      "say": "E toda semana, o resumo do que importa."
+    },
+    {
+      "t": 39.1,
+      "say": "Tudo isso num sistema só."
+    },
+    {
+      "t": 43.3,
+      "say": "A IA prepara. O sistema confere. Você aprova."
+    }
+  ]
+}

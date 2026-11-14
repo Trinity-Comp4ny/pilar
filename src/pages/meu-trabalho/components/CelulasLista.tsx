@@ -6,7 +6,7 @@ import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarPlus, Check, Clock, Flag, FolderOpen, Plus, Tag, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePanel } from "@/components/ui/date-panel";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -142,7 +142,7 @@ export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProp
     <span
       className={cn(
         "inline-flex items-center gap-1 text-xs text-muted-foreground",
-        atrasado && "font-medium text-destructive"
+        atrasado && "font-medium text-negative-strong"
       )}
     >
       <CalendarPlus className={cn("h-3 w-3 shrink-0", atrasado ? "text-destructive" : "text-muted-foreground/50")} />
@@ -164,29 +164,22 @@ export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProp
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger className="flex items-center rounded px-1 py-0.5 hover:bg-muted">{conteudo}</PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
-          <Calendar
-            mode="single"
-            selected={data}
+          <DatePanel
+            value={data}
             onSelect={(d) => {
-              onChange(d ? format(d, "yyyy-MM-dd") : null);
+              onChange(format(d, "yyyy-MM-dd"));
               setOpen(false);
             }}
-            defaultMonth={data}
-            locale={ptBR}
-            autoFocus
+            onClear={
+              prazo
+                ? () => {
+                    onChange(null);
+                    setOpen(false);
+                  }
+                : undefined
+            }
+            clearLabel="Limpar prazo"
           />
-          {prazo && (
-            <button
-              type="button"
-              onClick={() => {
-                onChange(null);
-                setOpen(false);
-              }}
-              className="w-full border-t px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted"
-            >
-              Limpar prazo
-            </button>
-          )}
         </PopoverContent>
       </Popover>
     </div>
@@ -322,11 +315,11 @@ export function EtiquetasCell({ labels, editavel, onChange }: EtiquetasCellProps
     labels.length > 0 ? (
       <span className="flex min-w-0 items-center gap-1 overflow-hidden">
         {labels.slice(0, 2).map((l) => (
-          <Badge key={l} variant="secondary" className="shrink-0 text-[10px] font-normal">
+          <Badge key={l} variant="secondary" className="shrink-0 text-3xs font-normal">
             {l}
           </Badge>
         ))}
-        {labels.length > 2 && <span className="shrink-0 text-[10px] text-muted-foreground">+{labels.length - 2}</span>}
+        {labels.length > 2 && <span className="shrink-0 text-3xs text-muted-foreground">+{labels.length - 2}</span>}
       </span>
     ) : editavel ? (
       <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
@@ -412,7 +405,7 @@ export function HorasCell({ valor, editavel, onChange }: HorasCellProps) {
         <PopoverTrigger className="flex items-center rounded px-1 py-0.5 hover:bg-muted">{conteudo}</PopoverTrigger>
         <PopoverContent align="start" className="w-40 p-3">
           <label className="space-y-1">
-            <span className="text-[11px] text-muted-foreground">Horas</span>
+            <span className="text-2xs text-muted-foreground">Horas</span>
             <div className="flex items-center gap-1.5">
               <Input
                 type="number"

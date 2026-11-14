@@ -1,3 +1,4 @@
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import {
   GitBranch,
   History,
   MessageSquare,
+  FolderOpen,
+  Send,
 } from "lucide-react";
 import { PageTabs } from "@/components/PageSlots";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
@@ -36,6 +39,8 @@ import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
+import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
+import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -62,6 +67,8 @@ interface ProjetoDetailTabsProps {
 const PROJETO_TABS: SectionTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
+  { id: "arquivos", label: "Arquivos", icon: FolderOpen },
+  { id: "cliente", label: "Cliente", icon: Send },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
@@ -122,6 +129,8 @@ export function ProjetoDetailTabs({
     if (h === "escopo") return { tab: "escopo", view: null };
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
+    if (h === "arquivos") return { tab: "arquivos", view: null };
+    if (h === "cliente" || h === "solicitacoes") return { tab: "cliente", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -258,6 +267,8 @@ export function ProjetoDetailTabs({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.hash]);
 
+  const isMobile = useIsMobile();
+
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     navigate(`#${v}`, { replace: true });
@@ -267,18 +278,18 @@ export function ProjetoDetailTabs({
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <div className="flex flex-col md:flex-row gap-4 md:items-start">
         <PageTabs>
-          <SectionTabs
-            tabs={PROJETO_TABS}
-            value={activeTab}
-            onValueChange={handleTabChange}
-            ariaLabel="Seções do projeto"
-          />
-        </PageTabs>
-        <div className="flex-1 min-w-0">
-          <TabsContent value="disciplinas">
-            <div className="space-y-3">
-              {/* Toggle de visualização */}
-              <div className="flex items-center justify-end">
+          {/* No desktop o seletor de visão das disciplinas fica na linha das abas, em vez de
+              ocupar uma linha só para ele acima da tabela (auditoria de espaço, 2026-11). */}
+          <div className="flex items-center">
+            <SectionTabs
+              tabs={PROJETO_TABS}
+              value={activeTab}
+              onValueChange={handleTabChange}
+              ariaLabel="Seções do projeto"
+              className="min-w-0 flex-1"
+            />
+            {activeTab === "disciplinas" && !isMobile && (
+              <div className="shrink-0 pr-6">
                 <ViewSwitcher
                   options={DISCIPLINA_VISOES}
                   value={disciplinaView}
@@ -286,6 +297,23 @@ export function ProjetoDetailTabs({
                   ariaLabel="Visualização das disciplinas"
                 />
               </div>
+            )}
+          </div>
+        </PageTabs>
+        <div className="flex-1 min-w-0">
+          <TabsContent value="disciplinas">
+            <div className="space-y-3">
+              {/* Toggle de visualização: no celular fica aqui (no desktop, na linha das abas). */}
+              {isMobile && (
+                <div className="flex items-center justify-end">
+                  <ViewSwitcher
+                    options={DISCIPLINA_VISOES}
+                    value={disciplinaView}
+                    onChange={handleViewChange}
+                    ariaLabel="Visualização das disciplinas"
+                  />
+                </div>
+              )}
 
               {disciplinaView === "tabela" ? (
                 <Card>
@@ -323,6 +351,7 @@ export function ProjetoDetailTabs({
                   disciplinas={disciplinasLegacy}
                   onOpenDisciplina={handleDiscClick}
                   checklistCounts={checklistCounts}
+                  projetoDataPrevisao={projeto.data_previsao}
                 />
               ) : (
                 <Card>
@@ -356,6 +385,14 @@ export function ProjetoDetailTabs({
                 comentarioDestacado={disciplinaDoLink ? null : comentarioDoLink}
               />
             </Card>
+          </TabsContent>
+
+          <TabsContent value="arquivos">
+            {activeTab === "arquivos" && <ProjetoArquivosTab projetoId={projeto.id} canEdit={canEdit} />}
+          </TabsContent>
+
+          <TabsContent value="cliente">
+            {activeTab === "cliente" && <SolicitacoesDoCliente projetoId={projeto.id} />}
           </TabsContent>
 
           <TabsContent value="pagamentos">

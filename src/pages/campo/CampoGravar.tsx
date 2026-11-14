@@ -259,7 +259,10 @@ export default function CampoGravar() {
         cancelLabel="Voltar"
         onSubmit={aceitarAviso}
       >
-        <p className="text-sm text-ink-soft">Só a sua empresa ouve. O cliente da obra nunca ouve o áudio.</p>
+        <p className="text-sm text-ink-soft">
+          Um agente de IA (Google Gemini) transcreve o áudio para montar o registro. Fora isso, só a sua empresa ouve. O
+          cliente da obra nunca ouve o áudio. Evite gravar a voz de quem não sabe que está sendo gravado.
+        </p>
       </FormDialog>
     </div>
   );

@@ -182,7 +182,7 @@ export function UsoPanel() {
           label="Usuários"
           used={uso.usuarios}
           max={uso.maxUsuarios}
-          hint="Usuários são ilimitados no Pilar; convide a firma inteira sem custo por cabeça."
+          hint="Usuários são ilimitados na Pilar; convide a firma inteira sem custo por cabeça."
         />
       </div>
 
@@ -212,8 +212,8 @@ export function UsoPanel() {
               {canComprar && (
                 <Button
                   variant="brand"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs rounded-full"
+                  size="xs"
+                  className="px-2.5 rounded-full"
                   onClick={() => {
                     closeSettings();
                     navigate("/comprar-tokens");
@@ -309,7 +309,7 @@ export function UsoPanel() {
               <p className="text-sm text-black/55">
                 {uso.planoNome
                   ? "Suba de plano e abra mais projetos, obras e leads sem trocar de ferramenta."
-                  : "Assine para liberar o uso completo do Pilar."}
+                  : "Assine para liberar o uso completo da Pilar."}
               </p>
             </div>
             <Button variant="brand" className="rounded-full shrink-0" onClick={() => openSettings("pagamento")}>

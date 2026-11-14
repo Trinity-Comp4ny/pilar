@@ -3,7 +3,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
 import { PageLayout } from "@/components/PageLayout";
@@ -17,26 +16,14 @@ import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Globe,
-  KeyRound,
   Mail,
   MapPin,
   Pencil,
   Phone,
-  Send,
-  ShieldOff,
   Trash2,
   User,
+  Users,
   Landmark,
   ChevronDown,
   ChevronRight,
@@ -48,7 +35,6 @@ import {
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { useClienteDetalhe } from "@/pages/clientes/hooks/useClienteDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes } from "@/hooks/useClientes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -56,8 +42,9 @@ import { ClienteMessageDialog } from "@/pages/clientes/ClienteMessageDialog";
 import { ClienteFormDialog } from "@/pages/clientes/ClienteFormDialog";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
-import { EntregasContent } from "@/pages/portal/PortalEntregas";
-import { EntregaFormDialog } from "@/pages/portal/EntregaFormDialog";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
+import { EntregaFormDialog } from "@/components/portal/EntregaFormDialog";
+import { AcessoPortalDialog } from "@/components/portal/AcessoPortalDialog";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 import { cn } from "@/lib/utils";
@@ -115,12 +102,12 @@ function ProjetoCard({ projeto }: { projeto: ProjetoResumo }) {
             <div className="min-w-0">
               <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{projeto.nome}</p>
             </div>
-            {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+            {config && <Badge className={cn("text-3xs shrink-0", config.color)}>{config.label}</Badge>}
           </div>
 
           {projeto.total_disciplinas > 0 && (
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-3xs text-muted-foreground">
                 <span>Progresso</span>
                 <span>{progress}%</span>
               </div>
@@ -154,10 +141,10 @@ function PropostaCard({ proposta, onOpen }: { proposta: PropostaResumo; onOpen: 
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              {proposta.codigo && <p className="text-[10px] font-mono text-muted-foreground">{proposta.codigo}</p>}
+              {proposta.codigo && <p className="text-3xs font-mono text-muted-foreground">{proposta.codigo}</p>}
               <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{proposta.titulo}</p>
             </div>
-            {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+            {config && <Badge className={cn("text-3xs shrink-0", config.color)}>{config.label}</Badge>}
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{proposta.valor_proposto != null ? formatCurrency(proposta.valor_proposto) : "Sem valor"}</span>
@@ -198,7 +185,7 @@ function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; child
             <span className="text-sm font-medium">{projeto.nome}</span>
           </div>
         </div>
-        {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+        {config && <Badge className={cn("text-3xs shrink-0", config.color)}>{config.label}</Badge>}
       </button>
       {open && <div className="px-4 pb-4 pt-2 border-t">{children}</div>}
     </div>
@@ -207,78 +194,32 @@ function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; child
 
 // ─── Visão Geral ─────────────────────────────────────────────────────────────
 
-function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolean }) {
-  const queryClient = useQueryClient();
-  const requireAal2 = useRequireAal2();
+function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGerirPortal: boolean }) {
   const [confirmPortalOpen, setConfirmPortalOpen] = useState(false);
-  const [portalCredentials, setPortalCredentials] = useState<{ email: string } | null>(null);
-  const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
-
   const { portalStatus, isLoadingPortal } = useClienteDetalhe(cliente.id);
-  const {
-    invitePortal,
-    isInvitingPortal,
-    resetPortalPassword,
-    isResettingPortal,
-    revokePortalAccess,
-    isRevokingPortal,
-  } = useClientes();
-
-  const handleInvite = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      const { email } = await invitePortal({ clienteId: cliente.id, email: cliente.email });
-      setPortalCredentials({ email });
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
-
-  const handleReset = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      const { email } = await resetPortalPassword({
-        clienteId: cliente.id,
-        nomeCliente: `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`,
-      });
-      setResetCredentials({ email });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
-
-  const handleRevoke = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      await revokePortalAccess(cliente.id);
-      setPortalCredentials(null);
-      setResetCredentials(null);
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
+  const emailsPortal = portalStatus?.emails ?? (portalStatus?.email ? [portalStatus.email] : []);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    // Duas colunas no desktop: travado em 672 px, sobravam ~300 px vazios ao lado num notebook 13"
+    // (auditoria de espaço, 2026-11). No celular segue uma coluna.
+    <div className="grid items-start gap-4 lg:grid-cols-2">
       {/* Dados */}
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
-              <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">CPF / CNPJ</p>
+              <p className="text-3xs uppercase text-muted-foreground tracking-wider mb-1">CPF / CNPJ</p>
               <p className="text-sm font-medium">{formatDocument(cliente.cpf_cnpj)}</p>
             </div>
             {cliente.origem && (
               <div>
-                <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Origem</p>
+                <p className="text-3xs uppercase text-muted-foreground tracking-wider mb-1">Origem</p>
                 <p className="text-sm font-medium">{cliente.origem}</p>
               </div>
             )}
             {cliente.tipo_nf && (
               <div>
-                <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Tipo NF</p>
+                <p className="text-3xs uppercase text-muted-foreground tracking-wider mb-1">Tipo NF</p>
                 <p className="text-sm font-medium capitalize">
                   {TIPO_NF_LABELS[cliente.tipo_nf.toLowerCase()] ?? cliente.tipo_nf}
                 </p>
@@ -337,10 +278,10 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">{conta.banco}</span>
                       {conta.is_primary && (
-                        <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded">Principal</span>
+                        <span className="text-3xs bg-brand text-ink px-1.5 py-0.5 rounded">Principal</span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-2xs text-muted-foreground">
                       Ag. {conta.agencia} · Cc. {conta.conta} · <span className="capitalize">{conta.tipo}</span>
                     </p>
                   </div>
@@ -352,7 +293,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
       )}
 
       {/* Portal do Cliente */}
-      {isAdmin && (
+      {podeGerirPortal && (
         <Card>
           <CardContent className="p-6 space-y-3">
             <p className="text-xs font-medium flex items-center gap-2 text-muted-foreground">
@@ -365,124 +306,49 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
               </div>
             )}
 
-            {!isLoadingPortal && (portalStatus?.exists || !!portalCredentials) && (
+            {!isLoadingPortal && portalStatus?.exists && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
-                  <Globe className="h-4 w-4" />
-                  <span className="flex-1">Cliente possui acesso ao portal</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleReset}
-                    disabled={isResettingPortal || isRevokingPortal}
-                    className="flex-1"
-                  >
-                    {isResettingPortal ? (
-                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                    ) : (
-                      <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRevoke}
-                    disabled={isRevokingPortal || isResettingPortal}
-                    className="border-danger-mid-border text-danger-strong hover:bg-danger-soft"
-                  >
-                    {isRevokingPortal ? (
-                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                    ) : (
-                      <ShieldOff className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {isRevokingPortal ? "Revogando..." : "Revogar"}
-                  </Button>
-                </div>
-                {resetCredentials && (
-                  <div className="border border-warning-mid-border bg-warning-soft rounded-lg p-3 text-sm text-warning-strong">
-                    Senha redefinida! Credenciais enviadas para <strong>{resetCredentials.email}</strong>.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!isLoadingPortal && portalCredentials && (
-              <div className="border border-positive/20 bg-positive/10 rounded-lg p-3 text-sm text-positive-strong">
-                Acesso criado! Credenciais enviadas para <strong>{portalCredentials.email}</strong>.
-              </div>
-            )}
-
-            {!isLoadingPortal && !portalStatus?.exists && !portalCredentials && (
-              <div className="space-y-2">
-                {cliente.email ? (
-                  <>
-                    <p className="text-xs text-muted-foreground">
-                      Criar acesso para <span className="font-medium text-foreground">{cliente.email}</span>
+                <div className="flex items-start gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p>
+                      {emailsPortal.length === 1
+                        ? "1 pessoa com acesso ao portal"
+                        : `${emailsPortal.length} pessoas com acesso ao portal`}
                     </p>
-                    <Button
-                      size="sm"
-                      onClick={() => setConfirmPortalOpen(true)}
-                      disabled={isInvitingPortal}
-                      variant="brand"
-                    >
-                      {isInvitingPortal ? (
-                        <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                      ) : (
-                        <Globe className="h-3.5 w-3.5 mr-1.5" />
-                      )}
-                      {isInvitingPortal ? "Criando..." : "Criar acesso ao portal"}
-                    </Button>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">Cadastre um email para criar acesso ao portal.</p>
-                )}
+                    <p className="truncate text-xs">{emailsPortal.join(", ")}</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setConfirmPortalOpen(true)}>
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  Gerenciar acessos
+                </Button>
+              </div>
+            )}
+
+            {!isLoadingPortal && !portalStatus?.exists && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  O cliente recebe um link para criar a senha e acompanha os projetos dele. Dá para dar acesso a mais de
+                  uma pessoa.
+                </p>
+                <Button size="sm" onClick={() => setConfirmPortalOpen(true)} variant="brand">
+                  <Globe className="h-3.5 w-3.5 mr-1.5" />
+                  Criar acesso ao portal
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      <AlertDialog open={confirmPortalOpen} onOpenChange={setConfirmPortalOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Criar acesso ao portal?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  Será criado acesso para{" "}
-                  <span className="font-medium text-foreground">
-                    {cliente.nome}
-                    {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
-                  </span>
-                  .
-                </p>
-                <div className="flex items-start gap-2 rounded-lg border border-info-mid-border bg-info-soft px-3 py-2.5 text-info-strong">
-                  <Send className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <p>
-                    As credenciais serão enviadas para <strong>{cliente.email}</strong>.
-                  </p>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmPortalOpen(false);
-                handleInvite();
-              }}
-              className="bg-brand hover:bg-brand/90 text-ink"
-            >
-              <Send className="h-3.5 w-3.5 mr-1.5" />
-              Criar e enviar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <AcessoPortalDialog
+        open={confirmPortalOpen}
+        onOpenChange={setConfirmPortalOpen}
+        clienteId={cliente.id}
+        clienteNome={`${cliente.nome}${cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}`}
+        clienteEmail={cliente.email}
+      />
     </div>
   );
 }
@@ -492,7 +358,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
 export default function ClienteDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAdmin, can } = usePermissions();
+  const { isAdmin, role, can } = usePermissions();
   const canEdit = can("clientes", "edit");
   const canEditEntregas = can("portal_cliente", "edit");
   const isMobile = useIsMobile();
@@ -651,7 +517,7 @@ export default function ClienteDetalhePage() {
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         {/* Visão Geral */}
         <TabsContent value="visao-geral">
-          <VisaoGeralTab cliente={cliente} isAdmin={isAdmin} />
+          <VisaoGeralTab cliente={cliente} podeGerirPortal={isAdmin || role === "coordenador"} />
         </TabsContent>
 
         {/* Projetos */}

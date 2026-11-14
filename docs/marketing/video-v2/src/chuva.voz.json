@@ -1,0 +1,14 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 9.8,
+  "lines": [
+    {
+      "t": 0.3,
+      "say": "Quem marcou a concretagem para o dia da chuva?"
+    },
+    {
+      "t": 4.4,
+      "say": "Obra não para por surpresa. A Pilar avisa antes, e quem decide é você."
+    }
+  ]
+}

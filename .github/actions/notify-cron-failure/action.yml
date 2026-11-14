@@ -1,13 +1,15 @@
 name: Notify cron failure
 description: >-
-  Abre (ou atualiza) uma issue quando um job agendado falha. Existe porque
-  itau-sync e bradesco-sync falharam 30 dias seguidos em silêncio: cron que quebra
-  não aparece em nenhum lugar, ninguém recebe e-mail, e a descoberta vem do cliente
-  reclamando que o extrato está defasado.
+  Abre (ou atualiza) uma issue quando um job automático falha, e FECHA essa issue
+  quando ele volta a passar. Existe porque itau-sync e bradesco-sync falharam 30
+  dias seguidos em silêncio: cron que quebra não aparece em nenhum lugar, ninguém
+  recebe e-mail, e a descoberta vem do cliente reclamando que o extrato está
+  defasado. O fechamento automático existe porque o contrário também acontecia:
+  issue aberta há semanas sem ninguém saber se o job ainda estava quebrado.
 
 inputs:
   job-name:
-    description: Nome legível do job agendado (ex.- "Extrato Itaú")
+    description: Nome legível do job (ex.- "Extrato Itaú")
     required: true
   token:
     # Nunca escrever a sintaxe de expressão literal (chaves duplas) aqui: o
@@ -20,49 +22,80 @@ inputs:
     # do workflow que CHAMA esta action.
     description: Token com permissão issues:write (passe o token de contexto do GitHub do workflow chamador)
     required: true
+  status:
+    description: >-
+      "failure" (padrão) abre ou comenta a issue. "success" fecha a issue aberta
+      desse job, se houver; sem issue aberta, não faz nada.
+    required: false
+    default: failure
+  title-prefix:
+    description: Prefixo do título da issue. Uma issue por título, então mudar o prefixo cria outra fila.
+    required: false
+    default: "Cron falhando"
+  details:
+    description: Texto extra para o corpo/comentário (ex.- quais jobs falharam). Opcional.
+    required: false
+    default: ""
 
 runs:
   using: composite
   steps:
-    - name: Abrir ou atualizar issue de falha
+    - name: Abrir, atualizar ou fechar a issue
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
         # Campos vindos do evento passam por env, nunca interpolados direto no run:
         # (título de job é conteúdo controlado, mas a regra vale para todos).
         JOB_NAME: ${{ inputs.job-name }}
+        STATUS: ${{ inputs.status }}
+        PREFIXO: ${{ inputs.title-prefix }}
+        DETALHES: ${{ inputs.details }}
         REPO: ${{ github.repository }}
+        SHA: ${{ github.sha }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         RUN_ATTEMPT: ${{ github.run_attempt }}
       run: |
         set -euo pipefail
-        export TITLE="Cron falhando: ${JOB_NAME}"
+        export TITLE="${PREFIXO}: ${JOB_NAME}"
 
-        # Idempotente: uma issue por job agendado. Enquanto ela estiver aberta, cada
-        # falha nova só acrescenta um comentário, então não vira enxurrada de issues.
+        # Idempotente: uma issue por job. Enquanto ela estiver aberta, cada falha
+        # nova só acrescenta um comentário, então não vira enxurrada de issues.
         # O título entra no jq por env, não por interpolação de string, para não
         # quebrar se o nome do job tiver aspas.
-        EXISTING=$(gh issue list --repo "$REPO" --state open --limit 50 \
+        EXISTING=$(gh issue list --repo "$REPO" --state open --limit 100 \
           --json number,title --jq '[.[] | select(.title == env.TITLE)][0].number // empty')
+
+        if [ "$STATUS" = "success" ]; then
+          if [ -z "$EXISTING" ]; then
+            echo "Nenhuma issue aberta para '${TITLE}'. Nada a fechar."
+            exit 0
+          fi
+          gh issue close "$EXISTING" --repo "$REPO" --reason completed \
+            --comment "Voltou a passar em \`${SHA:0:8}\`. Fechada automaticamente. Run: ${RUN_URL}"
+          echo "::notice::${JOB_NAME} voltou a passar. Issue #${EXISTING} fechada."
+          exit 0
+        fi
+
+        EXTRA=""
+        if [ -n "$DETALHES" ]; then
+          EXTRA=$(printf '\n\n%s' "$DETALHES")
+        fi
 
         if [ -n "$EXISTING" ]; then
           gh issue comment "$EXISTING" --repo "$REPO" \
-            --body "Falhou de novo (tentativa ${RUN_ATTEMPT}). Run: ${RUN_URL}"
+            --body "Falhou de novo em \`${SHA:0:8}\` (tentativa ${RUN_ATTEMPT}). Run: ${RUN_URL}${EXTRA}"
           echo "::warning::${JOB_NAME} falhou. Comentado na issue #${EXISTING}."
           exit 0
         fi
 
         BODY=$(cat <<EOF
-        O job agendado **${JOB_NAME}** falhou.
+        O job **${JOB_NAME}** falhou em \`${SHA:0:8}\`.
 
-        Run: ${RUN_URL}
+        Run: ${RUN_URL}${EXTRA}
 
-        Enquanto isto estiver quebrado, os dados que esse job traz estão **defasados**
-        e o produto mostra números velhos sem avisar ninguém.
-
-        Feche esta issue somente quando o job voltar a rodar verde. Cada nova falha
-        vira um comentário aqui, então o número de comentários indica há quantos dias
-        está caído.
+        Cada nova falha vira um comentário aqui, então o número de comentários indica
+        há quantas execuções está caído. A issue fecha sozinha na primeira execução
+        verde depois desta.
         EOF
         )
         gh issue create --repo "$REPO" --title "$TITLE" --body "$BODY"

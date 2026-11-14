@@ -170,7 +170,7 @@ export function SinapiImportacao() {
             icon={FileSpreadsheet}
             iconTone="brand"
             title="Nenhum SINAPI importado"
-            description="Sem o SINAPI, os itens do catálogo que dependem dele ficam sem preço de referência. Envie o relatório do mês e o Pilar confere antes de gravar."
+            description="Sem o SINAPI, os itens do catálogo que dependem dele ficam sem preço de referência. Envie o relatório do mês e a Pilar confere antes de gravar."
             action={{ label: "Escolher o relatório", onClick: () => entrada.current?.click(), variant: "brand" }}
           >
             <p className="mt-3 text-xs text-ink-soft">

@@ -8,6 +8,7 @@ export const IDS_DA_IA = [
   "ac12",
   "ac18",
   "ac24",
+  "ac36",
   "aqsolar",
   "fv",
   "automacao",
@@ -40,6 +41,10 @@ export const REGRAS: Record<IdDaIa, RegraDoItem> = {
   ac12: { comoContar: "número de aparelhos", aparece: "split de 12.000 BTU, 12k, 12 mil BTU" },
   ac18: { comoContar: "número de aparelhos", aparece: "split de 18.000 BTU, 18k, 18 mil BTU" },
   ac24: { comoContar: "número de aparelhos", aparece: "split de 24.000 BTU, 24k, 24 mil BTU" },
+  ac36: {
+    comoContar: "número de aparelhos",
+    aparece: "split de 36.000 BTU, 36k, 36 mil BTU, piso-teto de 36.000 BTU",
+  },
   aqsolar: {
     comoContar: "número de conjuntos (1 quando o texto só cita o aquecedor)",
     aparece: "aquecedor solar, aquecimento solar de água, placas coletoras com reservatório",

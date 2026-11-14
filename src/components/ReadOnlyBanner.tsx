@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+import { useAlvoFaixas } from "@/lib/faixasDoTopo";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
@@ -6,14 +8,11 @@ import { useSettingsModal } from "@/contexts/SettingsModalContext";
 // 90 dias de somente leitura antes da exclusão (ADR 0043), em vez de
 // bloquear o acesso por completo como cancelamento/inadimplência.
 export function ReadOnlyBanner({ isAdmin }: { isAdmin: boolean }) {
+  const alvo = useAlvoFaixas();
   const { openSettings } = useSettingsModal();
 
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed top-0 left-0 right-0 z-60 bg-fill-warning text-fill-warning-foreground shadow-md"
-    >
+  const faixa = (
+    <div role="status" aria-live="polite" className="bg-fill-warning text-fill-warning-foreground">
       <div className="px-4 py-2 flex items-center justify-center gap-3 text-sm">
         <Lock className="w-4 h-4" strokeWidth={2} />
         <span className="font-medium">Somente leitura: o período de teste acabou</span>
@@ -22,9 +21,9 @@ export function ReadOnlyBanner({ isAdmin }: { isAdmin: boolean }) {
         </span>
         {isAdmin && (
           <Button
-            size="sm"
+            size="xs"
             variant="ghost"
-            className="h-7 px-2 text-black hover:bg-black/10"
+            className="px-2 text-black hover:bg-black/10"
             onClick={() => openSettings("pagamento")}
           >
             Assinar agora
@@ -33,4 +32,6 @@ export function ReadOnlyBanner({ isAdmin }: { isAdmin: boolean }) {
       </div>
     </div>
   );
+  // No app, entra no bloco do topo (desce as páginas); fora dele, fixa por cima de tudo.
+  return alvo ? createPortal(faixa, alvo) : <div className="fixed left-0 right-0 top-0 z-60 shadow-md">{faixa}</div>;
 }

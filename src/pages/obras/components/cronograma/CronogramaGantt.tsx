@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLarguraDoElemento } from "@/pages/obras/hooks/useLarguraDoElemento";
 import { cn } from "@/lib/utils";
 import { estadoTarefaCronograma } from "@/lib/obras";
 import {
+  LARGURA_MINIMA_MES_CELULAR_PX,
   addDays,
   endOfMonth,
   generateColumns,
   parseDate,
+  passoDosRotulos,
+  rotuloCurtoDoMes,
   startOfMonth,
   toIso,
   todayPosition,
@@ -24,6 +28,7 @@ import {
   type LinhaCronograma,
   type NoArvore,
 } from "@/pages/obras/lib/obraArvore";
+import { GANTT_LABEL_W, GANTT_FRAME } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
@@ -80,9 +85,15 @@ export function CronogramaGantt({
       tlStart: start,
       tlEnd: end,
       todayPct: todayPosition(start, end),
-      colWidth: zoom === "weeks" ? 80 : 120,
+      // No celular, em meses, a obra inteira cabe na tela (o mês encolhe até o mínimo); semanas seguem rolando.
+      colWidth: zoom === "weeks" ? 80 : isMobile ? LARGURA_MINIMA_MES_CELULAR_PX : 120,
     };
-  }, [fases, zoom]);
+  }, [fases, zoom, isMobile]);
+  const larguraDaLinhaDoTempo = useLarguraDoElemento(scrollRef);
+  const reguaCurta = isMobile && zoom === "months";
+  const passo = reguaCurta
+    ? passoDosRotulos(Math.max(colWidth, larguraDaLinhaDoTempo / Math.max(1, columns.length)))
+    : 1;
 
   const scrollToToday = useCallback(() => {
     if (!scrollRef.current || todayPct < 0) return;
@@ -123,13 +134,13 @@ export function CronogramaGantt({
 
   return (
     <div className="space-y-3" style={{ userSelect: isDragging ? "none" : undefined }}>
-      <div className="overflow-hidden rounded-2xl border border-black/5 bg-white">
+      <div className={GANTT_FRAME}>
         <div className="flex flex-col items-start gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2">
             <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
             <h3 className="text-sm font-semibold text-ink">Linha do tempo</h3>
-            {isSaving && <span className="animate-pulse text-[10px] text-muted-foreground">Salvando…</span>}
-            {isDragging && <span className="text-[10px] text-muted-foreground">Esc cancela</span>}
+            {isSaving && <span className="animate-pulse text-3xs text-muted-foreground">Salvando…</span>}
+            {isDragging && <span className="text-3xs text-muted-foreground">Esc cancela</span>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={scrollToToday} disabled={todayPct < 0}>
@@ -141,9 +152,9 @@ export function CronogramaGantt({
 
         <div className="flex">
           {/* Coluna fixa com a árvore */}
-          <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[132px]" : "w-[280px]")}>
+          <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
             <div className="flex h-10 items-center border-b px-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Fase / etapa / serviço / tarefa
               </span>
             </div>
@@ -177,7 +188,7 @@ export function CronogramaGantt({
                         {l.arvore.no.nome}
                       </span>
                       {!isMobile && (
-                        <span className="truncate text-[10px] text-muted-foreground">
+                        <span className="truncate text-3xs text-muted-foreground">
                           {NIVEL_LABEL[l.arvore.nivel]} · {ESTADO_LABEL[l.arvore.estado]}
                           {l.arvore.total > 0 && ` · ${l.arvore.progresso}%`}
                         </span>
@@ -197,7 +208,7 @@ export function CronogramaGantt({
                     />
                     <span
                       className={cn(
-                        "truncate text-[11px]",
+                        "truncate text-2xs",
                         l.tarefa.status === "concluida" ? "text-muted-foreground line-through" : "text-ink"
                       )}
                     >
@@ -213,17 +224,33 @@ export function CronogramaGantt({
           <div ref={scrollRef} className="flex-1 overflow-x-auto">
             <div ref={timelineRef} className="relative" style={{ minWidth: `${columns.length * colWidth}px` }}>
               <div className="relative flex h-10 border-b">
-                {columns.map((col, i) => (
-                  <div key={i} className="flex flex-1 items-center justify-center border-r last:border-r-0">
-                    <span className="text-[10px] font-medium capitalize text-muted-foreground">{col.label}</span>
-                  </div>
-                ))}
+                {columns.map((col, i) =>
+                  reguaCurta ? (
+                    <div key={i} className={cn("relative flex-1", i % passo === 0 && "border-l first:border-l-0")}>
+                      {i % passo === 0 && i + passo <= columns.length && (
+                        <span className="absolute left-1 top-1/2 -translate-y-1/2 whitespace-nowrap text-3xs font-medium text-muted-foreground">
+                          {rotuloCurtoDoMes(col.start)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div key={i} className="flex flex-1 items-center justify-center border-r last:border-r-0">
+                      <span className="text-3xs font-medium capitalize text-muted-foreground">{col.label}</span>
+                    </div>
+                  )
+                )}
               </div>
 
               <div className="relative">
                 <div className="pointer-events-none absolute inset-0 flex" aria-hidden>
                   {columns.map((_, i) => (
-                    <div key={i} className="flex-1 border-r border-dashed border-border last:border-r-0" />
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex-1 border-dashed border-border",
+                        reguaCurta ? i % passo === 0 && i > 0 && "border-l" : "border-r last:border-r-0"
+                      )}
+                    />
                   ))}
                 </div>
                 {todayPct >= 0 && (
@@ -301,7 +328,7 @@ function Barra({
       !tarefa && linha.arvore.periodo ? intervalo(linha.arvore.periodo.inicio, linha.arvore.periodo.fim) : null;
     if (!resumo) {
       return (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] italic text-muted-foreground">
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-3xs italic text-muted-foreground">
           sem período
         </span>
       );
@@ -366,7 +393,7 @@ function Barra({
           canEdit && "mx-2 cursor-grab active:cursor-grabbing"
         )}
       >
-        <span className="truncate text-[10px] font-medium text-white">
+        <span className="truncate text-3xs font-medium text-white">
           {!tarefa && linha.arvore.total > 0 ? `${linha.arvore.progresso}%` : titulo}
         </span>
       </button>

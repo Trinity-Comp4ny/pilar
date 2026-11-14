@@ -1,0 +1,18 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.3,
+   "dur": 2.778,
+   "say": "Quem marcou a concretagem para o dia da chuva?",
+   "ritmo": 1.0
+  },
+  {
+   "t": 4.4,
+   "dur": 4.851,
+   "say": "Obra não para por surpresa. A Pilar avisa antes, e quem decide é você.",
+   "ritmo": 1.0
+  }
+ ]
+}

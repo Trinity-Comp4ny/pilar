@@ -14,9 +14,10 @@ import { clienteLoginSchema, clienteLoginDefaultValues, type ClienteLoginFormDat
 import { Logo } from "@/components/Logo";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { AvisoPrivacidadeConvidado } from "@/components/legal/AvisoPrivacidadeConvidado";
 
 // Sem contexto de empresa antes do login, a recuperação de acesso cai no suporte
-// do Pilar, que encaminha ao escritório responsável pela conta.
+// da Pilar, que encaminha ao escritório responsável pela conta.
 const SUPORTE_EMAIL = "suporte@pilarsoft.com.br";
 
 export default function ClienteLogin() {
@@ -201,6 +202,7 @@ export default function ClienteLogin() {
               </a>
             </p>
             <p className="text-xs text-ink-muted">Acesso exclusivo para clientes convidados pelo escritório.</p>
+            <AvisoPrivacidadeConvidado />
           </div>
         </div>
       </div>

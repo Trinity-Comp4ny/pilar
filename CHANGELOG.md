@@ -8,10 +8,27 @@ Regras deste repo:
 - **`[Não lançado]`** = está em `staging`, ainda não promovido para produção (`main`). Ao promover, renomeia-se a seção para a versão e a data.
 - Todo PR de feature ou fix visível ao usuário acrescenta uma linha em `[Não lançado]`, na categoria certa (Adicionado / Alterado / Corrigido / Removido).
 - A versão de runtime em produção é o commit SHA exposto em `/health` (`RELEASE_SHA`); esta é a versão amigável, voltada a suporte e ao cliente.
+- **O cliente vê as novidades dentro do app (SPEC 152).** Commit que muda o que o usuário vê ou faz leva as linhas `Novidade: <frase para o cliente>` e `Impacto: fluxo | melhoria | correcao` (opcional `Modulo: <feature>`). No deploy em produção elas viram rascunho em `/ultra-admin/releases`; publicado, aparece em Novidades. Este arquivo segue como histórico técnico.
 
 ## [Não lançado]
 
 ### Adicionado
+
+- Prévia de recursos: ligue um recurso novo antes de todo mundo em Configurações → Conta, com feedback e volta à versão atual. No Ultra admin, prazo de 7 dias em cada problema relatado. (SPEC 160)
+
+- Alerta de acesso à conta por navegador novo, no sino e por e-mail, e lista dos navegadores que entraram em Configurações → Segurança. (SPEC 159)
+
+- Comunicados da plataforma: o time do Pilar avisa os escritórios dentro do app, em faixa ou modal, por escritório, plano ou papel. Criados em `/ultra-admin/comunicados`. (SPEC 157)
+
+- Pesquisa de satisfação (NPS) no Início, no máximo a cada 90 dias, e pergunta rápida "Foi fácil?" depois de lançar, criar proposta ou lead. Respostas em `/ultra-admin/satisfacao`; detrator avisa o ultra admin na hora. (SPEC 156)
+
+- Agente da ajuda no canto da tela ("Como faço?"): responde com o passo a passo e leva até a tela; o que não tem artigo segue para os agentes ou para o suporte. Perguntas sem resposta aparecem em `/ultra-admin/ajuda`. (SPEC 155)
+
+- Central de ajuda (`/ajuda`) com passo a passo das tarefas mais comuns, botão "?" no topo das telas que têm artigo e artigos na busca ⌘K. (SPEC 154)
+
+- Faixa de aviso no topo do app quando há instabilidade declarada ou manutenção programada, com o que é afetado e o link para a status page. Manutenções cadastradas em `/ultra-admin/incidentes`. (SPEC 153)
+
+- Novidades dentro do app: página Novidades, modal "O que mudou" quando o caminho de uma tarefa muda, aviso de versão nova com a contagem do que veio, e aviso no sino para quem pediu a mudança. Releases revisadas e publicadas em `/ultra-admin/releases`. (SPEC 152)
 
 - Onboarding guiado: checklist de primeiros passos por pilar (Gestão/Projetos/Obras) e tour com coach marks nas ações principais. (#202)
 - Command palette (⌘K / Ctrl+K) para navegar e criar registros rápido. (#194)
@@ -26,6 +43,8 @@ Regras deste repo:
 - Microcopy de botões padronizada em sentence case.
 
 ### Corrigido
+
+- Nova receita e Nova despesa na busca ⌘K abriam abas do Financeiro que não existem mais; agora abrem Lançamentos.
 
 - Toasts que não apareciam: os avisos disparados pelo sistema antigo de toast (não montado) foram migrados para o sistema ativo. (#194)
 - Mensagens de erro que vazavam texto técnico cru agora são sanitizadas e trazem o próximo passo, em Projetos, Clientes e Financeiro. (#204)

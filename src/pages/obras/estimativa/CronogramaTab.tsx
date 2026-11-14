@@ -1,7 +1,17 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, GanttChartSquare, List } from "lucide-react";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
-import { addDays, barPosition, generateColumns, parseDate } from "@/lib/cronograma";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useLarguraDoElemento } from "@/pages/obras/hooks/useLarguraDoElemento";
+import {
+  LARGURA_MINIMA_MES_CELULAR_PX,
+  addDays,
+  barPosition,
+  generateColumns,
+  parseDate,
+  passoDosRotulos,
+  rotuloCurtoDoMes,
+} from "@/lib/cronograma";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ResultadoEstimativa } from "@/schemas/estimativaObra";
@@ -17,6 +27,8 @@ const MODOS: ViewOption<Modo>[] = [
 
 const LARGURA_MES_PX = 72;
 const LARGURA_NOMES_PX = 220;
+const LARGURA_NOMES_CELULAR_PX = 132;
+const LARGURA_MINIMA_MES_PX = 36;
 
 const contarServicos = (f: Fase) => f.etapas.reduce((s, e) => s + e.servicos.length, 0);
 
@@ -118,8 +130,21 @@ function Gantt({ fases }: { fases: Fase[] }) {
   }, [fases]);
 
   const colunas = useMemo(() => (limites ? generateColumns(limites.inicio, limites.fim, "months") : []), [limites]);
+  const isMobile = useIsMobile();
+  const caixaRef = useRef<HTMLDivElement>(null);
+  const larguraDaCaixa = useLarguraDoElemento(caixaRef);
   if (!limites) return null;
-  const larguraTotal = colunas.length * LARGURA_MES_PX;
+  // A obra inteira cabe na largura disponível: o mês encolhe até o mínimo (8px no celular, 36px no desktop) e,
+  // estreito, a régua passa ao rótulo curto, um a cada N meses. Abaixo do mínimo volta a rolagem lateral.
+  const larguraNomes = isMobile ? LARGURA_NOMES_CELULAR_PX : LARGURA_NOMES_PX;
+  const minimoMes = isMobile ? LARGURA_MINIMA_MES_CELULAR_PX : LARGURA_MINIMA_MES_PX;
+  const larguraMes =
+    larguraDaCaixa > 0
+      ? Math.min(LARGURA_MES_PX, Math.max(minimoMes, (larguraDaCaixa - larguraNomes - 2) / colunas.length))
+      : LARGURA_MES_PX;
+  const larguraTotal = colunas.length * larguraMes;
+  const reguaCurta = larguraMes < LARGURA_MES_PX;
+  const passo = reguaCurta ? passoDosRotulos(larguraMes) : 1;
 
   const linhas: LinhaGantt[] = fases.flatMap((f) => [
     { chave: f.id, nome: f.nome, nivel: 0 as const, inicio: f.inicio, fim: f.fim, expansivelId: f.id },
@@ -138,18 +163,39 @@ function Gantt({ fases }: { fases: Fase[] }) {
   ]);
 
   return (
-    <div className="overflow-x-auto rounded-2xl border bg-card" role="region" aria-label="Gantt da obra" tabIndex={0}>
-      <div style={{ width: LARGURA_NOMES_PX + larguraTotal }}>
+    <div
+      ref={caixaRef}
+      className="overflow-x-auto rounded-2xl border bg-card"
+      role="region"
+      aria-label="Gantt da obra"
+      tabIndex={0}
+    >
+      <div style={{ width: larguraNomes + larguraTotal }}>
         <div className="flex border-b bg-muted/40 text-xs text-ink-soft">
-          <div className="sticky left-0 z-10 shrink-0 bg-muted px-3 py-2" style={{ width: LARGURA_NOMES_PX }}>
-            Fase, etapa e serviço
+          <div className="sticky left-0 z-10 shrink-0 bg-muted px-3 py-2" style={{ width: larguraNomes }}>
+            {isMobile ? "Fase" : "Fase, etapa e serviço"}
           </div>
           <div className="flex" style={{ width: larguraTotal }}>
-            {colunas.map((c) => (
-              <div key={c.label} className="border-l px-2 py-2 text-center" style={{ width: LARGURA_MES_PX }}>
-                {c.label}
-              </div>
-            ))}
+            {colunas.map((c, i) =>
+              reguaCurta ? (
+                <div
+                  key={c.label}
+                  className={cn("relative py-2", i % passo === 0 && "border-l")}
+                  style={{ width: larguraMes }}
+                >
+                  {i % passo === 0 && i + passo <= colunas.length && (
+                    <span className="absolute left-1 top-2 whitespace-nowrap text-3xs">
+                      {rotuloCurtoDoMes(c.start)}
+                    </span>
+                  )}
+                  &nbsp;
+                </div>
+              ) : (
+                <div key={c.label} className="border-l px-2 py-2 text-center" style={{ width: larguraMes }}>
+                  {c.label}
+                </div>
+              )
+            )}
           </div>
         </div>
         {linhas.map((l) => {
@@ -159,8 +205,8 @@ function Gantt({ fases }: { fases: Fase[] }) {
           return (
             <div key={l.chave} className="flex border-b last:border-b-0">
               <div
-                className="sticky left-0 z-10 flex shrink-0 items-center bg-card px-3 py-2 text-sm"
-                style={{ width: LARGURA_NOMES_PX, paddingLeft: 12 + l.nivel * 16 }}
+                className="sticky left-0 z-10 flex shrink-0 items-center bg-card px-3 py-2 text-sm max-sm:text-xs"
+                style={{ width: larguraNomes, paddingLeft: (isMobile ? 8 : 12) + l.nivel * (isMobile ? 8 : 16) }}
               >
                 {l.expansivelId ? (
                   <button

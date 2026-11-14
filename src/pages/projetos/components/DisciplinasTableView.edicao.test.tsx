@@ -25,6 +25,8 @@ vi.mock("@/components/ui/date-picker", () => ({
   ),
 }));
 
+import userEvent from "@testing-library/user-event";
+import { clicarAcao } from "@/test/acoesLinha";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 
 // Tela pesada (Radix + muitos campos): sob cobertura passa dos 5s padrão.
@@ -246,11 +248,12 @@ describe("DisciplinasTableView: edição inline", () => {
 
   it("excluir pede confirmação; cancelar não remove", async () => {
     render(<DisciplinasTableView {...p} />);
-    fireEvent.click(within(linha("Hidráulica")).getByRole("button", { name: "Excluir disciplina" }));
+    const user = userEvent.setup();
+    await clicarAcao(user, linha("Hidráulica") as unknown as HTMLElement, "Excluir");
     fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancelar" }));
     expect(p.handleRemoveDisc).not.toHaveBeenCalled();
 
-    fireEvent.click(within(linha("Hidráulica")).getByRole("button", { name: "Excluir disciplina" }));
+    await clicarAcao(user, linha("Hidráulica") as unknown as HTMLElement, "Excluir");
     fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Excluir" }));
     expect(p.handleRemoveDisc).toHaveBeenCalledWith(2);
   });
@@ -321,7 +324,7 @@ describe("DisciplinasTableView: somente leitura", () => {
     expect(within(est).getByText("Ana +1")).toBeInTheDocument();
     expect(within(linha("Elétrica")).getAllByText("—").length).toBeGreaterThan(0);
     expect(within(linha("Hidráulica")).getByText("01/02")).toHaveClass("text-positive-strong");
-    expect(screen.queryByRole("button", { name: "Excluir disciplina" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Mais ações/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Aplicar fluxo/ })).not.toBeInTheDocument();
   });
 });

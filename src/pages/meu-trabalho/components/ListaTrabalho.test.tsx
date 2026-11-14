@@ -109,7 +109,7 @@ describe("ListaTrabalho", () => {
   it("linha mostra número, caminho da obra, contadores e cabeçalho das colunas ativas", () => {
     renderLista();
     const linha = screen.getByRole("group", { name: "Revisar" });
-    expect(linha).toHaveTextContent("#5");
+    expect(linha).not.toHaveTextContent("#5");
     expect(linha).toHaveTextContent("Obra · Serviço");
     expect(screen.getAllByText("Horas est.").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Horas reais").length).toBeGreaterThan(0);

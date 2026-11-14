@@ -17,7 +17,7 @@ Deno.env.set("RESEND_FROM", "Pilar <no-reply@test.dev>");
 Deno.env.delete("RESEND_REPLY_TO");
 
 const { escapeHtml, html, htmlToText, multiline, raw } = await import("./html.ts");
-const { fromAddress, resolveFrom, resolveReplyTo, sendEmail } = await import("./client.ts");
+const { chaveIdempotencia, fromAddress, resolveFrom, resolveReplyTo, sendEmail } = await import("./client.ts");
 const T = await import("./index.ts");
 const N = await import("./templates/notificacoes.ts");
 
@@ -113,6 +113,21 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
         enviadoEm: XSS,
         url: "https://l",
         dicaResposta: XSS,
+      }),
+  ],
+  [
+    "aviso legal",
+    () =>
+      T.templateAvisoLegal({
+        nome: XSS,
+        assunto: XSS,
+        titulo: XSS,
+        lead: XSS,
+        itens: [XSS, XSS],
+        vigencia: XSS,
+        link: "https://l",
+        linkLabel: XSS,
+        rodape: XSS,
       }),
   ],
   [
@@ -253,7 +268,7 @@ Deno.test("assunto: imediato com 1 item usa o título; semanal conta total inclu
   );
   assertEquals(
     N.assuntoNotificacoes({ modo: "imediato", itens: [item("financeiro"), item("obra")], totalOculto: 0 }),
-    "2 alertas importantes no Pilar"
+    "2 alertas importantes na Pilar"
   );
   assertEquals(
     N.assuntoNotificacoes({ modo: "semanal", itens: [item("financeiro")], totalOculto: 4 }),
@@ -272,7 +287,7 @@ Deno.test("assunto: menção com 1 item usa o título; com várias conta as men�
   );
   assertEquals(
     N.assuntoNotificacoes({ modo: "mencao", itens: [item("projeto"), item("tarefa")], totalOculto: 0 }),
-    "2 menções para você no Pilar"
+    "2 menções para você na Pilar"
   );
 });
 
@@ -446,7 +461,7 @@ Deno.test("logo, faixa de morros e fonte ignoram PUBLIC_SITE_URL de ambiente e u
   Deno.env.set("PUBLIC_SITE_URL", "https://staging-preview-que-pode-nao-existir.vercel.app");
   try {
     const mod = await import(`./brand.ts?cachebust=${crypto.randomUUID()}`);
-    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v3.png");
+    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v4.png");
     assertStringIncludes(mod.BRAND.waveUrl, "https://www.pilarsoft.com.br/email/wave-v1.png");
     assertStringIncludes(mod.FONT_FACE_CSS, "https://www.pilarsoft.com.br/fonts/geist-variable.woff2");
     assertEquals(mod.BRAND.siteUrl, "https://staging-preview-que-pode-nao-existir.vercel.app");
@@ -514,4 +529,14 @@ Deno.test("cobrança com abertura própria escapa o texto e usa o assunto da eta
   assert(!t.html.includes("<script>"), "script não pode passar");
   assertStringIncludes(t.html, "&lt;script&gt;");
   assertStringIncludes(t.html, "Segunda linha");
+});
+
+Deno.test("chaveIdempotencia separa staging de produção (mesma conta do Resend)", () => {
+  const chave = "ops-resumo-2026-11-12-a@b.c";
+  const prod = chaveIdempotencia(chave, "https://vepnsonbnsimqcsfcagm.supabase.co");
+  const staging = chaveIdempotencia(chave, "https://rizaklgstyfrwgmdsldf.supabase.co");
+  assertEquals(prod, `vepnsonbnsimqcsfcagm:${chave}`);
+  assert(prod !== staging);
+  assertEquals(chaveIdempotencia(chave, ""), `local:${chave}`);
+  assertEquals(chaveIdempotencia("x".repeat(300), "https://abc.supabase.co").length, 256);
 });

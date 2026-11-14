@@ -110,7 +110,8 @@ Ordem vertical fixa de toda página: **header** (título, busca, ação primári
 
 O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
 
-- **`BottomNav`**: pílula flutuante (16 px das bordas, blur), cinco itens: Início, Projetos, Obra, Gestão, Menu. Item ativo com fundo `brand` e ícone e texto `ink`. Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`). Agentes mora no Menu, com o contador de pendências.
+- **`BottomNav`**: pílula flutuante de vidro líquido (16 px das bordas; `.vidro-liquido` em `src/styles/vidro.css`: desfoque + saturação, borda de luz, brilho no ponto do toque), cinco itens: Início, Gestão, Projetos, Obra, Menu (ordem do dono, 12/11). O ativo é marcado por uma lente `brand` que desliza com mola entre os itens (`.vidro-lente`), com ícone e texto `ink`. O vidro fica restrito à barra: não usar em tabela, formulário ou card de dado. Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`). Agentes mora no Menu, com o contador de pendências.
+- **Ações secundárias do cabeçalho**: passe por `acoes` do `PageHeader` (botões contornados no desktop, um menu "⋯" no celular). Botões com texto em `children` estouram a linha em 390px.
 - **Ação principal**: o `primaryAction` do `PageHeader` vira o **`MobileFab`** (verde, 44 px, texto e ícone `ink`, acima da barra). Não monte botão flutuante à mão nem repita a ação no corpo da página.
 - **Abas, chips e filtros numa linha só**, com altura de 34 a 36 px e cantos totalmente arredondados. O que não cabe rola para o lado; nunca quebra em duas linhas (`FiltroChips` e `FilterBar` já fazem).
 - **Campos com 16 px**: `Input`, `Textarea`, `SelectTrigger` e `CommandInput` usam `text-sm max-md:text-base`: 14 px no desktop (um `text-xs` passado por quem usa continua valendo lá) e 16 px no celular. Campo de texto com menos de 16 px faz o iOS dar zoom ao tocar. Campo próprio novo segue a mesma regra; não use `text-base md:text-sm`, porque o `md:text-sm` sobrevive ao merge e desfaz o tamanho que o uso pediu.
@@ -139,6 +140,7 @@ O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
 
 - **`KanbanCard`** (`src/components/kanban/KanbanCard.tsx`): único card dos quadros de Tarefas, Projetos e Leads. Slots `eyebrow`, `tag`, `menu`, `title`, `subtitle`, `meta`, `footer`; raio, padding e posição das peças são fixos. Sem "#N" na face. Prioridade via `KanbanPriority`, etiqueta do usuário via `KanbanChip`.
 - **`KanbanColumn` + `KanbanDraggable`** (`src/components/kanban/KanbanColumn.tsx`): cabeçalho, menu da coluna, minimizar, superfície de soltar e vazio ("Nada aqui"). Medidas em `kanbanLayout.ts`.
+- **`KanbanMobile`** (`src/components/kanban/KanbanMobile.tsx`): o quadro abaixo de `md`. Colunas lado a lado que passam com o dedo (uma por tela, a ponta da próxima aparecendo) e uma faixa com o nome das colunas no alto. Sem arrastar: mover de coluna é pelo menu do card. Não empilhar colunas em acordeão no celular.
 - **Ordenação** (`src/lib/kanbanSort.ts` + `KanbanSortControl`): cada quadro declara as chaves que suporta e como ler o valor; o controle e os rótulos são um só.
 
 ### Números e KPIs
@@ -162,6 +164,16 @@ O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
 ### Pessoas
 
 - **`AvatarStack`** (`src/components/AvatarStack.tsx`): círculo(s) de pessoa. Prop `pessoas: (string | { nome: string; avatarUrl?: string | null })[]`, `max?`, `size?: "xs" | "sm"`. Foto quando `avatarUrl` existe e carrega; iniciais coloridas como fallback (padrão Slack). Toda vez que a tela referenciar uma ou mais pessoas (responsável, assignee, membro), usa este componente, nunca monta círculo com iniciais à mão.
+
+### Datas (digitar ou escolher no calendário)
+
+Toda data aceita os dois caminhos: digitar (dd/mm/aaaa, com máscara) ou escolher no calendário. Calendário como único caminho é proibido. É o padrão de GOV.UK, USWDS, Polaris e Carbon. Três peças, conforme o gatilho:
+
+- **Campo de formulário** → **`DatePicker`** (`src/components/ui/date-picker.tsx`). Fala ISO (`yyyy-MM-dd`). O campo é digitável e o clique abre o calendário sem tirar o foco. Mês e ano ficam em lista, a altura é fixa em 6 semanas e o rodapé tem o atalho "Hoje". A seta ↓ leva o foco ao calendário. Data inválida ou fora de `minDate`/`maxDate` volta ao valor anterior e mostra o motivo inline, abaixo do campo.
+- **Gatilho compacto** (chip ou célula que não é campo, como o prazo na lista de tarefas) → **`DatePanel`** (`src/components/ui/date-panel.tsx`) dentro do `Popover`. Traz o campo digitável no topo, os atalhos Hoje / Amanhã / Em 1 semana e o calendário.
+- **Intervalo** → `FiltroPeriodo` ("Personalizado" tem os campos De/Até digitáveis sobre o calendário).
+- Máscara e leitura da data digitada vêm de `src/lib/data-digitada.ts` (`mascararData`, `parseDataDigitada`: aceita dd/mm/aaaa, dd/mm/aa e dd/mm no ano corrente). Nunca reimplementar.
+- Proibido: `<Calendar>` solto numa tela, `Popover` + botão com a data montados à mão e `<Input type="date">` em tela nova.
 
 ### Filtros
 

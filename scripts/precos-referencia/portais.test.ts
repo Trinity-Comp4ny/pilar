@@ -1,0 +1,252 @@
+import { describe, expect, it } from "vitest";
+import {
+  arquivosDaPaginaDeDownload,
+  arquivosDosPacotesWpdm,
+  categoriaWpdm,
+  candidatosDoMes,
+  lerPortaisExtras,
+  linksPdfDaPagina,
+  linksPdfDoWordpress,
+  pacotesDoFeed,
+  paginasDeDownload,
+  urlPacotesWpdm,
+  portaisDaUf,
+  urlWordpressMedia,
+  type LinkPdf,
+} from "./portais";
+
+const PAGINA = "https://sindusconsp.com.br/servicos/cub/";
+
+describe("linksPdfDaPagina", () => {
+  it("pega os PDFs com o texto da âncora, resolve relativo e descarta o que não é https ou PDF", () => {
+    const html = `
+      <a href="/wp-content/uploads/2026/11/CUB-Outubro-2026.pdf"><span>CUB</span> outubro&nbsp;2026</a>
+      <a href="http://inseguro.com/cub.pdf">x</a>
+      <a href="/noticia/cub">notícia</a>
+      <a class="b" href='https://cdn.exemplo.com/a/CUB_10_2026_desonerado.PDF?v=2'>Desonerado</a>`;
+    expect(linksPdfDaPagina(html, PAGINA)).toEqual([
+      { url: "https://sindusconsp.com.br/wp-content/uploads/2026/11/CUB-Outubro-2026.pdf", texto: "CUB outubro 2026" },
+      { url: "https://cdn.exemplo.com/a/CUB_10_2026_desonerado.PDF?v=2", texto: "Desonerado" },
+    ]);
+  });
+});
+
+describe("linksPdfDoWordpress", () => {
+  it("lê source_url e o título, só PDF https", () => {
+    const json = [
+      {
+        source_url:
+          "https://sinduscon-rs.com.br/wp-content/uploads/2026/11/PRECOS-E-CUSTOS-DA-CONSTRUCAO-NOVEMBRO-2026.pdf",
+        title: { rendered: "Preços &#038; custos" },
+      },
+      { source_url: "https://sinduscon-rs.com.br/wp-content/uploads/2026/11/foto.jpg", title: { rendered: "foto" } },
+      { nada: 1 },
+    ];
+    expect(linksPdfDoWordpress(json)).toHaveLength(1);
+    expect(linksPdfDoWordpress({ code: "rest_no_route" })).toEqual([]);
+    expect(urlWordpressMedia(PAGINA)).toBe(
+      "https://sindusconsp.com.br/wp-json/wp/v2/media?search=cub&per_page=100&mime_type=application/pdf"
+    );
+  });
+});
+
+describe("candidatosDoMes", () => {
+  const L = (url: string, texto = ""): LinkPdf => ({
+    url: `https://s.com.br/wp-content/uploads/2026/11/${url}`,
+    texto,
+  });
+  const links = [
+    L("CUB-Outubro-2026.pdf"),
+    L("CUB-Outubro-2026-Desonerado.pdf"),
+    L("CUB-Setembro-2026.pdf"),
+    L("tabela.pdf", "CUB out/2026 sem desoneração"),
+    L("cub_10-2026_com_desoneracao.pdf"),
+  ];
+
+  it("separa por regime e ignora a pasta de upload do WordPress", () => {
+    expect(candidatosDoMes(links, "2026-10-01", "onerado", "referencia").map((l) => l.url.split("/").pop())).toEqual([
+      "CUB-Outubro-2026.pdf",
+      "tabela.pdf",
+    ]);
+    expect(candidatosDoMes(links, "2026-10-01", "desonerado", "referencia").map((l) => l.url.split("/").pop())).toEqual(
+      ["CUB-Outubro-2026-Desonerado.pdf", "cub_10-2026_com_desoneracao.pdf"]
+    );
+    // A pasta 2026/11 não faz o arquivo virar de novembro.
+    expect(candidatosDoMes(links, "2026-11-01", "onerado", "referencia")).toEqual([]);
+  });
+
+  it("mês de publicação: o CUB de janeiro está no arquivo de fevereiro", () => {
+    const rs = [
+      L("PRECOS-E-CUSTOS-DA-CONSTRUCAO-FEVEREIRO-2026.pdf"),
+      L("PRECOS-E-CUSTOS-DA-CONSTRUCAO-JANEIRO-2026.pdf"),
+    ];
+    const onerado = candidatosDoMes(rs, "2026-01-01", "onerado", "publicacao");
+    expect(onerado.map((l) => l.url.split("/").pop())).toEqual(["PRECOS-E-CUSTOS-DA-CONSTRUCAO-FEVEREIRO-2026.pdf"]);
+    // Sem arquivo marcado como desonerado, o mesmo arquivo serve aos dois regimes: a leitura decide.
+    expect(candidatosDoMes(rs, "2026-01-01", "desonerado", "publicacao")).toEqual(
+      onerado.map((l) => ({ ...l, semMarcaDeRegime: true }))
+    );
+    // Dezembro vira janeiro do ano seguinte.
+    expect(candidatosDoMes([L("PRECOS-JANEIRO-2027.pdf")], "2026-12-01", "onerado", "publicacao")).toHaveLength(1);
+  });
+
+  it("não confunde mês com outro número", () => {
+    expect(
+      candidatosDoMes([L("relatorio-1102026.pdf"), L("cub-2026-100.pdf")], "2026-10-01", "onerado", "referencia")
+    ).toEqual([]);
+  });
+});
+
+describe("configuração", () => {
+  it("lê portais extras e a extra substitui o padrão", () => {
+    const extras = lerPortaisExtras(
+      "TO=https://to.org.br/cub/; SP=https://outro.sp/cub/|publicacao; AL=http://inseguro/"
+    );
+    expect(extras.map((p) => p.uf)).toEqual(["TO", "SP"]);
+    expect(portaisDaUf("SP", extras)).toMatchObject({ paginas: ["https://outro.sp/cub/"], mesNoArquivo: "publicacao" });
+    expect(portaisDaUf("RS", [])).toMatchObject({ soPortal: true, mesNoArquivo: "referencia" });
+    expect(portaisDaUf("GO", [])).toBeNull();
+  });
+});
+
+describe("SindusCon-SP: páginas de download por mês (links do diagnóstico real)", () => {
+  const html = `
+    <a href="https://sindusconsp.com.br/wp-content/uploads/2026/11/Cub-Serie-Historica-Outubro-26.xlsx">série</a>
+    <a href="https://sindusconsp.com.br/downloads/2026-cub/">2026</a>
+    <a href="https://sindusconsp.com.br/downloads/10-outubro-2026-cub/">Outubro</a>
+    <a href="https://sindusconsp.com.br/downloads/incc-10-outubro-2026-cub/">INCC</a>
+    <a href="https://sindusconsp.com.br/downloads/encargos-sociais-10-outubro-2026-cub/">Encargos</a>
+    <a href="https://sindusconsp.com.br/downloads/09-setembro-2026-cub/">Setembro</a>
+    <a href="https://outro.site/downloads/10-outubro-2026-cub/">fora</a>`;
+
+  it("acha as páginas de download do site e o CUB do mês, sem INCC nem encargos", () => {
+    const paginas = paginasDeDownload(html, "https://sindusconsp.com.br/servicos/cub/");
+    expect(paginas.map((p) => p.texto)).toEqual([
+      "2026-cub",
+      "10-outubro-2026-cub",
+      "incc-10-outubro-2026-cub",
+      "encargos-sociais-10-outubro-2026-cub",
+      "09-setembro-2026-cub",
+    ]);
+    const outubro = candidatosDoMes(paginas, "2026-10-01", "onerado", "referencia");
+    expect(outubro.map((p) => p.texto)).toEqual(["10-outubro-2026-cub"]);
+  });
+
+  it("pega o arquivo da página de download, com o mês da página", () => {
+    const pagina = { url: "https://sindusconsp.com.br/downloads/10-outubro-2026-cub", texto: "10-outubro-2026-cub" };
+    const arquivos = arquivosDaPaginaDeDownload(
+      `<a class="wpdm-download-link" href="https://sindusconsp.com.br/download/10-outubro-2026-cub/?wpdmdl=88123&amp;refresh=abc">Baixar</a>
+       <a href="https://sindusconsp.com.br/wp-content/uploads/2026/11/CUB-Outubro-2026.pdf">pdf</a>
+       <a href="/contato">contato</a>`,
+      pagina
+    );
+    expect(arquivos).toEqual([
+      {
+        url: "https://sindusconsp.com.br/download/10-outubro-2026-cub/?wpdmdl=88123&refresh=abc",
+        texto: "10-outubro-2026-cub",
+      },
+      {
+        url: "https://sindusconsp.com.br/wp-content/uploads/2026/11/CUB-Outubro-2026.pdf",
+        texto: "10-outubro-2026-cub",
+      },
+    ]);
+    expect(candidatosDoMes(arquivos, "2026-10-01", "onerado", "referencia")).toHaveLength(2);
+  });
+});
+
+describe("Sinduscon-RS (links reais da página /cub-rs/)", () => {
+  const base = "https://sinduscon-rs.com.br/wp-content/uploads";
+  const links = [
+    `${base}/2026/11/PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-OUTUBRO-2026.pdf`,
+    `${base}/2026/11/SERIE-HISTORICA-VALOR-OUTUBRO-2026.pdf`,
+    `${base}/2026/11/SERIE-HISTORICA-VARIACAO-OUTUBRO-2026.pdf`,
+    `${base}/2026/10/PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-SETEMBRO-2026-REV.pdf`,
+  ].map((url) => ({ url, texto: "" }));
+
+  it("o CUB de outubro é o 'Preços e custos de OUTUBRO', sem a série histórica", () => {
+    const rs = portaisDaUf("RS", [])!;
+    const nome = (l: { url: string }) => l.url.split("/").pop();
+    expect(candidatosDoMes(links, "2026-10-01", "onerado", rs.mesNoArquivo).map(nome)).toEqual([
+      "PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-OUTUBRO-2026.pdf",
+    ]);
+    expect(candidatosDoMes(links, "2026-09-01", "onerado", rs.mesNoArquivo).map(nome)).toEqual([
+      "PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-SETEMBRO-2026-REV.pdf",
+    ]);
+  });
+});
+
+describe("SindusCon-SP: Download Manager (atributos reais da página de categoria)", () => {
+  it("acha a categoria pelo link da API ou pela classe do body", () => {
+    expect(categoriaWpdm('<link href="https://sindusconsp.com.br/wp-json/wp/v2/wpdmcategory/1108">')).toBe("1108");
+    expect(
+      categoriaWpdm('<body class="archive tax-wpdmcategory term-10-outubro-2026-cub term-1108 wp-theme-yootheme">')
+    ).toBe("1108");
+    expect(categoriaWpdm("<body class='home'>")).toBeNull();
+    expect(urlPacotesWpdm("https://sindusconsp.com.br/downloads/10-outubro-2026-cub/", "1108")).toBe(
+      "https://sindusconsp.com.br/wp-json/wp/v2/wpdmpro?wpdmcategory=1108&per_page=20"
+    );
+  });
+
+  it("monta o download de cada pacote e guarda o mês da página", () => {
+    const pagina = { url: "https://sindusconsp.com.br/downloads/10-outubro-2026-cub", texto: "10-outubro-2026-cub" };
+    const arquivos = arquivosDosPacotesWpdm(
+      [
+        {
+          id: 9101,
+          link: "https://sindusconsp.com.br/download/cub-outubro-2026/",
+          title: { rendered: "CUB &#8211; Outubro" },
+        },
+        { id: "x", link: "https://sindusconsp.com.br/download/ruim/" },
+        { id: 3, link: "http://inseguro/" },
+      ],
+      pagina
+    );
+    expect(arquivos).toEqual([
+      {
+        url: "https://sindusconsp.com.br/download/cub-outubro-2026/?wpdmdl=9101",
+        texto: "CUB – Outubro 10-outubro-2026-cub",
+      },
+    ]);
+    expect(candidatosDoMes(arquivos, "2026-10-01", "onerado", "referencia")).toHaveLength(1);
+    expect(arquivosDosPacotesWpdm({ code: "rest_forbidden" }, pagina)).toEqual([]);
+  });
+});
+
+describe("SindusCon-SP: feed RSS da categoria (a API responde 401)", () => {
+  const pagina = { url: "https://sindusconsp.com.br/downloads/10-outubro-2026-cub", texto: "10-outubro-2026-cub" };
+  it("lê os pacotes do feed com o número do guid", () => {
+    const xml = `<?xml version="1.0"?><rss><channel>
+      <item><title><![CDATA[CUB Outubro 2026]]></title>
+        <link>https://sindusconsp.com.br/download/cub-outubro-2026/</link>
+        <guid isPermaLink="false">https://sindusconsp.com.br/?post_type=wpdmpro&#038;p=91234</guid></item>
+      <item><title>Sem guid</title><link>https://sindusconsp.com.br/download/x/</link></item>
+      <item><title>Outro site</title><link>https://outro.com/download/y/</link><guid>https://outro.com/?p=5</guid></item>
+    </channel></rss>`;
+    const pacotes = pacotesDoFeed(xml, pagina);
+    expect(pacotes).toEqual([
+      {
+        url: "https://sindusconsp.com.br/download/cub-outubro-2026/?wpdmdl=91234",
+        texto: "CUB Outubro 2026 10-outubro-2026-cub",
+      },
+    ]);
+    expect(candidatosDoMes(pacotes, "2026-10-01", "onerado", "referencia")).toHaveLength(1);
+    expect(pacotesDoFeed("<html>não é feed</html>", pagina)).toEqual([]);
+  });
+});
+
+describe("SindusCon-SP: pacotes reais do feed de outubro", () => {
+  const base = "https://sindusconsp.com.br/download";
+  const pacotes = [
+    ["encargos-sociais-com", 155664, "Encargos Sociais – Outubro 2026 – Com Desoneração"],
+    ["encargos-sociais-sem", 155663, "Encargos Sociais – Outubro 2026 – Sem Desoneração"],
+    ["boletim-com", 155662, "Boletim Econômico – Outubro 2026 – Com Desoneração"],
+    ["boletim-sem", 155661, "Boletim Econômico – Outubro 2026 – Sem Desoneração"],
+    ["incc", 155609, "INCC – Outubro 2026"],
+  ].map(([slug, id, titulo]) => ({ url: `${base}/${slug}/?wpdmdl=${id}`, texto: `${titulo} 10-outubro-2026-cub` }));
+
+  it("o CUB de cada regime é o Boletim Econômico daquele regime; encargos e INCC ficam de fora", () => {
+    const id = (l: { url: string }) => new URL(l.url).searchParams.get("wpdmdl");
+    expect(candidatosDoMes(pacotes, "2026-10-01", "onerado", "referencia").map(id)).toEqual(["155661"]);
+    expect(candidatosDoMes(pacotes, "2026-10-01", "desonerado", "referencia").map(id)).toEqual(["155662"]);
+  });
+});

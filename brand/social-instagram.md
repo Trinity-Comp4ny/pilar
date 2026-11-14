@@ -30,7 +30,7 @@ Cinco regras valem para qualquer peça:
 ## 2. O perfil
 
 | Item                             | Regra                                                                                                                                                                                                                                                            |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | Nome de usuário                  | `@pilarsoft.app`                                                                                                                                                                                                                                                 |
 | Nome (campo de busca)            | `Pilar                                                                                                                                                                                                                                                           | Gestão com agentes de IA` |
 | Foto                             | `assets/social/avatar.png`: o ícone do app (coluna de três caneluras em Ink sobre o tile verde), 1080 × 1080, gerado por `scripts/brand/build.py`. O Instagram corta em círculo; o símbolo ocupa menos da metade da largura e sobra respiro. Sem o nome na foto. |
@@ -38,12 +38,13 @@ Cinco regras valem para qualquer peça:
 | Link                             | Landing com UTM: `utm_source=instagram&utm_medium=bio&utm_campaign=perfil`                                                                                                                                                                                       |
 | Categoria                        | Software (ou Serviço de tecnologia)                                                                                                                                                                                                                              |
 | Botão de contato                 | WhatsApp do Matheus, quando o fundador aprovar                                                                                                                                                                                                                   |
-| Destaques                        | Como funciona, Clientes, Dicas, Bastidores, Planos                                                                                                                                                                                                               |
-| Capas dos destaques              | `assets/social/destaque-*.png`: ícone de linha em verde sobre Ink, 1080 × 1920, ícone no centro. O Instagram mostra um círculo central, então nada fora do centro.                                                                                               |
+| Destaques                        | Comece aqui, Planos, Gestão, Projetos, Obras, Agentes (kit de lançamento: [social/lancamento.md](./social/lancamento.md))                                                                                                                                        |
+| Capas dos destaques              | `assets/social/lancamento/destaque-*.png`: ícone de linha em Ink sobre o verde cheio da marca, 1080 × 1920, ícone no centro. O Instagram mostra um círculo central, então nada fora do centro.                                                                   |
 
-As capas dos destaques são Ink com ícone verde de propósito: formam uma faixa escura e pequena no
-topo do perfil, que contrasta com o feed claro e leva o olho aos destaques. É um uso de verde
-**sobre Ink**, permitido.
+As capas dos destaques são verde cheio com ícone de linha grosso em Ink, a mesma família do ícone
+do app (`pilar-app-icon-verde`): seis círculos verdes formam uma faixa clara e reconhecível no topo
+do perfil, e o traço grosso lê a 60 px. Ícone de linha fina ou sobre fundo claro some nesse tamanho. Kit e ordem em
+[social/lancamento.md](./social/lancamento.md).
 
 ### Os cinco ícones
 
@@ -140,7 +141,7 @@ de croquis (20 a 30 peças) vem do `post-automation`; todas seguem [imagery.md](
 - **Capa:** gancho com pílula verde e a promessa concreta. Sem logo grande.
 - **Itens:** um por slide. Numeral grande em Ink peso 300, título de uma ou duas linhas, apoio de
   até três linhas. A barra de progresso no topo mostra onde o leitor está.
-- **Final:** Ink, gancho de fechamento, um CTA ("Teste grátis por 3 dias") e o handle. Nunca dois CTAs.
+- **Final:** Ink, gancho de fechamento, um CTA ("Veja os planos · link na bio"; não há teste grátis, DECISOES 2026-11-08) e o handle. Nunca dois CTAs.
 - **Continuidade:** mesmo fundo nos slides 1 a 6 (Paper); só o último vira Ink. Mesma margem, mesmo
   rodapé, mesma posição do título, para o olho não reaprender a tela a cada deslize.
 - Cada slide funciona sozinho se for salvo ou compartilhado.
@@ -214,5 +215,5 @@ O perfil mostra o feed em colunas de 3 peças no formato 3:4. Para o conjunto pa
 - **Automação:** copie `brand/social/templates/` e `apps/marketing/public/fonts/geist-variable*.woff2`
   para o `post-automation` (`templates/instagram/`) e aponte o `render-image.js`. Os placeholders
   são os mesmos dos templates atuais de lá. O `docs/brand.md` do `post-automation` está
-  desatualizado (usa `#0A0A0A`, `#3C3C3C` e gradiente): vale o `brand/` do Pilar.
+  desatualizado (usa `#0A0A0A`, `#3C3C3C` e gradiente): vale o `brand/` da Pilar.
 - **Gerar as prévias:** `python3 scripts/brand/render-social.py`.

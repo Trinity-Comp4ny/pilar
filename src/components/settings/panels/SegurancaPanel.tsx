@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { translateAuthError } from "@/lib/authErrors";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { NavegadoresConta } from "@/components/settings/NavegadoresConta";
 
 // Encerra as outras sessões e mantém esta. O Supabase revoga os refresh tokens
 // na hora; o access token que já está em outro aparelho vale até expirar (1h).
@@ -74,6 +75,8 @@ export function SegurancaPanel() {
       <PasswordChangeCard currentEmail={email} />
 
       <OutrosDispositivosCard />
+
+      <NavegadoresConta />
     </div>
   );
 }

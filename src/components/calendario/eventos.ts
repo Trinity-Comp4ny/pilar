@@ -1,11 +1,12 @@
 import { type Projeto, type DisciplinaResponsavel, getResponsaveisList } from "@/types/projetos";
-import { FolderKanban, Layers, CheckSquare, type LucideIcon } from "lucide-react";
+import { FolderKanban, Layers, CheckSquare, Video, type LucideIcon } from "lucide-react";
 
 // Uma "camada" é uma fonte de eventos que o usuário liga/desliga na sidebar,
 // no modelo "Meus calendários" do Google (ADR 0010). O motor é agnóstico à
 // origem: cada tela monta os eventos das camadas que fizerem sentido ali.
-export type CamadaId = "projeto" | "disciplina" | "tarefa";
-export type EventoEstado = "atrasado" | "proximo" | "concluido" | "futuro" | "pausado";
+// "reuniao" vem do Google Agenda da pessoa (SPEC 164): compromisso com hora, não prazo.
+export type CamadaId = "projeto" | "disciplina" | "tarefa" | "reuniao";
+export type EventoEstado = "atrasado" | "proximo" | "concluido" | "futuro" | "pausado" | "compromisso";
 
 export interface PrazoEvento {
   /** id do item de origem (projeto, disciplina ou tarefa); usado no clique. */
@@ -48,6 +49,11 @@ export const CAMADA_REGISTRY: Record<CamadaId, CamadaMeta> = {
   tarefa: {
     label: "Tarefas",
     icon: CheckSquare,
+    toggleClass: "data-[state=checked]:bg-brand! data-[state=checked]:border-brand! data-[state=checked]:text-ink!",
+  },
+  reuniao: {
+    label: "Reuniões",
+    icon: Video,
     toggleClass: "data-[state=checked]:bg-brand! data-[state=checked]:border-brand! data-[state=checked]:text-ink!",
   },
 };
@@ -276,6 +282,7 @@ export const ESTADO_CHIP: Record<EventoEstado, string> = {
   concluido: "bg-positive/10 text-positive-strong border-positive",
   futuro: "bg-info-soft text-info-strong border-info-mid-border",
   pausado: "bg-muted text-muted-foreground border-border",
+  compromisso: "bg-brand-accent-soft text-ink border-brand",
 };
 
 export const ESTADO_SIMBOLO: Record<EventoEstado, string> = {
@@ -284,6 +291,7 @@ export const ESTADO_SIMBOLO: Record<EventoEstado, string> = {
   concluido: "✓",
   futuro: "•",
   pausado: "‖",
+  compromisso: "◷",
 };
 
 export const ESTADO_LABEL: Record<EventoEstado, string> = {
@@ -292,4 +300,5 @@ export const ESTADO_LABEL: Record<EventoEstado, string> = {
   concluido: "Concluído",
   futuro: "Futuro",
   pausado: "Pausado",
+  compromisso: "Compromisso",
 };

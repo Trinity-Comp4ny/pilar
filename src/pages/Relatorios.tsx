@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { PageToolbar } from "@/components/PageSlots";
+import { FilterBar, FilterClear, FilterDivider } from "@/components/filters/FilterBar";
+import { filterTriggerClass } from "@/components/filters/filterStyles";
 import { statusBadgeClasses, statusLabel } from "@/lib/status";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TableCell } from "@/components/ui/table";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
-import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +22,6 @@ import {
 import {
   Download,
   FileBarChart,
-  Filter,
-  X,
   Columns3,
   FileSpreadsheet,
   FileText,
@@ -419,7 +418,7 @@ export default function Relatorios() {
     const cfg = statusConfig[status];
     if (!cfg) return <span>{status}</span>;
     return (
-      <Badge variant="outline" className={cn("text-[11px] font-medium", cfg.className)}>
+      <Badge variant="outline" className={cn("text-2xs font-medium", cfg.className)}>
         {cfg.label}
       </Badge>
     );
@@ -429,7 +428,7 @@ export default function Relatorios() {
     const cfg = tipoConfig[tipo];
     if (!cfg) return <span>{tipo}</span>;
     return (
-      <Badge variant="outline" className={cn("text-[11px] font-medium", cfg.className)}>
+      <Badge variant="outline" className={cn("text-2xs font-medium", cfg.className)}>
         {tipo}
       </Badge>
     );
@@ -458,7 +457,7 @@ export default function Relatorios() {
 
   const renderFilterSelect = (value: string, onChange: (v: string) => void, options: string[], placeholder: string) => (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-9 text-xs bg-white" aria-label={placeholder}>
+      <SelectTrigger className={filterTriggerClass(!!value, "w-auto min-w-[120px]")} aria-label={placeholder}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -472,95 +471,79 @@ export default function Relatorios() {
   );
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* ═══ Barra de parâmetros ═══ */}
-      <Card className="rounded-2xl border border-black/5 bg-white shrink-0">
-        <CardContent className="p-5 space-y-4">
-          {/* Linha 1: Tipo + Período + Botão */}
-          <div className="flex flex-wrap gap-4 items-end">
-            {/* Tipo */}
-            <div className="space-y-1.5 w-56 shrink-0">
-              <Label className="text-xs font-medium text-muted-foreground">Tipo de relatório</Label>
-              <Select
-                value={tipoRelatorio}
-                onValueChange={(v) => {
-                  setTipoRelatorio(v);
-                  setRentabilidadeMode(null);
-                }}
-              >
-                <SelectTrigger className="h-9 bg-white" aria-label="Tipo de relatório">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiposRelatorio.map((tipo) => (
-                    <SelectItem key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
-            {!isRentabilidade && (
-              <div className="space-y-1.5 shrink-0">
-                <Label className="text-xs font-medium text-muted-foreground">Período</Label>
-                <div>
-                  <FiltroPeriodo
-                    from={dateFrom}
-                    to={dateTo}
-                    onChange={(from, to) => {
-                      setDateFrom(from);
-                      setDateTo(to);
-                    }}
-                    presets={[
-                      "mes-atual",
-                      "mes-anterior",
-                      "ultimos-7",
-                      "ultimos-30",
-                      "este-trimestre",
-                      "trimestre-passado",
-                      "este-ano",
-                      "tudo",
-                      "custom",
-                    ]}
-                    align="start"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Botão gerar prévia (não baixa; exportar é passo separado) */}
+    <div className="flex flex-col gap-4">
+      {/* ═══ Barra de parâmetros ═══
+          Na barra de filtros da página (uma linha, rola na horizontal) em vez de um card com
+          rótulos acima do relatório (~100 a 150 px; auditoria de espaço, 2026-11). */}
+      <PageToolbar inlineSemLayout>
+        <FilterBar
+          end={
             <Button onClick={handleGerarRelatorio} variant="brand" className="h-9 px-5 shrink-0" disabled={isLoading}>
               <Eye className="mr-1.5 h-4 w-4" />
               {isLoading ? "Gerando..." : "Gerar prévia"}
             </Button>
-          </div>
+          }
+        >
+          <Select
+            value={tipoRelatorio}
+            onValueChange={(v) => {
+              setTipoRelatorio(v);
+              setRentabilidadeMode(null);
+            }}
+          >
+            <SelectTrigger
+              className={filterTriggerClass(!!tipoRelatorio, "w-auto min-w-[180px]")}
+              aria-label="Tipo de relatório"
+            >
+              <SelectValue placeholder="Tipo de relatório" />
+            </SelectTrigger>
+            <SelectContent>
+              {tiposRelatorio.map((tipo) => (
+                <SelectItem key={tipo.value} value={tipo.value}>
+                  {tipo.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          {/* Linha 2: Filtros de coluna (aparecem após gerar) */}
-          {reportData.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 border-t border-black/5">
-              <div className="flex items-center gap-2 text-xs font-medium text-black/50 shrink-0">
-                <Filter size={13} />
-                Filtrar por:
-              </div>
-              <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                {renderFilterSelect(filterCategoria, setFilterCategoria, filterOptions.categorias, "Categoria")}
-                {renderFilterSelect(filterCliente, setFilterCliente, filterOptions.clientes, "Cliente / Fornecedor")}
-                {renderFilterSelect(filterStatus, setFilterStatus, filterOptions.status, "Status")}
-                {renderFilterSelect(filterProjeto, setFilterProjeto, filterOptions.projetos, "Projeto")}
-                {renderFilterSelect(filterConta, setFilterConta, filterOptions.contas, "Conta")}
-              </div>
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-8 text-xs gap-1 shrink-0">
-                  <X size={12} />
-                  Limpar
-                </Button>
-              )}
-            </div>
+          {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
+          {!isRentabilidade && (
+            <FiltroPeriodo
+              from={dateFrom}
+              to={dateTo}
+              onChange={(from, to) => {
+                setDateFrom(from);
+                setDateTo(to);
+              }}
+              presets={[
+                "mes-atual",
+                "mes-anterior",
+                "ultimos-7",
+                "ultimos-30",
+                "este-trimestre",
+                "trimestre-passado",
+                "este-ano",
+                "tudo",
+                "custom",
+              ]}
+              align="start"
+            />
           )}
-        </CardContent>
-      </Card>
+
+          {/* Filtros de coluna (aparecem após gerar) */}
+          {reportData.length > 0 && (
+            <>
+              <FilterDivider />
+              {renderFilterSelect(filterCategoria, setFilterCategoria, filterOptions.categorias, "Categoria")}
+              {renderFilterSelect(filterCliente, setFilterCliente, filterOptions.clientes, "Cliente / Fornecedor")}
+              {renderFilterSelect(filterStatus, setFilterStatus, filterOptions.status, "Status")}
+              {renderFilterSelect(filterProjeto, setFilterProjeto, filterOptions.projetos, "Projeto")}
+              {renderFilterSelect(filterConta, setFilterConta, filterOptions.contas, "Conta")}
+              <FilterClear count={hasActiveFilters ? 1 : 0} onClick={clearAllFilters} />
+            </>
+          )}
+        </FilterBar>
+      </PageToolbar>
 
       {/* ═══ Resultado ═══ */}
       <div className="flex flex-col gap-5">
@@ -597,11 +580,11 @@ export default function Relatorios() {
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                    <Button variant="outline" size="xs" className="gap-1.5">
                       <Columns3 size={13} />
                       Colunas
                       {visibleColumns.size < ALL_COLUMNS.length && (
-                        <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
+                        <span className="text-3xs bg-brand text-ink rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
                           {visibleColumns.size}
                         </span>
                       )}
@@ -616,7 +599,7 @@ export default function Relatorios() {
                             setVisibleColumns(new Set(ALL_COLUMNS));
                             localStorage.setItem("relatorios.columns", JSON.stringify(ALL_COLUMNS));
                           }}
-                          className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-1"
+                          className="text-3xs text-muted-foreground hover:text-foreground underline underline-offset-1"
                         >
                           Todas
                         </button>
@@ -639,7 +622,7 @@ export default function Relatorios() {
                 </Popover>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="brand" className="h-8 text-xs gap-1.5" disabled={!filteredData.length}>
+                    <Button size="xs" variant="brand" className="gap-1.5" disabled={!filteredData.length}>
                       <Download size={13} />
                       Exportar
                       <ChevronDown size={13} className="opacity-70" />

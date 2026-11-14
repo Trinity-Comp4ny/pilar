@@ -31,6 +31,7 @@ quebrar resignação; Future Vision = paciência + marcos). Sinal de tração = 
 - [[greylock-designing-for-buying-plg-ceiling]] — Sarah Guo: teto do PLG (4 sintomas); adicionar venda top-down antes de saturar early adopters
 - [[lenny-activation-rate-benchmarks]] — aha moment prevê retenção; white-glove onboarding é tática legítima de ativação em B2B
 - [[reforge-growth-loops-monetization]] — loop>funil; pricing habilita/desabilita loops de crescimento
+- [[aquisicao-e-conteudo]] — tema irmão: orgânico x pago, marcas de referência, plano de 90 dias do lançamento
 
 ## Aplicação ao Pilar
 - Matheus vende os 10-25 primeiros; documenta objeções → playbook. Não contratar VP antes de 2-3 reps batendo quota (~$2M ARR) — VP antes do engine falha ~80%.

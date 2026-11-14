@@ -5,7 +5,7 @@ import { trackCta } from "../analytics";
 import { BrowserFrame } from "../components/BrowserFrame";
 import { CTASection } from "../components/CTASection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
-import { GroupMock } from "../components/mock/ModuleScreens";
+import { Celular, GroupMock } from "../components/mock/ModuleScreens";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
@@ -37,11 +37,14 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
 
   if (ehFone) {
     return (
-      <div className="mx-auto w-[300px] rounded-[36px] border-[3px] border-ink bg-ink shadow-[0_28px_56px_-20px_rgba(0,0,0,0.45)]">
-        <div className="overflow-hidden rounded-[32px]">
-          <img src={img} alt={alt} className="block w-full" onError={() => setCaiu(true)} />
-        </div>
-      </div>
+      <Celular>
+        <img
+          src={img}
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover object-top"
+          onError={() => setCaiu(true)}
+        />
+      </Celular>
     );
   }
 
@@ -66,8 +69,8 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
 
   usePageMeta({
-    titulo: `${modulo.nome} | Pilar`,
-    descricao: modulo.lede,
+    titulo: `${modulo.seo.titulo} | Pilar`,
+    descricao: modulo.seo.descricao,
     caminho: `/${slug}`,
   });
 
@@ -89,15 +92,16 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         <HeroBackdrop />
         <div className="relative z-10 mx-auto max-w-6xl">
           <Reveal variant="up" className="max-w-3xl">
-            <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">
-              <span className={`h-1.5 w-1.5 rounded-full ${modulo.cor.strong}`} />
-              {modulo.nome}
-            </p>
-
-            <h1 className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
+            {/* A headline grande é frase de marca, num <p> com desenho de título. O H1
+                (a frase com a palavra-chave que se busca no Google) abre o parágrafo
+                de apoio, como na home. Antes ele era uma etiqueta em caixa-alta acima
+                da headline, que repetia o título e empurrava tudo pra baixo. */}
+            <p className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
               {modulo.headline} <span className="italic text-ink/45">{modulo.headlineFim}</span>
-            </h1>
-            <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
+            </p>
+            <div className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">
+              <h1 className="inline font-normal">{modulo.seo.h1}.</h1> {modulo.lede}
+            </div>
 
             <div className="flex flex-wrap gap-3">
               <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `modulo_${slug}`)}>
@@ -122,8 +126,14 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
 
           <div className="flex flex-col gap-16 md:gap-24">
             {modulo.grupos.map((g, gi) => (
-              <div key={g.titulo} className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
-                <Reveal variant={gi % 2 === 0 ? "left" : "right"} className={gi % 2 === 0 ? "" : "lg:order-2"}>
+              // `grid-cols-1` + `min-w-0`: sem isso a coluna única do celular crescia até
+              // a largura mínima da tela simulada (a fileira de abas do Obra) e a
+              // página inteira passava de 390px, escondendo o botão de menu.
+              <div key={g.titulo} className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-14">
+                <Reveal
+                  variant={gi % 2 === 0 ? "left" : "right"}
+                  className={`min-w-0 ${gi % 2 === 0 ? "" : "lg:order-2"}`}
+                >
                   <h3 className="mb-2.5 text-[26px] font-medium leading-[1.15] tracking-[-0.03em] text-ink md:text-[30px]">
                     {g.titulo}
                   </h3>
@@ -147,7 +157,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
                 <Reveal
                   variant={gi % 2 === 0 ? "right" : "left"}
                   delay={0.1}
-                  className={gi % 2 === 0 ? "" : "lg:order-1"}
+                  className={`min-w-0 ${gi % 2 === 0 ? "" : "lg:order-1"}`}
                 >
                   <PrintReal img={g.img} alt={g.titulo} mock={g.mock} modulo={modulo} />
                 </Reveal>

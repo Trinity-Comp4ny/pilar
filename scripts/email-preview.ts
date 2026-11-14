@@ -28,7 +28,7 @@ Deno.env.set(
   `@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;src:url(${geist}) format('woff2');}\n` +
     `@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;src:url(${geistItalic}) format('woff2');}`
 );
-Deno.env.set("EMAIL_LOGO_URL", await dataUri("../apps/marketing/public/email/logo-v3.png", "image/png"));
+Deno.env.set("EMAIL_LOGO_URL", await dataUri("../apps/marketing/public/email/logo-v4.png", "image/png"));
 Deno.env.set("EMAIL_WAVE_URL", await dataUri("../apps/marketing/public/email/wave-v1.png", "image/png"));
 Deno.env.set("APP_URL", "https://app.pilarsoft.com.br");
 Deno.env.set("PUBLIC_SITE_URL", "https://www.pilarsoft.com.br");
@@ -181,6 +181,25 @@ const previews: Preview[] = [
       enviadoEm: "13/10/2026 14:05",
       url: `${APP}/ultra-admin?tab=trials`,
       dicaResposta: "Responda este e-mail para falar direto com quem se cadastrou.",
+    }),
+  },
+  {
+    slug: "aviso-legal-termos",
+    grupo: "Plataforma",
+    nota: "Aviso aos administradores de mudança nos Termos de Uso (Termos v2, cláusula 15)",
+    email: T.templateAvisoLegal({
+      nome: "João",
+      assunto: "Os Termos de Uso do Pilar mudam em 10 de dezembro",
+      titulo: "Novos Termos de Uso do Pilar",
+      lead: "Atualizamos os Termos de Uso e a Política de Privacidade. As mudanças valem para a sua conta a partir de 10 de dezembro de 2026.",
+      itens: [
+        "Agentes de IA: a IA prepara e a sua equipe revisa e aprova.",
+        "Créditos de IA: a cota do plano renova a cada ciclo.",
+      ],
+      vigencia: "10 de dezembro de 2026",
+      link: "https://www.pilarsoft.com.br/termos",
+      linkLabel: "Ler os Termos de Uso",
+      rodape: "Os Termos de Uso preveem este aviso com 30 dias de antecedência.",
     }),
   },
   {

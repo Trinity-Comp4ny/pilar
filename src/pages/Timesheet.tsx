@@ -31,12 +31,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const variant =
-    status === "aprovado"
-      ? "default"
-      : status === "rejeitado"
-        ? "destructive"
-        : "secondary";
+  const variant = status === "aprovado" ? "default" : status === "rejeitado" ? "destructive" : "secondary";
 
   return (
     <Badge variant={variant} className="text-xs">
@@ -114,21 +109,15 @@ function LancamentosTable({
               <TableCell className="whitespace-nowrap text-sm">
                 {format(new Date(l.data + "T00:00:00"), "dd/MM/yyyy")}
               </TableCell>
-              <TableCell className="text-sm font-medium max-w-[160px] truncate">
-                {l.projeto_nome}
-              </TableCell>
+              <TableCell className="text-sm font-medium max-w-[160px] truncate">{l.projeto_nome}</TableCell>
               <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">
                 {l.fase_nome ?? "—"}
               </TableCell>
-              {showUser && (
-                <TableCell className="text-sm">{l.user_nome}</TableCell>
-              )}
+              {showUser && <TableCell className="text-sm">{l.user_nome}</TableCell>}
               <TableCell className="text-sm max-w-[240px] truncate" title={l.descricao}>
                 {l.descricao}
               </TableCell>
-              <TableCell className="text-right text-sm font-medium">
-                {l.horas}h
-              </TableCell>
+              <TableCell className="text-right text-sm font-medium">{l.horas}h</TableCell>
               <TableCell>
                 <StatusBadge status={l.status} />
               </TableCell>
@@ -139,9 +128,9 @@ function LancamentosTable({
                       <>
                         {onAprovar && (
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-success-strong"
+                            className="px-2 text-success-strong"
                             disabled={isMutando}
                             onClick={() => onAprovar(l)}
                           >
@@ -151,9 +140,9 @@ function LancamentosTable({
                         )}
                         {onRejeitar && (
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-danger-mid"
+                            className="px-2 text-danger-mid"
                             disabled={isMutando}
                             onClick={() => onRejeitar(l)}
                           >
@@ -165,9 +154,9 @@ function LancamentosTable({
                     ) : (
                       onReabrir && (
                         <Button
-                          size="sm"
+                          size="xs"
                           variant="ghost"
-                          className="h-7 px-2 text-xs text-muted-foreground"
+                          className="px-2 text-muted-foreground"
                           disabled={isMutando}
                           onClick={() => onReabrir(l)}
                         >
@@ -259,11 +248,34 @@ export default function Timesheet() {
     setConfirmAction(null);
   };
 
-  const confirmCopy: Record<ConfirmAction["type"], { title: string; description: string; variant: "default" | "destructive"; confirmText: string }> = {
-    aprovar: { title: "Aprovar lançamento", description: "Confirmar a aprovação destas horas? Você poderá reabrir depois.", variant: "default", confirmText: "Aprovar" },
-    rejeitar: { title: "Rejeitar lançamento", description: "As horas serão marcadas como rejeitadas. Você poderá reabrir depois.", variant: "destructive", confirmText: "Rejeitar" },
-    reabrir: { title: "Reabrir lançamento", description: "As horas voltarão para pendente e precisarão de nova análise.", variant: "default", confirmText: "Reabrir" },
-    "aprovar-lote": { title: "Aprovar pendentes", description: "Confirmar a aprovação de todos os lançamentos pendentes filtrados?", variant: "default", confirmText: "Aprovar todos" },
+  const confirmCopy: Record<
+    ConfirmAction["type"],
+    { title: string; description: string; variant: "default" | "destructive"; confirmText: string }
+  > = {
+    aprovar: {
+      title: "Aprovar lançamento",
+      description: "Confirmar a aprovação destas horas? Você poderá reabrir depois.",
+      variant: "default",
+      confirmText: "Aprovar",
+    },
+    rejeitar: {
+      title: "Rejeitar lançamento",
+      description: "As horas serão marcadas como rejeitadas. Você poderá reabrir depois.",
+      variant: "destructive",
+      confirmText: "Rejeitar",
+    },
+    reabrir: {
+      title: "Reabrir lançamento",
+      description: "As horas voltarão para pendente e precisarão de nova análise.",
+      variant: "default",
+      confirmText: "Reabrir",
+    },
+    "aprovar-lote": {
+      title: "Aprovar pendentes",
+      description: "Confirmar a aprovação de todos os lançamentos pendentes filtrados?",
+      variant: "default",
+      confirmText: "Aprovar todos",
+    },
   };
 
   const hoje = format(new Date(), "yyyy-MM-dd");
@@ -367,7 +379,10 @@ export default function Timesheet() {
                     variant="outline"
                     disabled={isMutando}
                     onClick={() =>
-                      setConfirmAction({ type: "aprovar-lote", ids: pendentesEquipe.map((l: TimesheetLancamento) => l.id) })
+                      setConfirmAction({
+                        type: "aprovar-lote",
+                        ids: pendentesEquipe.map((l: TimesheetLancamento) => l.id),
+                      })
                     }
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />

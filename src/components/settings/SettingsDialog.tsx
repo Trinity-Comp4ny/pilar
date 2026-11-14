@@ -1,4 +1,7 @@
-import { Building2, CreditCard, Gauge, Lock, ShieldCheck, User } from "lucide-react";
+import { useEffect } from "react";
+import { Building2, CreditCard, Gauge, Lock, Plug, ShieldCheck, User } from "lucide-react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSettingsModal, type SettingsSection } from "@/contexts/SettingsModalContext";
@@ -8,6 +11,8 @@ import { EmpresaPanel } from "./panels/EmpresaPanel";
 import { UsoPanel } from "./panels/UsoPanel";
 import { PagamentoPanel } from "./panels/PagamentoPanel";
 import { PrivacidadePanel } from "./panels/PrivacidadePanel";
+import { IntegracoesPanel } from "./panels/IntegracoesPanel";
+import { lerRetornoDoDrive } from "@/lib/googleDrive";
 
 type SectionDef = {
   id: SettingsSection;
@@ -20,6 +25,7 @@ const SECTIONS: SectionDef[] = [
   { id: "conta", label: "Conta", icon: User, Panel: ContaPanel },
   { id: "seguranca", label: "Segurança", icon: ShieldCheck, Panel: SegurancaPanel },
   { id: "empresa", label: "Empresa", icon: Building2, Panel: EmpresaPanel },
+  { id: "integracoes", label: "Integrações", icon: Plug, Panel: IntegracoesPanel },
   { id: "uso", label: "Uso", icon: Gauge, Panel: UsoPanel },
   { id: "pagamento", label: "Pagamento", icon: CreditCard, Panel: PagamentoPanel },
   { id: "privacidade", label: "Privacidade", icon: Lock, Panel: PrivacidadePanel },
@@ -30,13 +36,49 @@ const SECTIONS: SectionDef[] = [
 // useSettingsModal().openSettings(secao).
 export function SettingsDialog() {
   const { isOpen, section, openSettings, closeSettings } = useSettingsModal();
+  const queryClient = useQueryClient();
+
+  // Volta do consentimento do Google Drive (SPEC 163): avisa e tira o ?drive= da URL.
+  useEffect(() => {
+    const retorno = lerRetornoDoDrive();
+    if (!retorno) return;
+    queryClient.invalidateQueries({ queryKey: ["google-drive-status"] });
+    queryClient.invalidateQueries({ queryKey: ["google-drive-projeto"] });
+    if (retorno === "conectado")
+      toast.success("Google Drive conectado", { description: "A pasta de cada projeto aparece na aba Arquivos." });
+    else if (retorno === "negado") toast.info("Conexão com o Google Drive cancelada");
+    else toast.error("Não foi possível conectar o Google Drive", { description: "Tente de novo em Configurações." });
+  }, [queryClient]);
+
+  // Volta do consentimento do Google Agenda (SPEC 164).
+  useEffect(() => {
+    const retorno = lerRetornoDoDrive("agenda");
+    if (!retorno) return;
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-status"] });
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-eventos"] });
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-calendarios"] });
+    if (retorno === "conectado")
+      toast.success("Google Agenda conectado", {
+        description: "Suas reuniões aparecem na Agenda e a Pilar avisa 30 minutos antes.",
+      });
+    else if (retorno === "negado") toast.info("Conexão com o Google Agenda cancelada");
+    else toast.error("Não foi possível conectar o Google Agenda", { description: "Tente de novo em Configurações." });
+  }, [queryClient]);
 
   const active = SECTIONS.find((s) => s.id === section) ?? SECTIONS[0];
   const Panel = active.Panel;
 
   return (
     <Dialog open={isOpen} onOpenChange={(next) => !next && closeSettings()}>
-      <DialogContent className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] gap-0 p-0 overflow-hidden">
+      <DialogContent
+        className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] max-md:h-[92dvh] gap-0 p-0 overflow-hidden"
+        // Abre com o foco no próprio diálogo: focar o 1º item do menu ("Conta") deixava um anel
+        // nele mesmo com outra seção aberta, parecendo dois itens selecionados.
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement | null)?.focus();
+        }}
+      >
         <div className="flex min-h-0 w-full flex-col sm:flex-row">
           {/* Rail de seções */}
           <nav
@@ -68,10 +110,14 @@ export function SettingsDialog() {
 
           {/* Painel ativo */}
           <div className="flex min-h-0 flex-1 flex-col">
-            <header className="shrink-0 border-b border-black/5 px-6 py-4 pr-12">
+            <header className="shrink-0 border-b border-black/5 px-4 py-3 pr-12 sm:px-6 sm:py-4">
               <h2 className="text-lg font-semibold text-ink">{active.label}</h2>
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{isOpen && <Panel />}</div>
+            {/* Celular: os cards dos painéis (p-6 do shadcn) perdem metade da margem lateral, senão o
+                formulário fica espremido dentro de card dentro de painel (feedback do dono, 12/11). */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 max-sm:[&_.p-6]:px-4 sm:px-6 sm:py-5">
+              {isOpen && <Panel />}
+            </div>
           </div>
         </div>
       </DialogContent>

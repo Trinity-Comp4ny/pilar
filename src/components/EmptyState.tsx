@@ -50,7 +50,9 @@ export function EmptyState({
       <h3 className="text-base font-semibold text-foreground mb-1">{title}</h3>
       {description && <p className="text-sm text-muted-foreground max-w-md mb-4">{description}</p>}
       {action && (
-        <Button onClick={action.onClick} variant={action.variant ?? "default"} size="sm">
+        // Ação de vazio é ação primária: verde da marca por padrão, como o botão do cabeçalho.
+        // Antes era preta (`default`) em metade das telas e verde na outra (auditoria, 2026-11).
+        <Button onClick={action.onClick} variant={action.variant ?? "brand"} size="sm">
           {action.label}
         </Button>
       )}

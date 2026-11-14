@@ -112,7 +112,7 @@ function Metrica({ icon: Icon, label, valor }: { icon: LucideIcon; label: string
     <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-3 py-2">
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <p className="text-[11px] leading-none text-muted-foreground">{label}</p>
+        <p className="text-2xs leading-none text-muted-foreground">{label}</p>
         <p className="truncate text-sm font-medium text-ink">{valor}</p>
       </div>
     </div>
@@ -216,13 +216,14 @@ export default function ObraClimaPage() {
   const [localizando, setLocalizando] = useState(false);
 
   useEffect(() => {
-    if (!alvo) return;
+    // Posição do aparelho nunca vai para o storage: só obra ou cidade escolhida.
+    if (!alvo || modoLocal) return;
     try {
       localStorage.setItem(LAST_KEY, JSON.stringify(alvo));
     } catch {
       /* modo privado: sem persistência */
     }
-  }, [alvo]);
+  }, [alvo, modoLocal]);
 
   const selecionar = (a: Alvo) => {
     setModoLocal(false);
@@ -282,7 +283,9 @@ export default function ObraClimaPage() {
         />
       }
     >
-      <div className="mx-auto w-full max-w-5xl space-y-4">
+      {/* Largura toda, alinhada ao título: a coluna central de 1024 px deixava ~230 px vazios de
+          cada lado num notebook e cortava a previsão por hora (auditoria de espaço, 2026-11). */}
+      <div className="w-full space-y-4">
         {/* Abas de lugares (obras + cidades salvas) + minha localização */}
         <div className="flex items-center gap-1 overflow-x-auto overflow-y-hidden border-b border-black/10">
           <button
@@ -447,10 +450,10 @@ export default function ObraClimaPage() {
                         <Fragment key={h.hora}>
                           {novoDia && (
                             <div className="flex min-w-12 flex-col items-center justify-center gap-0.5 border-l border-black/10 pl-2 text-center">
-                              <span className="text-[11px] font-medium capitalize text-ink">
+                              <span className="text-2xs font-medium capitalize text-ink">
                                 {diaSemana(h.hora.slice(0, 10))}
                               </span>
-                              <span className="text-[11px] text-muted-foreground">{diaMes(h.hora.slice(0, 10))}</span>
+                              <span className="text-2xs text-muted-foreground">{diaMes(h.hora.slice(0, 10))}</span>
                             </div>
                           )}
                           <div className="flex min-w-13 flex-col items-center gap-1">
@@ -460,13 +463,13 @@ export default function ObraClimaPage() {
                             <Icone className={cn("h-5 w-5", corClima(catHora, h.ehDia))} />
                             <span className="text-sm font-medium tabular-nums text-ink">{h.temp}°</span>
                             {h.chuvaProb > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[11px] text-info-strong">
+                              <span className="inline-flex items-center gap-0.5 text-2xs text-info-strong">
                                 <Droplets className="h-3 w-3" />
                                 {h.chuvaProb}%
                               </span>
                             )}
                             {h.chuvaMm > 0 && (
-                              <span className="text-[10px] tabular-nums text-muted-foreground">{h.chuvaMm} mm</span>
+                              <span className="text-3xs tabular-nums text-muted-foreground">{h.chuvaMm} mm</span>
                             )}
                           </div>
                         </Fragment>

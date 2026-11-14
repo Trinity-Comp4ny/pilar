@@ -1,0 +1,41 @@
+{
+  "id": "fala-04-nao-e-interiores",
+  "hook": "Engenharia *não* é interiores",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Quase todo conteúdo de gestão de escritório no Instagram é de arquitetura de interiores."
+    },
+    {
+      "id": "l02",
+      "text": "Mas quem faz estrutural, elétrico e hidrossanitário vende por disciplina, mede hora e acompanha a obra.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Vende por disciplina",
+          "Mede hora",
+          "Acompanha a obra"
+        ],
+        "icone": "ruler"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "É um negócio diferente, com problemas diferentes."
+    },
+    {
+      "id": "l04",
+      "text": "A Pilar foi feita para esse escritório: disciplina, prazo, responsável e lucro de cada projeto.",
+      "show": {
+        "type": "tela",
+        "tela": "projetos",
+        "legenda": "Cada projeto, por disciplina"
+      }
+    },
+    {
+      "id": "l05",
+      "text": "Se você é desse mundo, me segue que o conteúdo é para você."
+    }
+  ]
+}

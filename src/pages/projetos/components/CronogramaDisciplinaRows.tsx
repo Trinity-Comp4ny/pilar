@@ -44,7 +44,7 @@ export function DisciplinaLeftRows({
   if (!disciplinas || disciplinas.length === 0) {
     return (
       <div className="h-10 border-b pl-8 pr-3 flex items-center">
-        <span className="text-[10px] text-muted-foreground">Nenhuma disciplina cadastrada</span>
+        <span className="text-3xs text-muted-foreground">Nenhuma disciplina cadastrada</span>
       </div>
     );
   }
@@ -57,7 +57,7 @@ export function DisciplinaLeftRows({
       {exibidas.map((d) => (
         <div key={d.id} className="h-10 border-b pl-8 pr-3 flex items-center gap-1.5">
           <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", discBarClass(d))} aria-hidden />
-          <span className="text-[11px] truncate">
+          <span className="text-2xs truncate">
             {d.codigo && <span className="font-mono text-muted-foreground mr-1">{d.codigo}</span>}
             {d.nome}
           </span>
@@ -69,7 +69,7 @@ export function DisciplinaLeftRows({
             type="button"
             onClick={onMostrarOutras}
             aria-label={mostrarOutras ? undefined : rotulo}
-            className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            className="text-2xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
             {mostrarOutras ? (
               "Ocultar disciplinas de outras pessoas"
@@ -122,7 +122,7 @@ export function DisciplinaTimelineRows({
         if (!start || !end) {
           return (
             <div key={d.id} className="h-10 border-b relative flex items-center justify-center">
-              <span className="text-[10px] text-muted-foreground/60">sem datas</span>
+              <span className="text-3xs text-muted-foreground/60">sem datas</span>
             </div>
           );
         }
@@ -140,7 +140,7 @@ export function DisciplinaTimelineRows({
               )}
               style={{ left: `${leftPct}%`, width: `${widthPct}%`, minWidth: "24px" }}
             >
-              <span className={cn("text-[9px] font-medium truncate mx-2", textoSobreBarra(discBarClass(d)))}>
+              <span className={cn("text-3xs font-medium truncate mx-2", textoSobreBarra(discBarClass(d)))}>
                 {d.nome}
               </span>
             </button>

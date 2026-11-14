@@ -15,7 +15,8 @@ const { auth, toastError, toastSuccess, envMock, track } = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth } }));
 vi.mock("sonner", () => ({ toast: { error: toastError, success: toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
-vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
+const { applyCookieConsent } = vi.hoisted(() => ({ applyCookieConsent: vi.fn() }));
+vi.mock("@/lib/analytics", () => ({ analytics: { track }, applyCookieConsent }));
 vi.mock("@/lib/env", () => ({ env: envMock }));
 vi.mock("@/components/TurnstileWidget", () => ({
   TurnstileWidget: ({ onToken }: { onToken: (t: string) => void }) => (
@@ -116,7 +117,7 @@ describe("Signup", () => {
   it("senha fraca e confirmação divergente são recusadas", async () => {
     renderPage();
     const user = await preencherTudo({ senha: "fraca", conf: "outra" });
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     expect(await screen.findByText("Senha deve ter pelo menos 12 caracteres")).toBeInTheDocument();
     expect(screen.getByText("As senhas não coincidem")).toBeInTheDocument();
     expect(botaoCriar()).toBeDisabled();
@@ -125,7 +126,7 @@ describe("Signup", () => {
   it("cadastro válido envia metadados normalizados e mostra 'Confira seu e-mail'", async () => {
     renderPage();
     const user = await preencherTudo({ email: " Ana@Escritorio.com" });
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await waitFor(() => expect(botaoCriar()).toBeEnabled());
     await user.click(botaoCriar());
     expect(await screen.findByText("Confira seu e-mail")).toBeInTheDocument();
@@ -146,7 +147,7 @@ describe("Signup", () => {
     auth.signUp.mockResolvedValue({ data: { user: { id: "u", identities: [] } }, error: null });
     renderPage();
     const user = await preencherTudo();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(botaoCriar());
     expect(await screen.findByText("Esse e-mail já tem conta")).toBeInTheDocument();
     expect(screen.queryByText("Confira seu e-mail")).not.toBeInTheDocument();
@@ -157,11 +158,11 @@ describe("Signup", () => {
     auth.signUp.mockResolvedValue({ data: { user: null }, error: { message: "Database error saving new user" } });
     renderPage();
     const user = await preencherTudo();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(botaoCriar());
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("Erro ao criar conta", {
-        description: "Este e-mail ainda não tem conta no Pilar. Fale com o time para criar a da sua empresa.",
+        description: "Este e-mail ainda não tem conta na Pilar. Fale com o time para criar a da sua empresa.",
       })
     );
     expect(JSON.stringify(toastError.mock.calls)).not.toContain("Database error");
@@ -173,7 +174,7 @@ describe("Signup", () => {
     auth.signUp.mockResolvedValue({ data: { user: null }, error: { code: "weak_password", message: "x" } });
     renderPage();
     const user = await preencherTudo();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(botaoCriar());
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("Erro ao criar conta", {
@@ -187,7 +188,7 @@ describe("Signup", () => {
     auth.signUp.mockReturnValue(new Promise((r) => (resolver = r)));
     renderPage();
     const user = await preencherTudo();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(botaoCriar());
     expect(await screen.findByRole("button", { name: /Criando conta/ })).toBeDisabled();
     await user.click(botaoCriar());
@@ -200,7 +201,7 @@ describe("Signup", () => {
     envMock.VITE_TURNSTILE_SITE_KEY = "site-key";
     renderPage();
     const user = await preencherTudo();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     expect(botaoCriar()).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "resolver captcha" }));
     await waitFor(() => expect(botaoCriar()).toBeEnabled());
@@ -212,7 +213,7 @@ describe("Signup", () => {
   it("reenviar e-mail: sucesso e falha", async () => {
     renderPage();
     const user = await preencherTudo();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(botaoCriar());
     await screen.findByText("Confira seu e-mail");
     const reenviar = screen.getByRole("button", { name: /Reenviar/ });
@@ -233,12 +234,19 @@ describe("Signup", () => {
     auth.signInWithOAuth.mockResolvedValue({ error: { code: "signup_disabled", message: "x" } });
     renderPage();
     const user = userEvent.setup();
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(screen.getByRole("button", { name: /Google/ }));
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("Erro ao continuar com Google", {
         description: expect.stringContaining("ainda não tem conta"),
       })
     );
+  });
+});
+
+describe("Signup: caixa opcional de análise de uso", () => {
+  it("começa desmarcada e separada dos Termos", () => {
+    renderPage();
+    expect(screen.getByRole("checkbox", { name: /medir como uso a Pilar/ })).not.toBeChecked();
   });
 });

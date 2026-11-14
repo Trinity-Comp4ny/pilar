@@ -3,6 +3,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TarefaDialog } from "./TarefaDialog";
 import type { Etapa } from "../useEtapas";
 
+vi.mock("@/hooks/useComentarioAutoria", () => ({
+  useComentarioAutoria: () => ({ autorId: "u-eu", podeExcluir: () => false }),
+}));
 vi.mock("@/lib/notificarMencao", () => ({ notificarMencao: vi.fn() }));
 vi.mock("@/components/ui/responsive-detail-panels", () => ({
   ResponsiveDetailPanels: ({ primary, secondary }: { primary: React.ReactNode; secondary: React.ReactNode }) => (

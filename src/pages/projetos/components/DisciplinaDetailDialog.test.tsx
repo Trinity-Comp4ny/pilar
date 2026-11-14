@@ -7,6 +7,9 @@ import type { DisciplinaResponsavel } from "@/types/projetos";
 // com menção, observação pré-save, excluir com confirmação e a disciplina ainda não salva.
 
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+vi.mock("@/hooks/useComentarioAutoria", () => ({
+  useComentarioAutoria: () => ({ autorId: "u-eu", podeExcluir: () => false }),
+}));
 vi.mock("sonner", () => ({ toast }));
 const pausas = vi.hoisted(() => ({
   data: [] as unknown[],

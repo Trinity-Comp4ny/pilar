@@ -37,8 +37,9 @@ import {
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
 import type { ServicoObra } from "../servicoObra";
-import { notificarMencao } from "@/lib/notificarMencao";
-import { ComentarioCard } from "@/components/atividades/ComentarioCard";
+import { apagarNotificacoesComentario, notificarMencao } from "@/lib/notificarMencao";
+import { ComentariosLista } from "@/components/atividades/ComentariosLista";
+import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
 
 const SEM = "__none__";
 
@@ -143,6 +144,7 @@ function TarefaFormBody({
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
   const [links, setLinks] = useState<LinkItem[]>(tarefa?.links ?? []);
   const [comentarios, setComentarios] = useState<Comentario[]>(tarefa?.comentarios ?? []);
+  const { autorId } = useComentarioAutoria(autorNome);
   // Menções de comentários adicionados nesta sessão do dialog, ainda não notificadas: só
   // notifica quando o Salvar do rodapé persistir de fato (comentário de tarefa não salva sozinho
   // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
@@ -166,12 +168,17 @@ function TarefaFormBody({
         id,
         texto: t,
         autor: autorNome,
+        autorId,
         data: new Date().toISOString(),
         mencionados: mencionados.length ? mencionados : undefined,
       },
     ]);
     if (mencionados.length || mencionaTodos(t)) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
   };
+
+  // Comentários apagados nesta sessão do dialog: a notificação deles só sai do sino depois que
+  // o Salvar gravar a lista sem eles (a RPC recusa enquanto o comentário existe no banco).
+  const [apagados, setApagados] = useState<string[]>([]);
 
   const salvar = async () => {
     if (!podeSalvar) return;
@@ -202,12 +209,16 @@ function TarefaFormBody({
       await Promise.all(pendentesMencao.map((p) => notificarMencao("tarefa", tarefaId, p.mencionados, p.texto, p.id)));
       setPendentesMencao([]);
     }
+    if (tarefaId && apagados.length) {
+      await Promise.all(apagados.map((id) => apagarNotificacoesComentario("tarefa", tarefaId, id)));
+      setApagados([]);
+    }
   };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho: chip + título editável */}
-      <div className="shrink-0 border-b px-10 pt-8 pb-5">
+      <div className="shrink-0 border-b px-4 pt-3 pb-4 md:px-10 md:pt-8 md:pb-5">
         <DialogTitle className="sr-only">
           {readOnly ? "Detalhes da tarefa" : tarefa ? "Editar tarefa" : "Nova tarefa"}
         </DialogTitle>
@@ -215,7 +226,7 @@ function TarefaFormBody({
           Propriedades e descrição à esquerda; atividades à direita.
         </DialogDescription>
         <div className="mb-2 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             <CheckSquare className="h-3 w-3" /> Tarefa
           </span>
           {tarefa?.numero != null && (
@@ -251,7 +262,7 @@ function TarefaFormBody({
         primaryLabel="Detalhes"
         secondaryLabel="Atividades"
         primary={
-          <div className="h-full space-y-7 overflow-y-auto px-8 py-6">
+          <div className="h-full space-y-7 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={Circle} label="Status">
@@ -390,18 +401,21 @@ function TarefaFormBody({
               </Label>
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-4">
-              {comentarios.length === 0 ? (
-                <p className="py-8 text-center text-xs text-muted-foreground">Nenhum comentário ainda</p>
-              ) : (
-                comentarios.map((c) => (
-                  <ComentarioCard
-                    key={c.id}
-                    comentario={c}
-                    pessoas={pessoas}
-                    destacado={c.id === comentarioDestacado}
-                  />
-                ))
-              )}
+              <ComentariosLista
+                comentarios={comentarios}
+                pessoas={pessoas}
+                autorNome={autorNome}
+                destacadoId={comentarioDestacado}
+                onExcluir={
+                  readOnly
+                    ? undefined
+                    : (id) => {
+                        setComentarios((prev) => prev.filter((x) => x.id !== id));
+                        setPendentesMencao((prev) => prev.filter((x) => x.id !== id));
+                        setApagados((prev) => [...prev, id]);
+                      }
+                }
+              />
             </div>
             {!readOnly && (
               <div className="shrink-0 border-t bg-background/60 p-4">
@@ -413,7 +427,7 @@ function TarefaFormBody({
       />
 
       {/* Rodapé */}
-      <DialogFooter className="shrink-0 border-t px-8 py-3">
+      <DialogFooter className="shrink-0 border-t px-4 py-3 md:px-8">
         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
           {readOnly ? "Fechar" : "Cancelar"}
         </Button>

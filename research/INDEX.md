@@ -2,7 +2,7 @@
 
 Índice mestre. Cada nota captada ganha uma linha. Atualizar a cada coleta.
 
-**Stats:** notas captadas: `97` · fontes pending: ver [SOURCES.md](./SOURCES.md) · última coleta: `2026-08-11` (market-scout — leva AEC de domínio, 8 notas: planejamento/cronograma, orçamento (BDI/SINAPI), controle de custos/EVM, suprimentos/cotação/contratos, KPIs produtividade/qualidade/segurança, normas/ART/obrigações, BIM 4D/5D, e intel Sienge/Prevision/Starian + conteúdo)
+**Stats:** notas captadas: `100` · fontes pending: ver [SOURCES.md](./SOURCES.md) · última coleta: `2026-11-10` (accelerator-intel — leva marketing/aquisição: 2 notas em `marketing/` + tema `aquisicao-e-conteudo`; e market-scout — conteúdo social no nicho AEC: Instagram/LinkedIn de Vobi, Sienge, OrçaFascio, AltoQi, Archtrends, mentorias de gestão de escritório, Monograph, BQE, Deltek, Projectworks, Mosaic, Archdesk, Procore). Leva anterior: `2026-08-11` (leva AEC de domínio, 8 notas: planejamento/cronograma, orçamento (BDI/SINAPI), controle de custos/EVM, suprimentos/cotação/contratos, KPIs produtividade/qualidade/segurança, normas/ART/obrigações, BIM 4D/5D, e intel Sienge/Prevision/Starian + conteúdo)
 
 ## Por fonte
 
@@ -129,6 +129,7 @@
 - [Controle de custos, medição e valor agregado (EVM)](./aec/controle-custos-medicao-e-valor-agregado.md) — motor medição física→VA→orçado/comprometido/realizado→EAC/VAC = a tagline em conta; os 3 custos (Sienge) + fórmulas EVM (PMBOK) em PT; realista p/ ICP = 3 custos + IDC/EAC, teatro = SPI/curva S sem baseline; trava: useRentabilidade ignora MO · `metrics positioning icp moat` · 🟢 high
 - [BIM 4D/5D e integração de projetos](./aec/bim-4d-5d-e-integracao-projetos.md) — dimensões 3D→4D(tempo)→5D(custo)→6D/7D; IFC(ISO 16739)/openBIM; atrito NBR 15965↔SINAPI; mandato Dec.10.306/2020→11.888/2024 (fases 2021/2024/2028, só órgãos federais); adoção real ~20,6% (mar/24) concentrada em arquitetura/grandes; VEREDITO: tarpit p/ construir, ICP não produz IFC federado; borda que vale = importar quantitativo em planilha, não motor BIM · `positioning icp moat vertical-saas` · 🟢 high
 - [Sienge + Prevision: intel competitiva e conteúdo (Starian/Softplan)](./aec/sienge-prevision-intel-competitiva-e-conteudo.md) — ERP líder BR (Softplan→marca Starian jun/25, "IA" no nome; 5k clientes, 80/100 maiores); ICP = construtora/incorporadora média-grande que vende unidade ≠ ICP Pilar; Prevision = planejamento físico Lean (linha de balanço/Gantt) com IA nativa por WhatsApp (voz/texto); moat real deles = máquina de conteúdo SEO (14 clusters + 2 canais YT); roubar clusters de dor + IA por voz, evitar virar ERP · `positioning icp moat gtm ai-agents pricing` · 🟢 high
+- [Conteúdo social no nicho AEC (Instagram + LinkedIn)](./aec/conteudo-social-instagram-nicho-aec-2026.md) — BR: vendors (Vobi Talks, Sienge, OrçaFascio, AltoQi) educam sobre obra/orçamento/marketing do arquiteto; quem educa o sócio sobre precificação são mentorias sem produto; fora: Monograph/BQE/Deltek/Projectworks dominam "lucro do escritório" com benchmark de dado próprio + podcast + webinar com convidado, via LinkedIn; vazio = margem de escritório de ENGENHARIA em PT no Instagram, com produto fazendo a conta; sem números de engajamento por concorrente (IG/Ad Library inacessíveis na coleta) · `gtm positioning growth` · 🟢 high
 - [Agentes que EXECUTAM: work management + AEC (Vobi)](./aec/agentes-executores-work-management-e-aec.md) — modelo "você orquestra, agentes executam" (monday); ClickUp/Asana/Notion/Linear = NL→passos→pronto pra revisão, governança por permissão/audit, Notion não escreve cross-tool; Vobi já em prod (Financeiro+Compras+Secretária via WhatsApp, "pronto para revisão"); 8 padrões de design tabelados; diferencial Pilar = executor na margem/prestação de contas por administração (016/018/019), não "ter agente" · `ai-agents ai-native moat positioning agent-ux-patterns` · 🟢 high
 - [KPIs de obra — produtividade/qualidade/segurança](./aec/kpis-produtividade-qualidade-seguranca-obra.md) — RUP (Hh/unidade, menor=melhor; diária/cumulativa/potencial + curva de aprendizado), PPC do Last Planner (>80%; caso BR 72→77→90%), IDP/IDC=SPI/CPI (ver nota EVM acima), FVS/não-conformidade/retrabalho (PBQP-H), NR-18/NR-35 + TF/TG (NBR 14280), DDS; ICP enxuto acompanha custo/etapa + prazo/marco + PPC leve + retrabalho + registro-prova, corta RUP e TF/TG (teatro de construtora) · `metrics positioning moat` · 🟢 high
 - [Planejamento e cronograma de obra](./aec/planejamento-e-cronograma-de-obra.md) — físico-financeiro + curva S = a tese "lucro antes de terminar" desenhada; EVM (EV=avanço×orçamento, SPI=IDP/CPI=IDC); horizontes longo/médio/curto; CPM/folga, linha de balanço e Last Planner = peso de construtora que o ICP NÃO deve copiar; loop defensável = RDO→avanço→curva S · `vertical-saas positioning moat icp` · 🟢 high
@@ -136,7 +137,14 @@
 - [Suprimentos: fluxo compra→cotação→contrato (o processo)](./aec/suprimentos-compras-cotacao-contratos-fluxo.md) — ciclo canônico requisição→cotação(mapa,≥3 forn.)→pedido/OC→recebimento→NF→pagamento; 3 regimes de contrato (global/unitário/administração=ICP); curva de suprimentos; o que cabe vs peso enterprise nas specs 018/019 · `vertical-saas positioning moat` · 🟢 high
 - [Normas, regulação e obrigações de obra BR](./aec/normas-regulacao-e-obrigacoes-obra-br.md) — ART/RRT (uma por atividade, antes do início), CNO substitui CEI (30 dias), INSS 11%/3,5%, ISS no município da obra, reoneração da folha 2025→2028, eSocial S-1005, ABNT (6118/15575/12721), NR-18/35, alvará→habite-se; recorte ICP = ART+docs são dele, folha/tributo de canteiro é da construtora · `icp positioning moat` · 🟢 high
 
+### Marketing e aquisição (`marketing/`)
+
+- [Marcas de referência em posicionamento e conteúdo](./marketing/marcas-referencia-posicionamento-e-conteudo.md) — 10 marcas (Linear, Ramp, Attio, Clay, Granola, Notion, Duolingo, Nubank, Conta Azul, RD): ideia central, o que funciona no canal, 1 lição cada; padrão = pessoa > logo, conteúdo sobre o negócio do cliente, artefato como mídia · `positioning gtm growth` · 🟢 high
+- [Orgânico x pago para vertical SaaS B2B no Brasil](./marketing/organico-vs-pago-vertical-saas-b2b-brasil.md) — Edelman/LinkedIn (confiança), Refine Labs (software subatribui orgânico), benchmarks CPC/CPM/CPL Google/Meta/LinkedIn com grau de confiança; teto de CAC Pilar ≤ R$ 1.400 (alvo) / R$ 2.800 (corte) · `gtm metrics unit-economics` · 🟢 high
+
 ## Por tema (`themes/`)
+
+- [aquisicao-e-conteudo](./themes/aquisicao-e-conteudo.md) — orgânico cria demanda, pago captura; plano 90 dias (10/11/26→08/02/27), regras de corte, métrica norte = pagante ativado em 7 dias
 
 - [ai-native-vertical-saas](./themes/ai-native-vertical-saas.md) — 8 fontes: labor budget, system of action, janela, moats
 - [ai-agents](./themes/ai-agents.md) — playbook vertical AI, pricing por tarefa, autonomia/HITL
@@ -147,6 +155,7 @@
 - [metrics](./themes/metrics.md) — métrica norte, Levels, benchmarks (NRR/CLTV-CAC/Rule of 40)
 - [positioning](./themes/positioning.md) — Dunford, "AI-powered não é posição", alternativa = Excel+chute
 - [fundraising](./themes/fundraising.md) — seed/SAFE, default alive, deck/Why Now, ramen profitable
+- [profissionalizacao-saas-referencias](./themes/profissionalizacao-saas-referencias.md) — Linear, GitHub, Intercom Fin, Canny, Notion, Omie, Procore: changelog in-app, NPS, bug zero, suporte com IA, trust center; backlog adotado pelo Pilar
 
 ## Notas temáticas mais relevantes pro Pilar
 

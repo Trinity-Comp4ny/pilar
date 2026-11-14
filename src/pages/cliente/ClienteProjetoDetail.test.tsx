@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import ClienteProjetoDetail from "./ClienteProjetoDetail";
 
@@ -22,6 +23,11 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
+// O cliente do portal não tem login Supabase: a conversa dele não usa o perfil.
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: null, user: null }) }));
+vi.mock("./ArquivosDoProjeto", () => ({
+  ArquivosDoProjeto: () => <div data-testid="aba-arquivos" />,
+}));
 vi.mock("@/lib/monitoring", () => ({
   reportInvokeError: h.reportInvokeError,
   monitoring: { captureException: vi.fn() },
@@ -75,14 +81,17 @@ const ENTREGA = {
 };
 
 function renderPage(path = "/cliente/projeto/p1") {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
-          <Route path="projeto/:id/*" element={<ClienteProjetoDetail />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
+            <Route path="projeto/:id/*" element={<ClienteProjetoDetail />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -92,7 +101,7 @@ beforeEach(() => {
   sessionStorage.setItem("pilar_portal_token", "tok");
   h.rpcs = {
     get_cliente_projeto_detail: { data: PROJETO, error: null },
-    portal_listar_entregas: { data: [ENTREGA], error: null },
+    portal_listar_solicitacoes: { data: [ENTREGA], error: null },
     portal_aprovar_entrega: { data: null, error: null },
     portal_solicitar_revisao_entrega: { data: null, error: null },
   };
@@ -123,11 +132,10 @@ describe("ClienteProjetoDetail", () => {
     expect(h.rpc).not.toHaveBeenCalledWith("get_cliente_projeto_detail", expect.anything());
   });
 
-  it("pendências: parcelas atrasadas, a vencer e entregas levam às abas certas", async () => {
+  it("pendências: parcelas atrasadas e a vencer", async () => {
     h.rpcs.get_cliente_projeto_detail = {
       data: {
         ...PROJETO,
-        portal_entregas_pendentes: 2,
         receitas: [
           {
             id: "r1",
@@ -159,11 +167,10 @@ describe("ClienteProjetoDetail", () => {
     };
     renderPage();
     expect(await screen.findByText("Você tem pendências")).toBeInTheDocument();
-    expect(screen.getByText("4 itens precisam da sua atenção.")).toBeInTheDocument();
+    expect(screen.getByText("2 itens precisam da sua atenção.")).toBeInTheDocument();
     expect(screen.getByText("1 parcela em atraso")).toBeInTheDocument();
     expect(screen.getByText(/1 parcela\s*vencendo em 7 dias/)).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByText("2 entregas para aprovar"));
-    expect(await screen.findByText("Planta baixa")).toBeInTheDocument();
+    expect(screen.queryByText(/entrega/)).not.toBeInTheDocument();
   });
 
   describe("aprovar proposta", () => {
@@ -218,57 +225,35 @@ describe("ClienteProjetoDetail", () => {
     });
   });
 
-  describe("aba Entregas", () => {
-    it("aprovar entrega chama o RPC por token", async () => {
-      renderPage("/cliente/projeto/p1/entregas");
-      await userEvent.setup().click(await screen.findByRole("button", { name: /^Aprovar$/ }));
-      await waitFor(() =>
-        expect(h.rpc).toHaveBeenCalledWith("portal_aprovar_entrega", { p_token: "tok", p_entrega_id: "en1" })
-      );
-      expect(h.toastSuccess).toHaveBeenCalledWith("Entregável aprovado");
+  describe("aba Arquivos", () => {
+    it("o menu do projeto tem a aba Arquivos e ela abre o conteúdo de arquivos", async () => {
+      renderPage("/cliente/projeto/p1/arquivos");
+      expect(await screen.findByTestId("aba-arquivos")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Arquivos/ })).toHaveAttribute("href", "/cliente/projeto/p1/arquivos");
     });
 
-    it("erro ao aprovar mostra mensagem amigável", async () => {
-      h.rpcs.portal_aprovar_entrega = { data: null, error: { message: "entrega de outro cliente" } };
-      renderPage("/cliente/projeto/p1/entregas");
-      await userEvent.setup().click(await screen.findByRole("button", { name: /^Aprovar$/ }));
-      await waitFor(() =>
-        expect(h.toastError).toHaveBeenCalledWith("Não foi possível aprovar", {
-          description: "Tente novamente em instantes ou fale com o escritório.",
-        })
-      );
+    it("a Visão Geral não repete o bloco de arquivos", async () => {
+      renderPage("/cliente/projeto/p1");
+      await screen.findByText("Residência Seed");
+      expect(screen.queryByTestId("aba-arquivos")).not.toBeInTheDocument();
     });
+  });
 
-    it("solicitar revisão exige texto e envia aparado", async () => {
-      renderPage("/cliente/projeto/p1/entregas");
-      const user = userEvent.setup();
-      await user.click(await screen.findByRole("button", { name: /Solicitar revisão/ }));
-      const enviar = screen.getAllByRole("button", { name: /Solicitar revisão/ }).at(-1)!;
-      expect(enviar).toBeDisabled();
-      await user.type(screen.getByPlaceholderText("Descreva o que precisa ser revisado..."), "   ");
-      expect(enviar).toBeDisabled();
-      await user.type(screen.getByPlaceholderText("Descreva o que precisa ser revisado..."), "Ajustar cotas  ");
-      await user.click(enviar);
-      await waitFor(() =>
-        expect(h.rpc).toHaveBeenCalledWith("portal_solicitar_revisao_entrega", {
-          p_token: "tok",
-          p_entrega_id: "en1",
-          p_resposta: "Ajustar cotas",
-        })
-      );
-    });
+  it("botão Falar com o escritório abre a conversa do projeto", async () => {
+    h.rpcs.portal_listar_mensagens = { data: [], error: null };
+    renderPage("/cliente/projeto/p1");
+    await userEvent.setup().click(await screen.findByRole("button", { name: /Falar com o escritório/ }));
+    expect(await screen.findByText("Conversa com o escritório")).toBeInTheDocument();
+    expect(h.rpc).toHaveBeenCalledWith(
+      "portal_listar_mensagens",
+      expect.objectContaining({ p_token: "tok", p_projeto_id: "p1" })
+    );
+  });
 
-    it("falha ao listar entregas mostra aviso", async () => {
-      h.rpcs.portal_listar_entregas = { data: null, error: { message: "boom" } };
-      renderPage("/cliente/projeto/p1/entregas");
-      expect(await screen.findByText(/Não foi possível carregar as entregas agora/)).toBeInTheDocument();
-    });
-
-    it("sem entregas mostra estado vazio", async () => {
-      h.rpcs.portal_listar_entregas = { data: [], error: null };
-      renderPage("/cliente/projeto/p1/entregas");
-      expect(await screen.findByText("Nenhuma entrega disponível")).toBeInTheDocument();
-    });
+  it("não há aba Entregas no portal", async () => {
+    renderPage("/cliente/projeto/p1");
+    await screen.findByText("Residência Seed");
+    expect(screen.queryByRole("link", { name: /Entregas/ })).not.toBeInTheDocument();
   });
 
   it("aba Financeiro lista parcelas e resumo", async () => {

@@ -17,7 +17,7 @@ Se algum dado de valor não veio porque o perfil de quem pergunta não vê dinhe
 Se um item trouxer "acao_sugerida" ou for uma pendência, feche com uma frase oferecendo o próximo passo (por exemplo: "Se quiser, marco como recebida: é só pedir.").`;
 
 export function respostaPrompt(agente: Agente): string {
-  const base = `Você é o ${AGENTE_LABEL[agente]} do Pilar, um copiloto para escritórios de engenharia.
+  const base = `Você é o ${AGENTE_LABEL[agente]} da Pilar, um copiloto para escritórios de engenharia.
 Responda à pergunta do usuário de forma direta, clara e em português do Brasil, usando SOMENTE os dados fornecidos.
 ${REGRAS_RESPOSTA}
 Responda APENAS em JSON no formato {"resposta": "<texto>"}.`;
@@ -31,7 +31,7 @@ Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (
 // Variante do prompt de resposta para o modo STREAMING: pede TEXTO PURO (sem JSON),
 // para que o token-a-token chegue como prosa legível ao usuário.
 export function respostaPromptStream(agente: Agente): string {
-  const base = `Você é o ${AGENTE_LABEL[agente]} do Pilar, um copiloto para escritórios de engenharia.
+  const base = `Você é o ${AGENTE_LABEL[agente]} da Pilar, um copiloto para escritórios de engenharia.
 Responda à pergunta do usuário em TEXTO PURO (sem JSON, sem blocos de código), de forma direta, clara e em português do Brasil, usando SOMENTE os dados fornecidos.
 ${REGRAS_RESPOSTA}`;
   if (agente === "geral") {

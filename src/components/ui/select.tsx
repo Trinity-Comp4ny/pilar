@@ -10,6 +10,9 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
+/** Tamanho de fonte passado pelo chamador (seletor compacto de linha, chip, célula de tabela). */
+const TAMANHO_EXPLICITO = /(^|\s)text-(xs|sm|\[\d+(\.\d+)?px\])(\s|$)/;
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
@@ -17,7 +20,11 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm max-md:text-base ring-offset-background placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      // 16 px no celular só no seletor de formulário, para acompanhar os campos. Quem pede
+      // tamanho próprio (status da disciplina, prioridade na tabela) mantém: o `max-md:text-base`
+      // ganhava do `text-2xs` e deixava esses seletores maiores que o texto ao redor.
+      !TAMANHO_EXPLICITO.test(className ?? "") && "max-md:text-base",
       className
     )}
     {...props}

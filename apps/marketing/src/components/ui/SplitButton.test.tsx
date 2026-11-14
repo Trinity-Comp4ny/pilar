@@ -8,7 +8,7 @@ import { SplitButton } from "./SplitButton";
 beforeAll(() => prepararAmbiente());
 
 describe("SplitButton", () => {
-  it("destino fora do Pilar (agenda da demo) abre em nova aba, sem opener", () => {
+  it("destino fora da Pilar (agenda da demo) abre em nova aba, sem opener", () => {
     renderNaRota(<SplitButton href={DEMO_URL}>Agendar demonstração</SplitButton>);
     const link = screen.getByRole("link", { name: /Agendar demonstração/ });
     expect(link).toHaveAttribute("href", DEMO_URL);
@@ -26,7 +26,7 @@ describe("SplitButton", () => {
     }
   );
 
-  it("domínio parecido que não é do Pilar conta como externo", () => {
+  it("domínio parecido que não é da Pilar conta como externo", () => {
     renderNaRota(<SplitButton href="https://pilarsoft.com.br.exemplo.com/x">Ir</SplitButton>);
     expect(screen.getByRole("link", { name: /Ir/ })).toHaveAttribute("target", "_blank");
   });

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { useState, type ReactNode } from "react";
 import { sb } from "@/pages/financeiro/testing/supabaseMock";
 
@@ -198,6 +199,7 @@ vi.mock("@/pages/projetos/components/ProjetosFilterBar", () => ({
   },
 }));
 vi.mock("@/pages/projetos/components/ProjetosKPIs", () => ({
+  ProjetosKPIsResumo: () => <span data-testid="kpis-resumo" />,
   ProjetosKPIs: ({
     onFilterAtraso,
     onFilterProximos,
@@ -471,12 +473,19 @@ const PROJETOS = [
   },
 ];
 
-function abrir() {
+function Url() {
+  return <span data-testid="url">{useLocation().search}</span>;
+}
+
+function abrir(url = "/projetos") {
   const client = new QueryClient();
   const invalidate = vi.spyOn(client, "invalidateQueries");
   render(
     <QueryClientProvider client={client}>
-      <ProjetosKanban />
+      <MemoryRouter initialEntries={[url]}>
+        <ProjetosKanban />
+        <Url />
+      </MemoryRouter>
     </QueryClientProvider>
   );
   return { invalidate };
@@ -531,6 +540,27 @@ describe("Projetos: quadro e filtros", () => {
     abrir();
     fireEvent.click(screen.getByRole("button", { name: botao }));
     expect(visiveis()).toEqual(esperado);
+  });
+
+  it("filtro de prioridade olha a disciplina, não só o projeto", () => {
+    ctx.projetos = [
+      ...PROJETOS,
+      {
+        id: "p4",
+        nome: "Clínica Gama",
+        cliente_id: "c4",
+        prioridade: "Baixa",
+        status: "Em andamento",
+        etapa_id: "e1",
+        disciplinas: [{ disciplina: "Hidráulica", responsavel_id: "pe3", prioridade: "Alta" }],
+      },
+    ];
+    abrir();
+    fireEvent.click(screen.getByRole("button", { name: "f-prioridade" }));
+    const nomes = ["Torre Alfa", "Casa Beta", "Galpão Órfão", "Clínica Gama"].filter(
+      (n) => within(screen.getByTestId("kanban")).queryByText(n) !== null
+    );
+    expect(nomes).toEqual(["Torre Alfa", "Clínica Gama"]);
   });
 
   it("sem resultado mostra o vazio de filtro e limpar volta tudo", () => {
@@ -754,5 +784,18 @@ describe("Projetos: colunas", () => {
     fireEvent.click(screen.getByRole("button", { name: "excluir-Vazia" }));
     fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não deu para excluir a coluna"));
+  });
+
+  it("busca rápida: ?new=1 abre o formulário de projeto novo e sai da URL", () => {
+    abrir("/projetos?new=1");
+    expect(screen.getByText("form:novo")).toBeInTheDocument();
+    expect(screen.getByTestId("url")).toBeEmptyDOMElement();
+  });
+
+  it("busca rápida: sem permissão de criar não abre o formulário", () => {
+    ctx.podeEditar = false;
+    abrir("/projetos?new=1");
+    expect(screen.queryByText("form:novo")).not.toBeInTheDocument();
+    expect(screen.getByTestId("url")).toBeEmptyDOMElement();
   });
 });

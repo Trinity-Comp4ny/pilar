@@ -11,6 +11,7 @@ import {
   MapPin,
   Pencil,
   Scale,
+  Send,
   Trash2,
   User,
   Wallet,
@@ -34,6 +35,7 @@ import { sensivelClimaLabel } from "@/lib/obras";
 import { cn } from "@/lib/utils";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraAcessosTab } from "../components/ObraAcessosTab";
+import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
@@ -119,6 +121,7 @@ export default function ObraDetalhePage() {
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
+    ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
     ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
 
@@ -159,31 +162,35 @@ export default function ObraDetalhePage() {
         </PageHeader>
       }
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-        <StatusBadge domain="obra" status={obra.status} />
-        {obra.projeto?.nome && (
-          <Link to={`/projetos/${obra.projeto.id}`} className="underline-offset-2 hover:underline">
-            {obra.projeto.nome}
-          </Link>
-        )}
-        <span className="inline-flex items-center gap-1.5">
-          <User className="h-3.5 w-3.5" />
-          {obra.responsavel?.nome ?? "Sem responsável"}
-        </span>
-        {(obra.cidade || obra.localizacao) && (
+      {/* Dados da obra só na Visão: nas outras abas eram 40 px (3 linhas no celular) repetidos
+          acima do conteúdo da aba. O nome já está no cabeçalho (auditoria, 2026-11). */}
+      {tab === "timeline" && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <StatusBadge domain="obra" status={obra.status} />
+          {obra.projeto?.nome && (
+            <Link to={`/projetos/${obra.projeto.id}`} className="underline-offset-2 hover:underline">
+              {obra.projeto.nome}
+            </Link>
+          )}
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5" />
-            {obra.localizacao || obra.cidade}
+            <User className="h-3.5 w-3.5" />
+            {obra.responsavel?.nome ?? "Sem responsável"}
           </span>
-        )}
-        {(obra.data_inicio_prevista || obra.data_fim_prevista) && (
-          <span className="inline-flex items-center gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            {obra.data_inicio_prevista ? formatDate(obra.data_inicio_prevista) : "?"} —{" "}
-            {obra.data_fim_prevista ? formatDate(obra.data_fim_prevista) : "?"}
-          </span>
-        )}
-      </div>
+          {(obra.cidade || obra.localizacao) && (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" />
+              {obra.localizacao || obra.cidade}
+            </span>
+          )}
+          {(obra.data_inicio_prevista || obra.data_fim_prevista) && (
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarClock className="h-3.5 w-3.5" />
+              {obra.data_inicio_prevista ? formatDate(obra.data_inicio_prevista) : "?"} —{" "}
+              {obra.data_fim_prevista ? formatDate(obra.data_fim_prevista) : "?"}
+            </span>
+          )}
+        </div>
+      )}
 
       {alertasClima.length > 0 && (
         <div className="space-y-1.5 rounded-xl border border-warning-soft bg-warning-soft/40 p-3">
@@ -237,6 +244,11 @@ export default function ObraDetalhePage() {
         {showConta && (
           <TabsContent value="conta">
             <ObraContaTab obra={obra} canEdit={canEdit} />
+          </TabsContent>
+        )}
+        {obra.modelo_cobranca === "administracao" && (
+          <TabsContent value="cliente">
+            <SolicitacoesDoCliente obraId={obra.id} />
           </TabsContent>
         )}
         {canEdit && (

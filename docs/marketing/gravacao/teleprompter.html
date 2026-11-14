@@ -1,0 +1,83 @@
+<title>Teleprompter Pilar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
+<style>
+/* Ferramenta de leitura: barra de controle no topo, texto grande rolando, tudo a uma mão no celular. */
+:root{
+  --bg:#F7F7F5; --fg:#1A1A1A; --soft:#5F6572; --line:#DEDFDA; --panel:#FFFFFF; --accent:#A4EC86; --accent-ink:#1A1A1A; --cue:#2F6B1C;
+  --display:"Geist", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E100E;--fg:#F4F4F0;--soft:#9AA096;--line:#2A2E29;--panel:#171A16;--accent:#A4EC86;--accent-ink:#1A1A1A;--cue:#A4EC86;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E100E;--fg:#F4F4F0;--soft:#9AA096;--line:#2A2E29;--panel:#171A16;--accent:#A4EC86;--accent-ink:#1A1A1A;--cue:#A4EC86;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--display);margin:0}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+select,button,input[type=range]{font:inherit}
+select{min-width:0;flex:1 1 220px;max-width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:15px}
+button{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:10px 16px;font-size:15px;font-weight:500;cursor:pointer}
+button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600;min-width:96px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ctl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--soft)}
+.ctl input{width:110px;accent-color:var(--accent)}
+.stage{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28vh 70vh;max-width:44rem;margin:0 auto}
+.hook{font-size:.55em;color:var(--soft);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.2em;font-weight:500}
+.line{font-size:1em;line-height:1.38;font-weight:500;letter-spacing:-.01em;margin:0 0 1.1em;text-wrap:pretty}
+.cue{display:inline-block;font-size:.42em;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--cue);border:1.5px solid var(--cue);border-radius:999px;padding:.2em .7em;margin-bottom:.5em}
+.guide{position:fixed;left:0;right:0;top:34vh;height:0;border-top:2px dashed var(--accent);opacity:.55;pointer-events:none}
+.count{position:fixed;inset:0;display:grid;place-items:center;font-size:30vw;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--bg) 70%,transparent);z-index:8}
+.tip{font-size:13px;color:var(--soft);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px;border-bottom:1px solid var(--line);background:var(--panel)}
+@media (prefers-reduced-motion: reduce){.count{transition:none}}
+</style>
+<div class="bar">
+  <select id="roteiro" aria-label="Roteiro"></select>
+  <button class="go" id="play">Começar</button>
+  <button id="voltar" aria-label="Voltar ao início">Do início</button>
+  <label class="ctl" for="vel">Velocidade <input id="vel" type="range" min="10" max="90" value="38"></label>
+  <label class="ctl" for="tam">Letra <input id="tam" type="range" min="26" max="64" value="40"></label>
+</div>
+<div class="tip">Olhe para a lente, leia na linha tracejada. Uma fala por respiração; se errar, pause e recomece a fala.</div>
+<div class="guide" aria-hidden="true"></div>
+<main class="stage" id="stage"></main>
+<div class="count" id="count" hidden>3</div>
+<script>
+const ROTEIROS = [{"id": "fala-01-por-que-construo", "hook": "Por que eu estou construindo a Pilar", "lines": [{"t": "Eu vi muito escritório de engenharia bom perdendo dinheiro sem perceber.", "show": null, "det": ""}, {"t": "A proposta ficava no Word, o controle no Excel e a obra no grupo do WhatsApp.", "show": "lista", "det": "Proposta no Word, Controle no Excel, Obra no WhatsApp"}, {"t": "E o lucro do projeto só aparecia quando o projeto já tinha acabado.", "show": null, "det": ""}, {"t": "A Pilar junta tudo isso num lugar só, e mostra a margem enquanto ainda dá para agir.", "show": "tela", "det": "A margem de cada projeto, durante"}, {"t": "Eu construo isso porque quem projeta merece ganhar pelo que projeta.", "show": null, "det": ""}]}, {"id": "fala-02-por-escritorio", "hook": "Por que a Pilar não cobra por usuário", "lines": [{"t": "Quase todo sistema cobra por usuário. A gente decidiu não cobrar.", "show": null, "det": ""}, {"t": "Porque o escritório cresce, e o estagiário, o mestre de obras e o sócio precisam estar no mesmo sistema.", "show": "lista", "det": "Estagiário, Mestre de obras, Sócio"}, {"t": "Cobrar por cabeça faz o escritório deixar gente de fora. E aí volta a planilha.", "show": null, "det": ""}, {"t": "Então todo plano tem usuários ilimitados, a partir de duzentos e noventa e nove reais por mês.", "show": "numero", "det": "R$ 299"}, {"t": "O plano muda quanto, nunca o quê.", "show": null, "det": ""}]}, {"id": "fala-03-ia-nao-aprova", "hook": "A IA da Pilar não aprova nada", "lines": [{"t": "Muita gente me pergunta se dá para confiar em IA no financeiro do escritório.", "show": null, "det": ""}, {"t": "Na Pilar, a IA prepara. Você conta o que aconteceu e ela monta o lançamento.", "show": "tela", "det": "A IA prepara"}, {"t": "O sistema confere a conta: o projeto, o valor, a parcela.", "show": "lista", "det": "Projeto pelo nome, Valor do contrato, Parcela calculada"}, {"t": "E nada grava sem o seu ok. Quem aprova é você.", "show": null, "det": ""}, {"t": "É assim que dá para usar IA sem perder o controle.", "show": null, "det": ""}]}, {"id": "fala-04-nao-e-interiores", "hook": "Engenharia não é interiores", "lines": [{"t": "Quase todo conteúdo de gestão de escritório no Instagram é de arquitetura de interiores.", "show": null, "det": ""}, {"t": "Mas quem faz estrutural, elétrico e hidrossanitário vende por disciplina, mede hora e acompanha a obra.", "show": "lista", "det": "Vende por disciplina, Mede hora, Acompanha a obra"}, {"t": "É um negócio diferente, com problemas diferentes.", "show": null, "det": ""}, {"t": "A Pilar foi feita para esse escritório: disciplina, prazo, responsável e lucro de cada projeto.", "show": "tela", "det": "Cada projeto, por disciplina"}, {"t": "Se você é desse mundo, me segue que o conteúdo é para você.", "show": null, "det": ""}]}, {"id": "fala-05-margem-no-fim", "hook": "O dia em que a margem apareceu no fim", "lines": [{"t": "Imagina um projeto que parecia ótimo: contrato bom, cliente bom.", "show": null, "det": ""}, {"t": "Aí veio uma revisão sem aditivo, uma compatibilização refeita, uma versão errada.", "show": "lista", "det": "+60 h de revisão, +40 h de compatibilização, +30 h de versão errada"}, {"t": "No fim, o lucro caiu de vinte e cinco para seis por cento. E ninguém viu acontecer.", "show": "numero", "det": "6%"}, {"t": "Na Pilar, a hora real aparece contra o orçado enquanto o projeto anda.", "show": "tela", "det": "Hora real contra o orçado"}, {"t": "Descobrir no fim não adianta. Tem que ser durante.", "show": null, "det": ""}]}, {"id": "fala-06-aditivo-pronto", "hook": "O aditivo que chega pronto", "lines": [{"t": "Pedir aditivo é a parte mais chata do projeto. Ninguém gosta.", "show": null, "det": ""}, {"t": "Na Pilar, quando o projeto passa do orçamento de horas, o aditivo já chega montado.", "show": "tela", "det": "Aditivo pronto para aprovar"}, {"t": "Ele cita as despesas e os apontamentos que sustentam cada valor.", "show": null, "det": ""}, {"t": "Você revisa, aprova e manda para o cliente com a base na mão.", "show": null, "det": ""}, {"t": "Aditivo com base não parece cobrança. Parece profissionalismo.", "show": null, "det": ""}]}, {"id": "fala-07-diario-audio", "hook": "Diário de obra falado", "lines": [{"t": "O mestre de obras não vai digitar relatório. E tudo bem.", "show": null, "det": ""}, {"t": "Ele grava um áudio contando o dia, e a Pilar organiza o registro.", "show": "tela", "det": "O áudio vira o registro do dia"}, {"t": "O que avançou, o que ficou pendente, quantas pessoas, o clima.", "show": "lista", "det": "O que avançou, O que ficou pendente, Efetivo e clima"}, {"t": "O registro nasce interno e só vai para o cliente quando você liberar.", "show": null, "det": ""}, {"t": "Menos grupo de WhatsApp, mais obra documentada.", "show": null, "det": ""}]}, {"id": "fala-08-o-que-cortei", "hook": "Cortei uma funcionalidade que dois clientes pediram", "lines": [{"t": "Essa semana eu disse não para uma funcionalidade que dois clientes pediram.", "show": null, "det": ""}, {"t": "Não porque era ruim. Mas porque ela resolvia o problema de dois, e complicava a vida de todos.", "show": null, "det": ""}, {"t": "Toda funcionalidade nova é uma tela a mais para quem só quer saber se o projeto dá lucro.", "show": null, "det": ""}, {"t": "Eu prefiro uma Pilar que faz menos coisas, mas faz direito.", "show": null, "det": ""}, {"t": "E você, já disse não para um cliente? Me conta aqui.", "show": null, "det": ""}]}, {"id": "fala-09-ja-uso-planilha", "hook": "“Eu já uso planilha. Por que mudar?”", "lines": [{"t": "Essa é a pergunta que eu mais ouço. E planilha funciona, até um ponto.", "show": null, "det": ""}, {"t": "Funciona enquanto uma pessoa cuida dela. Quando o escritório cresce, vira cinco versões.", "show": "lista", "det": "Controle_v5, Controle_FINAL, Controle_FINAL_v7 (2)"}, {"t": "E a planilha não avisa nada. Não avisa a parcela atrasada, nem o projeto que passou do orçamento.", "show": null, "det": ""}, {"t": "A Pilar avisa, e a informação entra uma vez só.", "show": "tela", "det": "O resumo da semana, pronto"}, {"t": "A planilha guarda. O sistema trabalha.", "show": null, "det": ""}]}, {"id": "fala-10-chuva", "hook": "Quem marcou a concretagem para o dia da chuva?", "lines": [{"t": "Toda obra já perdeu uma concretagem para a chuva.", "show": null, "det": ""}, {"t": "Na Pilar, você marca a tarefa como sensível ao clima.", "show": "tela", "det": "Tarefa sensível ao clima"}, {"t": "E a Pilar cruza o cronograma com a previsão do local da obra.", "show": "tela", "det": "Aviso antes, com o motivo"}, {"t": "Se o dia tem chance alta de chuva, você é avisado antes, com o motivo.", "show": null, "det": ""}, {"t": "Quem decide reprogramar é você. Mas agora você decide sabendo.", "show": null, "det": ""}]}, {"id": "fala-11-portal-cliente", "hook": "O cliente que liga toda semana", "lines": [{"t": "Todo escritório tem aquele cliente que liga toda semana para saber como está.", "show": null, "det": ""}, {"t": "E alguém para o que está fazendo para montar a resposta.", "show": null, "det": ""}, {"t": "Na Pilar, o cliente acompanha pelo portal, com um link.", "show": "lista", "det": "Andamento do projeto, Diário da obra liberado, Sem precisar ligar"}, {"t": "Ele vê só o que você liberar.", "show": null, "det": ""}, {"t": "O cliente fica mais tranquilo, e o seu dia volta a ser seu.", "show": null, "det": ""}]}, {"id": "fala-12-respondendo", "hook": "Respondendo: “a IA vai substituir o engenheiro?”", "lines": [{"t": "Recebi essa pergunta nos comentários e quero responder com calma.", "show": null, "det": ""}, {"t": "Não. A IA não assina projeto, não assina ART e não decide nada sozinha.", "show": "lista", "det": "Não assina projeto, Não assina ART, Não decide sozinha"}, {"t": "O que ela faz é tirar do seu caminho o trabalho que não é engenharia.", "show": null, "det": ""}, {"t": "Lançamento, aditivo, resumo da semana. Ela prepara, você aprova.", "show": "tela", "det": "A IA prepara, você aprova"}, {"t": "Manda a sua pergunta aqui que eu respondo no próximo vídeo.", "show": null, "det": ""}]}];
+const sel = document.getElementById("roteiro"), stage = document.getElementById("stage");
+const play = document.getElementById("play"), vel = document.getElementById("vel"), tam = document.getElementById("tam");
+const count = document.getElementById("count");
+const CUE = { tela: "a tela entra", numero: "o número entra", lista: "a lista entra" };
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+ROTEIROS.forEach((r, i) => { const o = document.createElement("option"); o.value = i; o.textContent = `${i + 1}. ${r.hook}`; sel.appendChild(o); });
+const load = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const save = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+sel.value = load("tp-roteiro") ?? "0"; vel.value = load("tp-vel") ?? vel.value; tam.value = load("tp-tam") ?? tam.value;
+function render() {
+  const r = ROTEIROS[+sel.value] || ROTEIROS[0];
+  stage.style.fontSize = tam.value + "px";
+  stage.innerHTML = `<div class="hook">${esc(r.hook)}</div>` + r.lines.map((l) =>
+    `<p class="line">${l.show ? `<span class="cue">${CUE[l.show]}${l.det ? ": " + esc(l.det) : ""}</span><br>` : ""}${esc(l.t)}</p>`).join("");
+}
+let running = false, last = 0, acc = 0, lock = null;
+function step(ts) {
+  if (!running) return;
+  if (last) { acc += ((ts - last) / 1000) * +vel.value; const px = Math.floor(acc); if (px) { window.scrollBy(0, px); acc -= px; } }
+  last = ts;
+  if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) { stop(); return; }
+  requestAnimationFrame(step);
+}
+async function start() {
+  count.hidden = false;
+  for (const n of [3, 2, 1]) { count.textContent = n; await new Promise((r) => setTimeout(r, 800)); }
+  count.hidden = true; running = true; last = 0; play.textContent = "Pausar"; requestAnimationFrame(step);
+  try { lock = await navigator.wakeLock?.request("screen"); } catch {}
+}
+function stop() { running = false; play.textContent = "Continuar"; try { lock?.release(); } catch {} }
+play.addEventListener("click", () => (running ? stop() : start()));
+document.getElementById("voltar").addEventListener("click", () => { stop(); play.textContent = "Começar"; window.scrollTo(0, 0); });
+sel.addEventListener("change", () => { save("tp-roteiro", sel.value); stop(); play.textContent = "Começar"; render(); window.scrollTo(0, 0); });
+vel.addEventListener("input", () => save("tp-vel", vel.value));
+tam.addEventListener("input", () => { save("tp-tam", tam.value); stage.style.fontSize = tam.value + "px"; });
+document.addEventListener("keydown", (e) => { if (e.code === "Space" && e.target === document.body) { e.preventDefault(); running ? stop() : start(); } });
+render();
+</script>

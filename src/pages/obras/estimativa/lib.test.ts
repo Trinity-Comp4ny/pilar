@@ -13,27 +13,29 @@ import {
   lerPremissasDoBanco,
   fraseDoCenario,
   lerResultadoDoBanco,
-  mesPadraoDeInicio,
-  proximosMeses,
+  dataDoInicio,
+  dataPadraoDeInicio,
   resumoDaFicha,
+  rotuloInicio,
   rotuloMes,
 } from "./lib";
 
 const ficha = fichaInicial("2027-03");
 
-describe("meses", () => {
-  it("lista do mês atual para frente, virando o ano", () => {
-    const m = proximosMeses(new Date(Date.UTC(2026, 10, 20)), 4);
-    expect(m.map((x) => x.valor)).toEqual(["2026-11", "2026-12", "2027-01", "2027-02"]);
-    expect(m[2].rotulo).toBe("jan/2027");
+describe("início da obra", () => {
+  it("o início padrão é o dia 1 do mês seguinte ao de hoje", () => {
+    expect(dataPadraoDeInicio(new Date(Date.UTC(2026, 9, 19)))).toBe("2026-11-01");
+    expect(dataPadraoDeInicio(new Date(Date.UTC(2026, 11, 31)))).toBe("2027-01-01");
   });
 
-  it("o início padrão é o mês seguinte ao de hoje", () => {
-    expect(mesPadraoDeInicio(new Date(Date.UTC(2026, 9, 19)))).toBe("2026-11");
-    expect(mesPadraoDeInicio(new Date(Date.UTC(2026, 11, 31)))).toBe("2027-01");
+  it("ficha antiga, só com o mês, vira o dia 1", () => {
+    expect(dataDoInicio("2027-03")).toBe("2027-03-01");
+    expect(dataDoInicio("2025-08-14")).toBe("2025-08-14");
   });
 
-  it("rótulo do mês", () => {
+  it("rótulo do início: data completa ou mês da ficha antiga", () => {
+    expect(rotuloInicio("2025-08-14")).toBe("14/08/2025");
+    expect(rotuloInicio("2027-03")).toBe("mar/2027");
     expect(rotuloMes("2027-03")).toBe("mar/2027");
   });
 });
@@ -55,7 +57,7 @@ describe("erros da ficha", () => {
     const e = errosDaFicha({ ...ficha, area: 0, pavimentos: 0, inicio: "", subtipo: "" });
     expect(e.area).toBe("Informe a área construída");
     expect(e.pavimentos).toBe("Informe ao menos 1 pavimento");
-    expect(e.inicio).toBe("Escolha o mês de início");
+    expect(e.inicio).toBe("Escolha a data de início da obra");
     expect(e.subtipo).toBe("Escolha o subtipo da obra");
   });
 

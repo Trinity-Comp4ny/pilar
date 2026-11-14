@@ -3,6 +3,9 @@
 /** Injetado via `define` no vite.config.ts — commit sha do deploy (ou "dev" fora de build de prod). */
 declare const __SENTRY_RELEASE__: string;
 
+/** Injetado via `define` no vite.config.ts — instante ISO do build (mostrado em "Sobre a Pilar"). */
+declare const __BUILD_TIME__: string;
+
 /**
  * Injetado via `define` no vite.config.ts a partir de VERCEL_ENV: "production",
  * "preview" (staging/PR preview) ou "development" (local). Separa staging de

@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.3,
+   "dur": 2.531,
+   "say": "O mesmo escritório, antes e depois da Pilar.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 3.6,
+   "dur": 5.991,
+   "say": "A proposta aceita vira projeto. O lucro aparece enquanto dá para agir. E o cliente acompanha pelo portal.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 14.5,
+   "dur": 1.111,
+   "say": "Um sistema só.",
+   "ritmo": 1.0
+  }
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.5,
+   "dur": 2.311,
+   "say": "O seu controle de projetos, hoje.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 6.4,
+   "dur": 1.651,
+   "say": "Qual versão é a certa?",
+   "ritmo": 1.0
+  },
+  {
+   "t": 10.1,
+   "dur": 3.526,
+   "say": "Na Pilar, é uma versão só, na tela de todo mundo.",
+   "ritmo": 1.0
+  }
+ ]
+}

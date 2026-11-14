@@ -96,8 +96,8 @@ describe("LancamentosFilterBar: barra", () => {
   it("tipo pelo seletor de visualização", () => {
     const { onChange } = setup();
     const grupo = screen.getByRole("group", { name: "Tipo de lançamento" });
-    expect(within(grupo).getByRole("button", { name: /Todos/ })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(within(grupo).getByRole("button", { name: /Despesas/ }));
+    expect(within(grupo).getByRole("button", { name: /Tudo/ })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(within(grupo).getByRole("button", { name: /A pagar/ }));
     expect(onChange).toHaveBeenLastCalledWith({ tipo: "despesa" });
   });
 

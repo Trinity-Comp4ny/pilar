@@ -53,8 +53,9 @@ Opções consideradas:
 
 **Negativas / dívida assumida:**
 
-- O CUB depende de importação mensal manual (BEZ-13); esquecer deixa a faixa mais larga. Automação de coleta fica para
-  depois.
+- O CUB depende de importação mensal manual (BEZ-13); esquecer deixa a faixa mais larga. Desde 2026-11 o SINAPI e o CUB
+  são coletados sozinhos (portal da CBIC e portais estaduais, com SP e RS pelo portal próprio), e o atraso de
+  qualquer um dos dois abre issue (workflow `precos-referencia.yml`). UF sem fonte automática segue manual.
 - Percentuais por etapa e produtividade são médias do setor, não da empresa. A calibração com o histórico da empresa é
   a Fase 3.
 - O cálculo roda no cliente, então um usuário malicioso poderia gravar um snapshot adulterado na própria estimativa.

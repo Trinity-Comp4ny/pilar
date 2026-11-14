@@ -1,0 +1,36 @@
+name: Fechar issues resolvidas em staging
+
+# O `Closes #N` nativo do GitHub só dispara quando o commit chega na branch DEFAULT
+# (main). Aqui todo PR entra em staging, então as issues ficavam abertas e o
+# CLAUDE.md mandava fechar à mão depois de cada merge. Este workflow faz o que o
+# GitHub faria: lê as mensagens dos commits que chegaram em staging e fecha as
+# issues citadas com close/closes/closed, fix/fixes/fixed ou resolve/resolves/resolved.
+#
+# Fecha só ISSUE aberta. Número que é PR, issue já fechada ou inexistente é ignorado.
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  fechar:
+    name: Fechar issues citadas nos commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout: scripts
+      - name: Fechar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+          # Mensagens de commit são conteúdo de quem escreveu o commit: entram por env
+          # e são lidas pelo jq, nunca interpoladas no script.
+          COMMITS: ${{ toJSON(github.event.commits) }}
+        run: scripts/fechar-issues-de-commits.sh
