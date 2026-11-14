@@ -4,11 +4,11 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import { useRestaurarFoco } from "@/components/ui/useRestaurarFoco";
 
 // Lazy: o gesto de arrastar só serve em tela de toque e fica fora do bundle de entrada (teto apertado).
 const AlcaArrastar = React.lazy(() => import("./AlcaArrastar").then((m) => ({ default: m.AlcaArrastar })));
-const TELA_DE_TOQUE = typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
 
 const Sheet = SheetPrimitive.Root;
 

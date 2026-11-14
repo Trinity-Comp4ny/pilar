@@ -1,13 +1,16 @@
 import { useRef, useState, type ReactNode } from "react";
+import { Archive, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { decidirDeslize, ehHorizontal, limitarDeslize } from "@/lib/gestos";
 import { haptico } from "@/lib/haptico";
 
-interface AcaoDeslize {
-  rotulo: string;
-  icone: ReactNode;
-  /** Fundo da ação: token semântico (ex.: "bg-success", "bg-destructive"). */
-  className: string;
+const TIPOS = {
+  lida: { rotulo: "Lida", icone: <CheckCheck className="h-4 w-4" />, className: "bg-chart-success" },
+  arquivar: { rotulo: "Arquivar", icone: <Archive className="h-4 w-4" />, className: "bg-primary" },
+} as const;
+
+export interface AcaoDeslize {
+  tipo: keyof typeof TIPOS;
   onAcionar: () => void;
 }
 
@@ -84,7 +87,8 @@ export function SwipeRowImpl({ children, acaoEsquerda, acaoDireita, className }:
     }
   };
 
-  const mostrando = dx > 0 ? acaoEsquerda : dx < 0 ? acaoDireita : undefined;
+  const escolhida = dx > 0 ? acaoEsquerda : dx < 0 ? acaoDireita : undefined;
+  const mostrando = escolhida && TIPOS[escolhida.tipo];
 
   return (
     <div className={cn("relative overflow-hidden", className)}>
