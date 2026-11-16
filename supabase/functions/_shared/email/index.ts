@@ -32,6 +32,7 @@ export {
   templateTrialAviso,
   templateTrialExpirado,
   templateAtivarPlanoRecibo,
+  templateBoasVindasAssinatura,
   templateRetencaoAviso,
   templateAvisoPlataforma,
   templateFeedbackRecebido,

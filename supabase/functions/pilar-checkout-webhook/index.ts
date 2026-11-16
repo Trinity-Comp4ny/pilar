@@ -20,6 +20,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
+import { sendEmail, templateBoasVindasAssinatura } from "../_shared/email/index.ts";
 import { autorizarWebhook } from "./autorizacao.ts";
 import { dataPagamento, planejarWebhook } from "./plano.ts";
 
@@ -262,6 +263,35 @@ serve(
             .from("pilar_pending_signups")
             .update({ invite_dispatched_at: new Date().toISOString() })
             .eq("id", signup.id);
+
+          // Boas-vindas com o resumo do que foi contratado. É só cortesia: falha aqui
+          // não pode refazer o convite nem derrubar o webhook.
+          try {
+            const { data: contrato } = await admin
+              .from("pilar_pending_signups")
+              .select("billing_cycle, plan_id")
+              .eq("id", signup.id)
+              .maybeSingle();
+            const { data: plano } = contrato?.plan_id
+              ? await admin.from("pilar_subscription_plans").select("nome").eq("id", contrato.plan_id).maybeSingle()
+              : { data: null };
+            const planoNome = plano?.nome ?? "Pilar";
+            const ciclo = contrato?.billing_cycle === "yearly" ? "yearly" : "monthly";
+            await sendEmail({
+              classe: "plataforma",
+              tipo: "checkout_boas_vindas",
+              to: signup.email,
+              ...templateBoasVindasAssinatura({
+                nome: signup.nome,
+                empresaNome: signup.company_name,
+                planoNome,
+                ciclo,
+                emailAcesso: signup.email,
+              }),
+            });
+          } catch (welcomeEx) {
+            log.warn("boas-vindas do checkout não enviadas", { signup_id: signup.id, error: String(welcomeEx) });
+          }
         } catch (inviteEx) {
           const errMsg = inviteEx instanceof Error ? inviteEx.message : "invite dispatch failed";
           log.error("invite dispatch failed — will retry via cron", inviteEx, {
