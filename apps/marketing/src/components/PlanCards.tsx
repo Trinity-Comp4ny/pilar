@@ -31,7 +31,7 @@ export function PlanCards({ contexto }: { contexto: string }) {
           >
             {p.destaque && (
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-ink">
-                Mais escolhido
+                Recomendado
               </span>
             )}
 

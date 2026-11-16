@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 import { act, cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
+import { matchPath } from "react-router-dom";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { limparCookies, prepararAmbiente, renderNaRota } from "../test/ambiente";
 import { APP_URL } from "../config";
-import { DEMO_URL } from "../lib/contato";
+import { DEMO_URL, WHATSAPP_COMERCIAL_URL } from "../lib/contato";
 import { MODULOS } from "../lib/modules";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { CONSENT_REVIEW_REQUESTED_EVENT } from "../cookieConsent";
@@ -19,6 +20,7 @@ import { Home } from "../pages/Home";
 import { ModulePage } from "../pages/ModulePage";
 import { ComparativoPage } from "../pages/ComparativoPage";
 import { Planos } from "../pages/Planos";
+import { PublicoPage } from "../pages/PublicoPage";
 import { NotFound } from "../pages/NotFound";
 
 const trackCta = vi.hoisted(() => vi.fn());
@@ -48,7 +50,10 @@ function confereDestinos(raiz: HTMLElement) {
     const href = a.getAttribute("href")!;
     if (href.startsWith("/")) {
       const caminho = href.split("#")[0] || "/";
-      expect(ROTAS, `link "${a.textContent}" para ${href}`).toContain(caminho);
+      expect(
+        ROTAS.some((rota) => matchPath({ path: rota, end: true }, caminho)),
+        `link "${a.textContent}" para ${href}`
+      ).toBe(true);
       continue;
     }
     const conhecido = href === DEMO_URL || href.startsWith(`${APP_URL}/`) || href.startsWith("https://wa.me/");
@@ -223,6 +228,8 @@ describe("CTAs para a demonstração em toda página", () => {
     ["fecho (CTASection)", <CTASection />, "/"],
     ["home inteira", <Home />, "/"],
     ["/planos", <Planos />, "/planos"],
+    ["/engenharia", <PublicoPage slug="engenharia" />, "/engenharia"],
+    ["/arquitetura", <PublicoPage slug="arquitetura" />, "/arquitetura"],
     ...MODULOS.map((m): [string, ReactElement, string] => [`/${m.slug}`, <ModulePage slug={m.slug} />, `/${m.slug}`]),
     ...COMPARATIVOS.map((c): [string, ReactElement, string] => [
       `/vs/${c.slug}`,
@@ -258,6 +265,30 @@ describe("CTAs para a demonstração em toda página", () => {
     expect(doApp.length).toBeGreaterThan(0);
     for (const a of doApp) expect(a).not.toHaveAttribute("target");
   });
+
+  it.each(["engenharia", "arquitetura"] as const)(
+    "/%s oferece demonstração, preserva o acesso aos preços e distingue o pedido de implantação",
+    async (slug) => {
+      renderNaRota(<PublicoPage slug={slug} />, `/${slug}`);
+      const demonstracao = screen.getByRole("link", { name: "Agendar demonstração" });
+      expect(demonstracao).toHaveAttribute("href", DEMO_URL);
+      demonstracao.addEventListener("click", (e) => e.preventDefault());
+      await userEvent.click(demonstracao);
+      expect(trackCta).toHaveBeenCalledWith("agende_demo", `publico_${slug}`);
+
+      for (const planos of screen.getAllByRole("link", { name: "Ver planos" })) {
+        expect(planos).toHaveAttribute("href", "/planos");
+      }
+
+      trackCta.mockClear();
+      const implantacao = screen.getByRole("link", { name: "Conversar sobre implantação" });
+      expect(implantacao).toHaveAttribute("href", WHATSAPP_COMERCIAL_URL);
+      implantacao.addEventListener("click", (e) => e.preventDefault());
+      await userEvent.click(implantacao);
+      expect(trackCta).toHaveBeenCalledWith("consultar_implantacao", `implantacao_${slug}`);
+      expect(trackCta).not.toHaveBeenCalledWith("agende_demo", expect.anything());
+    }
+  );
 });
 
 describe("páginas de módulo e comparação", () => {
