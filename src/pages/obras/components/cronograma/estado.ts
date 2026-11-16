@@ -22,3 +22,29 @@ export const ESTADO_LABEL: Record<Estado, string> = {
 };
 
 export const LEGENDA: EstadoFrente[] = ["em_andamento", "concluida", "atrasada", "futura"];
+
+export type NivelCor = "fase" | "etapa" | "servico" | "tarefa";
+
+/**
+ * Uma cor por nível (fase, etapa, serviço, tarefa) para a hierarquia ler de relance, na lista e no
+ * Gantt. O estado (atrasada, concluída) continua à mostra pela bolinha, pelo texto e pelo contorno da barra.
+ */
+export const NIVEL_COR: Record<NivelCor, string> = {
+  fase: "hsl(var(--c-ink-900))",
+  etapa: "hsl(var(--c-orange-500))",
+  servico: "hsl(var(--c-purple-500))",
+  tarefa: "hsl(var(--chart-success))",
+};
+
+export const NIVEL_NOME: Record<NivelCor, string> = {
+  fase: "Fase",
+  etapa: "Etapa",
+  servico: "Serviço",
+  tarefa: "Tarefa",
+};
+
+/** Contorno da barra por estado: atrasada chama atenção, concluída recua. */
+export const ESTADO_BARRA: Partial<Record<Estado, string>> = {
+  atrasada: "ring-2 ring-negative ring-offset-1",
+  concluida: "opacity-60",
+};

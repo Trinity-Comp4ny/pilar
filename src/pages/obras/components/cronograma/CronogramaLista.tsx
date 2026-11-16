@@ -1,3 +1,4 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -39,13 +40,19 @@ import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
 import type { PessoaOpcao } from "@/pages/meu-trabalho/hooks";
 import { EtiquetasCell, ResponsavelCell } from "@/pages/meu-trabalho/components/CelulasLista";
-import { ESTADO_FILL, ESTADO_LABEL } from "./estado";
+import { useFornecedoresLite } from "@/pages/obras/hooks/useFornecedoresLite";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { ESTADO_FILL, ESTADO_LABEL, NIVEL_COR } from "./estado";
 import type { CronogramaAcoes } from "./useCronogramaAcoes";
 
 type Arvore = NoArvore<ObraFrenteRow, ObraTarefa>;
 
 /** Colunas da lista no desktop; no mobile a linha vira nome + prazo + menu. */
 const GRID = "md:grid md:grid-cols-[minmax(0,1fr)_140px_110px_136px_136px_96px_32px] md:items-center md:gap-2";
+/** Com o financeiro ligado, entram as colunas Orçado e Realizado depois das Etiquetas. */
+const GRID_FIN =
+  "md:grid md:grid-cols-[minmax(0,1fr)_140px_110px_108px_108px_136px_136px_96px_32px] md:items-center md:gap-2";
+const gridDe = (comFinanceiro: boolean) => (comFinanceiro ? GRID_FIN : GRID);
 /** Recuo por nível: menor no mobile, senão o nome some em 390px. */
 const recuo = (profundidade: number, extra = 0) => `calc(var(--recuo) * ${profundidade} + ${extra}px)`;
 const SEM_CLIMA = "__nenhum__";
@@ -80,6 +87,8 @@ interface ListaProps {
   acoes: CronogramaAcoes;
   adicionando: Adicionando;
   setAdicionando: (a: Adicionando) => void;
+  /** Orçado e realizado de cada nó, quando quem vê tem acesso ao financeiro. Sem isso, sem as colunas. */
+  financeiro?: ReadonlyMap<string, { previsto: number; realizado: number }>;
 }
 
 export function CronogramaLista(props: ListaProps) {
@@ -90,8 +99,17 @@ export function CronogramaLista(props: ListaProps) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-black/5 bg-white [--recuo:10px] md:[--recuo:20px]">
-      <div className={cn(GRID, "hidden border-b bg-muted/30 px-3 py-2")}>
-        {["Fase, etapa, serviço e tarefa", "Responsável", "Etiquetas", "Início", "Fim", "Avanço", ""].map((c, i) => (
+      <div className={cn(gridDe(!!props.financeiro), "hidden border-b bg-muted/30 px-3 py-2")}>
+        {[
+          "Item",
+          "Responsável / prestador",
+          "Etiquetas",
+          ...(props.financeiro ? ["Orçado", "Realizado"] : []),
+          "Início",
+          "Fim",
+          "Avanço",
+          "",
+        ].map((c, i) => (
           <span key={i} className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
             {c}
           </span>
@@ -257,6 +275,7 @@ function NoLinha({
   canEdit,
   acoes,
   onExcluir,
+  financeiro,
 }: ListaProps & ComExcluir & { arvore: Arvore; profundidade: number; aberto: boolean; onNovoFilho: () => void }) {
   const { no, nivel } = arvore;
   const [editando, setEditando] = useState(false);
@@ -284,7 +303,12 @@ function NoLinha({
 
   return (
     <div
-      className={cn(GRID, "group flex min-h-11 items-center gap-2 border-b px-3 py-1.5", LINHA_CLASSE[nivel])}
+      className={cn(
+        gridDe(!!financeiro),
+        "group flex min-h-11 items-center gap-2 border-b border-l-4 px-3 py-1.5",
+        LINHA_CLASSE[nivel]
+      )}
+      style={{ borderLeftColor: NIVEL_COR[nivel] }}
       data-testid={`no-${no.id}`}
     >
       <div className="relative flex min-w-0 flex-1 items-center gap-1" style={{ paddingLeft: recuo(profundidade) }}>
@@ -297,9 +321,6 @@ function NoLinha({
         >
           {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-        <span className="hidden shrink-0 rounded bg-muted px-1.5 py-0.5 text-3xs font-medium uppercase tracking-wide text-muted-foreground md:inline">
-          {NIVEL_LABEL[nivel]}
-        </span>
         {editando ? (
           <NomeEditavel
             valor={no.nome}
@@ -335,8 +356,17 @@ function NoLinha({
         )}
       </div>
 
+      {nivel === "servico" ? (
+        <PrestadorDoServico
+          valor={(no as { fornecedor_id?: string | null }).fornecedor_id ?? null}
+          canEdit={canEdit}
+          onChange={(id) => acoes.atualizarNo({ id: no.id, fornecedor_id: id })}
+        />
+      ) : (
+        <span className="hidden md:block" />
+      )}
       <span className="hidden md:block" />
-      <span className="hidden md:block" />
+      {financeiro && <ValoresDoNo valores={financeiro.get(no.id)} />}
 
       <div className="hidden md:block">
         <DatePicker
@@ -407,6 +437,61 @@ function NoLinha({
   );
 }
 
+const SEM_PRESTADOR = "__nenhum__";
+
+/** Prestador padrão do serviço (o eletricista, o encanador de sempre): nome, ou seletor para quem edita. */
+function PrestadorDoServico({
+  valor,
+  canEdit,
+  onChange,
+}: {
+  valor: string | null;
+  canEdit: boolean;
+  onChange: (id: string | null) => void;
+}) {
+  const { data: fornecedores = [] } = useFornecedoresLite();
+  const nome = fornecedores.find((f) => f.id === valor)?.nome;
+  if (!canEdit) return <span className="hidden truncate text-xs text-muted-foreground md:block">{nome ?? "—"}</span>;
+  return (
+    <div className="hidden min-w-0 md:block">
+      <Select value={valor ?? SEM_PRESTADOR} onValueChange={(v) => onChange(v === SEM_PRESTADOR ? null : v)}>
+        <SelectTrigger className="h-7 px-2 text-xs" aria-label="Prestador do serviço">
+          <SelectValue placeholder="Prestador" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SEM_PRESTADOR}>Sem prestador</SelectItem>
+          {fornecedores.map((f) => (
+            <SelectItem key={f.id} value={f.id}>
+              {f.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+/** Orçado e realizado do nó (já somados dos filhos). Realizado acima do orçado fica em vermelho. */
+function ValoresDoNo({ valores }: { valores?: { previsto: number; realizado: number } }) {
+  const formatCurrency = useMoneyMask();
+  const estourou = !!valores && valores.previsto > 0 && valores.realizado > valores.previsto;
+  return (
+    <>
+      <span className="hidden truncate text-right text-xs tabular-nums text-muted-foreground md:block">
+        {valores && valores.previsto > 0 ? formatCurrency(valores.previsto) : "—"}
+      </span>
+      <span
+        className={cn(
+          "hidden truncate text-right text-xs tabular-nums md:block",
+          estourou ? "font-medium text-danger-strong" : "text-muted-foreground"
+        )}
+      >
+        {valores && valores.realizado > 0 ? formatCurrency(valores.realizado) : "—"}
+      </span>
+    </>
+  );
+}
+
 // --- Tarefa -----------------------------------------------------------------
 
 function TarefaLinha({
@@ -418,6 +503,7 @@ function TarefaLinha({
   servicos,
   caminho,
   onExcluir,
+  financeiro,
 }: ListaProps & ComExcluir & { tarefa: ObraTarefa; profundidade: number }) {
   const navigate = useNavigate();
   const [editando, setEditando] = useState(false);
@@ -445,7 +531,8 @@ function TarefaLinha({
 
   return (
     <div
-      className={cn(GRID, "group flex min-h-10 items-center gap-2 border-b px-3 py-1")}
+      className={cn(gridDe(!!financeiro), "group flex min-h-10 items-center gap-2 border-b border-l-4 px-3 py-1")}
+      style={{ borderLeftColor: NIVEL_COR.tarefa }}
       data-testid={`tarefa-${tarefa.id}`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2" style={{ paddingLeft: recuo(profundidade, 4) }}>
@@ -500,6 +587,12 @@ function TarefaLinha({
           onChange={(labels) => acoes.atualizarTarefa({ id: tarefa.id, labels })}
         />
       </div>
+      {financeiro && (
+        <>
+          <span className="hidden md:block" />
+          <span className="hidden md:block" />
+        </>
+      )}
       <div className="hidden md:block">
         <DatePicker
           value={tarefa.data_inicio ?? ""}
