@@ -49,7 +49,7 @@ test("lança despesa na conta da obra", async ({ page }) => {
   await page.getByText(nome).first().click();
   await expect(page.getByRole("heading", { name: nome }).first()).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole("tab", { name: "Conta da obra" }).click();
+  await page.getByRole("tab", { name: "Financeiro" }).click();
   await page.getByRole("button", { name: "Despesa", exact: true }).click();
 
   const dialog = page.getByRole("dialog", { name: "Nova despesa" });
