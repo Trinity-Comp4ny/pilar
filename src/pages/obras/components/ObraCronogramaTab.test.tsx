@@ -44,6 +44,13 @@ vi.mock("@/pages/meu-trabalho/hooks", () => ({
   useTarefaMutations: () => ({ atualizar: { mutateAsync: async () => {} } }),
 }));
 
+vi.mock("@/pages/obras/hooks/useFluxosObra", () => ({
+  useFluxosObra: () => ({ data: [] }),
+  useSalvarFluxoObra: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useExcluirFluxoObra: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+vi.mock("@/pages/obras/hooks/useFornecedoresLite", () => ({ useFornecedoresLite: () => ({ data: [] }) }));
+vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => false }) }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 
 function no(id: string, nivel: string, parent_id: string | null, campos: Partial<ObraFrenteRow> = {}): ObraFrenteRow {

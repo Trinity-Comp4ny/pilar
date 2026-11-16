@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
 import { CalendarClock, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,13 @@ import {
 } from "@/pages/obras/lib/obraArvore";
 import { GANTT_LABEL_W, GANTT_FRAME } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { desembolsoPorColuna } from "@/pages/obras/lib/custoPorPeriodo";
+import type { FisicoFinanceiro } from "@/pages/obras/lib/fisicoFinanceiro";
+import { achatarOrcado, type LinhaOrcado, type OrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
-import { ESTADO_FILL, ESTADO_LABEL, LEGENDA } from "./estado";
+import { ESTADO_BARRA, ESTADO_LABEL, NIVEL_COR, NIVEL_NOME, type NivelCor } from "./estado";
 import type { CronogramaAcoes } from "./useCronogramaAcoes";
 
 type Arvore = NoArvore<ObraFrenteRow, ObraTarefa>;
@@ -59,6 +64,9 @@ export function CronogramaGantt({
   canEdit,
   acoes,
   onIrParaLista,
+  orcado,
+  fisicoFinanceiro,
+  despesas,
 }: {
   fases: Arvore[];
   recolhidos: ReadonlySet<string>;
@@ -66,7 +74,14 @@ export function CronogramaGantt({
   canEdit: boolean;
   acoes: CronogramaAcoes;
   onIrParaLista: () => void;
+  /** Orçado e realizado por item (só para quem vê o financeiro): liga o custo ao cronograma. */
+  orcado?: OrcadoRealizado | null;
+  /** Físico-financeiro da obra (spec 165): a mesma conta da grade da aba Financeiro, com o ajuste manual. */
+  fisicoFinanceiro?: FisicoFinanceiro | null;
+  /** Despesas da obra, para o gasto por período. */
+  despesas?: ReadonlyArray<{ data: string; valor: number }>;
 }) {
+  const formatCurrency = useMoneyMask();
   const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -89,6 +104,23 @@ export function CronogramaGantt({
       colWidth: zoom === "weeks" ? 80 : isMobile ? LARGURA_MINIMA_MES_CELULAR_PX : 120,
     };
   }, [fases, zoom, isMobile]);
+  // Custo por item (para a linha da árvore) e por coluna (para a faixa de desembolso).
+  const custoDoNo = useMemo(() => {
+    const m = new Map<string, LinhaOrcado>();
+    if (orcado) achatarOrcado(orcado.raizes).forEach((l) => m.set(l.no.id, l));
+    return m;
+  }, [orcado]);
+  const custoColunas = useMemo(
+    () =>
+      fisicoFinanceiro
+        ? desembolsoPorColuna(
+            fisicoFinanceiro,
+            despesas ?? [],
+            columns.map((c) => ({ inicio: toIso(c.start), fim: toIso(c.end) }))
+          )
+        : null,
+    [fisicoFinanceiro, despesas, columns]
+  );
   const larguraDaLinhaDoTempo = useLarguraDoElemento(scrollRef);
   const reguaCurta = isMobile && zoom === "months";
   const passo = reguaCurta
@@ -105,6 +137,50 @@ export function CronogramaGantt({
     if (todayPct >= 0) scrollToToday();
   }, [todayPct, scrollToToday]);
 
+  // Quem contém quem: a faixa do pai (para desenhar) e o período que cada nó precisa cobrir (para travar).
+  const { faixaDoPai, limitesDe } = useMemo(() => {
+    const faixa = new Map<string, { start: Date; end: Date; nome: string; nivel: string } | null>();
+    const limites = new Map<
+      string,
+      {
+        pai: { start: Date; end: Date; nome: string; nivel: string } | null;
+        cobrir: { inicio: string; fim: string } | null;
+      }
+    >();
+    const visitar = (a: Arvore, pai: Arvore | null) => {
+      const paiPeriodo = pai?.periodoProprio ? intervalo(pai.periodoProprio.inicio, pai.periodoProprio.fim) : null;
+      const info = pai && paiPeriodo ? { ...paiPeriodo, nome: pai.no.nome, nivel: pai.nivel } : null;
+      faixa.set(`no:${a.no.id}`, info);
+      limites.set(`no:${a.no.id}`, {
+        pai:
+          pai && pai.periodoProprio
+            ? { ...intervalo(pai.periodoProprio.inicio, pai.periodoProprio.fim)!, nome: pai.no.nome, nivel: pai.nivel }
+            : null,
+        cobrir: unirPeriodos([
+          ...a.filhos.map((f) => f.periodo),
+          ...a.tarefas.map((t) => (t.data_inicio && t.prazo ? { inicio: t.data_inicio, fim: t.prazo } : null)),
+        ]),
+      });
+      for (const t of a.tarefas) {
+        faixa.set(
+          `tarefa:${t.id}`,
+          a.periodoProprio
+            ? { ...intervalo(a.periodoProprio.inicio, a.periodoProprio.fim)!, nome: a.no.nome, nivel: a.nivel }
+            : null
+        );
+        limites.set(`tarefa:${t.id}`, {
+          pai: a.periodoProprio
+            ? { ...intervalo(a.periodoProprio.inicio, a.periodoProprio.fim)!, nome: a.no.nome, nivel: a.nivel }
+            : null,
+          cobrir: null,
+        });
+      }
+      a.filhos.forEach((f) => visitar(f, a));
+    };
+    fases.forEach((f) => visitar(f, null));
+    return { faixaDoPai: faixa, limitesDe: limites };
+  }, [fases]);
+
   const { isSaving, isDragging, startDrag, getBarGeometry, shouldSuppressClick } = useGanttDrag<string>({
     timelineStart: tlStart,
     timelineEnd: tlEnd,
@@ -112,7 +188,34 @@ export function CronogramaGantt({
     enabled: canEdit,
     timelineRef,
     scrollRef,
-    onCommit: async (chave, { start, end }) => {
+    onCommit: async (chave, intervaloNovo) => {
+      let { start, end } = intervaloNovo;
+      const lim = limitesDe.get(chave);
+      // O filho fica dentro do pai: fora do período dele, a barra volta para a borda.
+      if (lim?.pai && (start < lim.pai.start || end > lim.pai.end)) {
+        const antes = `${toIso(start)} a ${toIso(end)}`;
+        start = start < lim.pai.start ? lim.pai.start : start;
+        end = end > lim.pai.end ? lim.pai.end : end;
+        if (start > end) start = end;
+        toast.info(
+          `Fica dentro d${lim.pai.nivel === "fase" ? "a" : "o"} ${NIVEL_NOME[lim.pai.nivel as NivelCor].toLowerCase()}`,
+          {
+            description: `"${lim.pai.nome}" vai de ${toIso(lim.pai.start)} a ${toIso(lim.pai.end)}. Ajustei (${antes}).`,
+          }
+        );
+      }
+      // O pai cobre os filhos: não dá para encolher a fase deixando uma etapa de fora.
+      if (lim?.cobrir) {
+        const ini = parseDate(lim.cobrir.inicio)!;
+        const fim = parseDate(lim.cobrir.fim)!;
+        if (start > ini || end < fim) {
+          start = start > ini ? ini : start;
+          end = end < fim ? fim : end;
+          toast.info("Cobre o que está dentro", {
+            description: `Os itens abaixo vão de ${lim.cobrir.inicio} a ${lim.cobrir.fim}. Mova-os antes de encolher.`,
+          });
+        }
+      }
       const [tipo, id] = chave.split(":");
       if (tipo === "no") await acoes.atualizarNo({ id, data_inicio: toIso(start), data_fim: toIso(end) });
       else await acoes.atualizarTarefa({ id, data_inicio: toIso(start), prazo: toIso(end) });
@@ -154,15 +257,17 @@ export function CronogramaGantt({
           {/* Coluna fixa com a árvore */}
           <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
             <div className="flex h-10 items-center border-b px-3">
-              <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Fase / etapa / serviço / tarefa
-              </span>
+              <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">Item</span>
             </div>
             {linhas.map((l) => (
               <div
                 key={l.chave}
-                className="flex items-center gap-1 border-b pr-2"
-                style={{ height: alturaDe(l), paddingLeft: 4 + l.profundidade * (isMobile ? 6 : INDENT) }}
+                className="flex items-center gap-1 border-b border-l-4 pr-2"
+                style={{
+                  height: alturaDe(l),
+                  paddingLeft: 4 + l.profundidade * (isMobile ? 6 : INDENT),
+                  borderLeftColor: NIVEL_COR[l.tipo === "tarefa" ? "tarefa" : l.arvore.nivel],
+                }}
               >
                 {l.tipo === "no" ? (
                   <>
@@ -189,8 +294,19 @@ export function CronogramaGantt({
                       </span>
                       {!isMobile && (
                         <span className="truncate text-3xs text-muted-foreground">
-                          {NIVEL_LABEL[l.arvore.nivel]} · {ESTADO_LABEL[l.arvore.estado]}
-                          {l.arvore.total > 0 && ` · ${l.arvore.progresso}%`}
+                          {/* Com custo, a linha troca nível e % (a cor e a barra já dizem) por orçado e gasto. */}
+                          {(custoDoNo.get(l.arvore.no.id)?.previsto ?? 0) > 0 ? (
+                            <>
+                              {ESTADO_LABEL[l.arvore.estado]} ·{" "}
+                              {formatCurrency(custoDoNo.get(l.arvore.no.id)!.previsto, { compact: true })} orçado ·{" "}
+                              {formatCurrency(custoDoNo.get(l.arvore.no.id)!.realizado, { compact: true })} gasto
+                            </>
+                          ) : (
+                            <>
+                              {NIVEL_LABEL[l.arvore.nivel]} · {ESTADO_LABEL[l.arvore.estado]}
+                              {l.arvore.total > 0 && ` · ${l.arvore.progresso}%`}
+                            </>
+                          )}
                         </span>
                       )}
                     </div>
@@ -218,6 +334,16 @@ export function CronogramaGantt({
                 )}
               </div>
             ))}
+            {custoColunas && (
+              <>
+                <div className="flex h-8 items-center border-b border-t-2 px-3 text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Previsto no período
+                </div>
+                <div className="flex h-8 items-center border-b px-3 text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Gasto no período
+                </div>
+              </>
+            )}
           </div>
 
           {/* Linha do tempo */}
@@ -263,6 +389,12 @@ export function CronogramaGantt({
 
                 {linhas.map((l) => (
                   <div key={l.chave} className="relative border-b" style={{ height: alturaDe(l) }}>
+                    <FaixaDoPai
+                      faixa={
+                        faixaDoPai.get(l.tipo === "tarefa" ? `tarefa:${l.tarefa.id}` : `no:${l.arvore.no.id}`) ?? null
+                      }
+                      geometria={getBarGeometry}
+                    />
                     <Barra
                       linha={l}
                       canEdit={canEdit}
@@ -273,26 +405,94 @@ export function CronogramaGantt({
                     />
                   </div>
                 ))}
+                {custoColunas && (
+                  <>
+                    <div className="relative flex h-8 border-b border-t-2">
+                      {custoColunas.previsto.map((v, i) => (
+                        <div
+                          key={i}
+                          className="flex flex-1 items-center justify-center px-0.5 text-3xs tabular-nums text-muted-foreground"
+                          title={v > 0 ? formatCurrency(v) : undefined}
+                        >
+                          {v > 0 ? formatCurrency(v, { compact: true }) : ""}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="relative flex h-8 border-b">
+                      {custoColunas.realizado.map((v, i) => (
+                        <div
+                          key={i}
+                          className="flex flex-1 items-center justify-center px-0.5 text-3xs font-medium tabular-nums text-ink"
+                          title={v > 0 ? formatCurrency(v) : undefined}
+                        >
+                          {v > 0 ? formatCurrency(v, { compact: true }) : ""}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {custoColunas && (custoColunas.previstoSemData > 0 || custoColunas.realizadoForaDaLinha > 0) && (
+        <p className="text-center text-xs text-muted-foreground">
+          {custoColunas.previstoSemData > 0 &&
+            `${formatCurrency(custoColunas.previstoSemData)} do orçado está em itens sem período e não entra na faixa. `}
+          {custoColunas.realizadoForaDaLinha > 0 &&
+            `${formatCurrency(custoColunas.realizadoForaDaLinha)} de despesas têm data fora da linha do tempo.`}
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-        {LEGENDA.map((estado) => (
-          <div key={estado} className="flex items-center gap-1.5">
-            <div className={cn("h-2.5 w-6 rounded-sm", ESTADO_FILL[estado])} />
-            <span>{ESTADO_LABEL[estado]}</span>
+        {(Object.keys(NIVEL_NOME) as NivelCor[]).map((nivel) => (
+          <div key={nivel} className="flex items-center gap-1.5">
+            <div className="h-2.5 w-6 rounded-sm" style={{ backgroundColor: NIVEL_COR[nivel] }} />
+            <span>{NIVEL_NOME[nivel]}</span>
           </div>
         ))}
+        <div className="flex items-center gap-1.5">
+          <div className="h-2.5 w-6 rounded-sm bg-muted-foreground/40 ring-2 ring-negative ring-offset-1" />
+          <span>Atrasada</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2.5 w-6 rounded-sm bg-muted-foreground/40 opacity-60" />
+          <span>Concluída</span>
+        </div>
         <div className="flex items-center gap-1.5">
           <div className="h-2.5 w-6 rounded-sm border border-dashed border-muted-foreground/50" />
           <span>Período pelos itens abaixo</span>
         </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2.5 w-6 border-x border-dashed border-black/15 bg-black/[0.06]" />
+          <span>Período do item pai (não passa dele)</span>
+        </div>
         {canEdit && <span className="text-muted-foreground/70">Arraste as bordas para ajustar as datas</span>}
       </div>
     </div>
+  );
+}
+
+/** Sombra do período do pai atrás do filho: mostra de onde a barra não pode sair. */
+function FaixaDoPai({
+  faixa,
+  geometria,
+}: {
+  faixa: { start: Date; end: Date; nome: string; nivel: string } | null;
+  geometria: Geometria;
+}) {
+  if (!faixa) return null;
+  const g = geometria(`faixa:${faixa.nome}:${faixa.start.getTime()}`, { start: faixa.start, end: faixa.end });
+  if (!g) return null;
+  return (
+    <div
+      aria-hidden
+      title={`${NIVEL_NOME[faixa.nivel as NivelCor]} ${faixa.nome}`}
+      className="pointer-events-none absolute inset-y-0 border-x border-dashed border-black/15 bg-black/[0.04]"
+      style={{ left: `${g.leftPct}%`, width: `${g.widthPct}%` }}
+    />
   );
 }
 
@@ -370,9 +570,14 @@ function Barra({
       className={cn(
         "absolute top-1/2 flex -translate-y-1/2 items-center rounded border border-black/5 shadow-sm",
         altura,
-        ESTADO_FILL[estado]
+        ESTADO_BARRA[estado]
       )}
-      style={{ left: `${g.leftPct}%`, width: `${g.widthPct}%`, minWidth: 24 }}
+      style={{
+        left: `${g.leftPct}%`,
+        width: `${g.widthPct}%`,
+        minWidth: 24,
+        backgroundColor: NIVEL_COR[tarefa ? "tarefa" : linha.arvore.nivel],
+      }}
     >
       {alca("left")}
       <button
