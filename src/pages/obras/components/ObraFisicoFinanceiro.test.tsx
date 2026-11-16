@@ -11,7 +11,8 @@ vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/pages/obras/testing/supabaseFake")).fake.supabase,
 }));
 vi.mock("@/hooks/useMoneyMask", () => ({
-  useMoneyMask: () => (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+  useMoneyMask: () => (v: number) =>
+    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
 }));
 
 vi.mock("@/lib/analytics", () => ({ analytics: { track: vi.fn() } }));
@@ -36,7 +37,15 @@ vi.mock("./FisicoFinanceiroChart", () => ({
 
 import { ObraFisicoFinanceiro } from "./ObraFisicoFinanceiro";
 
-const no = (id: string, parent_id: string | null, nivel: string, nome: string, ordem: number, ini: string | null, fim: string | null) => ({
+const no = (
+  id: string,
+  parent_id: string | null,
+  nivel: string,
+  nome: string,
+  ordem: number,
+  ini: string | null,
+  fim: string | null
+) => ({
   id,
   obra_id: "o-1",
   empresa_id: "emp-1",
@@ -64,7 +73,13 @@ const ORC = [
 ];
 
 function dados(over: Partial<Record<string, unknown[]>> = {}) {
-  const t: Record<string, unknown[]> = { obra_frente: FRENTES, tarefas: [], obra_orcamento_etapa: ORC, obra_planejamento_mes: [], ...over };
+  const t: Record<string, unknown[]> = {
+    obra_frente: FRENTES,
+    tarefas: [],
+    obra_orcamento_etapa: ORC,
+    obra_planejamento_mes: [],
+    ...over,
+  };
   fake.responder((c) => (c.op === "select" && t[c.tabela] ? { data: t[c.tabela], error: null } : undefined));
 }
 
@@ -72,10 +87,20 @@ function montar(props: Partial<Parameters<typeof ObraFisicoFinanceiro>[0]> = {})
   const onIrParaConta = vi.fn();
   const onIrParaCronograma = vi.fn();
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const Wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
-  render(<ObraFisicoFinanceiro obraId="o-1" onIrParaConta={onIrParaConta} onIrParaCronograma={onIrParaCronograma} {...props} />, {
-    wrapper: Wrapper,
-  });
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+  render(
+    <ObraFisicoFinanceiro
+      obraId="o-1"
+      onIrParaConta={onIrParaConta}
+      onIrParaCronograma={onIrParaCronograma}
+      {...props}
+    />,
+    {
+      wrapper: Wrapper,
+    }
+  );
   return { onIrParaConta, onIrParaCronograma };
 }
 
@@ -116,7 +141,11 @@ describe("ObraFisicoFinanceiro", () => {
     });
     montar();
     await screen.findByTestId("grafico");
-    const pontos = grafico.props!.pontos as { mes: string; planejadoAcumulado: number; realizadoAcumulado: number | null }[];
+    const pontos = grafico.props!.pontos as {
+      mes: string;
+      planejadoAcumulado: number;
+      realizadoAcumulado: number | null;
+    }[];
     const por = (mes: string) => pontos.find((p) => p.mes === mes)!;
     expect(por("2026-11").planejadoAcumulado).toBe(15483.87);
     expect(por("2026-12").planejadoAcumulado).toBe(30000);
@@ -218,7 +247,8 @@ describe("ObraFisicoFinanceiro", () => {
 });
 
 describe("ObraFisicoFinanceiro: edição de célula", () => {
-  const editar = (nome: string, rotulo: string) => screen.getByRole("button", { name: `Editar percentual de ${nome} em ${rotulo}` });
+  const editar = (nome: string, rotulo: string) =>
+    screen.getByRole("button", { name: `Editar percentual de ${nome} em ${rotulo}` });
   const gravacoes = () => fake.escritas("obra_planejamento_mes");
 
   it("sem permissão de edição não há célula editável nem ação no nó", async () => {
@@ -256,7 +286,9 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     fireEvent.change(campo, { target: { value: "12,5" } });
     fireEvent.keyDown(campo, { key: "Enter" });
     await waitFor(() => expect(gravacoes().length).toBeGreaterThan(0));
-    expect((gravacoes()[0].payload as { mes: string; percentual: number }[]).find((c) => c.mes === "2026-12-01")!.percentual).toBe(12.5);
+    expect(
+      (gravacoes()[0].payload as { mes: string; percentual: number }[]).find((c) => c.mes === "2026-12-01")!.percentual
+    ).toBe(12.5);
   });
 
   it("valor inválido no Enter mantém o campo aberto marcado como inválido e não grava", async () => {
@@ -267,7 +299,10 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     const campo = screen.getByRole("textbox", { name: "Percentual de Sapatas em dez/26" });
     fireEvent.change(campo, { target: { value: "150" } });
     fireEvent.keyDown(campo, { key: "Enter" });
-    expect(screen.getByRole("textbox", { name: "Percentual de Sapatas em dez/26" })).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("textbox", { name: "Percentual de Sapatas em dez/26" })).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
     expect(gravacoes()).toHaveLength(0);
   });
 
@@ -313,7 +348,9 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     await waitFor(() => expect(gravacoes()).toHaveLength(1));
     expect(gravacoes()[0].op).toBe("delete");
     expect(gravacoes()[0].filtros).toContainEqual(["eq", "obra_frente_id", "s1"]);
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Voltou a seguir o cronograma", { description: "Sapatas" }));
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("Voltou a seguir o cronograma", { description: "Sapatas" })
+    );
   });
 
   it("nó manual com mês fora do período atual avisa e oferece 'Redistribuir'", async () => {
@@ -335,7 +372,15 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     fake.responder((c) => {
       if (c.op === "upsert") return { data: null, error: { message: "violates row-level security" } };
       return c.op === "select"
-        ? { data: ({ obra_frente: FRENTES, tarefas: [], obra_orcamento_etapa: ORC, obra_planejamento_mes: [] } as Record<string, unknown[]>)[c.tabela], error: null }
+        ? {
+            data: (
+              { obra_frente: FRENTES, tarefas: [], obra_orcamento_etapa: ORC, obra_planejamento_mes: [] } as Record<
+                string,
+                unknown[]
+              >
+            )[c.tabela],
+            error: null,
+          }
         : undefined;
     });
     montar({ canEdit: true });
@@ -345,7 +390,9 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     fireEvent.change(campo, { target: { value: "70" } });
     fireEvent.keyDown(campo, { key: "Enter" });
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Não foi possível salvar o planejamento", { description: "violates row-level security" })
+      expect(toast.error).toHaveBeenCalledWith("Não foi possível salvar o planejamento", {
+        description: "violates row-level security",
+      })
     );
   });
 
@@ -357,7 +404,11 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     const itens = await screen.findAllByRole("menuitem", { name: "Tudo" });
     fireEvent.click(itens[0]);
     await waitFor(() => expect(baixar.xlsx).toHaveBeenCalledTimes(1));
-    const [tabela, cab, nome] = baixar.xlsx.mock.calls[0] as unknown as [{ linhas: unknown[][] }, { obraNome: string }, string];
+    const [tabela, cab, nome] = baixar.xlsx.mock.calls[0] as unknown as [
+      { linhas: unknown[][] },
+      { obraNome: string },
+      string,
+    ];
     expect(cab.obraNome).toBe("Casa Ação");
     expect(nome).toMatch(/^fisico-financeiro-casa-acao-tudo-\d{4}-\d{2}-\d{2}$/);
     expect(tabela.linhas.length).toBeGreaterThan(2);
@@ -372,6 +423,8 @@ describe("ObraFisicoFinanceiro: edição de célula", () => {
     fireEvent.keyDown(screen.getByRole("button", { name: "Exportar" }), { key: "Enter" });
     const itens = await screen.findAllByRole("menuitem", { name: "Fases" });
     fireEvent.click(itens[1]);
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível exportar", { description: "Tente novamente." }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Não foi possível exportar", { description: "Tente novamente." })
+    );
   });
 });

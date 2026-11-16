@@ -86,7 +86,13 @@ interface Props {
  * Físico-financeiro da obra (spec 165): desembolso previsto por mês de cada fase, etapa e serviço, calculado do
  * previsto e das datas do cronograma, com o ajuste manual guardado em `obra_planejamento_mes`.
  */
-export function ObraFisicoFinanceiro({ obraId, onIrParaConta, onIrParaCronograma, canEdit = false, obraNome = "Obra" }: Props) {
+export function ObraFisicoFinanceiro({
+  obraId,
+  onIrParaConta,
+  onIrParaCronograma,
+  canEdit = false,
+  obraNome = "Obra",
+}: Props) {
   const formatCurrency = useMoneyMask();
   const mobile = useIsMobile();
   const frentes = useObraFrentes(obraId);
@@ -134,7 +140,8 @@ export function ObraFisicoFinanceiro({ obraId, onIrParaConta, onIrParaCronograma
     [ff, lancamentos, mesAtual]
   );
 
-  const carregando = frentes.isLoading || tarefas.isLoading || orcamentos.isLoading || manual.isLoading || conta.isLoading;
+  const carregando =
+    frentes.isLoading || tarefas.isLoading || orcamentos.isLoading || manual.isLoading || conta.isLoading;
   const erro = frentes.isError || tarefas.isError || orcamentos.isError || manual.isError || conta.isError;
 
   if (carregando) return <PageLoader size="section" label="Montando o físico-financeiro" />;
@@ -179,7 +186,11 @@ export function ObraFisicoFinanceiro({ obraId, onIrParaConta, onIrParaCronograma
         description={`Há ${formatCurrency(ff.semData.valor)} previstos em ${ff.semData.itens} ${
           ff.semData.itens === 1 ? "item" : "itens"
         } sem data de início e fim.`}
-        action={onIrParaCronograma ? { label: "Abrir o cronograma", onClick: onIrParaCronograma, variant: "brand" } : undefined}
+        action={
+          onIrParaCronograma
+            ? { label: "Abrir o cronograma", onClick: onIrParaCronograma, variant: "brand" }
+            : undefined
+        }
       />
     );
   }
@@ -266,8 +277,8 @@ export function ObraFisicoFinanceiro({ obraId, onIrParaConta, onIrParaCronograma
         <Alert>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              {formatCurrency(ff.semData.valor)} em {ff.semData.itens} {ff.semData.itens === 1 ? "item" : "itens"} sem data
-              no cronograma. Eles ficam na coluna "Sem data".
+              {formatCurrency(ff.semData.valor)} em {ff.semData.itens} {ff.semData.itens === 1 ? "item" : "itens"} sem
+              data no cronograma. Eles ficam na coluna "Sem data".
             </span>
             {onIrParaCronograma && (
               <Button variant="outline" size="sm" onClick={onIrParaCronograma}>
@@ -292,16 +303,16 @@ export function ObraFisicoFinanceiro({ obraId, onIrParaConta, onIrParaCronograma
       {mobile ? (
         <FisicoFinanceiroLista ff={ff} colunas={colunas} />
       ) : (
-      <FisicoFinanceiroGrade
-        ff={ff}
-        colunas={colunas}
-        recolhidos={recolhidos}
-        onToggle={alternar}
-        editavel={editavel}
-        onSalvarCelula={salvarCelula}
-        onVoltarAutomatico={voltarAutomatico}
-        ocupado={salvar.isPending || voltar.isPending}
-      />
+        <FisicoFinanceiroGrade
+          ff={ff}
+          colunas={colunas}
+          recolhidos={recolhidos}
+          onToggle={alternar}
+          editavel={editavel}
+          onSalvarCelula={salvarCelula}
+          onVoltarAutomatico={voltarAutomatico}
+          ocupado={salvar.isPending || voltar.isPending}
+        />
       )}
     </div>
   );

@@ -67,7 +67,8 @@ export function lerOfx(texto: string): TransacaoOfx[] {
     if (!data || valor === null || valor === 0) return;
     const memo = decodificarEntidades(tag(bloco, "MEMO"));
     const nome = decodificarEntidades(tag(bloco, "NAME"));
-    const descricao = [nome, memo].filter((p, idx, arr) => p && arr.indexOf(p) === idx).join(" - ") || "Lançamento do extrato";
+    const descricao =
+      [nome, memo].filter((p, idx, arr) => p && arr.indexOf(p) === idx).join(" - ") || "Lançamento do extrato";
     saida.push({ fitid: tag(bloco, "FITID") || `sem-id-${i}`, data, valor, descricao });
   });
   return saida;

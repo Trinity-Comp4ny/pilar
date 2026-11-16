@@ -28,7 +28,11 @@ describe("lerOfx", () => {
     const t = lerOfx(SGML);
     expect(t).toHaveLength(2);
     expect(t[0]).toMatchObject({ fitid: "A1", data: "2026-11-05", valor: 5000 });
-    expect(t[1]).toMatchObject({ data: "2026-11-06", valor: -1234.56, descricao: "CASA DO CONSTRUTOR - Cimento & areia" });
+    expect(t[1]).toMatchObject({
+      data: "2026-11-06",
+      valor: -1234.56,
+      descricao: "CASA DO CONSTRUTOR - Cimento & areia",
+    });
   });
 
   it("lê OFX XML", () => {
@@ -62,7 +66,9 @@ describe("planejarOfx", () => {
 
 describe("entidades no OFX", () => {
   it("não decodifica duas vezes", () => {
-    const t = lerOfx("<OFX><STMTTRN><DTPOSTED>20261001</DTPOSTED><TRNAMT>-1</TRNAMT><MEMO>a &amp;lt; b</MEMO></STMTTRN></OFX>");
+    const t = lerOfx(
+      "<OFX><STMTTRN><DTPOSTED>20261001</DTPOSTED><TRNAMT>-1</TRNAMT><MEMO>a &amp;lt; b</MEMO></STMTTRN></OFX>"
+    );
     expect(t[0].descricao).toBe("a &lt; b");
   });
 });

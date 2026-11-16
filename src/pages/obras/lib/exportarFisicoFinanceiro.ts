@@ -69,8 +69,7 @@ export function nomeArquivoFF(obraNome: string, nivel: NivelExportacao, hoje = n
   return `fisico-financeiro-${base || "obra"}-${nivel}-${format(hoje, "yyyy-MM-dd")}`;
 }
 
-const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Letra da coluna do Excel: 0 vira A, 26 vira AA. */
 export function letraColuna(i: number): string {
