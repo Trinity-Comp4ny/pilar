@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CalendarClock, LayoutGrid, List, ListChecks, ListFilter, Plus, type LucideIcon } from "lucide-react";
+import {
+  CalendarClock,
+  FolderKanban,
+  HardHat,
+  LayoutGrid,
+  List,
+  ListChecks,
+  ListFilter,
+  Plus,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditColumnDialog, type ColunaEditavel } from "@/components/kanban/EditColumnDialog";
@@ -32,6 +42,7 @@ import {
   type TarefaItem,
 } from "./hooks";
 import { resolverPessoaIds } from "./filtroPessoas";
+import { useObras } from "@/pages/obras/hooks/useObras";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
 import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
@@ -78,6 +89,20 @@ function noPeriodo(prazo: string | null, filtro: FiltroData): boolean {
   const fim = new Date(hoje);
   fim.setDate(fim.getDate() + 7);
   return d >= hoje && d <= fim; // semana
+}
+
+const TODOS = "todos";
+const NENHUM = "nenhum";
+
+function obraIdDoItem(i: ItemTrabalho): string | null {
+  return i.tarefa?.obra?.id ?? null;
+}
+
+/** `todos` não filtra, `nenhum` pega quem não tem o vínculo, e um id pega só aquele projeto ou obra. */
+function bate(valorDoItem: string | null, filtro: string): boolean {
+  if (filtro === TODOS) return true;
+  if (filtro === NENHUM) return !valorDoItem;
+  return valorDoItem === filtro;
 }
 
 /** Peças que a moldura (página ou aba) encaixa: o espaço é dela, o conteúdo é do workspace. */
@@ -174,10 +199,42 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     tipo,
   });
 
+  // Projeto e Obra: dois filtros simples, cada um com "Sem ..." para as tarefas gerais do escritório.
+  // Na URL (`?projeto=` e `?obra=`); dentro da obra eles não existem.
+  const filtroProjeto = obra ? TODOS : (searchParams.get("projeto") ?? TODOS);
+  const filtroObra = obra ? TODOS : (searchParams.get("obra") ?? TODOS);
+  const setFiltroUrl = (chave: "projeto" | "obra", v: string) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (v === TODOS) next.delete(chave);
+        else next.set(chave, v);
+        return next;
+      },
+      { replace: true }
+    );
+  const { data: obrasDaEmpresa } = useObras();
+  const { opcoesProjeto, opcoesObra } = useMemo(() => {
+    const obras = new Map<string, string>((obrasDaEmpresa ?? []).map((o) => [o.id, o.nome]));
+    const projs = new Map<string, string>((projetos ?? []).map((p) => [p.id, p.nome]));
+    for (const i of itens) {
+      const oid = obraIdDoItem(i);
+      if (oid && i.tarefa?.obra) obras.set(oid, i.tarefa.obra.nome);
+      if (i.projetoId && i.projetoNome) projs.set(i.projetoId, i.projetoNome);
+    }
+    const porNome = (a: [string, string], b: [string, string]) => a[1].localeCompare(b[1], "pt-BR");
+    const lista = (m: Map<string, string>) => [...m].sort(porNome).map(([value, label]) => ({ value, label }));
+    return {
+      opcoesProjeto: [{ value: TODOS, label: "Todos" }, { value: NENHUM, label: "Sem projeto" }, ...lista(projs)],
+      opcoesObra: [{ value: TODOS, label: "Todas" }, { value: NENHUM, label: "Sem obra" }, ...lista(obras)],
+    };
+  }, [itens, obrasDaEmpresa, projetos]);
+
   const itensFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return itens.filter((i) => {
       if (obra && i.tarefa?.obra?.id !== obra.id) return false;
+      if (!bate(i.projetoId, filtroProjeto) || !bate(obraIdDoItem(i), filtroObra)) return false;
       if (!noPeriodo(i.prazo, filtroData)) return false;
       if (!termo) return true;
       const numeroTermo = termo.replace(/^#/, "");
@@ -190,7 +247,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
     });
-  }, [itens, busca, filtroData, obra]);
+  }, [itens, busca, filtroData, obra, filtroProjeto, filtroObra]);
 
   // A lista usa a mesma ordenação do quadro (o controle "Ordenar" vale para as duas visões).
   const itensOrdenados = useMemo(
@@ -486,9 +543,23 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
   const filtraTipo = temProjetos && !obra;
   const tipoPadrao: FiltroTipo = filtraTipo ? "tudo" : "tarefa";
   const filtrosAtivos =
-    (filtroPessoas.length > 0 ? 1 : 0) + (filtraTipo && tipo !== "tudo" ? 1 : 0) + (filtroData !== "todas" ? 1 : 0);
+    (filtroPessoas.length > 0 ? 1 : 0) +
+    (filtraTipo && tipo !== "tudo" ? 1 : 0) +
+    (filtroData !== "todas" ? 1 : 0) +
+    (filtroProjeto !== TODOS ? 1 : 0) +
+    (filtroObra !== TODOS ? 1 : 0);
   const limparFiltros = () => {
-    setFiltroPessoas([]);
+    // Uma atualização só: duas seguidas em setSearchParams perdem a primeira.
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("pessoas");
+        next.delete("projeto");
+        next.delete("obra");
+        return next;
+      },
+      { replace: true }
+    );
     setTipo(tipoPadrao);
     setFiltroData("todas");
   };
@@ -524,6 +595,28 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
             onChange={(v) => setTipo(v as FiltroTipo)}
             options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
           />
+        )}
+        {!obra && (
+          <>
+            <FilterSelect
+              label="Projeto"
+              icon={FolderKanban}
+              value={filtroProjeto}
+              emptyValue={TODOS}
+              onChange={(v) => setFiltroUrl("projeto", v)}
+              options={opcoesProjeto}
+              searchable
+            />
+            <FilterSelect
+              label="Obra"
+              icon={HardHat}
+              value={filtroObra}
+              emptyValue={TODOS}
+              onChange={(v) => setFiltroUrl("obra", v)}
+              options={opcoesObra}
+              searchable
+            />
+          </>
         )}
         <FilterSelect
           label="Prazo"

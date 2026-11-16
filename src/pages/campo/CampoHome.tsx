@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FormDialog } from "@/components/FormDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/format";
 import { climaLabel } from "@/lib/obras";
@@ -48,6 +49,7 @@ interface RdoDia {
 
 export default function CampoHome() {
   usePageTitle("Pilar Campo");
+  const [rdoAberto, setRdoAberto] = useState<RdoDia | null>(null);
   const navigate = useNavigate();
   const { account } = useOutletContext<{ account: CampoAccount }>();
   const { pendentes, locais, sincronizando, sincronizar, registrar, descartarRegistro } = useCampoSync();
@@ -152,14 +154,14 @@ export default function CampoHome() {
           <button
             type="button"
             onClick={() => navigate("/campo/gravar")}
-            className="flex w-full items-center gap-4 rounded-[28px] bg-ink px-5 py-5 text-left shadow-[0_16px_36px_-16px_rgba(26,26,26,0.6)] active:scale-[0.99]"
+            className="flex w-full items-center gap-4 rounded-[28px] bg-brand px-5 py-5 text-left shadow-[0_16px_36px_-16px_hsl(var(--c-brand-500)/0.9)] active:scale-[0.99]"
           >
-            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand text-ink">
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-ink text-brand">
               <Mic className="h-7 w-7" aria-hidden="true" />
             </span>
             <span className="space-y-1">
-              <span className="block text-xl font-semibold text-background">Gravar o que foi feito</span>
-              <span className="block text-sm text-background/70">Fale do seu jeito. A gente organiza.</span>
+              <span className="block text-xl font-semibold text-ink">Gravar o que foi feito</span>
+              <span className="block text-sm text-ink/70">Fale do seu jeito. A gente organiza.</span>
             </span>
           </button>
           <div className="grid grid-cols-2 gap-2.5">
@@ -259,39 +261,46 @@ export default function CampoHome() {
           ) : (
             <ul className="space-y-2">
               {rdos.map((r) => (
-                <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-ink">{formatDate(r.data)}</p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      {r.clima && <span>{climaLabel(r.clima)}</span>}
-                      {r.efetivo != null && (
-                        <span className="inline-flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {r.efetivo}
-                        </span>
-                      )}
-                      {!!r.fotos && r.fotos > 0 && (
-                        <span className="inline-flex items-center gap-1">
-                          <Camera className="h-3 w-3" />
-                          {r.fotos}
-                        </span>
-                      )}
-                      {!!r.medicoes && r.medicoes > 0 && (
-                        <span className="inline-flex items-center gap-1">
-                          <Ruler className="h-3 w-3" />
-                          {r.medicoes}
-                        </span>
-                      )}
-                      {!!r.tarefas && r.tarefas > 0 && (
-                        <span className="inline-flex items-center gap-1">
-                          <CheckSquare className="h-3 w-3" />
-                          {r.tarefas}
-                        </span>
-                      )}
-                      {r.atividades && <span className="truncate">{r.atividades}</span>}
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    onClick={() => setRdoAberto(r)}
+                    aria-label={`Ver o dia ${formatDate(r.data)}`}
+                    className="flex w-full items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3 text-left transition-colors active:bg-muted/60"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-ink">{formatDate(r.data)}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        {r.clima && <span>{climaLabel(r.clima)}</span>}
+                        {r.efetivo != null && (
+                          <span className="inline-flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {r.efetivo}
+                          </span>
+                        )}
+                        {!!r.fotos && r.fotos > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <Camera className="h-3 w-3" />
+                            {r.fotos}
+                          </span>
+                        )}
+                        {!!r.medicoes && r.medicoes > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <Ruler className="h-3 w-3" />
+                            {r.medicoes}
+                          </span>
+                        )}
+                        {!!r.tarefas && r.tarefas > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <CheckSquare className="h-3 w-3" />
+                            {r.tarefas}
+                          </span>
+                        )}
+                        {r.atividades && <span className="truncate">{r.atividades}</span>}
+                      </div>
                     </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -302,6 +311,47 @@ export default function CampoHome() {
           Seu acesso é só desta obra. O que você registrar aqui aparece para o escritório.
         </p>
       </main>
+
+      <Dialog open={!!rdoAberto} onOpenChange={(aberto) => !aberto && setRdoAberto(null)}>
+        <DialogContent className="max-w-md">
+          {rdoAberto && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{formatDate(rdoAberto.data)}</DialogTitle>
+                <DialogDescription>
+                  {[
+                    rdoAberto.clima ? climaLabel(rdoAberto.clima) : null,
+                    rdoAberto.efetivo != null ? `${rdoAberto.efetivo} no efetivo` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Registro do dia"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    O que foi feito
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-ink">
+                    {rdoAberto.atividades || "Nada escrito neste dia."}
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {[
+                    rdoAberto.fotos ? `${rdoAberto.fotos} ${rdoAberto.fotos === 1 ? "foto" : "fotos"}` : null,
+                    rdoAberto.medicoes
+                      ? `${rdoAberto.medicoes} ${rdoAberto.medicoes === 1 ? "medição" : "medições"}`
+                      : null,
+                    rdoAberto.tarefas ? `${rdoAberto.tarefas} ${rdoAberto.tarefas === 1 ? "tarefa" : "tarefas"}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <FormDialog
         open={escrevendo}
