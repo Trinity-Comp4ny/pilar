@@ -36,7 +36,7 @@ export const PLANOS: Plano[] = [
   {
     slug: "starter",
     nome: "Essencial",
-    publico: "Escritório de 5 a 8 pessoas",
+    publico: "Para organizar até 10 projetos em andamento",
     preco: 299,
     projetos: "Até 10 projetos ativos",
     obras: "Até 2 obras ativas",
@@ -47,7 +47,7 @@ export const PLANOS: Plano[] = [
   {
     slug: "pro",
     nome: "Profissional",
-    publico: "O mais escolhido, e onde a maioria fica",
+    publico: "Para coordenar até 30 projetos em andamento",
     preco: 499,
     projetos: "Até 30 projetos ativos",
     obras: "Até 5 obras ativas",
@@ -76,5 +76,5 @@ export const INCLUSO_EM_TODOS = [
   "Portal do cliente e Pilar Campo",
   "Agentes de IA com aprovação sua",
   "Todos os relatórios e exportações",
-  "Atualizações e novos módulos incluídos",
+  "Atualizações da plataforma",
 ];
