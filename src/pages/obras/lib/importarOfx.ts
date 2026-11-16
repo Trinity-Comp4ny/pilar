@@ -50,13 +50,11 @@ function valorOfx(bruto: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+const ENTIDADES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+/** Uma passada só: decodificar em etapas faria "&amp;lt;" virar "<" (dupla decodificação). */
 function decodificarEntidades(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
+  return s.replace(/&(amp|lt|gt|quot|apos);/g, (_, nome: string) => ENTIDADES[nome]);
 }
 
 export function lerOfx(texto: string): TransacaoOfx[] {
