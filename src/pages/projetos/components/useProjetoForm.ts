@@ -21,6 +21,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { analytics } from "@/lib/analytics";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { vincularProjetoAoFluxo } from "@/hooks/useSincronizarFluxoProjetos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
@@ -178,6 +179,8 @@ export function useProjetoForm({
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [projetosDisciplinas, setProjetosDisciplinas] = useState<DisciplinaResponsavel[]>([]);
+  // Fluxo escolhido no formulário: vira o vínculo do projeto depois que ele é criado.
+  const fluxoAplicadoRef = useRef<string | null>(null);
   const [tempDisciplina, setTempDisciplina] = useState<Partial<DisciplinaResponsavel>>(EMPTY_TEMP_DISCIPLINA);
   const [selectedDisciplinaIndex, setSelectedDisciplinaIndex] = useState<number | null>(null);
   const [isDisciplinaDetailOpen, setIsDisciplinaDetailOpen] = useState(false);
@@ -479,6 +482,7 @@ export function useProjetoForm({
 
   const applyFluxo = (fluxoId: string | null) => {
     if (!fluxoId) {
+      fluxoAplicadoRef.current = null;
       setProjetosDisciplinas([]);
       return;
     }
@@ -513,6 +517,7 @@ export function useProjetoForm({
     });
 
     const colunas = new Set(fluxo.disciplinas.map((d) => d.ordem)).size;
+    fluxoAplicadoRef.current = fluxoId;
     setProjetosDisciplinas(novasDisciplinas);
     toast.success("Fluxo aplicado", {
       description: `${novasDisciplinas.length} disciplina(s) em ${colunas} coluna(s) de "${fluxo.nome}"`,
@@ -717,6 +722,11 @@ export function useProjetoForm({
               .eq("id", newProjetoId as string);
             throw discErr;
           }
+        }
+
+        // O projeto novo passa a seguir o fluxo escolhido no formulário (para ser atualizado quando o fluxo mudar).
+        if (newProjetoId && fluxoAplicadoRef.current && projetosDisciplinas.length > 0) {
+          await vincularProjetoAoFluxo(newProjetoId as string, fluxoAplicadoRef.current).catch(() => undefined);
         }
 
         if (newProjetoId && parcelas.geraParcelas) await gerarParcelasDoProjeto(newProjetoId as string, parcelas);

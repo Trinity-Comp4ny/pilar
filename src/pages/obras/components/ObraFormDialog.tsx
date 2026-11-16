@@ -23,10 +23,16 @@ import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { useNivelConfianca } from "@/hooks/useNivelConfianca";
 import { analytics } from "@/lib/analytics";
+import { useFluxosObra } from "@/pages/obras/hooks/useFluxosObra";
+import { gravarPlanoDoCronograma } from "@/pages/obras/hooks/useImportarCronograma";
+import { vincularObraAoFluxo } from "@/pages/obras/hooks/useSincronizarFluxoObra";
+import { planoDoFluxo } from "@/pages/obras/lib/fluxoObra";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 
 const SEM_RESPONSAVEL = "__none__";
+const SEM_FLUXO = "__sem_fluxo__";
 const SEM_PROJETO = "__none__";
 const SEM_CLIENTE = "__none__";
 
@@ -86,6 +92,9 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
   const { data: clientes = [] } = useClientesLite();
   const { data: obrasExistentes = [] } = useObrasParaFiltro(isEdit);
   const criar = useCreateObra();
+  const qc = useQueryClient();
+  const { data: fluxos = [] } = useFluxosObra();
+  const [fluxoId, setFluxoId] = useState(SEM_FLUXO);
   const atualizar = useUpdateObra();
 
   const [local, setLocal] = useState<Local | null>(null);
@@ -195,9 +204,27 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         await atualizar.mutateAsync({ id: obra.id, ...payload });
         toast.success("Obra atualizada");
       } else {
-        await criar.mutateAsync(payload);
+        const nova = await criar.mutateAsync(payload);
         analytics.track("obra_criada", { com_projeto: Boolean(payload.projeto_id) });
-        toast.success("Obra criada");
+        const fluxo = fluxos.find((f) => f.id === fluxoId);
+        if (fluxo) {
+          // O cronograma nasce do fluxo, a partir do início previsto (ou de hoje). Se falhar, a obra já existe:
+          // avisa e deixa aplicar de novo pelo cronograma.
+          try {
+            const inicio = payload.data_inicio_prevista ?? new Date().toISOString().slice(0, 10);
+            await gravarPlanoDoCronograma(nova.id, payload.projeto_id, 0, planoDoFluxo(fluxo.estrutura, inicio));
+            await vincularObraAoFluxo(nova.id, fluxo.id).catch(() => undefined);
+            qc.invalidateQueries({ queryKey: ["obra_frente"] });
+            qc.invalidateQueries({ queryKey: ["obra_tarefas"] });
+            toast.success("Obra criada com o cronograma do fluxo", { description: fluxo.nome });
+          } catch {
+            toast.warning("Obra criada, mas o fluxo não entrou", {
+              description: "Aplique de novo pelo cronograma da obra.",
+            });
+          }
+        } else {
+          toast.success("Obra criada");
+        }
       }
       onOpenChange(false);
       onSaved?.();
@@ -422,6 +449,28 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
             )}
           </div>
         </div>
+
+        {!isEdit && fluxos.length > 0 && (
+          <div className="space-y-1.5">
+            <Label htmlFor="fluxo">Fluxo do cronograma (opcional)</Label>
+            <Select value={fluxoId} onValueChange={setFluxoId}>
+              <SelectTrigger id="fluxo">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_FLUXO}>Começar sem cronograma</SelectItem>
+                {fluxos.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Cria fases, etapas, serviços e tarefas com o prestador padrão, a partir do início previsto.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <Label htmlFor="obs">Observações</Label>

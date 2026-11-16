@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoDisciplinaTemplate, FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 import { duracaoEfetiva, responsaveisEfetivos } from "@/lib/fluxoCascata";
+import { SincronizarProjetosDialog } from "./SincronizarProjetosDialog";
 import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 import {
   Plus,
@@ -91,6 +92,12 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   const [form, setForm] = useState<FluxoFormState>(emptyForm);
   const [expandedColunas, setExpandedColunas] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Depois de editar um fluxo que já existia, oferece atualizar os projetos que o seguem.
+  const [sincronizar, setSincronizar] = useState<{
+    id: string;
+    nome: string;
+    disciplinas: FluxoDisciplinaTemplate[];
+  } | null>(null);
 
   const resetToList = () => {
     setMode("list");
@@ -144,6 +151,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       if (editingId) {
         await updateFluxo.mutateAsync({ id: editingId, ...payload });
         toast.success("Fluxo atualizado");
+        setSincronizar({ id: editingId, nome: payload.nome, disciplinas: payload.disciplinas });
       } else {
         await createFluxo.mutateAsync(payload);
         toast.success("Fluxo criado");
@@ -557,6 +565,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
         </DialogContent>
       </Dialog>
 
+      <SincronizarProjetosDialog fluxo={sincronizar} onOpenChange={(v) => !v && setSincronizar(null)} />
+
       <ConfirmDialog
         open={!!confirmDeleteId}
         onOpenChange={(v) => {
@@ -564,7 +574,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
         }}
         onConfirm={handleDelete}
         title="Excluir fluxo?"
-        description="Esta ação não pode ser desfeita. Projetos que já usaram este fluxo não serão afetados."
+        description="Esta ação não pode ser desfeita. Os projetos que já o usam continuam como estão."
         confirmText="Excluir"
       />
     </>

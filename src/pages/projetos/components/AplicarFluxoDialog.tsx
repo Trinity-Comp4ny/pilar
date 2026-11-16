@@ -4,6 +4,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { vincularProjetoAoFluxo } from "@/hooks/useSincronizarFluxoProjetos";
 import { useAplicarFluxoNoProjeto } from "@/hooks/useProjetoDisciplinas";
 import { formatDateLocal } from "@/lib/businessDays";
 import { errorMessage } from "@/lib/errors";
@@ -93,6 +94,8 @@ export function AplicarFluxoDialog({
     if (!fluxo || !plano) return;
     try {
       await aplicarFluxo.mutateAsync({ projetoId, plano });
+      // O projeto passa a seguir o fluxo: é o que permite atualizá-lo quando o fluxo mudar.
+      await vincularProjetoAoFluxo(projetoId, fluxo.id).catch(() => undefined);
       toast.success("Fluxo aplicado", {
         description: `${plano.novas.length} disciplina(s) criada(s) e ${plano.encaixadas.length} encaixada(s) em "${fluxo.nome}"`,
       });
