@@ -1,9 +1,14 @@
 # FinOps: custo de infraestrutura
 
-Quanto o Pilar gasta para rodar, onde está o risco de estourar e o que já segura o gasto.
+Quanto a Pilar gasta para rodar, onde está o risco de estourar e o que já segura o gasto.
 Revisar uma vez por mês (checklist no fim). ← [voltar](./README.md)
 
 ## Retrato em 2026-10-13 (produção)
+
+Este retrato é histórico, não uma fatura atual. As 11 empresas ativas registradas
+na época não equivalem automaticamente a 11 assinantes pagantes. Para orçamento
+e medição atuais, conferir [Custo por empresa](./CUSTO_POR_EMPRESA.md) e os painéis
+dos fornecedores; separar consumo observado de hipóteses de planejamento.
 
 | Fornecedor           | Plano                                    | Consumo medido                                | Limite que importa                                                   | Risco    |
 | -------------------- | ---------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------- | -------- |
@@ -55,14 +60,24 @@ cobre.
 
 ## Custo por empresa
 
-O que varia por cliente hoje é IA e storage. Banco e build não escalam por empresa nesta fase.
+IA, storage, saída de dados, cobranças e atendimento variam com uso e clientes.
+A base compartilhada pode permanecer estável dentro de uma faixa, mas isso não
+comprova capacidade nem custo constante em qualquer escala. Ver o modelo e a
+consulta por modelo/moeda em [Custo por empresa](./CUSTO_POR_EMPRESA.md).
 
 ```sql
--- IA por empresa, últimos 30 dias (US$ estimado)
-select e.nome, count(*) as chamadas, round(sum(l.custo_estimado)::numeric, 4) as custo_usd
-from public.ai_token_ledger l join public.empresas e on e.id = l.empresa_id
-where l.created_at > now() - interval '30 days' and l.source <> 'pack_purchase'
-group by e.nome order by custo_usd desc;
+-- Eventos de uso por empresa e modelo, últimos 30 dias.
+-- Não somar modelos/moedas diferentes sem conferir o catálogo vigente.
+select l.empresa_id, l.model,
+       count(*) as eventos_uso,
+       count(*) filter (where l.custo_estimado is null) as eventos_sem_custo,
+       sum(l.custo_estimado) as subtotal_conhecido
+from public.ai_token_ledger l
+where l.created_at >= now() - interval '30 days'
+  and l.created_at < now()
+  and l.source = 'usage'
+group by l.empresa_id, l.model
+order by subtotal_conhecido desc nulls last;
 
 -- Banco e storage totais
 select pg_size_pretty(pg_database_size(current_database())) as banco;
@@ -72,16 +87,18 @@ from storage.objects group by bucket_id order by sum((metadata->>'size')::bigint
 
 ## Quando mudar de plano
 
-| Gatilho                                               | Ação                                                        |
-| ----------------------------------------------------- | ----------------------------------------------------------- |
-| Primeiro cliente pagante                              | Vercel Pro (uso comercial) e Supabase Pro (PITR, sem pausa) |
-| Banco acima de 350 MB ou storage acima de 700 MB      | Supabase Pro antes do teto de 500 MB / 1 GB                 |
-| IA acima de 30% da receita de uma empresa             | rever teto do plano dela no motor de tokens                 |
-| Sentry ou PostHog acima de 80% da cota no meio do mês | baixar amostragem antes de subir de plano                   |
+| Gatilho                                               | Ação                                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Uso comercial e primeiros clientes pagantes           | Conferir Vercel Pro e Supabase Pro; PITR é adicional separado, não incluído no Pro |
+| Banco acima de 350 MB ou storage acima de 700 MB      | Supabase Pro antes do teto de 500 MB / 1 GB                                        |
+| IA acima de 30% da receita de uma empresa             | rever teto do plano dela no motor de tokens                                        |
+| Sentry ou PostHog acima de 80% da cota no meio do mês | baixar amostragem antes de subir de plano                                          |
 
 ## Revisão mensal (dia 1)
 
 - [ ] Vercel → Usage: build e crédito do mês, por projeto. Algum projeto pessoal gastando?
-- [ ] Rodar as consultas acima em produção e anotar banco, storage e IA na tabela do topo.
+- [ ] Com acesso autorizado e ambiente explícito, rodar as consultas de leitura e registrar banco, storage e IA em um novo retrato datado, preservando o histórico.
+- [ ] Conferir a moeda do catálogo, os eventos sem custo estimado e a reconciliação com as faturas; custo ausente não é zero.
+- [ ] Medir horas de implantação e suporte por empresa; conferir assinantes pagantes separadamente das contas no banco.
 - [ ] Sentry, PostHog e Resend: consumo contra a cota.
 - [ ] Algum gatilho da tabela "Quando mudar de plano" bateu?
