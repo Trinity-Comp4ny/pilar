@@ -3052,6 +3052,50 @@ export type Database = {
           },
         ]
       }
+      fluxos_obra: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          descricao: string | null
+          empresa_id: string
+          estrutura: Json
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          empresa_id: string
+          estrutura?: Json
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          estrutura?: Json
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluxos_obra_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folha_pagamento: {
         Row: {
           adicional_variavel: number | null
@@ -4213,7 +4257,9 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
+          quantidade: number | null
           tipo: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number
@@ -4232,7 +4278,9 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id: string
           pago_por?: string | null
+          quantidade?: number | null
           tipo: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor: number
@@ -4251,7 +4299,9 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id?: string
           pago_por?: string | null
+          quantidade?: number | null
           tipo?: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: number
@@ -4607,6 +4657,7 @@ export type Database = {
           data_fim: string | null
           data_inicio: string | null
           empresa_id: string
+          fornecedor_id: string | null
           id: string
           nivel: string
           nome: string
@@ -4620,6 +4671,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           empresa_id: string
+          fornecedor_id?: string | null
           id?: string
           nivel?: string
           nome: string
@@ -4633,6 +4685,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           empresa_id?: string
+          fornecedor_id?: string | null
           id?: string
           nivel?: string
           nome?: string
@@ -4647,6 +4700,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_frente_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
           {
@@ -4870,6 +4930,61 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_orcamento_etapa_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_planejamento_mes: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          mes: string
+          obra_frente_id: string
+          obra_id: string
+          percentual: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          mes: string
+          obra_frente_id: string
+          obra_id: string
+          percentual: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          mes?: string
+          obra_frente_id?: string
+          obra_id?: string
+          percentual?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_planejamento_mes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_planejamento_mes_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_planejamento_mes_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -5510,6 +5625,7 @@ export type Database = {
           data_inicio_real: string | null
           deleted_at: string | null
           empresa_id: string
+          fluxo_obra_id: string | null
           id: string
           latitude: number | null
           localizacao: string | null
@@ -5537,6 +5653,7 @@ export type Database = {
           data_inicio_real?: string | null
           deleted_at?: string | null
           empresa_id: string
+          fluxo_obra_id?: string | null
           id?: string
           latitude?: number | null
           localizacao?: string | null
@@ -5564,6 +5681,7 @@ export type Database = {
           data_inicio_real?: string | null
           deleted_at?: string | null
           empresa_id?: string
+          fluxo_obra_id?: string | null
           id?: string
           latitude?: number | null
           localizacao?: string | null
@@ -5628,6 +5746,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_folha_pagamento"
             referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "obras_fluxo_obra_id_fkey"
+            columns: ["fluxo_obra_id"]
+            isOneToOne: false
+            referencedRelation: "fluxos_obra"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7740,6 +7865,7 @@ export type Database = {
           empresa_id: string
           etapa_id: string | null
           exemplo: boolean
+          fluxo_id: string | null
           id: string
           latitude: number | null
           links: Json
@@ -7772,6 +7898,7 @@ export type Database = {
           empresa_id: string
           etapa_id?: string | null
           exemplo?: boolean
+          fluxo_id?: string | null
           id?: string
           latitude?: number | null
           links?: Json
@@ -7804,6 +7931,7 @@ export type Database = {
           empresa_id?: string
           etapa_id?: string | null
           exemplo?: boolean
+          fluxo_id?: string | null
           id?: string
           latitude?: number | null
           links?: Json
@@ -7840,6 +7968,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "projeto_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_fluxo_id_fkey"
+            columns: ["fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "fluxos_disciplinas"
             referencedColumns: ["id"]
           },
         ]
@@ -11653,6 +11788,8 @@ export type Database = {
           p_obra_frente_id?: string
           p_obra_id: string
           p_pago_por?: string
+          p_quantidade?: number
+          p_unidade?: string
           p_valor: number
         }
         Returns: {
@@ -11669,7 +11806,9 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
+          quantidade: number | null
           tipo: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number

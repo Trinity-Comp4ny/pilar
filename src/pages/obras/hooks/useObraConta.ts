@@ -79,6 +79,9 @@ export type DespesaInput = {
   comprovante_url?: string | null;
   /** false = segurada (em conferência), não aparece no portal do cliente. Default true. */
   confirmada_portal?: boolean;
+  /** Custo por item: quantos e em que unidade (ex.: 200 un). O preço unitário é valor / quantidade. */
+  quantidade?: number | null;
+  unidade?: string | null;
 };
 
 /**
@@ -100,6 +103,8 @@ export function useSaveDespesa(obraId: string) {
         p_pago_por: input.pago_por ?? "cliente",
         p_comprovante_url: input.comprovante_url ?? undefined,
         p_confirmada_portal: input.confirmada_portal ?? true,
+        p_quantidade: input.quantidade ?? undefined,
+        p_unidade: input.unidade ?? undefined,
       });
       if (error) throw error;
     },
