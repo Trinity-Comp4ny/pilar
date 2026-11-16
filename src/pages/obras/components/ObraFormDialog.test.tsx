@@ -66,6 +66,11 @@ const lookupCEP = vi.fn();
 vi.mock("@/lib/brasilApi", () => ({ lookupCEP: (...a: unknown[]) => lookupCEP(...a) }));
 const geocodarCidade = vi.fn();
 vi.mock("@/pages/obras/lib/clima", () => ({ geocodarCidade: (...a: unknown[]) => geocodarCidade(...a) }));
+vi.mock("@/pages/obras/hooks/useFluxosObra", () => ({
+  useFluxosObra: () => ({ data: [] }),
+  useSalvarFluxoObra: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useExcluirFluxoObra: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 vi.mock("@/lib/analytics", () => ({ analytics: { track: vi.fn() } }));
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));

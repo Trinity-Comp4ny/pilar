@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 // excluir com confirmação, validações e erro do servidor.
 
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+vi.mock("./SincronizarProjetosDialog", () => ({ SincronizarProjetosDialog: () => null }));
 vi.mock("sonner", () => ({ toast }));
 const fx = vi.hoisted(() => ({ lista: [] as unknown[], criar: vi.fn(), atualizar: vi.fn(), excluir: vi.fn() }));
 vi.mock("@/hooks/useFluxosDisciplinas", () => ({

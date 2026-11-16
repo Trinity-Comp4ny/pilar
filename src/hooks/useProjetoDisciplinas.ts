@@ -496,26 +496,30 @@ export function useBulkSaveDisciplinas() {
  * `planejarAplicacaoFluxo`: cria as disciplinas que faltam e só põe na coluna
  * as que já existem, sem tocar no andamento delas. Não apaga nada.
  */
+/** Grava o plano de aplicação de um fluxo num projeto: cria o que falta e só encaixa na coluna o que já existe. */
+export async function aplicarPlanoFluxoNoProjeto(projetoId: string, plano: PlanoAplicacaoFluxo) {
+  for (const disc of plano.novas) {
+    const discId = await inserirDisciplina(projetoId, disc);
+    await syncResponsaveis(discId, disc.responsavel_ids);
+  }
+
+  for (const disc of plano.encaixadas) {
+    const { error } = await supabase
+      .from("projeto_disciplinas")
+      .update({ ordem_etapa: disc.ordem_etapa, updated_at: new Date().toISOString() } as never)
+      .eq("id", disc.id);
+    if (error) throw error;
+  }
+
+  return projetoId;
+}
+
 export function useAplicarFluxoNoProjeto() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projetoId, plano }: { projetoId: string; plano: PlanoAplicacaoFluxo }) => {
-      for (const disc of plano.novas) {
-        const discId = await inserirDisciplina(projetoId, disc);
-        await syncResponsaveis(discId, disc.responsavel_ids);
-      }
-
-      for (const disc of plano.encaixadas) {
-        const { error } = await supabase
-          .from("projeto_disciplinas")
-          .update({ ordem_etapa: disc.ordem_etapa, updated_at: new Date().toISOString() } as never)
-          .eq("id", disc.id);
-        if (error) throw error;
-      }
-
-      return projetoId;
-    },
+    mutationFn: ({ projetoId, plano }: { projetoId: string; plano: PlanoAplicacaoFluxo }) =>
+      aplicarPlanoFluxoNoProjeto(projetoId, plano),
     onSettled: (_data, _error, { projetoId }) => {
       // Também em erro: o que já foi gravado antes da falha precisa aparecer.
       queryClient.invalidateQueries({ queryKey: ["projeto-disciplinas", projetoId] });
