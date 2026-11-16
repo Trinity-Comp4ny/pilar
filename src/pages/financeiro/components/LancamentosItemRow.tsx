@@ -73,10 +73,9 @@ function StatusBadge({
 
   const badge = (
     <Badge
-      variant="secondary"
+      variant={paid && isReceita ? "default" : "secondary"}
       className={cn(
         "text-xs cursor-pointer transition-colors",
-        paid && isReceita && "bg-positive text-ink hover:bg-positive/90",
         paid && !isReceita && !isTransf && "bg-negative text-white hover:bg-negative/90",
         paid && isTransf && "bg-info-mid text-white hover:bg-info-mid/90",
         !paid && overdue && "bg-warning-soft text-warning-strong hover:bg-warning-mid"

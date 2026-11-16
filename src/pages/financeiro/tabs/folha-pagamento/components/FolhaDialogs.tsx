@@ -379,7 +379,7 @@ export function HistoryDetailDialog({
                       <Badge
                         variant="secondary"
                         className={`capitalize text-xs px-2 py-0.5
-                          ${item.status === "pago" ? "bg-positive text-ink" : ""}
+                          ${item.status === "pago" ? "bg-brand text-ink" : ""}
                           ${item.status === "pendente" ? "bg-warning-soft text-warning-strong" : ""}
                           ${item.status === "cancelado" ? "bg-destructive text-destructive-foreground" : ""}
                         `}

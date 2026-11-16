@@ -49,7 +49,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
               aria-label="Progresso de pagamento"
             >
               <div
-                className="bg-positive h-3 rounded-full transition-all"
+                className="bg-brand h-3 rounded-full transition-all"
                 style={{ width: `${(totalPago / totalPrevisto) * 100}%` }}
               />
             </div>

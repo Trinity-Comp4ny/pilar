@@ -3,15 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock, MessageSquare } from "lucide-react";
+import { FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { EmptyState } from "@/components/EmptyState";
-import { ConversaPortal } from "@/components/portal/ConversaPortal";
-import { useNaoLidasCliente } from "@/components/portal/useConversaPortal";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
@@ -34,6 +32,12 @@ interface Entrega {
   aprovado_user_agent: string | null;
   created_at: string;
 }
+
+const TIPO_LABEL: Record<string, string> = {
+  aprovacao: "Pedido de aprovação",
+  documento: "Documento para conferir",
+  informacao: "Informação para você",
+};
 
 const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; icon: typeof Clock }> = {
   pendente: { label: "Aguardando resposta", color: "bg-warning-soft text-warning-strong", icon: Clock },
@@ -206,10 +210,15 @@ export function EntregasContent({
     <div className="space-y-6">
       {pendentes.length > 0 && (
         <section>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
             <FileCheck className="h-4 w-4 text-warning-mid" />
-            Aguardando sua resposta ({pendentes.length})
+            {readOnly ? "Aguardando o cliente" : "Para você decidir"} ({pendentes.length})
           </h3>
+          <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
+            {readOnly
+              ? "O cliente aprova ou pede ajustes pelo portal."
+              : "O escritório pediu a sua decisão: aprove ou peça ajustes. Ficou com dúvida? Use o botão Falar com o escritório."}
+          </p>
           <div className="space-y-3">
             {pendentes.map((e) => (
               <EntregaCard
@@ -289,6 +298,8 @@ function EntregaCard({
   const origem = entrega.obra_nome ?? entrega.projeto_nome;
   const config = STATUS_CONFIG[entrega.status];
   const StatusIcon = config.icon;
+  const tipoLabel = entrega.tipo ? TIPO_LABEL[entrega.tipo] : undefined;
+  const rotulo = entrega.status === "pendente" ? (readOnly ? "Aguardando o cliente" : "Aguardando você") : config.label;
 
   return (
     <Card className={cn(entrega.status === "pendente" && "border-warning-mid-border")}>
@@ -310,6 +321,7 @@ function EntregaCard({
             </div>
             {entrega.descricao && <p className="text-xs text-muted-foreground mt-1">{entrega.descricao}</p>}
             <div className="flex items-center gap-3 mt-1.5 text-2xs text-muted-foreground flex-wrap">
+              {tipoLabel && <span className="font-medium text-ink-muted">{tipoLabel}</span>}
               <span>{new Date(entrega.created_at).toLocaleDateString("pt-BR")}</span>
               {entrega.drive_url && (
                 <a
@@ -325,7 +337,7 @@ function EntregaCard({
           </div>
           <Badge className={cn("text-3xs border shrink-0", config.color)}>
             <StatusIcon className="h-3 w-3 mr-1" />
-            {config.label}
+            {rotulo}
           </Badge>
         </div>
 
@@ -380,37 +392,7 @@ function EntregaCard({
             )}
           </div>
         )}
-        <FioDaSolicitacao entregaId={entrega.id} lado={readOnly ? "equipe" : "cliente"} />
       </CardContent>
     </Card>
-  );
-}
-
-/** Fio de conversa da solicitação: o cliente tira a dúvida antes de aprovar, sem sair do item. */
-function FioDaSolicitacao({ entregaId, lado }: { entregaId: string; lado: "cliente" | "equipe" }) {
-  const [aberto, setAberto] = useState(false);
-  const naoLidas = useNaoLidasCliente();
-  const pendentes =
-    lado === "cliente" ? ((naoLidas.data ?? []).find((n) => n.entrega_id === entregaId)?.total ?? 0) : 0;
-
-  return (
-    <div className="border-t pt-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-11 gap-1.5 px-2 text-muted-foreground sm:h-9"
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-      >
-        <MessageSquare className="h-3.5 w-3.5" />
-        {aberto ? "Fechar conversa" : lado === "cliente" ? "Tirar dúvida com o escritório" : "Conversar com o cliente"}
-        {!aberto && pendentes > 0 && (
-          <Badge variant="warning" className="ml-1 text-[10px]">
-            {pendentes} nova{pendentes === 1 ? "" : "s"}
-          </Badge>
-        )}
-      </Button>
-      {aberto && <ConversaPortal lado={lado} escopo={{ entregaId }} className="mt-2 max-h-96" />}
-    </div>
   );
 }

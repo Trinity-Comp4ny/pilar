@@ -4,7 +4,7 @@ type Estado = EstadoFrente | EstadoTarefa;
 
 /** Preenchimento de barra e bolinha por estado (tokens de status, não paleta crua). */
 export const ESTADO_FILL: Record<Estado, string> = {
-  concluida: "bg-positive",
+  concluida: "bg-brand",
   atrasada: "bg-negative",
   em_andamento: "bg-status-progress",
   futura: "bg-status-unknown",

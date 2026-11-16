@@ -252,8 +252,10 @@ describe("EntregasContent", () => {
     });
     sb.rpcResultado("portal_aprovar_entrega", { data: null, error: null });
     renderComQuery(<EntregasContent projetoId="p1" />);
-    expect(await screen.findByText("Aguardando sua resposta (1)")).toBeInTheDocument();
+    expect(await screen.findByText("Para você decidir (1)")).toBeInTheDocument();
     expect(screen.getByText("Planta baixa")).toBeInTheDocument();
+    expect(screen.getByText("Aguardando você")).toBeInTheDocument();
+    expect(screen.queryByText(/Tirar dúvida/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Abrir no Drive/ })).toHaveAttribute("href", "https://drive/x");
     expect(sb.argsRpc("portal_listar_solicitacoes")).toEqual({ p_token: "tok", p_projeto_id: "p1", p_obra_id: null });
 

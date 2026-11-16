@@ -149,7 +149,7 @@ export function LancamentosGroupRow({
           variant="secondary"
           className={cn(
             "text-xs",
-            status === "quitado" && isReceita && "bg-positive text-white",
+            status === "quitado" && isReceita && "bg-brand text-ink",
             status === "quitado" && !isReceita && "bg-negative text-white",
             status === "parcial" && "bg-warning-soft text-warning-strong"
           )}

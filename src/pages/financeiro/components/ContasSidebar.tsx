@@ -71,7 +71,7 @@ function CartaoRow({
         <div
           className={cn(
             "h-1 rounded-full transition-all",
-            pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-positive"
+            pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-brand"
           )}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />

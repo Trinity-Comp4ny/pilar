@@ -100,7 +100,7 @@ function StatusDistributionBar({ grupo }: { grupo: DisciplinaAgrupada }) {
   if (total === 0) return null;
 
   const segments = [
-    { count: grupo.totalConcluido, color: "bg-positive", label: "Concluído" },
+    { count: grupo.totalConcluido, color: "bg-brand", label: "Concluído" },
     { count: grupo.totalEmAndamento, color: "bg-status-progress", label: "Em Andamento" },
     { count: grupo.totalPendente, color: "bg-status-planning", label: "Pendente" },
     { count: grupo.totalNaoIniciado, color: "bg-gray-300", label: "Não Iniciado" },

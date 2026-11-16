@@ -90,6 +90,8 @@ const BUDGETS = {
   // 2026-11-14: 339 kB (era 338). Mesma fiação mínima do PR #870 (338,7 kB medidos no CI).
   // 2026-11-16: 340 kB (era 339). Regra de item ativo da sidebar em rota filha (PR #881):
   // o shell passou 0,1 kB (339,1 kB medidos no CI).
+  // Mesma data, painel "Falar com o escritório" (BEZ-576): o chunk lazy entra na tabela de preload
+  // da entrada (+~0,1 kB) sem mexer no teto.
   initialLoad: 340 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,

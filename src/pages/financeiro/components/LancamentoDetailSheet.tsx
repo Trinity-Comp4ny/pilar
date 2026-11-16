@@ -222,7 +222,7 @@ export function LancamentoDetailSheet({
                     aria-valuenow={progresso}
                     aria-label="Progresso do parcelamento"
                   >
-                    <div className="h-full rounded-full bg-positive" style={{ width: `${progresso}%` }} />
+                    <div className="h-full rounded-full bg-brand" style={{ width: `${progresso}%` }} />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Saldo em aberto{" "}
