@@ -1,7 +1,9 @@
 import { trackCta } from "../analytics";
 import { Reveal } from "../components/Reveal";
 import { IncluidoEmTodos, PlanCards } from "../components/PlanCards";
+import { InicioAssistidoSection } from "../components/InicioAssistidoSection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
+import { WHATSAPP_COMERCIAL_URL } from "../lib/contato";
 import { usePageMeta } from "../lib/seo";
 
 /**
@@ -73,6 +75,8 @@ export function Planos() {
         </div>
       </section>
 
+      <InicioAssistidoSection contexto="implantacao_planos" />
+
       <section className="bg-paper px-5 pb-20 md:px-10 md:pb-28">
         <div className="mx-auto max-w-3xl">
           <Reveal variant="up" className="mb-8">
@@ -92,10 +96,10 @@ export function Planos() {
 
           <Reveal variant="fade" delay={0.2} className="mt-10">
             <a
-              href="https://wa.me/5514998721100"
+              href={WHATSAPP_COMERCIAL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackCta("agende_demo", "planos")}
+              onClick={() => trackCta("contato_comercial", "planos")}
               className="inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-[14px] font-medium text-white transition-colors hover:bg-ink/90"
             >
               Ainda com dúvida? Fale com a gente
