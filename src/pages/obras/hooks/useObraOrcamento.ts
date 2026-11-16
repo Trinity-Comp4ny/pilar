@@ -44,3 +44,26 @@ export function useSaveOrcamentoEtapa(obraId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: orcamentoKey(obraId) }),
   });
 }
+
+/** Grava vários previstos de uma vez (preencher o orçado pela estimativa): um upsert só, por obra e frente. */
+export function useSalvarOrcamentoEmLote(obraId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (itens: { obraFrenteId: string; valorPrevisto: number }[]): Promise<void> => {
+      if (itens.length === 0) return;
+      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
+      if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
+      const { error } = await supabase.from("obra_orcamento_etapa").upsert(
+        itens.map((i) => ({
+          empresa_id: empresaId,
+          obra_id: obraId,
+          obra_frente_id: i.obraFrenteId,
+          valor_previsto: i.valorPrevisto,
+        })),
+        { onConflict: "obra_id,obra_frente_id" }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: orcamentoKey(obraId) }),
+  });
+}
