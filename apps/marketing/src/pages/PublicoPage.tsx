@@ -3,10 +3,11 @@ import { ArrowRight, Check, X } from "lucide-react";
 import { trackCta } from "../analytics";
 import { CTASection } from "../components/CTASection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
-import { LinkDemo } from "../components/LinkDemo";
+import { InicioAssistidoSection } from "../components/InicioAssistidoSection";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { ARTIGOS_POR_SLUG } from "../lib/blog";
+import { DEMO_URL } from "../lib/contato";
 import { MODULOS_POR_SLUG } from "../lib/modules";
 import { PUBLICOS_POR_SLUG, type PublicoSlug } from "../lib/publicos";
 import { useJsonLd, usePageMeta } from "../lib/seo";
@@ -44,11 +45,16 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
             </h1>
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{p.lede}</p>
             <div className="flex flex-wrap gap-3">
-              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `publico_${slug}`)}>
+              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `publico_${slug}`)}>
+                Agendar demonstração
+              </SplitButton>
+              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `publico_${slug}`)} fantasma>
                 Ver planos
               </SplitButton>
             </div>
-            <LinkDemo local={`publico_${slug}`} className="mt-3" />
+            <p className="mt-3 text-[12.5px] text-ink-muted">
+              Conheça o fluxo do seu escritório. Se já decidiu, a contratação está nos planos.
+            </p>
           </Reveal>
         </div>
       </section>
@@ -137,6 +143,8 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
           </Reveal>
         </div>
       </section>
+
+      <InicioAssistidoSection contexto={`implantacao_${slug}`} />
 
       {artigos.length > 0 && (
         <section className="bg-paper px-5 pb-16 md:px-10 md:pb-20">
