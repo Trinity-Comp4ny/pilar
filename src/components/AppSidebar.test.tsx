@@ -299,4 +299,33 @@ describe("AppSidebar", () => {
       expect(screen.getByRole("link", { name: "Portal ultra admin" })).toBeInTheDocument();
     });
   });
+
+  describe("item ativo em rota filha", () => {
+    it("detalhe (/gestao/tarefas/:id) mantém o item do pai marcado", () => {
+      h.nav = navPadrao({ currentPath: "/gestao/tarefas/abc" });
+      renderSidebar("/gestao/tarefas/abc");
+      expect(screen.getByRole("link", { name: /Tarefas/ })).toHaveClass("bg-brand");
+    });
+
+    it("o item mais específico vence sobre o pai", () => {
+      h.nav = navPadrao({
+        currentPath: "/obras/fornecedores/1",
+        moduleGroups: [
+          {
+            label: null,
+            entries: [
+              { item: { title: "Obras", url: "/obras", icon: Settings }, nav: { disabled: false, title: "" } },
+              {
+                item: { title: "Fornecedores", url: "/obras/fornecedores", icon: Settings },
+                nav: { disabled: false, title: "" },
+              },
+            ],
+          },
+        ],
+      });
+      renderSidebar("/obras/fornecedores/1");
+      expect(screen.getByRole("link", { name: /Fornecedores/ })).toHaveClass("bg-brand");
+      expect(screen.getByRole("link", { name: /^Obras$/ })).not.toHaveClass("bg-brand");
+    });
+  });
 });
