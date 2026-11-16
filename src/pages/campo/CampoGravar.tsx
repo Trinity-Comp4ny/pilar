@@ -184,7 +184,7 @@ export default function CampoGravar() {
         {gravador.niveis.map((n, i) => (
           <span
             key={i}
-            className="w-1 rounded-full bg-ink transition-[height] duration-100"
+            className="w-1 rounded-full bg-brand transition-[height] duration-100"
             style={{ height: `${Math.round(n * 52)}px` }}
           />
         ))}
@@ -238,8 +238,8 @@ export default function CampoGravar() {
           className="flex flex-col items-center gap-2 disabled:opacity-40"
           aria-label="Parar e enviar"
         >
-          <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-ink shadow-lg">
-            <Square className="h-7 w-7 fill-brand text-brand" aria-hidden="true" />
+          <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-brand text-ink shadow-[0_12px_28px_-10px_hsl(var(--c-brand-500)/0.9)] ring-4 ring-brand/30">
+            <Square className="h-7 w-7 fill-ink text-ink" aria-hidden="true" />
           </span>
           <span className="text-sm font-semibold text-ink">Parar e enviar</span>
         </button>

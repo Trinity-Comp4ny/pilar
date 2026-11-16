@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  HardHat,
   Link2,
   MessageSquare,
   MoreHorizontal,
@@ -221,6 +222,18 @@ function CelulaColuna({
   const ehTarefa = item.tipo === "tarefa";
   switch (coluna) {
     case "projeto":
+      // Tarefa do cronograma de uma obra: a coluna mostra a obra (o caminho completo fica sob o nome).
+      if (ehTarefa && !item.projetoId && item.tarefa?.obra) {
+        return (
+          <span
+            className="inline-flex min-w-0 items-center gap-1.5 text-sm text-ink"
+            title={item.obraCaminho ?? undefined}
+          >
+            <HardHat className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="truncate">{item.tarefa.obra.nome}</span>
+          </span>
+        );
+      }
       return (
         <ProjetoCell
           projetoId={item.projetoId}
