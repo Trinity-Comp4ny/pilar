@@ -127,4 +127,52 @@ describe("PullToRefresh", () => {
     await vi.advanceTimersByTimeAsync(10);
     expect(vibrate).toHaveBeenCalledWith([40, 60, 40]);
   });
+
+  describe("página que rola dentro de um painel (PageLayout)", () => {
+    function painel(scrollTop: number) {
+      document.body.innerHTML = '<div id="painel" style="overflow-y:auto"><p id="conteudo">x</p></div>';
+      const el = document.getElementById("painel") as HTMLElement;
+      Object.defineProperty(el, "scrollHeight", { value: 900, configurable: true });
+      Object.defineProperty(el, "clientHeight", { value: 400, configurable: true });
+      el.scrollTop = scrollTop;
+      return el;
+    }
+
+    it("painel no topo: puxar atualiza, mesmo com a janela em 0", async () => {
+      const spy = vi.spyOn(qc, "invalidateQueries");
+      montar();
+      const el = painel(0);
+      const alvo = el.querySelector("#conteudo") as Element;
+      toque("touchstart", 10, alvo);
+      expect(toque("touchmove", 260, alvo).defaultPrevented).toBe(true);
+      toque("touchend", 260, alvo);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(900);
+      });
+      expect(spy).toHaveBeenCalledWith({ type: "active" });
+    });
+
+    it("painel rolado para baixo: não puxa (a rolagem é do painel)", async () => {
+      const spy = vi.spyOn(qc, "invalidateQueries");
+      montar();
+      const el = painel(300);
+      const alvo = el.querySelector("#conteudo") as Element;
+      toque("touchstart", 10, alvo);
+      expect(toque("touchmove", 260, alvo).defaultPrevented).toBe(false);
+      toque("touchend", 260, alvo);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(900);
+      });
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it("painel sai do topo no meio do gesto: o puxão é largado", () => {
+      montar();
+      const el = painel(0);
+      const alvo = el.querySelector("#conteudo") as Element;
+      toque("touchstart", 10, alvo);
+      el.scrollTop = 40;
+      expect(toque("touchmove", 260, alvo).defaultPrevented).toBe(false);
+    });
+  });
 });

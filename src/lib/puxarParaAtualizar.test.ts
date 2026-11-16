@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   LIMIAR_PUXAR,
   MAXIMO_PUXAR,
-  alvoTratoGestoProprio,
   amortecer,
+  classificarToque,
+  estaNoTopo,
   podeIniciarPuxar,
   progressoDoPuxar,
 } from "./puxarParaAtualizar";
@@ -21,30 +22,73 @@ describe("puxarParaAtualizar", () => {
     expect(progressoDoPuxar(500)).toBe(1);
   });
 
-  it("só inicia no topo, sem sobreposição e fora de área própria", () => {
-    const base = { scrollY: 0, sobreposicaoAberta: false, alvoProprio: false };
-    expect(podeIniciarPuxar(base)).toBe(true);
-    expect(podeIniciarPuxar({ ...base, scrollY: 40 })).toBe(false);
-    expect(podeIniciarPuxar({ ...base, sobreposicaoAberta: true })).toBe(false);
-    expect(podeIniciarPuxar({ ...base, alvoProprio: true })).toBe(false);
+  it("só inicia com o rolável no topo e sem sobreposição", () => {
+    expect(podeIniciarPuxar({ tipoDoToque: "topo", sobreposicaoAberta: false })).toBe(true);
+    expect(podeIniciarPuxar({ tipoDoToque: "rolado", sobreposicaoAberta: false })).toBe(false);
+    expect(podeIniciarPuxar({ tipoDoToque: "proprio", sobreposicaoAberta: false })).toBe(false);
+    expect(podeIniciarPuxar({ tipoDoToque: "topo", sobreposicaoAberta: true })).toBe(false);
   });
 
-  it("reconhece alvo que trata o gesto sozinho", () => {
-    document.body.innerHTML = `<div id="a"><input id="i"/></div><div data-no-ptr><span id="n"></span></div><p id="p"></p>`;
+  describe("classificarToque", () => {
     const sem = () => ({ overflowY: "visible", overflowX: "visible" }) as CSSStyleDeclaration;
-    expect(alvoTratoGestoProprio(document.getElementById("i"), sem)).toBe(true);
-    expect(alvoTratoGestoProprio(document.getElementById("n"), sem)).toBe(true);
-    expect(alvoTratoGestoProprio(document.getElementById("p"), sem)).toBe(false);
-    expect(alvoTratoGestoProprio(null, sem)).toBe(false);
+
+    function painel(scrollTop: number, alturaTotal = 800) {
+      document.body.innerHTML = `<div id="painel"><div id="conteudo"><p id="p"></p></div></div>`;
+      const el = document.getElementById("painel") as HTMLElement;
+      Object.defineProperty(el, "scrollHeight", { value: alturaTotal, configurable: true });
+      Object.defineProperty(el, "clientHeight", { value: 400, configurable: true });
+      el.scrollTop = scrollTop;
+      return el;
+    }
+    const estiloDoPainel = (el: Element) =>
+      ({ overflowY: el.id === "painel" ? "auto" : "visible", overflowX: "visible" }) as CSSStyleDeclaration;
+
+    it("painel interno no topo permite puxar, mesmo com a janela em 0", () => {
+      const el = painel(0);
+      const r = classificarToque(document.getElementById("p"), estiloDoPainel, 0);
+      expect(r).toEqual({ tipo: "topo", rolavel: el });
+    });
+
+    it("painel interno rolado não deixa puxar", () => {
+      painel(300);
+      expect(classificarToque(document.getElementById("p"), estiloDoPainel, 0).tipo).toBe("rolado");
+    });
+
+    it("tolera fração do iOS no topo", () => {
+      painel(0.33);
+      expect(classificarToque(document.getElementById("p"), estiloDoPainel, 0).tipo).toBe("topo");
+    });
+
+    it("sem painel rolável, quem decide é a janela", () => {
+      document.body.innerHTML = `<p id="p"></p>`;
+      expect(classificarToque(document.getElementById("p"), sem, 0)).toEqual({ tipo: "topo", rolavel: null });
+      expect(classificarToque(document.getElementById("p"), sem, 120).tipo).toBe("rolado");
+    });
+
+    it("campo, data-no-ptr e rolagem horizontal são gesto próprio", () => {
+      document.body.innerHTML = `<input id="i"/><div data-no-ptr><span id="n"></span></div><div id="h"><p id="q"></p></div>`;
+      expect(classificarToque(document.getElementById("i"), sem, 0).tipo).toBe("proprio");
+      expect(classificarToque(document.getElementById("n"), sem, 0).tipo).toBe("proprio");
+      const h = document.getElementById("h") as HTMLElement;
+      Object.defineProperty(h, "scrollWidth", { value: 900, configurable: true });
+      Object.defineProperty(h, "clientWidth", { value: 300, configurable: true });
+      const estiloH = (el: Element) =>
+        ({ overflowX: el.id === "h" ? "auto" : "visible", overflowY: "visible" }) as CSSStyleDeclaration;
+      expect(classificarToque(document.getElementById("q"), estiloH, 0).tipo).toBe("proprio");
+    });
+
+    it("alvo que não é elemento cai na janela", () => {
+      expect(classificarToque(null, sem, 0)).toEqual({ tipo: "topo", rolavel: null });
+    });
   });
 
-  it("área que rola por dentro também é própria", () => {
-    document.body.innerHTML = `<div id="r"><p id="p"></p></div>`;
-    const r = document.getElementById("r") as HTMLElement;
-    Object.defineProperty(r, "scrollHeight", { value: 500 });
-    Object.defineProperty(r, "clientHeight", { value: 100 });
-    const estilo = (el: Element) =>
-      ({ overflowY: el === r ? "auto" : "visible", overflowX: "visible" }) as CSSStyleDeclaration;
-    expect(alvoTratoGestoProprio(document.getElementById("p"), estilo)).toBe(true);
+  it("estaNoTopo lê o rolável ou a janela", () => {
+    const el = document.createElement("div");
+    el.scrollTop = 0;
+    expect(estaNoTopo(el, 500)).toBe(true);
+    el.scrollTop = 50;
+    expect(estaNoTopo(el, 0)).toBe(false);
+    expect(estaNoTopo(null, 1)).toBe(true);
+    expect(estaNoTopo(null, 80)).toBe(false);
   });
 });

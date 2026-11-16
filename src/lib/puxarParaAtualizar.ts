@@ -23,37 +23,68 @@ export function progressoDoPuxar(distancia: number): number {
   return Math.max(0, Math.min(1, distancia / LIMIAR_PUXAR));
 }
 
-interface IniciarArgs {
-  /** `window.scrollY` no começo do toque. */
-  scrollY: number;
-  /** Há diálogo, sheet ou menu aberto por cima da página. */
-  sobreposicaoAberta: boolean;
-  /** O toque nasceu em área que rola, arrasta ou digita por conta própria. */
-  alvoProprio: boolean;
+/** Tolerância (px) para "está no topo": o iOS repousa em frações (0,33) e com sobra de borracha. */
+export const TOLERANCIA_TOPO = 2;
+
+type AlvoDoToque =
+  /** Algo que trata o gesto sozinho (campo, mapa, arraste, carrossel horizontal). */
+  | "proprio"
+  /** Quem rola (a janela ou o contêiner interno da página) não está no topo. */
+  | "rolado"
+  /** Quem rola está no topo: pode puxar. */
+  | "topo";
+
+interface ClassificacaoDoToque {
+  tipo: AlvoDoToque;
+  /** Contêiner que rola a página sob o dedo; `null` = a própria janela. */
+  rolavel: Element | null;
 }
 
-/** Só puxa a página quando ela está no topo e nada por cima/ao redor quer o gesto. */
-export function podeIniciarPuxar({ scrollY, sobreposicaoAberta, alvoProprio }: IniciarArgs): boolean {
-  return scrollY <= 0 && !sobreposicaoAberta && !alvoProprio;
+/**
+ * Onde o toque começou e se dá para puxar. Nas telas principais a página rola DENTRO de um painel
+ * fixo (PageLayout: `fixed` + `overflow-y-auto`), não na janela: `window.scrollY` ali é sempre 0.
+ * Por isso o que vale é o `scrollTop` do primeiro ancestral que rola na vertical; só sem ele a
+ * janela decide. Ancestral que rola na horizontal (chips, kanban, tabela larga) é gesto próprio.
+ */
+export function classificarToque(
+  alvo: EventTarget | null,
+  getComputedStyleFn: (el: Element) => CSSStyleDeclaration = (el) => window.getComputedStyle(el),
+  scrollYJanela: number = typeof window === "undefined" ? 0 : window.scrollY
+): ClassificacaoDoToque {
+  if (!(alvo instanceof Element)) return { tipo: scrollYJanela > TOLERANCIA_TOPO ? "rolado" : "topo", rolavel: null };
+  if (alvo.closest(SELETOR_PROPRIO)) return { tipo: "proprio", rolavel: null };
+
+  let el: Element | null = alvo;
+  while (el && el !== document.body && el !== document.documentElement) {
+    const estilo = getComputedStyleFn(el);
+    if (/(auto|scroll)/.test(estilo.overflowX) && el.scrollWidth > el.clientWidth + 1) {
+      return { tipo: "proprio", rolavel: null };
+    }
+    if (/(auto|scroll)/.test(estilo.overflowY) && el.scrollHeight > el.clientHeight + 1) {
+      return { tipo: el.scrollTop > TOLERANCIA_TOPO ? "rolado" : "topo", rolavel: el };
+    }
+    el = el.parentElement;
+  }
+  return { tipo: scrollYJanela > TOLERANCIA_TOPO ? "rolado" : "topo", rolavel: null };
+}
+
+/** O que rola a página (contêiner interno ou janela) ainda está no topo? */
+export function estaNoTopo(rolavel: Element | null, scrollYJanela: number = window.scrollY): boolean {
+  return (rolavel ? rolavel.scrollTop : scrollYJanela) <= TOLERANCIA_TOPO;
+}
+
+interface IniciarArgs {
+  tipoDoToque: AlvoDoToque;
+  /** Há diálogo, sheet ou menu aberto por cima da página. */
+  sobreposicaoAberta: boolean;
+}
+
+/** Só puxa quando quem rola está no topo e nada por cima/ao redor quer o gesto. */
+export function podeIniciarPuxar({ tipoDoToque, sobreposicaoAberta }: IniciarArgs): boolean {
+  return tipoDoToque === "topo" && !sobreposicaoAberta;
 }
 
 const SELETOR_PROPRIO =
   "input, textarea, select, [contenteditable=true], [data-no-ptr], .leaflet-container, [data-dnd-kit], [role=slider]";
-
-/** O toque começou em algo que trata o gesto sozinho: mapa, campo de texto, arraste, área rolável interna. */
-export function alvoTratoGestoProprio(alvo: EventTarget | null, getComputedStyleFn = window.getComputedStyle): boolean {
-  if (!(alvo instanceof Element)) return false;
-  if (alvo.closest(SELETOR_PROPRIO)) return true;
-  // Ancestral que rola (vertical, ou horizontal: carrossel/kanban) e tem conteúdo a mais.
-  let el: Element | null = alvo;
-  while (el && el !== document.body && el !== document.documentElement) {
-    const estilo = getComputedStyleFn(el);
-    const rolaY = /(auto|scroll)/.test(estilo.overflowY) && el.scrollHeight > el.clientHeight;
-    const rolaX = /(auto|scroll)/.test(estilo.overflowX) && el.scrollWidth > el.clientWidth;
-    if (rolaY || rolaX) return true;
-    el = el.parentElement;
-  }
-  return false;
-}
 
 export const SELETOR_SOBREPOSICAO = '[role="dialog"], [role="alertdialog"], [role="menu"], [data-vaul-drawer]';
