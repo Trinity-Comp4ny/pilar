@@ -2,7 +2,7 @@ import { useMemo } from "react";
 // Valor real, sem a máscara de "ocultar valores": é um relatório para o cliente e vai para o papel.
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { achatarOrcado, montarOrcadoRealizado, type NoFinanceiro } from "@/pages/obras/lib/orcadoRealizado";
+import { achatarOrcado, montarOrcadoRealizado, type NoFinanceiro } from "@/lib/orcadoRealizado";
 
 export interface LinhaDoRelatorio extends Omit<NoFinanceiro, "created_at"> {
   previsto: number;

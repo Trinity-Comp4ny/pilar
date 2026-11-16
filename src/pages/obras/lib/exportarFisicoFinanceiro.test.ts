@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { letraColuna, montarPlanilhaXML, montarTabelaExport, nomeArquivoFF } from "./exportarFisicoFinanceiro";
 import { montarFisicoFinanceiro } from "./fisicoFinanceiro";
-import { montarOrcadoRealizado, type NoFinanceiro } from "./orcadoRealizado";
+import { montarOrcadoRealizado, type NoFinanceiro } from "@/lib/orcadoRealizado";
 import type { Periodo } from "./obraArvore";
 
 const no = (id: string, parent_id: string | null, nivel: string, ordem = 0): NoFinanceiro => ({

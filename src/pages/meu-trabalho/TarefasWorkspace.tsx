@@ -42,7 +42,7 @@ import {
   type TarefaItem,
 } from "./hooks";
 import { resolverPessoaIds } from "./filtroPessoas";
-import { useObras } from "@/pages/obras/hooks/useObras";
+import { bate, obraIdDoItem, TODOS, useFiltroProjetoObra } from "./useFiltroProjetoObra";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
 import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
@@ -89,20 +89,6 @@ function noPeriodo(prazo: string | null, filtro: FiltroData): boolean {
   const fim = new Date(hoje);
   fim.setDate(fim.getDate() + 7);
   return d >= hoje && d <= fim; // semana
-}
-
-const TODOS = "todos";
-const NENHUM = "nenhum";
-
-function obraIdDoItem(i: ItemTrabalho): string | null {
-  return i.tarefa?.obra?.id ?? null;
-}
-
-/** `todos` não filtra, `nenhum` pega quem não tem o vínculo, e um id pega só aquele projeto ou obra. */
-function bate(valorDoItem: string | null, filtro: string): boolean {
-  if (filtro === TODOS) return true;
-  if (filtro === NENHUM) return !valorDoItem;
-  return valorDoItem === filtro;
 }
 
 /** Peças que a moldura (página ou aba) encaixa: o espaço é dela, o conteúdo é do workspace. */
@@ -199,37 +185,11 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     tipo,
   });
 
-  // Projeto e Obra: dois filtros simples, cada um com "Sem ..." para as tarefas gerais do escritório.
-  // Na URL (`?projeto=` e `?obra=`); dentro da obra eles não existem.
-  const filtroProjeto = obra ? TODOS : (searchParams.get("projeto") ?? TODOS);
-  const filtroObra = obra ? TODOS : (searchParams.get("obra") ?? TODOS);
-  const setFiltroUrl = (chave: "projeto" | "obra", v: string) =>
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (v === TODOS) next.delete(chave);
-        else next.set(chave, v);
-        return next;
-      },
-      { replace: true }
-    );
-  const { data: obrasDaEmpresa } = useObras();
-  const { opcoesProjeto, opcoesObra } = useMemo(() => {
-    const obras = new Map<string, string>((obrasDaEmpresa ?? []).map((o) => [o.id, o.nome]));
-    const projs = new Map<string, string>((projetos ?? []).map((p) => [p.id, p.nome]));
-    for (const i of itens) {
-      const oid = obraIdDoItem(i);
-      if (oid && i.tarefa?.obra) obras.set(oid, i.tarefa.obra.nome);
-      if (i.projetoId && i.projetoNome) projs.set(i.projetoId, i.projetoNome);
-    }
-    const porNome = (a: [string, string], b: [string, string]) => a[1].localeCompare(b[1], "pt-BR");
-    const lista = (m: Map<string, string>) => [...m].sort(porNome).map(([value, label]) => ({ value, label }));
-    return {
-      opcoesProjeto: [{ value: TODOS, label: "Todos" }, { value: NENHUM, label: "Sem projeto" }, ...lista(projs)],
-      opcoesObra: [{ value: TODOS, label: "Todas" }, { value: NENHUM, label: "Sem obra" }, ...lista(obras)],
-    };
-  }, [itens, obrasDaEmpresa, projetos]);
-
+  const { filtroProjeto, filtroObra, setFiltroUrl, opcoesProjeto, opcoesObra } = useFiltroProjetoObra(
+    !!obra,
+    itens,
+    projetos
+  );
   const itensFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return itens.filter((i) => {
@@ -549,13 +509,10 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     (filtroProjeto !== TODOS ? 1 : 0) +
     (filtroObra !== TODOS ? 1 : 0);
   const limparFiltros = () => {
-    // Uma atualização só: duas seguidas em setSearchParams perdem a primeira.
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        next.delete("pessoas");
-        next.delete("projeto");
-        next.delete("obra");
+        for (const chave of ["pessoas", "projeto", "obra"]) next.delete(chave);
         return next;
       },
       { replace: true }

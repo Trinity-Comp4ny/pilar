@@ -10,7 +10,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useObraConta } from "@/pages/obras/hooks/useObraConta";
 import { useObraOrcamento } from "@/pages/obras/hooks/useObraOrcamento";
-import { achatarOrcado, montarOrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { achatarOrcado, montarOrcadoRealizado } from "@/lib/orcadoRealizado";
 import { calcularSaldoConta, realizadoPorEtapa, SEM_ETAPA } from "@/lib/obras";
 import { agruparPlanejamentoManual, useObraPlanejamentoMes } from "@/pages/obras/hooks/useObraPlanejamentoMes";
 import { montarFisicoFinanceiro, periodosPorNo } from "@/pages/obras/lib/fisicoFinanceiro";

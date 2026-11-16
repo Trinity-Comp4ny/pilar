@@ -3,7 +3,7 @@
 // devolve a grade. Datas são texto "YYYY-MM-DD" lidas por partes, nunca por `Date`, para não depender de fuso.
 import type { PontoDesembolso } from "@/lib/obras";
 import type { Periodo } from "./obraArvore";
-import type { LinhaOrcado } from "./orcadoRealizado";
+import type { LinhaOrcado } from "@/lib/orcadoRealizado";
 
 /** "YYYY-MM" */
 export type MesChave = string;

@@ -6,8 +6,8 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ArrowDownCircle, ArrowUpCircle, Receipt, ExternalLink, Percent } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteObraConta } from "@/pages/cliente/useClienteObraData";
-import { useClienteObraOrcamento } from "@/pages/cliente/useClienteObraOrcamento";
-import { RelatorioOrcadoRealizado } from "@/pages/obras/components/RelatorioOrcadoRealizado";
+import { useClienteObraOrcamento } from "@/pages/portal/useClienteObraOrcamento";
+import { RelatorioOrcadoRealizado } from "@/components/obras/RelatorioOrcadoRealizado";
 
 /** Orçado x realizado da obra, linha por linha. Some em silêncio se a obra ainda não tem orçamento nem gasto. */
 function OrcadoRealizadoDaObra({ obraId }: { obraId: string }) {

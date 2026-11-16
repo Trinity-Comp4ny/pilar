@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { FisicoFinanceiroLista } from "./FisicoFinanceiroLista";
 import { colunasDaEscala, montarFisicoFinanceiro } from "@/pages/obras/lib/fisicoFinanceiro";
-import { montarOrcadoRealizado, type NoFinanceiro } from "@/pages/obras/lib/orcadoRealizado";
+import { montarOrcadoRealizado, type NoFinanceiro } from "@/lib/orcadoRealizado";
 
 vi.mock("@/hooks/useMoneyMask", () => ({ useMoneyMask: () => (v: number) => `R$ ${v}` }));
 
