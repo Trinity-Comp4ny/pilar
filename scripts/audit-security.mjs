@@ -87,6 +87,7 @@ const ANON_ESPERADO = new Set([
   "portal_solicitar_revisao_entrega",
   "get_cliente_obras",
   "get_cliente_obra_detail",
+  "get_cliente_obra_orcamento",
   "get_cliente_projetos",
   "get_cliente_projeto_detail",
   // Pilar Campo: credencial própria do app de campo (spec 042).
