@@ -160,7 +160,7 @@ export default function ClienteObraDetail() {
         {aba === "financeiro" && (
           <div className="">
             <h2 className="text-sm font-semibold mb-3">Prestação de contas</h2>
-            <ContaObraContent conta={data.conta} taxaPct={data.taxa_administracao_pct} />
+            <ContaObraContent conta={data.conta} taxaPct={data.taxa_administracao_pct} obraId={data.obra_id} />
           </div>
         )}
       </div>
