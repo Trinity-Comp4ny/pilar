@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 vi.mock("@/hooks/useMoneyMask", () => ({
-  useMoneyMask: () => (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+  useMoneyMask: () => (v: number) =>
+    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
 }));
 
 import { FisicoFinanceiroChart, TooltipPlanejadoRealizado } from "./FisicoFinanceiroChart";
@@ -47,7 +48,12 @@ describe("FisicoFinanceiroChart", () => {
       unobserve() {}
       disconnect() {}
     } as unknown as typeof ResizeObserver;
-    render(<FisicoFinanceiroChart pontos={[{ mes: "2026-11", planejadoAcumulado: 10, realizadoAcumulado: 5 }]} mesAtual="2026-11" />);
+    render(
+      <FisicoFinanceiroChart
+        pontos={[{ mes: "2026-11", planejadoAcumulado: 10, realizadoAcumulado: 5 }]}
+        mesAtual="2026-11"
+      />
+    );
     expect(screen.getByText("Planejado × realizado")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Legenda" })).toHaveTextContent("PlanejadoRealizado");
   });

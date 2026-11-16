@@ -55,7 +55,10 @@ export function FisicoFinanceiroLista({ ff, colunas }: Props) {
                 {linhas.map((l) => (
                   <li
                     key={l.id}
-                    className={cn("flex justify-between gap-2 text-sm", l.nivel === "etapa" && "pl-3 text-muted-foreground")}
+                    className={cn(
+                      "flex justify-between gap-2 text-sm",
+                      l.nivel === "etapa" && "pl-3 text-muted-foreground"
+                    )}
                   >
                     <span className="truncate">{l.nome}</span>
                     <span className="tabular-nums">{formatCurrency(valorDaColuna(l.porMes, c))}</span>

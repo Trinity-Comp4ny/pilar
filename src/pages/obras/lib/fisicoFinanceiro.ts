@@ -261,7 +261,10 @@ export function percentualDe(valor: number, previsto: number): number {
 }
 
 /** Percentuais de um nó (`valor ÷ previsto`) prontos para gravar em `obra_planejamento_mes`, em 4 casas. */
-export function percentuaisDoNo(porMes: Readonly<Record<MesChave, number>>, previsto: number): Record<MesChave, number> {
+export function percentuaisDoNo(
+  porMes: Readonly<Record<MesChave, number>>,
+  previsto: number
+): Record<MesChave, number> {
   const r: Record<MesChave, number> = {};
   if (previsto <= 0) return r;
   for (const [mes, valor] of Object.entries(porMes)) r[mes] = Math.round((valor / previsto) * 1_000_000) / 10_000;
@@ -277,7 +280,8 @@ export function trimestreDe(mes: MesChave): string {
 /** Soma colunas de mês por trimestre; ordem de chegada dos meses é preservada. */
 export function somarPorTrimestre(porMes: Readonly<Record<MesChave, number>>): Record<string, number> {
   const r: Record<string, number> = {};
-  for (const mes of Object.keys(porMes).sort()) r[trimestreDe(mes)] = centavos((r[trimestreDe(mes)] ?? 0) + porMes[mes]);
+  for (const mes of Object.keys(porMes).sort())
+    r[trimestreDe(mes)] = centavos((r[trimestreDe(mes)] ?? 0) + porMes[mes]);
   return r;
 }
 

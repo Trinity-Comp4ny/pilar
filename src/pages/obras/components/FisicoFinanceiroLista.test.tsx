@@ -7,13 +7,22 @@ import { montarOrcadoRealizado, type NoFinanceiro } from "@/pages/obras/lib/orca
 vi.mock("@/hooks/useMoneyMask", () => ({ useMoneyMask: () => (v: number) => `R$ ${v}` }));
 
 const no = (id: string, parent_id: string | null, nivel: string): NoFinanceiro => ({
-  id, parent_id, nivel, nome: id.toUpperCase(), ordem: 0, created_at: "2026-01-01",
+  id,
+  parent_id,
+  nivel,
+  nome: id.toUpperCase(),
+  ordem: 0,
+  created_at: "2026-01-01",
 });
 
 describe("FisicoFinanceiroLista", () => {
   const nos = [no("f1", null, "fase"), no("e1", "f1", "etapa"), no("s1", "e1", "servico")];
   const orcado = montarOrcadoRealizado(nos, new Map([["s1", 1000]]), {});
-  const ff = montarFisicoFinanceiro(orcado.raizes, new Map([["s1", { inicio: "2026-01-01", fim: "2026-02-28" }]]), new Map());
+  const ff = montarFisicoFinanceiro(
+    orcado.raizes,
+    new Map([["s1", { inicio: "2026-01-01", fim: "2026-02-28" }]]),
+    new Map()
+  );
   const colunas = colunasDaEscala(ff.meses, "mensal");
 
   it("um cartão por mês com total, acumulado e só as fases; abrir mostra as etapas", () => {

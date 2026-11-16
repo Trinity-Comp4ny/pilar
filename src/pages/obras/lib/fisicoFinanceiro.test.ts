@@ -85,7 +85,12 @@ describe("distribuirLinear", () => {
 });
 
 describe("montarFisicoFinanceiro", () => {
-  const nos = [no("f1", null, "fase"), no("e1", "f1", "etapa"), no("s1", "e1", "servico", 1), no("s2", "e1", "servico", 2)];
+  const nos = [
+    no("f1", null, "fase"),
+    no("e1", "f1", "etapa"),
+    no("s1", "e1", "servico", 1),
+    no("s2", "e1", "servico", 2),
+  ];
   const periodos = new Map<string, Periodo | null>([
     ["f1", { inicio: "2026-11-01", fim: "2026-12-31" }],
     ["e1", { inicio: "2026-11-01", fim: "2026-12-31" }],
@@ -189,7 +194,11 @@ describe("montarFisicoFinanceiro", () => {
     const orc = montarOrcadoRealizado(nos, new Map([["s1", 1000]]), {});
     const manual = new Map([["s1", { "2026-11": 100 }]]);
     const a = montarFisicoFinanceiro(orc.raizes, periodos, manual);
-    const b = montarFisicoFinanceiro(orc.raizes, new Map([["s1", { inicio: "2027-03-01", fim: "2027-04-01" }]]), manual);
+    const b = montarFisicoFinanceiro(
+      orc.raizes,
+      new Map([["s1", { inicio: "2027-03-01", fim: "2027-04-01" }]]),
+      manual
+    );
     expect(b.linhas.find((l) => l.id === "s1")!.porMes).toEqual(a.linhas.find((l) => l.id === "s1")!.porMes);
   });
 
@@ -327,15 +336,24 @@ describe("colunas da escala", () => {
 
 describe("diferencaPlanejado", () => {
   it("positivo quando gastou mais do que o planejado, com percentual sobre o planejado", () => {
-    expect(diferencaPlanejado({ mes: "2026-11", planejadoAcumulado: 250, realizadoAcumulado: 300 })).toEqual({ valor: 50, pct: 20 });
+    expect(diferencaPlanejado({ mes: "2026-11", planejadoAcumulado: 250, realizadoAcumulado: 300 })).toEqual({
+      valor: 50,
+      pct: 20,
+    });
   });
 
   it("negativo quando gastou menos", () => {
-    expect(diferencaPlanejado({ mes: "2026-11", planejadoAcumulado: 400, realizadoAcumulado: 300 })).toEqual({ valor: -100, pct: -25 });
+    expect(diferencaPlanejado({ mes: "2026-11", planejadoAcumulado: 400, realizadoAcumulado: 300 })).toEqual({
+      valor: -100,
+      pct: -25,
+    });
   });
 
   it("sem percentual quando o planejado é zero", () => {
-    expect(diferencaPlanejado({ mes: "2026-09", planejadoAcumulado: 0, realizadoAcumulado: 50 })).toEqual({ valor: 50, pct: null });
+    expect(diferencaPlanejado({ mes: "2026-09", planejadoAcumulado: 0, realizadoAcumulado: 50 })).toEqual({
+      valor: 50,
+      pct: null,
+    });
   });
 
   it("nulo nos meses sem realizado", () => {
@@ -373,7 +391,12 @@ describe("percentuaisAposEdicao", () => {
   });
 
   it("edita um mês que o nó ainda não tinha", () => {
-    const r = percentuaisAposEdicao({ porMes: { "2026-11": 100 }, previsto: 100 }, ["2026-11", "2026-12"], "2026-12", 25);
+    const r = percentuaisAposEdicao(
+      { porMes: { "2026-11": 100 }, previsto: 100 },
+      ["2026-11", "2026-12"],
+      "2026-12",
+      25
+    );
     expect(r).toEqual({ "2026-11": 100, "2026-12": 25 });
   });
 });
@@ -382,7 +405,11 @@ describe("periodosPorNo", () => {
   it("percorre a árvore inteira por id", () => {
     const p = { inicio: "2026-11-01", fim: "2026-11-30" };
     const mapa = periodosPorNo([
-      { no: { id: "f" }, periodo: p, filhos: [{ no: { id: "e" }, periodo: null, filhos: [{ no: { id: "s" }, periodo: p, filhos: [] }] }] },
+      {
+        no: { id: "f" },
+        periodo: p,
+        filhos: [{ no: { id: "e" }, periodo: null, filhos: [{ no: { id: "s" }, periodo: p, filhos: [] }] }],
+      },
     ]);
     expect([...mapa.keys()]).toEqual(["f", "e", "s"]);
     expect(mapa.get("e")).toBeNull();
@@ -391,7 +418,12 @@ describe("periodosPorNo", () => {
 });
 
 describe("distribuivel e datasMudaram", () => {
-  const nos = [no("f1", null, "fase"), no("e1", "f1", "etapa"), no("s1", "e1", "servico", 1), no("s2", "e1", "servico", 2)];
+  const nos = [
+    no("f1", null, "fase"),
+    no("e1", "f1", "etapa"),
+    no("s1", "e1", "servico", 1),
+    no("s2", "e1", "servico", 2),
+  ];
   const periodos = new Map<string, Periodo | null>([
     ["s1", { inicio: "2026-11-01", fim: "2026-11-30" }],
     ["s2", { inicio: "2026-12-01", fim: "2026-12-31" }],
@@ -399,13 +431,32 @@ describe("distribuivel e datasMudaram", () => {
 
   it("folha com valor é distribuível; agregado de filhos e detalhe de pai com valor próprio não são", () => {
     const filhos = montarFisicoFinanceiro(
-      montarOrcadoRealizado(nos, new Map([["s1", 100], ["s2", 100]]), {}).raizes,
+      montarOrcadoRealizado(
+        nos,
+        new Map([
+          ["s1", 100],
+          ["s2", 100],
+        ]),
+        {}
+      ).raizes,
       periodos
     );
-    expect(filhos.linhas.map((l) => [l.id, l.distribuivel])).toEqual([["f1", false], ["e1", false], ["s1", true], ["s2", true]]);
+    expect(filhos.linhas.map((l) => [l.id, l.distribuivel])).toEqual([
+      ["f1", false],
+      ["e1", false],
+      ["s1", true],
+      ["s2", true],
+    ]);
 
     const pai = montarFisicoFinanceiro(
-      montarOrcadoRealizado(nos, new Map([["e1", 300], ["s1", 100]]), {}).raizes,
+      montarOrcadoRealizado(
+        nos,
+        new Map([
+          ["e1", 300],
+          ["s1", 100],
+        ]),
+        {}
+      ).raizes,
       new Map([["e1", { inicio: "2026-11-01", fim: "2026-12-31" }]])
     );
     expect(pai.linhas.find((l) => l.id === "e1")!.distribuivel).toBe(true);

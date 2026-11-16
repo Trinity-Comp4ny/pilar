@@ -14,8 +14,16 @@ const no = (id: string, parent_id: string | null, nivel: string, ordem = 0): NoF
 });
 
 function ff(semData = false) {
-  const nos = [no("f1", null, "fase"), no("e1", "f1", "etapa"), no("s1", "e1", "servico"), no("s2", "e1", "servico", 1)];
-  const previsto = new Map([["s1", 1000], ["s2", 500]]);
+  const nos = [
+    no("f1", null, "fase"),
+    no("e1", "f1", "etapa"),
+    no("s1", "e1", "servico"),
+    no("s2", "e1", "servico", 1),
+  ];
+  const previsto = new Map([
+    ["s1", 1000],
+    ["s2", 500],
+  ]);
   const orcado = montarOrcadoRealizado(nos, previsto, {});
   const per = new Map<string, Periodo>([["s1", { inicio: "2026-01-01", fim: "2026-02-28" }]]);
   if (!semData) per.set("s2", { inicio: "2026-02-01", fim: "2026-02-28" });
@@ -25,8 +33,7 @@ function ff(semData = false) {
 describe("montarTabelaExport", () => {
   it("filtra por nível: fases, fases e etapas, tudo", () => {
     const f = ff();
-    const nomes = (n: "fases" | "etapas" | "tudo") =>
-      montarTabelaExport(f, n).linhas.map((l) => String(l[0]).trim());
+    const nomes = (n: "fases" | "etapas" | "tudo") => montarTabelaExport(f, n).linhas.map((l) => String(l[0]).trim());
     expect(nomes("fases")).toEqual(["F1", "No período", "Acumulado"]);
     expect(nomes("etapas")).toEqual(["F1", "E1", "No período", "Acumulado"]);
     expect(nomes("tudo")).toEqual(["F1", "E1", "S1", "S2", "No período", "Acumulado"]);

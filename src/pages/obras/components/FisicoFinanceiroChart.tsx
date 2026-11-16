@@ -1,4 +1,14 @@
-import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { cn } from "@/lib/utils";
 import {
@@ -56,7 +66,10 @@ export function FisicoFinanceiroChart({ pontos, mesAtual }: Props) {
             Planejado
           </li>
           <li className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-[hsl(var(--chart-danger))] opacity-40" aria-hidden />
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-sm bg-[hsl(var(--chart-danger))] opacity-40"
+              aria-hidden
+            />
             Realizado
           </li>
         </ul>

@@ -150,7 +150,10 @@ export function FisicoFinanceiroGrade({
 }: Props) {
   const formatCurrency = useMoneyMask();
   const visiveis = useMemo(() => linhasVisiveis(ff.linhas, recolhidos), [ff.linhas, recolhidos]);
-  const temFilhos = useMemo(() => new Set(ff.linhas.map((l) => l.parentId).filter((p): p is string => !!p)), [ff.linhas]);
+  const temFilhos = useMemo(
+    () => new Set(ff.linhas.map((l) => l.parentId).filter((p): p is string => !!p)),
+    [ff.linhas]
+  );
   const temSemData = ff.semData.valor > 0;
 
   const noMes = colunas.map((c) => valorDaColuna(ff.totalPorMes, c));
@@ -197,7 +200,11 @@ export function FisicoFinanceiroGrade({
               <tr
                 key={l.id}
                 data-testid={`ff-${l.id}`}
-                className={cn("border-b align-middle", l.nivel === "fase" && "bg-muted/40", detalhe && "text-muted-foreground")}
+                className={cn(
+                  "border-b align-middle",
+                  l.nivel === "fase" && "bg-muted/40",
+                  detalhe && "text-muted-foreground"
+                )}
               >
                 <th
                   scope="row"
@@ -220,7 +227,11 @@ export function FisicoFinanceiroGrade({
                     </button>
                     <div className="min-w-0">
                       <p
-                        className={cn("truncate text-sm", l.nivel === "fase" ? "font-semibold" : "font-medium", !detalhe && "text-ink")}
+                        className={cn(
+                          "truncate text-sm",
+                          l.nivel === "fase" ? "font-semibold" : "font-medium",
+                          !detalhe && "text-ink"
+                        )}
                         title={`${NIVEL_NOME[l.nivel]}: ${l.caminho}`}
                       >
                         {l.nome}
@@ -241,7 +252,9 @@ export function FisicoFinanceiroGrade({
                       {l.manual && editavel && onVoltarAutomatico && (
                         <p className="text-[10px]">
                           {l.datasMudaram && (
-                            <span className="text-danger-strong">O planejamento é manual e não acompanha as datas. </span>
+                            <span className="text-danger-strong">
+                              O planejamento é manual e não acompanha as datas.{" "}
+                            </span>
                           )}
                           <button
                             type="button"

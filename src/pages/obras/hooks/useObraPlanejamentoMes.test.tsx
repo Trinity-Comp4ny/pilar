@@ -19,7 +19,9 @@ import {
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const invalidar = vi.spyOn(qc, "invalidateQueries");
-  const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
   return { invalidar, wrapper };
 }
 
@@ -59,7 +61,9 @@ describe("agruparPlanejamentoManual", () => {
 
 describe("useObraPlanejamentoMes", () => {
   it("lê as células da obra", async () => {
-    fake.responder((c) => (c.tabela === "obra_planejamento_mes" ? { data: [linha("s1", "2026-11-01", 100)], error: null } : undefined));
+    fake.responder((c) =>
+      c.tabela === "obra_planejamento_mes" ? { data: [linha("s1", "2026-11-01", 100)], error: null } : undefined
+    );
     const m = montar();
     const { result } = renderHook(() => useObraPlanejamentoMes("o-1"), { wrapper: m.wrapper });
     await waitFor(() => expect(result.current.data).toHaveLength(1));
@@ -108,8 +112,12 @@ describe("useSalvarPlanejamentoNo", () => {
       await expect(result.current.mutateAsync({ obraFrenteId: "s1", percentuais: { "2026-11": 101 } })).rejects.toThrow(
         "0 a 100"
       );
-      await expect(result.current.mutateAsync({ obraFrenteId: "s1", percentuais: { "2026-11": -1 } })).rejects.toThrow();
-      await expect(result.current.mutateAsync({ obraFrenteId: "s1", percentuais: { "2026-11": Number.NaN } })).rejects.toThrow();
+      await expect(
+        result.current.mutateAsync({ obraFrenteId: "s1", percentuais: { "2026-11": -1 } })
+      ).rejects.toThrow();
+      await expect(
+        result.current.mutateAsync({ obraFrenteId: "s1", percentuais: { "2026-11": Number.NaN } })
+      ).rejects.toThrow();
     });
     expect(fake.escritas()).toHaveLength(0);
   });
@@ -121,7 +129,9 @@ describe("useSalvarPlanejamentoNo", () => {
       await expect(result.current.mutateAsync({ obraFrenteId: "s1", percentuais: { "2026-13": 10 } })).rejects.toThrow(
         "Mês inválido"
       );
-      await expect(result.current.mutateAsync({ obraFrenteId: "s1", percentuais: {} })).rejects.toThrow("ao menos um mês");
+      await expect(result.current.mutateAsync({ obraFrenteId: "s1", percentuais: {} })).rejects.toThrow(
+        "ao menos um mês"
+      );
     });
     expect(fake.escritas()).toHaveLength(0);
   });
@@ -139,7 +149,9 @@ describe("useSalvarPlanejamentoNo", () => {
   });
 
   it("propaga erro de RLS do upsert e não limpa nem invalida", async () => {
-    fake.responder((c) => (c.op === "upsert" ? { data: null, error: { message: "violates row-level security" } } : undefined));
+    fake.responder((c) =>
+      c.op === "upsert" ? { data: null, error: { message: "violates row-level security" } } : undefined
+    );
     const m = montar();
     const { result } = renderHook(() => useSalvarPlanejamentoNo("o-1"), { wrapper: m.wrapper });
     await act(async () => {
