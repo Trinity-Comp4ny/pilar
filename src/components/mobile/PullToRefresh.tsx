@@ -7,7 +7,8 @@ import {
   MINIMO_ATUALIZANDO_MS,
   POSICAO_ATUALIZANDO,
   SELETOR_SOBREPOSICAO,
-  alvoTratoGestoProprio,
+  classificarToque,
+  estaNoTopo,
   amortecer,
   podeIniciarPuxar,
   progressoDoPuxar,
@@ -45,6 +46,7 @@ export function PullToRefresh() {
 
     let inicioY = 0;
     let inicioX = 0;
+    let rolavel: Element | null = null;
     let puxando = false;
     let rastreando = false;
     let distancia = 0;
@@ -66,12 +68,13 @@ export function PullToRefresh() {
       rastreando = false;
       puxando = false;
       if (atualizando.current || e.touches.length !== 1) return;
+      const toque = classificarToque(e.target);
       const ok = podeIniciarPuxar({
-        scrollY: window.scrollY,
+        tipoDoToque: toque.tipo,
         sobreposicaoAberta: !!document.querySelector(SELETOR_SOBREPOSICAO),
-        alvoProprio: alvoTratoGestoProprio(e.target),
       });
       if (!ok) return;
+      rolavel = toque.rolavel;
       inicioY = e.touches[0].clientY;
       inicioX = e.touches[0].clientX;
       distancia = 0;
@@ -85,7 +88,7 @@ export function PullToRefresh() {
       const dx = e.touches[0].clientX - inicioX;
       if (!puxando) {
         // Gesto horizontal, subida ou a página saiu do topo: não é puxar.
-        if (dy < 0 || window.scrollY > 0 || Math.abs(dx) > Math.abs(dy)) {
+        if (dy < 0 || !estaNoTopo(rolavel) || Math.abs(dx) > Math.abs(dy)) {
           if (dy < 0 || Math.abs(dx) > Math.abs(dy)) rastreando = false;
           return;
         }
@@ -153,7 +156,7 @@ export function PullToRefresh() {
       aria-hidden={estado === "ocioso"}
       role="status"
       aria-label={estado === "atualizando" ? "Atualizando" : undefined}
-      className="pointer-events-none fixed left-1/2 top-0 z-40 flex size-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md"
+      className="pointer-events-none fixed left-1/2 top-0 z-45 flex size-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md"
       style={{ transform: "translate3d(-50%, 0, 0)", opacity: 0, marginTop: "calc(env(safe-area-inset-top) - 2.5rem)" }}
     >
       <PilarMark variant={estado === "atualizando" ? "rhythm" : "static"} weight={2.4} className="w-5" />
