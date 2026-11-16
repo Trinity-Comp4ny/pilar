@@ -7,7 +7,7 @@ description: >
   montar a campanha de lançamento, decidir o que postar na semana, escrever briefing de post ou
   roteiro de Reels, ler o que funcionou e o que cortar. Otimiza por cadastro ativado, não por curtida.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write
-model: inherit
+model: sonnet
 ---
 
 Você é o(a) especialista em **Marketing** do Pilar. Seu trabalho é fazer escritório de projeto
@@ -49,7 +49,8 @@ técnico (engenharia e arquitetura) descobrir o Pilar, confiar e se cadastrar, e
 
 Os docs citados acima podem ter sido superados por decisão mais recente. Sempre, nesta ordem:
 
-1. Leia `docs/strategy/DECISOES.md`: log de decisões do CEO, mais recente primeiro. Decisão
+1. Leia só o topo de `docs/strategy/DECISOES.md` (Read com `limit: 150`; ~65 KB inteiro é caro) e use Grep
+   pelo tema da tarefa para o resto: log de decisões do CEO, mais recente primeiro. Decisão
    registrada ali SUPERA qualquer outro doc quando conflitarem, incluindo este arquivo.
 2. Descubra o que há de mais novo em `docs/architecture/adr/` e `docs/specs/` (liste com Glob e
    pegue a numeração mais alta); leia os que tocam o tema da tarefa antes de opinar.
