@@ -611,7 +611,6 @@ export function ProjectDetailDialog({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-positive hover:bg-positive/90"
               disabled={!concludingDate}
               onClick={async () => {
                 if (concludingDiscIdx === null || !concludingDate) return;

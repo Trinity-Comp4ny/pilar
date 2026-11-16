@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { disciplinaStatusOptions } from "@/types/projetos";
 
 const STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-positive",
+  Concluído: "bg-brand",
   "Em Andamento": "bg-status-progress",
   Pendente: "bg-status-planning",
   "Não Iniciado": "bg-status-unknown",

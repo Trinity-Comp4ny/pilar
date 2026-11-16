@@ -175,7 +175,7 @@ export function FolhaTable({
                       <Badge
                         variant="secondary"
                         className={`capitalize cursor-pointer hover:bg-opacity-80 transition-colors px-2 py-0.5 text-xs
-                          ${item.status === "pago" ? "bg-positive text-ink" : ""}
+                          ${item.status === "pago" ? "bg-brand text-ink" : ""}
                           ${item.status === "pendente" ? "bg-warning-soft text-warning-strong" : ""}
                           ${item.status === "cancelado" ? "bg-destructive text-destructive-foreground" : ""}
                         `}

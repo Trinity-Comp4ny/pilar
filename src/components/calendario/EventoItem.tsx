@@ -56,7 +56,7 @@ export function EventoDetalhe({ evento, onOpen }: { evento: PrazoEvento; onOpen:
               </Badge>
             )}
             {evento.estado === "concluido" && evento.camada !== "reuniao" && (
-              <Badge className="text-3xs px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
+              <Badge className="text-3xs px-1 py-0 bg-brand hover:bg-brand text-ink">OK</Badge>
             )}
           </div>
           {evento.subtitulo && <div className="text-3xs text-muted-foreground truncate">{evento.subtitulo}</div>}
@@ -82,7 +82,7 @@ export function CalendarioLegenda({ camadas }: { camadas: CamadaId[] }) {
         <span className="h-2 w-2 rounded-full bg-chart-info" /> Futuro
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-positive" /> Concluído
+        <span className="h-2 w-2 rounded-full bg-brand" /> Concluído
       </div>
       <div className="flex items-center gap-3 ml-auto">
         {camadas.map((id) => {

@@ -53,7 +53,7 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
   [PROJECT_STATUS.REVISAO]: "bg-status-review",
   [PROJECT_STATUS.PARALISADO]: "bg-brand",
-  [PROJECT_STATUS.CONCLUIDO]: "bg-positive",
+  [PROJECT_STATUS.CONCLUIDO]: "bg-brand",
   [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
 };
 

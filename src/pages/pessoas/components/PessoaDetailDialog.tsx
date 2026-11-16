@@ -305,11 +305,7 @@ export function PessoaDetailDialog({
                           {percent}%
                         </span>
                       </div>
-                      <Progress
-                        value={percent}
-                        className="h-1.5 bg-muted"
-                        indicatorClassName={isCompleted ? "bg-positive" : "bg-brand"}
-                      />
+                      <Progress value={percent} className="h-1.5 bg-muted" indicatorClassName="bg-brand" />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>
                           {formatarValor(atual, meta.unidade, rotulo)} de{" "}

@@ -311,7 +311,7 @@ export function PropostaDetailDialog({
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
+                      className="gap-1.5 border-brand/50 text-ink hover:bg-brand hover:text-ink hover:border-brand transition-colors"
                       disabled={isUpdating}
                       onClick={() => onStatusChange(proposta.id, "aceita")}
                     >
@@ -423,7 +423,7 @@ export function PropostaDetailDialog({
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
-                        className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
+                        className="gap-1.5 border-brand/50 text-ink hover:bg-brand hover:text-ink hover:border-brand transition-colors"
                         disabled={isUpdating}
                         onClick={onMarcarContratoAssinado}
                       >

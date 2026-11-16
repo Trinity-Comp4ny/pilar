@@ -18,7 +18,7 @@ import {
 import type { ClienteObraFrente } from "./useClienteObraData";
 
 export const ESTADO_FRENTE: Record<EstadoFrente, { label: string; bar: string; badge: string }> = {
-  concluida: { label: "Concluída", bar: "bg-positive", badge: "bg-positive/10 text-positive-strong" },
+  concluida: { label: "Concluída", bar: "bg-brand", badge: "bg-brand/20 text-ink" },
   em_andamento: { label: "Em andamento", bar: "bg-status-progress", badge: "bg-info-soft text-info-strong" },
   atrasada: { label: "Atrasada", bar: "bg-status-cancelled", badge: "bg-danger-soft text-danger-strong" },
   futura: { label: "Próxima", bar: "bg-status-unknown", badge: "bg-muted text-ink-muted" },
