@@ -59,3 +59,10 @@ describe("planejarOfx", () => {
     expect(planejarOfx("<OFX></OFX>", []).erro).toMatch(/nenhuma/);
   });
 });
+
+describe("entidades no OFX", () => {
+  it("não decodifica duas vezes", () => {
+    const t = lerOfx("<OFX><STMTTRN><DTPOSTED>20261001</DTPOSTED><TRNAMT>-1</TRNAMT><MEMO>a &amp;lt; b</MEMO></STMTTRN></OFX>");
+    expect(t[0].descricao).toBe("a &lt; b");
+  });
+});
