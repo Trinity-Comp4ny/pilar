@@ -96,6 +96,7 @@ WITH permitido(sig, motivo) AS (
   VALUES
     ('fases_do_projeto(uuid)', 'devolve só id e disciplina'),
     ('get_cliente_obra_detail(text, uuid)', 'portal do cliente, sessão por token'),
+    ('get_cliente_obra_orcamento(text, uuid)', 'portal do cliente, sessão por token, mesmo gate do detalhe da obra'),
     ('get_cliente_projeto_detail(uuid)', 'portal do cliente, conta ligada ao auth.uid()'),
     ('get_cliente_projeto_detail(uuid, text)', 'portal do cliente, sessão por token'),
     ('portal_get_projeto_full(uuid, text)', 'portal do cliente, sessão por token'),

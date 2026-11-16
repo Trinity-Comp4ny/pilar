@@ -50,8 +50,8 @@ CREATE POLICY obra_planejamento_mes_insert ON public.obra_planejamento_mes
     )
     AND EXISTS (
       SELECT 1 FROM public.obra_frente f
-      WHERE f.id = obra_frente_id
-        AND f.obra_id = obra_id
+      WHERE f.id = obra_planejamento_mes.obra_frente_id
+        AND f.obra_id = obra_planejamento_mes.obra_id
         AND f.empresa_id = public.get_user_empresa_id()
     )
   );
@@ -67,8 +67,8 @@ CREATE POLICY obra_planejamento_mes_update ON public.obra_planejamento_mes
     )
     AND EXISTS (
       SELECT 1 FROM public.obra_frente f
-      WHERE f.id = obra_frente_id
-        AND f.obra_id = obra_id
+      WHERE f.id = obra_planejamento_mes.obra_frente_id
+        AND f.obra_id = obra_planejamento_mes.obra_id
         AND f.empresa_id = public.get_user_empresa_id()
     )
   );
