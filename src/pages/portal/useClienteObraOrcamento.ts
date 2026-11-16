@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
-import type { LinhaDoRelatorio } from "@/pages/obras/components/RelatorioOrcadoRealizado";
+import type { LinhaDoRelatorio } from "@/components/obras/RelatorioOrcadoRealizado";
 
 interface Resposta {
   linhas: LinhaDoRelatorio[];

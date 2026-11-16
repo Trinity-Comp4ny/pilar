@@ -6,8 +6,8 @@ import { calcularSaldoConta, realizadoPorEtapa, SEM_ETAPA } from "@/lib/obras";
 import { useObraConta } from "@/pages/obras/hooks/useObraConta";
 import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
 import { useObraOrcamento } from "@/pages/obras/hooks/useObraOrcamento";
-import { achatarOrcado, montarOrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
-import { RelatorioOrcadoRealizado, type LinhaDoRelatorio } from "./RelatorioOrcadoRealizado";
+import { achatarOrcado, montarOrcadoRealizado } from "@/lib/orcadoRealizado";
+import { RelatorioOrcadoRealizado, type LinhaDoRelatorio } from "@/components/obras/RelatorioOrcadoRealizado";
 
 /** Imprime só o relatório (o resto da tela some no papel). */
 const CSS_IMPRESSAO = `

@@ -3,7 +3,7 @@ import { SincronizarFluxoDialog, type LinhaSincronizacao } from "@/components/fl
 import {
   useAplicarSincronizacoesProjetos,
   useSincronizacoesDoFluxoProjetos,
-} from "@/hooks/useSincronizarFluxoProjetos";
+} from "@/pages/projetos/hooks/useSincronizarFluxoProjetos";
 import type { FluxoDisciplinaTemplate } from "@/types/fluxoDisciplinas";
 
 function frase(n: number, singular: string, plural: string) {

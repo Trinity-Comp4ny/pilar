@@ -22,7 +22,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { ObraResumo } from "@/pages/obras/hooks/useObras";
 import { useFornecedoresLite } from "@/pages/obras/hooks/useFornecedoresLite";
 import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
-import { achatarOrcado, montarOrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { achatarOrcado, montarOrcadoRealizado } from "@/lib/orcadoRealizado";
 import { useObraConta, useDeleteLancamento, type ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";
 import { useObraOrcamento, useSaveOrcamentoEtapa } from "@/pages/obras/hooks/useObraOrcamento";
 import { calcularSaldoConta, pagoPorLabel, realizadoPorEtapa, SEM_ETAPA, totalAdiantadoEscritorio } from "@/lib/obras";

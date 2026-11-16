@@ -49,7 +49,7 @@ import {
   type NivelExportacao,
 } from "@/pages/obras/lib/exportarFisicoFinanceiro";
 import { montarArvoreCronograma } from "@/pages/obras/lib/obraArvore";
-import { montarOrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { montarOrcadoRealizado } from "@/lib/orcadoRealizado";
 import { FisicoFinanceiroChart } from "./FisicoFinanceiroChart";
 import { FisicoFinanceiroGrade } from "./FisicoFinanceiroGrade";
 import { FisicoFinanceiroLista } from "./FisicoFinanceiroLista";

@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { desvioOrcamento } from "@/lib/obras";
 import { cn } from "@/lib/utils";
-import { achatarOrcado, type LinhaOrcado, type OrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { achatarOrcado, type LinhaOrcado, type OrcadoRealizado } from "@/lib/orcadoRealizado";
 import { NIVEL_COR, NIVEL_NOME } from "./cronograma/estado";
 
 const COLUNAS =

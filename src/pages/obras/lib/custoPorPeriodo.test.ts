@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { montarOrcadoRealizado, type NoFinanceiro } from "./orcadoRealizado";
+import { montarOrcadoRealizado, type NoFinanceiro } from "@/lib/orcadoRealizado";
 import { montarFisicoFinanceiro } from "./fisicoFinanceiro";
 import { desembolsoPorColuna, type ColunaIso } from "./custoPorPeriodo";
 

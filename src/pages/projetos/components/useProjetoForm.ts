@@ -21,7 +21,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { analytics } from "@/lib/analytics";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
-import { vincularProjetoAoFluxo } from "@/hooks/useSincronizarFluxoProjetos";
+import { vincularProjetoAoFluxo } from "@/pages/projetos/hooks/useSincronizarFluxoProjetos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
@@ -179,7 +179,6 @@ export function useProjetoForm({
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [projetosDisciplinas, setProjetosDisciplinas] = useState<DisciplinaResponsavel[]>([]);
-  // Fluxo escolhido no formulário: vira o vínculo do projeto depois que ele é criado.
   const fluxoAplicadoRef = useRef<string | null>(null);
   const [tempDisciplina, setTempDisciplina] = useState<Partial<DisciplinaResponsavel>>(EMPTY_TEMP_DISCIPLINA);
   const [selectedDisciplinaIndex, setSelectedDisciplinaIndex] = useState<number | null>(null);
@@ -723,12 +722,8 @@ export function useProjetoForm({
             throw discErr;
           }
         }
-
-        // O projeto novo passa a seguir o fluxo escolhido no formulário (para ser atualizado quando o fluxo mudar).
-        if (newProjetoId && fluxoAplicadoRef.current && projetosDisciplinas.length > 0) {
+        if (newProjetoId && fluxoAplicadoRef.current && projetosDisciplinas.length > 0)
           await vincularProjetoAoFluxo(newProjetoId as string, fluxoAplicadoRef.current).catch(() => undefined);
-        }
-
         if (newProjetoId && parcelas.geraParcelas) await gerarParcelasDoProjeto(newProjetoId as string, parcelas);
 
         toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });

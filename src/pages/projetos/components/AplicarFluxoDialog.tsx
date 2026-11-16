@@ -4,7 +4,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { vincularProjetoAoFluxo } from "@/hooks/useSincronizarFluxoProjetos";
+import { vincularProjetoAoFluxo } from "@/pages/projetos/hooks/useSincronizarFluxoProjetos";
 import { useAplicarFluxoNoProjeto } from "@/hooks/useProjetoDisciplinas";
 import { formatDateLocal } from "@/lib/businessDays";
 import { errorMessage } from "@/lib/errors";

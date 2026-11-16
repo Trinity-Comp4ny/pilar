@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
-import { achatarOrcado, montarOrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { achatarOrcado, montarOrcadoRealizado } from "@/lib/orcadoRealizado";
 import { useFornecedoresLite } from "@/pages/obras/hooks/useFornecedoresLite";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";

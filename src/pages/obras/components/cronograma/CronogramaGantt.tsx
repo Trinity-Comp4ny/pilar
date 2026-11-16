@@ -34,7 +34,7 @@ import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { desembolsoPorColuna } from "@/pages/obras/lib/custoPorPeriodo";
 import type { FisicoFinanceiro } from "@/pages/obras/lib/fisicoFinanceiro";
-import { achatarOrcado, type LinhaOrcado, type OrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { achatarOrcado, type LinhaOrcado, type OrcadoRealizado } from "@/lib/orcadoRealizado";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
 import { ESTADO_BARRA, ESTADO_LABEL, NIVEL_COR, NIVEL_NOME, type NivelCor } from "./estado";
