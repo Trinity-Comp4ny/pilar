@@ -50,7 +50,7 @@ WITH allowed(sig) AS (
     ('campo_registrar_impedimento(text, uuid, text, text)'),
     ('campo_registrar_visita(text, uuid, uuid, text, text)'),
     ('get_cliente_projetos(text)'), ('get_cliente_projeto_detail(uuid, text)'),
-    ('get_cliente_obras(text)'), ('get_cliente_obra_detail(text, uuid)'),
+    ('get_cliente_obras(text)'), ('get_cliente_obra_detail(text, uuid)'), ('get_cliente_obra_orcamento(text, uuid)'),
     ('guard_login_attempt(text)')
 ),
 exposto AS (
