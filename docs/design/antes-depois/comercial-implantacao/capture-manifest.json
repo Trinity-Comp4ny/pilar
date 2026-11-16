@@ -1,0 +1,142 @@
+{
+  "base_sha": "efc534fdf0e42a56eb65dd6739ed9a81a5c8df27",
+  "sources": {
+    "before": "efc534fdf0e42a56eb65dd6739ed9a81a5c8df27",
+    "after": "49513dbdb33854a01ec7218620fbf8e53820f4c1"
+  },
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "captures": [
+    {
+      "source": "before",
+      "route": "/",
+      "viewport": "desktop",
+      "file": "home-desktop-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/engenharia",
+      "viewport": "desktop",
+      "file": "engenharia-desktop-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/arquitetura",
+      "viewport": "desktop",
+      "file": "arquitetura-desktop-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/planos",
+      "viewport": "desktop",
+      "file": "planos-desktop-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/faq",
+      "viewport": "desktop",
+      "file": "faq-desktop-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/",
+      "viewport": "mobile",
+      "file": "home-mobile-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/engenharia",
+      "viewport": "mobile",
+      "file": "engenharia-mobile-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/arquitetura",
+      "viewport": "mobile",
+      "file": "arquitetura-mobile-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/planos",
+      "viewport": "mobile",
+      "file": "planos-mobile-before.png"
+    },
+    {
+      "source": "before",
+      "route": "/faq",
+      "viewport": "mobile",
+      "file": "faq-mobile-before.png"
+    },
+    {
+      "source": "after",
+      "route": "/",
+      "viewport": "desktop",
+      "file": "home-desktop-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/engenharia",
+      "viewport": "desktop",
+      "file": "engenharia-desktop-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/arquitetura",
+      "viewport": "desktop",
+      "file": "arquitetura-desktop-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/planos",
+      "viewport": "desktop",
+      "file": "planos-desktop-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/faq",
+      "viewport": "desktop",
+      "file": "faq-desktop-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/",
+      "viewport": "mobile",
+      "file": "home-mobile-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/engenharia",
+      "viewport": "mobile",
+      "file": "engenharia-mobile-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/arquitetura",
+      "viewport": "mobile",
+      "file": "arquitetura-mobile-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/planos",
+      "viewport": "mobile",
+      "file": "planos-mobile-after.png"
+    },
+    {
+      "source": "after",
+      "route": "/faq",
+      "viewport": "mobile",
+      "file": "faq-mobile-after.png"
+    }
+  ],
+  "blocked_external_origins": []
+}
