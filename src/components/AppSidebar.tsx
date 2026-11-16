@@ -141,10 +141,25 @@ export function AppSidebar() {
     navigate("/admin");
   };
 
+  // Rota filha (ex.: /gestao/clientes/:id) mantém o item do pai marcado. O item mais
+  // específico que casa vence, para /projetos não engolir /projetos/disciplinas.
+  const casaRota = (itemPath: string) => currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
+  const isItemActive = (itemPath: string, itemView: string | null) => {
+    if (!casaRota(itemPath)) return false;
+    if (currentPath === itemPath && currentView !== itemView) return false;
+    const maisEspecifico = moduleGroups.some(({ entries }) =>
+      entries.some(({ item: outro }) => {
+        const outroPath = outro.url.split("?")[0];
+        return outroPath.length > itemPath.length && casaRota(outroPath);
+      })
+    );
+    return !maisEspecifico;
+  };
+
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
     const [itemPath, itemQuery] = item.url.split("?");
     const itemView = itemQuery ? new URLSearchParams(itemQuery).get("view") : null;
-    const isActive = currentPath === itemPath && currentView === itemView;
+    const isActive = isItemActive(itemPath, itemView);
     const Icon = item.icon;
 
     if (navProps.disabled) {
@@ -174,12 +189,12 @@ export function AppSidebar() {
         <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
         <span className="tracking-tight flex-1">{item.title}</span>
         {item.badge === "novo" && (
-          <span className="text-3xs leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
+          <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
             Novo
           </span>
         )}
         {item.badge === "em breve" && (
-          <span className="text-3xs leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
+          <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
             Em breve
           </span>
         )}
@@ -272,7 +287,7 @@ export function AppSidebar() {
               <span className={railIconClass(isActive)}>
                 <Icon size={18} strokeWidth={1.5} />
                 {pendencias > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-brand px-1 text-center text-3xs font-semibold leading-4 text-ink ring-2 ring-white">
+                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-brand px-1 text-center text-[10px] font-semibold leading-4 text-ink ring-2 ring-white">
                     {pendencias}
                   </span>
                 )}
@@ -429,7 +444,7 @@ export function AppSidebar() {
               <div key={group} className="space-y-1">
                 {/* Grupo de um item só (Time) dispensa o título: o item já se chama assim. */}
                 {secoes.length > 1 && (
-                  <p className="px-3 pt-1 text-3xs font-medium uppercase tracking-wider text-black/35">{group}</p>
+                  <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group}</p>
                 )}
                 {secoes.map((secao) => {
                   const Icon = secao.icon;
@@ -449,7 +464,7 @@ export function AppSidebar() {
                       <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
                       <span className="tracking-tight flex-1">{secao.title}</span>
                       {contador > 0 && (
-                        <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-3xs font-semibold leading-5 text-ink tabular-nums">
+                        <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-[10px] font-semibold leading-5 text-ink tabular-nums">
                           {contador}
                         </span>
                       )}
@@ -469,7 +484,9 @@ export function AppSidebar() {
           {moduleGroups.map((group, i) => (
             <div key={group.label ?? `grupo-${i}`} className="space-y-1">
               {group.label && (
-                <p className="px-3 pt-1 text-3xs font-medium uppercase tracking-wider text-black/35">{group.label}</p>
+                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">
+                  {group.label}
+                </p>
               )}
               {group.entries.map(({ item, nav }) => renderItem(item, nav))}
             </div>
