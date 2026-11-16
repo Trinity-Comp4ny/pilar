@@ -114,13 +114,13 @@ export default function ObraDetalhePage() {
 
   // Abas de seção (SPEC 124): mesmas regras de visibilidade de antes, agora no slot do header.
   const secoes: SectionTab[] = [
-    { id: "timeline", label: "Visão", icon: LayoutList },
+    { id: "timeline", label: "Visão geral", icon: LayoutList },
     ...(showDiario ? [{ id: "diario", label: "Diário", icon: ClipboardList }] : []),
     ...(showCronograma ? [{ id: "cronograma", label: "Cronograma", icon: CalendarClock }] : []),
     { id: "tarefas", label: "Tarefas", icon: ListChecks },
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
-    ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
+    ...(showConta ? [{ id: "conta", label: "Financeiro", icon: Wallet }] : []),
     ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
     ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
@@ -225,7 +225,13 @@ export default function ObraDetalhePage() {
         )}
         {showCronograma && (
           <TabsContent value="cronograma">
-            <ObraCronogramaTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
+            <ObraCronogramaTab
+              obraId={obra.id}
+              projetoId={obra.projeto_id}
+              canEdit={canEdit}
+              inicioPrevisto={obra.data_inicio_prevista}
+              nomeDaObra={obra.nome}
+            />
           </TabsContent>
         )}
         <TabsContent value="tarefas">
@@ -243,7 +249,11 @@ export default function ObraDetalhePage() {
         )}
         {showConta && (
           <TabsContent value="conta">
-            <ObraContaTab obra={obra} canEdit={canEdit} />
+            <ObraContaTab
+              obra={obra}
+              canEdit={canEdit}
+              onIrParaCronograma={showCronograma ? () => setTab("cronograma") : undefined}
+            />
           </TabsContent>
         )}
         {obra.modelo_cobranca === "administracao" && (

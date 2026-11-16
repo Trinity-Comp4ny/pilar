@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
@@ -7,8 +6,10 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/integrations/supabase/client";
-import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
+import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
+import { achatarOrcado, montarOrcadoRealizado } from "@/pages/obras/lib/orcadoRealizado";
+import { useFornecedoresLite } from "@/pages/obras/hooks/useFornecedoresLite";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";
 import { PAGO_POR_OPCOES, type PagoPor } from "@/lib/obras";
 
@@ -27,7 +28,10 @@ interface Props {
 /** Registra um aporte do cliente ou uma despesa. Despesa passa pelo RPC (gera a taxa). */
 export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancamento }: Props) {
   const isEdit = !!lancamento;
-  const { data: frentes = [] } = useObraEtapas(obraId);
+  const formatCurrency = useMoneyMask();
+  const { data: nos = [] } = useObraFrentes(obraId);
+  // A despesa pode ir para qualquer nível do cronograma (fase, etapa ou serviço), citado pelo caminho inteiro.
+  const frentes = useMemo(() => achatarOrcado(montarOrcadoRealizado(nos, new Map(), {}).raizes), [nos]);
   const { data: fornecedores = [] } = useFornecedoresLite();
   const saveAporte = useSaveAporte(obraId);
   const saveDespesa = useSaveDespesa(obraId);
@@ -39,6 +43,8 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
   const [valor, setValor] = useState(lancamento ? String(lancamento.valor) : "");
   const [frenteId, setFrenteId] = useState(lancamento?.obra_frente_id ?? SEM_FRENTE);
   const [fornecedorId, setFornecedorId] = useState(lancamento?.fornecedor_id ?? SEM_FORNECEDOR);
+  const [quantidade, setQuantidade] = useState(lancamento?.quantidade != null ? String(lancamento.quantidade) : "");
+  const [unidade, setUnidade] = useState(lancamento?.unidade ?? "");
   const [pagoPor, setPagoPor] = useState<PagoPor>((lancamento?.pago_por as PagoPor) ?? "cliente");
   const [comprovanteUrl, setComprovanteUrl] = useState(lancamento?.comprovante_url ?? "");
   // "Segurar" = não deixar aparecer no portal ainda (confirmada_portal = false).
@@ -51,6 +57,11 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
     const v = Number(valor);
     if (!descricao.trim() || valor.trim() === "" || !Number.isFinite(v) || v < 0) {
       toast.error("Preencha descrição e um valor válido");
+      return;
+    }
+    const qtd = quantidade.trim() === "" ? null : Number(quantidade);
+    if (qtd != null && (!Number.isFinite(qtd) || qtd <= 0)) {
+      toast.error("A quantidade precisa ser maior que zero");
       return;
     }
     try {
@@ -67,6 +78,8 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
           pago_por: pagoPor,
           comprovante_url: comprovanteUrl.trim() || null,
           confirmada_portal: !seguraPortal,
+          quantidade: qtd,
+          unidade: qtd != null ? unidade.trim() || null : null,
         });
       }
       toast.success(tipo === "aporte" ? "Aporte registrado" : "Despesa registrada");
@@ -120,18 +133,47 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
 
         {tipo === "despesa" && (
           <>
+            <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lanc-qtd">Quantidade (opcional)</Label>
+                <Input
+                  id="lanc-qtd"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={quantidade}
+                  onChange={(e) => setQuantidade(e.target.value)}
+                  placeholder="Ex.: 200"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lanc-un">Unidade</Label>
+                <Input
+                  id="lanc-un"
+                  value={unidade}
+                  onChange={(e) => setUnidade(e.target.value)}
+                  placeholder="un, m³, kg, saco"
+                  maxLength={12}
+                />
+              </div>
+              <p className="pb-2 text-xs tabular-nums text-muted-foreground">
+                {Number(quantidade) > 0 && Number(valor) > 0
+                  ? `${formatCurrency(Number(valor) / Number(quantidade))} / ${unidade.trim() || "un"}`
+                  : ""}
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Etapa</Label>
+                <Label>Fase, etapa ou serviço</Label>
                 <Select value={frenteId} onValueChange={setFrenteId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sem etapa" />
+                    <SelectValue placeholder="Sem vínculo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={SEM_FRENTE}>Sem etapa</SelectItem>
+                    <SelectItem value={SEM_FRENTE}>Sem vínculo com o cronograma</SelectItem>
                     {frentes.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
+                      <SelectItem key={f.no.id} value={f.no.id}>
+                        {f.caminho}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -200,20 +242,4 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
       </div>
     </FormDialog>
   );
-}
-
-function useFornecedoresLite() {
-  return useQuery({
-    queryKey: ["fornecedores-lite"],
-    queryFn: async (): Promise<{ id: string; nome: string }[]> => {
-      const { data, error } = await supabase
-        .from("fornecedores")
-        .select("id, nome")
-        .is("deleted_at", null)
-        .order("nome");
-      if (error) throw error;
-      return data ?? [];
-    },
-    staleTime: 1000 * 60 * 5,
-  });
 }

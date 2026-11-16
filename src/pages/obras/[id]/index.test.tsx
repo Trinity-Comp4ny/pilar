@@ -138,13 +138,13 @@ describe("ObraDetalhePage", () => {
     montar();
     expect(await screen.findByRole("heading", { name: "Residência Silva" })).toBeInTheDocument();
     expect(abas()).toEqual([
-      "Visão",
+      "Visão geral",
       "Diário",
       "Cronograma",
       "Tarefas",
       "Cotações",
       "Estoque",
-      "Conta da obra",
+      "Financeiro",
       "Acessos",
     ]);
     expect(screen.getByRole("link", { name: "Projeto Silva" })).toHaveAttribute("href", "/projetos/proj-1");
@@ -168,7 +168,7 @@ describe("ObraDetalhePage", () => {
     comObra({ ...obra, projeto: null, responsavel: null, cidade: null, data_inicio_prevista: null });
     montar();
     await screen.findByRole("heading", { name: "Residência Silva" });
-    expect(abas()).toEqual(["Visão", "Tarefas"]);
+    expect(abas()).toEqual(["Visão geral", "Tarefas"]);
     expect(screen.getByText("Sem responsável")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
