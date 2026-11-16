@@ -5713,6 +5713,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "obras_fluxo_obra_id_fkey"
+            columns: ["fluxo_obra_id"]
+            isOneToOne: false
+            referencedRelation: "fluxos_obra"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obras_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
@@ -5746,13 +5753,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_folha_pagamento"
             referencedColumns: ["pessoa_id"]
-          },
-          {
-            foreignKeyName: "obras_fluxo_obra_id_fkey"
-            columns: ["fluxo_obra_id"]
-            isOneToOne: false
-            referencedRelation: "fluxos_obra"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -10888,6 +10888,10 @@ export type Database = {
       gerar_notificacoes_ambient: { Args: never; Returns: number }
       gerar_notificacoes_ambient_monitored: { Args: never; Returns: undefined }
       get_cliente_obra_detail: {
+        Args: { p_obra_id: string; p_token: string }
+        Returns: Json
+      }
+      get_cliente_obra_orcamento: {
         Args: { p_obra_id: string; p_token: string }
         Returns: Json
       }
