@@ -11,6 +11,22 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-13 · Proposta em revisão: aquisição assistida e escopo de implantação
+
+**Direção da mudança:** as páginas `/engenharia` e `/arquitetura` destacam a demonstração, com preços a um clique.
+A home e os cartões mantêm a assinatura direta. A entrada explica a primeira rotina, o atendimento incluído no plano
+e o trabalho adicional opcional, definido em proposta. Não há nova taxa obrigatória, alteração de cobrança ou SLA.
+
+Contexto: o CEO pediu a estruturação comercial e autorizou as melhorias em PR a partir de staging. A prospecção parte
+do fundador e da Pilar. Valores e limites dos pacotes dedicados serão avaliados na proposta comercial; o site não os
+publica como condição já vigente. A copy dos planos deixa de afirmar popularidade sem evidência e não promete todos
+os módulos futuros.
+
+**Supera:** a prioridade de CTA da decisão de 08/11 apenas nas duas páginas de público. Preserva a contratação direta,
+os preços, capacidades e o atendimento já incluído. Detalhes e medição em `docs/marketing/10-jornada-comercial-site.md`.
+
+---
+
 ## 2026-11-12 (noite) · A marca é feminina: "a Pilar"
 
 **Decisão:** o nome leva artigo feminino em toda copy, site, app e e-mail: "a Pilar", "da Pilar", "na Pilar".
