@@ -88,7 +88,10 @@ const BUDGETS = {
   // 2026-11-13: 338 kB (era 337). O atalho Novidades no trilho da sidebar (PR #846) soma ~0,1 kB
   // gzip ao boot (337,1): o item só aparece com release não vista, mas o código está no shell.
   // 2026-11-14: 339 kB (era 338). Mesma fiação mínima do PR #870 (338,7 kB medidos no CI).
-  initialLoad: 339 * 1024,
+  // 2026-11-16: 340 kB (era 339). staging já media 339,0 kB, colado no teto. O painel "Falar com o
+  // escritório" do portal (BEZ-576) é lazy e não põe módulo no boot; o chunk novo só entra na tabela
+  // de preload da entrada (+~0,1 kB), o que bastou para passar do teto.
+  initialLoad: 340 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
