@@ -18,7 +18,9 @@ vi.mock("@/hooks/usePermissions", () => ({
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
 vi.mock("@/pages/obras/hooks/useObras", () => ({
   useObras: () => ({ data: [], isLoading: false, isError: false }),
+  useUpdateObra: () => ({ mutate: vi.fn() }),
 }));
+vi.mock("./components/FluxosObraDialog", () => ({ FluxosObraDialog: () => null }));
 vi.mock("./components/FilaCotacoesPendentes", () => ({ FilaCotacoesPendentes: () => null }));
 vi.mock("./components/ObraFormDialog", () => ({
   ObraFormDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog">Formulário da obra</div> : null),

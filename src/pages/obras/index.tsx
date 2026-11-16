@@ -1,69 +1,23 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { HardHat, MapPin, Plus, User, Globe } from "lucide-react";
+import { GitBranch, HardHat, Plus, User } from "lucide-react";
+import { toast } from "sonner";
 import { PilarPage } from "@/components/PilarPage";
 import { KPICard } from "@/components/KPICard";
 import { KpiResumo } from "@/components/KpiResumo";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { EmptyState } from "@/components/EmptyState";
-import { StatusBadge } from "@/components/StatusBadge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useObras, type ObraResumo } from "@/pages/obras/hooks/useObras";
+import { useObras, useUpdateObra, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { EscolherInicioObraDialog } from "./components/EscolherInicioObraDialog";
 import { ObraFormDialog } from "./components/ObraFormDialog";
 import { FilaCotacoesPendentes } from "./components/FilaCotacoesPendentes";
-
-function ObraCard({ obra }: { obra: ObraResumo }) {
-  return (
-    <Link to={`/obras/${obra.id}`} className="group">
-      <Card className="rounded-2xl border border-black/5 bg-white transition-colors hover:border-brand/40">
-        <CardContent className="space-y-3 p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate font-medium text-ink group-hover:text-brand">{obra.nome}</p>
-              <p className="truncate text-xs text-muted-foreground">{obra.projeto?.nome ?? "Sem projeto"}</p>
-            </div>
-            <StatusBadge domain="obra" status={obra.status} />
-          </div>
-
-          <div>
-            <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Avanço</span>
-              <span className="tabular-nums">{obra.avanco}%</span>
-            </div>
-            <Progress value={obra.avanco} className="h-1.5" />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
-              {obra.responsavel?.nome ?? "Sem responsável"}
-            </span>
-            {obra.cidade && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" />
-                {obra.cidade}
-              </span>
-            )}
-            {obra.visivel_portal && obra.cliente_id && (
-              <span
-                className="inline-flex items-center gap-1.5 text-positive-strong"
-                title="Cliente acompanha esta obra no portal"
-              >
-                <Globe className="h-3.5 w-3.5" />
-                No portal
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
+import { ObrasQuadro } from "./components/ObrasQuadro";
+import { FluxosObraDialog } from "./components/FluxosObraDialog";
+import { Button } from "@/components/ui/button";
 
 export default function ObrasPage() {
   usePageTitle("Obras");
@@ -74,15 +28,33 @@ export default function ObrasPage() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [escolhaOpen, setEscolhaOpen] = useState(false);
+  const [fluxosOpen, setFluxosOpen] = useState(false);
   const iniciarObra = () => (podeEstimar ? setEscolhaOpen(true) : setDialogOpen(true));
   const { data: obras = [], isLoading, isError } = useObras();
+  const atualizar = useUpdateObra();
+  const mudarStatus = (obra: ObraResumo, status: string) =>
+    atualizar.mutate(
+      { id: obra.id, status },
+      { onError: () => toast.error("Não deu para mudar o status da obra.", { description: "Tente de novo." }) }
+    );
+
+  const [responsavel, setResponsavel] = useState("todos");
+  const responsaveis = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const o of obras) if (o.responsavel) m.set(o.responsavel.id, o.responsavel.nome);
+    return [...m].sort((a, b) => a[1].localeCompare(b[1], "pt-BR")).map(([value, label]) => ({ value, label }));
+  }, [obras]);
 
   const filtradas = useMemo(() => {
     const t = search.trim().toLowerCase();
-    if (!t) return obras;
-    return obras.filter((o) => o.nome.toLowerCase().includes(t) || (o.projeto?.nome ?? "").toLowerCase().includes(t));
-  }, [obras, search]);
+    return obras.filter((o) => {
+      if (responsavel !== "todos" && o.responsavel?.id !== responsavel) return false;
+      if (!t) return true;
+      return o.nome.toLowerCase().includes(t) || (o.projeto?.nome ?? "").toLowerCase().includes(t);
+    });
+  }, [obras, search, responsavel]);
 
+  const quadro = !isLoading && !isError && filtradas.length > 0;
   const ativas = obras.filter((o) => o.status === "em_andamento").length;
   const paralisadas = obras.filter((o) => o.status === "paralisada").length;
 
@@ -97,7 +69,30 @@ export default function ObrasPage() {
         feature: "obras",
         dataTour: "onb-nova-obra",
       }}
+      actions={
+        canCreate ? (
+          <Button variant="outline" className="h-9 rounded-full text-sm" onClick={() => setFluxosOpen(true)}>
+            <GitBranch className="mr-2 h-4 w-4" aria-hidden="true" />
+            Fluxos
+          </Button>
+        ) : undefined
+      }
+      toolbar={
+        <FilterBar>
+          <FilterSelect
+            label="Responsável"
+            icon={User}
+            value={responsavel}
+            emptyValue="todos"
+            onChange={setResponsavel}
+            options={[{ value: "todos", label: "Todos" }, ...responsaveis]}
+          />
+          <FilterClear count={responsavel !== "todos" ? 1 : 0} onClick={() => setResponsavel("todos")} />
+        </FilterBar>
+      }
       density="compact"
+      className={quadro ? "md:overflow-y-hidden" : undefined}
+      containerClassName={cn("flex flex-col", quadro && "md:h-full md:min-h-0")}
     >
       <CollapsibleKpiSection
         storageKey="obras"
@@ -150,10 +145,8 @@ export default function ObrasPage() {
       ) : filtradas.length === 0 ? (
         <EmptyState icon={HardHat} title="Nada encontrado" description="Nenhuma obra bate com a busca." />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtradas.map((o) => (
-            <ObraCard key={o.id} obra={o} />
-          ))}
+        <div className="min-h-0 flex-1">
+          <ObrasQuadro obras={filtradas} podeEditar={can("obras", "edit")} onMudarStatus={mudarStatus} />
         </div>
       )}
 
@@ -163,6 +156,7 @@ export default function ObrasPage() {
         onEmBranco={() => setDialogOpen(true)}
       />
       <ObraFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <FluxosObraDialog open={fluxosOpen} onOpenChange={setFluxosOpen} />
     </PilarPage>
   );
 }
