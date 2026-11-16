@@ -21,8 +21,6 @@ export const ESTADO_LABEL: Record<Estado, string> = {
   sem_periodo: "Sem período",
 };
 
-export const LEGENDA: EstadoFrente[] = ["em_andamento", "concluida", "atrasada", "futura"];
-
 export type NivelCor = "fase" | "etapa" | "servico" | "tarefa";
 
 /**

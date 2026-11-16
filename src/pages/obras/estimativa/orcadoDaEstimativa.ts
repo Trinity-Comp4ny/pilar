@@ -14,7 +14,7 @@ export interface NoDoOrcado {
   nome: string;
 }
 
-export interface LinhaDoOrcado {
+interface LinhaDoOrcado {
   id: string;
   /** "Fase › Etapa" ou só "Fase". */
   caminho: string;

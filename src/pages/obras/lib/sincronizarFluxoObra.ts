@@ -18,7 +18,7 @@ export interface TarefaDaObra {
   titulo: string;
 }
 
-export interface NovoNoSync {
+interface NovoNoSync {
   chave: string;
   /** Pai que já existe na obra. */
   paiId: string | null;
@@ -31,7 +31,7 @@ export interface NovoNoSync {
   fim: string | null;
   fornecedorId: string | null;
 }
-export interface NovaTarefaSync {
+interface NovaTarefaSync {
   titulo: string;
   servicoId: string | null;
   servicoChave: string | null;

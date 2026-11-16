@@ -7,7 +7,7 @@ import {
   type PlanoSincronizacao,
 } from "@/pages/obras/lib/sincronizarFluxoObra";
 
-export interface ObraDoFluxo {
+interface ObraDoFluxo {
   id: string;
   nome: string;
   projeto_id: string | null;

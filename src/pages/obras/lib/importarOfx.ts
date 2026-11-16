@@ -14,7 +14,7 @@ export type TransacaoOfx = {
   descricao: string;
 };
 
-export type LinhaOfx = TransacaoOfx & {
+type LinhaOfx = TransacaoOfx & {
   tipo: "aporte" | "despesa";
   /** Valor absoluto, o que a conta grava. */
   valorAbs: number;

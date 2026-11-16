@@ -2,7 +2,7 @@
 // A empresa monta uma vez; ao aplicar, o fluxo vira um plano de importação com as datas em cascata.
 import type { ItemImportado, PlanoImportacao, TarefaImportada } from "./importarCronograma";
 
-export interface FluxoServico {
+interface FluxoServico {
   nome: string;
   duracao_dias: number;
   /** Prestador padrão (fornecedor). */
@@ -11,11 +11,11 @@ export interface FluxoServico {
   paralelo: boolean;
   tarefas: string[];
 }
-export interface FluxoEtapa {
+interface FluxoEtapa {
   nome: string;
   servicos: FluxoServico[];
 }
-export interface FluxoFase {
+interface FluxoFase {
   nome: string;
   etapas: FluxoEtapa[];
 }
