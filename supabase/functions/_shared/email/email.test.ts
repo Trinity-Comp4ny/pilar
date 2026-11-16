@@ -56,6 +56,17 @@ const empresaX = XSS;
 
 const casos: Array<[string, () => { subject: string; html: string }]> = [
   ["convite", () => T.templateConviteUsuario("https://l", XSS)],
+  [
+    "boas-vindas",
+    () =>
+      T.templateBoasVindasAssinatura({
+        nome: XSS,
+        empresaNome: XSS,
+        planoNome: XSS,
+        ciclo: "monthly",
+        emailAcesso: XSS,
+      }),
+  ],
   ["recuperacao", () => T.templateRecuperacaoSenha(`https://l?x=${XSS}`)],
   ["magic", () => T.templateMagicLink(`https://l?x=${XSS}`)],
   ["confirmacao", () => T.templateConfirmacaoCadastro(`https://l?x=${XSS}`)],

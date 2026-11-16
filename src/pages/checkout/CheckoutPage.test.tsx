@@ -62,7 +62,8 @@ function abrir(url: string) {
 async function preencherEPagarComPix() {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Nome completo"), "Ana Souza");
-  await user.type(screen.getByLabelText("Email"), "ana@escritorio.com");
+  await user.type(screen.getByLabelText("E-mail de acesso"), "ana@escritorio.com");
+  await user.type(screen.getByLabelText("Confirme o e-mail"), "ana@escritorio.com");
   await user.type(screen.getByLabelText("CPF ou CNPJ"), "52998224725");
   await user.type(screen.getByLabelText("Telefone"), "11987654321");
   await user.type(screen.getByLabelText("Nome do escritório"), "Escritório Souza");

@@ -84,6 +84,8 @@ export function CheckoutForm({
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
+  const emailConfere = email.trim().toLowerCase() === emailConfirm.trim().toLowerCase();
   const [companyName, setCompanyName] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -129,6 +131,11 @@ export function CheckoutForm({
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!emailConfere) {
+      toast.error("Os e-mails não são iguais", { description: "O acesso ao Pilar chega nesse endereço." });
+      return;
+    }
 
     const digits = onlyDigits(cpfCnpj);
     const cpfCnpjValid = digits.length === 11 ? validCpf(digits) : digits.length === 14 ? validCnpj(digits) : false;
@@ -192,13 +199,9 @@ export function CheckoutForm({
           <p className="text-xs text-ink-muted mt-0.5">Use o CPF/CNPJ que vai constar na nota fiscal.</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-brand/30 bg-brand/5 p-4 space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="nome">Nome completo</Label>
-            <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required autoComplete="name" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-mail de acesso</Label>
             <Input
               id="email"
               type="email"
@@ -206,7 +209,34 @@ export function CheckoutForm({
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+              placeholder="voce@escritorio.com.br"
             />
+            <p className="text-xs text-ink-muted">
+              O link para criar sua senha e entrar no Pilar chega neste e-mail. Confira antes de pagar.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="emailConfirm">Confirme o e-mail</Label>
+            <Input
+              id="emailConfirm"
+              type="email"
+              value={emailConfirm}
+              onChange={(e) => setEmailConfirm(e.target.value)}
+              onPaste={(e) => e.preventDefault()}
+              required
+              autoComplete="off"
+              aria-invalid={emailConfirm.length > 0 && !emailConfere}
+            />
+            {emailConfirm.length > 0 && !emailConfere && (
+              <p className="text-xs text-danger-mid">Os e-mails não são iguais.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="nome">Nome completo</Label>
+            <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required autoComplete="name" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cpfCnpj">CPF ou CNPJ</Label>

@@ -153,6 +153,50 @@ export function templateAtivarPlanoRecibo(params: {
   };
 }
 
+/**
+ * Boas-vindas depois do pagamento do checkout. Sai logo depois do convite de acesso
+ * (que traz o link para criar a senha) e resume o que foi contratado e onde o acesso chegou.
+ */
+export function templateBoasVindasAssinatura(params: {
+  nome: string;
+  empresaNome: string;
+  planoNome: string;
+  ciclo: "monthly" | "yearly";
+  emailAcesso: string;
+}): EmailTemplate {
+  const { nome, empresaNome, planoNome, ciclo, emailAcesso } = params;
+  const cicloRotulo = ciclo === "yearly" ? "Anual" : "Mensal";
+
+  return {
+    subject: `Pagamento confirmado: bem-vindo à ${BRAND.nome}`,
+    html: shell({
+      preview: `Plano ${planoNome} ativo. O link de acesso foi enviado para ${emailAcesso}`,
+      footerNote: `Você recebeu este e-mail por contratar a ${BRAND.nome} para a empresa ${empresaNome}.`,
+      hero: {
+        titulo: html`Pagamento ${em("confirmado")}`,
+        lead: html`Olá, ${strong(nome)}. A assinatura da ${strong(empresaNome)} está ativa. Falta só criar sua senha.`,
+      },
+      content: [
+        card(
+          [
+            kv("Escritório", empresaNome),
+            kvDivider(),
+            kv("Plano", `${planoNome} (${cicloRotulo})`),
+            kvDivider(),
+            kv("E-mail de acesso", emailAcesso),
+          ],
+          { accent: "positive", mt: 0 }
+        ),
+        callout(
+          `Enviamos outro e-mail para ${emailAcesso} com o link para criar sua senha e entrar. O link vale por 24 horas. Se não achar na caixa de entrada, veja o spam.`,
+          "warning"
+        ),
+        small("Seu CNPJ e telefone do cadastro já vão preenchidos na configuração do escritório."),
+      ],
+    }),
+  };
+}
+
 /** Cópia dos próprios dados pronta (SPEC 115): link assinado, válido por alguns dias. */
 export function templateLgpdExportacaoPronta(params: { nome: string; link: string; validoAte: string }): EmailTemplate {
   const { nome, link, validoAte } = params;
