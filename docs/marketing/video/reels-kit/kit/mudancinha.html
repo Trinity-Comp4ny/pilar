@@ -49,8 +49,7 @@ window.render=async(t)=>{
   show('s0',t<2.2); show('s1',t>=2.2&&t<11.2); show('s2',t>=11.2&&t<16.2);
   if(t<2.2){ enter('h1',t,-1); enter('h2',t,-1); pill('p1',t,-1); enter('h3',t,0.4,20); }
   if(t>=2.2&&t<11.2){
-    let n=0,h=0; for(const [tm,id,c] of MSG){ const el=$(id); const k=expo(lin(t,tm,tm+0.35)); el.style.opacity=k; el.style.transform='translateY('+(1-k)*30+'px) scale('+(0.96+0.04*k)+')'; el.style.display=t>=tm?'':'none'; if(t>=tm&&c) n=c; }
-    for(const [tm,v] of HRS) if(t>=tm) h=v;
+    let n=0; for(const [tm,id,c] of MSG){ const el=$(id); const k=expo(lin(t,tm,tm+0.35)); el.style.opacity=k; el.style.transform='translateY('+(1-k)*30+'px) scale('+(0.96+0.04*k)+')'; el.style.display=t>=tm?'':'none'; if(t>=tm&&c) n=c; }
     $('nmud').textContent=n; const prev=HRS.filter(x=>x[0]<=t); const last=prev[prev.length-1]; const before=prev.length>1?prev[prev.length-2][1]:0;
     $('nh').textContent=last?Math.round(before+(last[1]-before)*quint(lin(t,last[0],last[0]+0.6)))+' h':'0 h';
     $('st').textContent=t>=9.8?'Escritório digitando…':'online';

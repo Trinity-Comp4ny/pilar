@@ -18,14 +18,14 @@ export function VencimentoRow({ item }: { item: DashboardVencimento }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-ink-soft truncate">{item.entidade || item.descricao}</p>
-        <p className="text-[11px] text-ink-disabled truncate">{item.projeto || item.descricao}</p>
+        <p className="text-2xs text-ink-disabled truncate">{item.projeto || item.descricao}</p>
       </div>
       <div className="text-right shrink-0">
         <p className={`text-sm font-semibold ${isReceita ? "text-positive-strong" : "text-negative-strong"}`}>
           {isReceita ? "+" : "-"}
           {formatCurrency(item.valor)}
         </p>
-        <p className="text-[11px] text-ink-disabled">
+        <p className="text-2xs text-ink-disabled">
           {item.diasRestantes === 0 ? "Hoje" : item.diasRestantes === 1 ? "Amanhã" : `${item.diasRestantes}d`}
         </p>
       </div>

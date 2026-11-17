@@ -44,10 +44,11 @@ describe("PlanCards", () => {
     for (const preco of ["R$ 299", "R$ 499", "R$ 899"]) expect(screen.getByText(preco)).toBeInTheDocument();
   });
 
-  it("marca só o Profissional como 'Mais escolhido'", () => {
+  it("recomenda o Profissional sem afirmar popularidade não comprovada", () => {
     renderNaRota(<PlanCards contexto="home" />);
-    expect(screen.getAllByText("Mais escolhido")).toHaveLength(1);
-    expect(within(cartaoDo("Profissional")).getByText("Mais escolhido")).toBeInTheDocument();
+    expect(screen.getAllByText("Recomendado")).toHaveLength(1);
+    expect(within(cartaoDo("Profissional")).getByText("Recomendado")).toBeInTheDocument();
+    expect(screen.queryByText("Mais escolhido")).not.toBeInTheDocument();
   });
 
   it("o botão de cada plano leva ao checkout daquele plano, na mesma aba", () => {
@@ -128,5 +129,14 @@ describe("página /planos", () => {
   it("grava title, description e canonical de /planos", () => {
     renderNaRota(<Planos />, "/planos");
     expect(document.title).toBe("Preço do software de gestão para engenharia | Pilar");
+  });
+
+  it("o contato por WhatsApp não é contado como interesse em demonstração", async () => {
+    renderNaRota(<Planos />, "/planos");
+    const contato = screen.getByRole("link", { name: "Ainda com dúvida? Fale com a gente" });
+    contato.addEventListener("click", (e) => e.preventDefault());
+    await userEvent.click(contato);
+    expect(trackCta).toHaveBeenCalledWith("contato_comercial", "planos");
+    expect(trackCta).not.toHaveBeenCalledWith("agende_demo", expect.anything());
   });
 });

@@ -19,23 +19,30 @@ const LancamentoSchema = z.object({
  * tentar de novo), mas um lançamento malformado sai com aviso em vez de reprovar
  * o documento inteiro: antes, um único valor negativo num extrato de 80 linhas
  * fazia o usuário perder a importação toda.
+ *
+ * O modelo às vezes devolve a lista solta na raiz (`[...]`) em vez de `{ lancamentos: [...] }`
+ * (PILAR-6Q: "Expected object, received array", 2 de 2 tentativas). A lista na raiz é o mesmo
+ * dado, só sem o envelope: aceitamos em vez de pedir ao usuário para reformular.
  */
-export const ResultSchema = z
-  .object({
-    lancamentos: z.array(z.unknown()),
-    avisos: z.array(z.string()).catch([]).default([]),
-  })
-  .transform(({ lancamentos, avisos }) => {
-    const validos = lancamentos.flatMap((l) => {
-      const r = LancamentoSchema.safeParse(l);
-      return r.success ? [r.data] : [];
-    });
-    const ignorados = lancamentos.length - validos.length;
-    return {
-      lancamentos: validos,
-      avisos: ignorados > 0 ? [...avisos, `${ignorados} lançamento(s) ignorado(s): formato inválido.`] : avisos,
-    };
-  });
+export const ResultSchema = z.preprocess(
+  (bruto) => (Array.isArray(bruto) ? { lancamentos: bruto } : bruto),
+  z
+    .object({
+      lancamentos: z.array(z.unknown()),
+      avisos: z.array(z.string()).catch([]).default([]),
+    })
+    .transform(({ lancamentos, avisos }) => {
+      const validos = lancamentos.flatMap((l) => {
+        const r = LancamentoSchema.safeParse(l);
+        return r.success ? [r.data] : [];
+      });
+      const ignorados = lancamentos.length - validos.length;
+      return {
+        lancamentos: validos,
+        avisos: ignorados > 0 ? [...avisos, `${ignorados} lançamento(s) ignorado(s): formato inválido.`] : avisos,
+      };
+    })
+);
 
 export type Resultado = z.output<typeof ResultSchema>;
 

@@ -8,6 +8,28 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { softDelete, restaurar } from "@/lib/softDelete";
 import { analytics } from "@/lib/analytics";
 
+/**
+ * Mensagem escrita pela própria edge function (`safeErrorResponse`) para o usuário:
+ * diz o que fazer ("Cadastre o e-mail da empresa em Configurações..."). Não passa
+ * pelo filtro de getSafeErrorMessage, que só conhece erros de banco e trocaria
+ * tudo por "Tente novamente." (12/11: convite do portal falhava sem dizer o motivo).
+ */
+class ErroDaFunction extends Error {}
+
+type ErroInvoke = { message?: string; context?: { json?: () => Promise<{ error?: string } | null> } };
+
+async function erroDoInvoke(fnError: ErroInvoke): Promise<Error> {
+  const body = fnError.context ? await fnError.context.json?.().catch(() => null) : null;
+  const msg = body?.error?.trim();
+  if (msg) return new ErroDaFunction(msg);
+  return new Error(fnError.message || "Erro desconhecido");
+}
+
+function descricaoDoErro(error: Error): string {
+  if (error instanceof ErroDaFunction) return error.message;
+  return getSafeErrorMessage(error, "Tente novamente.");
+}
+
 export interface ContaBancaria {
   banco: string;
   agencia: string;
@@ -346,16 +368,13 @@ export const useClientes = (options: UseClientesOptions = {}) => {
         body: { cliente_id: clienteId, email, ...(nome ? { nome } : {}) },
       });
 
-      if (fnError) {
-        const body = fnError.context ? await fnError.context.json?.().catch(() => null) : null;
-        throw new Error(body?.error || fnError.message || "Erro desconhecido");
-      }
-      if (data?.error) throw new Error(data.error);
+      if (fnError) throw await erroDoInvoke(fnError);
+      if (data?.error) throw new ErroDaFunction(data.error);
 
       return { email: data.email as string };
     },
     onError: (error: Error) => {
-      toast.error("Não foi possível criar o acesso", { description: getSafeErrorMessage(error, "Tente novamente.") });
+      toast.error("Não foi possível criar o acesso", { description: descricaoDoErro(error) });
     },
   });
 
@@ -374,17 +393,14 @@ export const useClientes = (options: UseClientesOptions = {}) => {
         body: { cliente_id: clienteId, nome_cliente: nomeCliente, ...(accountId ? { account_id: accountId } : {}) },
       });
 
-      if (fnError) {
-        const body = fnError.context ? await fnError.context.json?.().catch(() => null) : null;
-        throw new Error(body?.error || fnError.message || "Erro desconhecido");
-      }
-      if (data?.error) throw new Error(data.error);
+      if (fnError) throw await erroDoInvoke(fnError);
+      if (data?.error) throw new ErroDaFunction(data.error);
 
       return { email: data.email as string };
     },
     onError: (error: Error) => {
       toast.error("Não foi possível redefinir a senha", {
-        description: getSafeErrorMessage(error, "Tente novamente."),
+        description: descricaoDoErro(error),
       });
     },
   });
@@ -414,7 +430,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       toast.success("Acesso ao portal revogado");
     },
     onError: (error: Error) => {
-      toast.error("Não foi possível revogar o acesso", { description: getSafeErrorMessage(error, "Tente novamente.") });
+      toast.error("Não foi possível revogar o acesso", { description: descricaoDoErro(error) });
     },
   });
 

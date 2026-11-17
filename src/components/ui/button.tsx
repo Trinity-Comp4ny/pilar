@@ -27,8 +27,11 @@ const buttonVariants = cva(
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 px-3",
+        /** Ação secundária em barra densa/linha de tabela: h-8, texto xs. */
+        xs: "h-8 px-3 text-xs",
         lg: "h-11 px-8",
         icon: "h-10 w-10",
+        "icon-sm": "h-8 w-8",
       },
     },
     defaultVariants: {

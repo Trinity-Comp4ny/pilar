@@ -46,7 +46,13 @@ const BUDGETS = {
   // faixas do topo (FaixasDoTopo) ficou lazy, o que recuperou 0,14 kB.
   // 2026-11-12: 129 kB (era 128). O convite de instalar o app (PR #834) soma ~0,5 kB gzip ao
   // chunk de entrada (128,5): captura do `beforeinstallprompt` e ManifestDoApp, que rodam no boot.
-  entry: 129 * 1024,
+  // 2026-11-13: 130 kB (era 129). Parar de reportar duas vezes cada falha do Supabase (PR #851)
+  // põe no boot o detector `jaReportadoPelaRede` e o fingerprint por consulta, ~0,2 kB gzip; a
+  // entrada de staging já estava colada no teto (129,0 kB). Corta ~70% do volume de erro do Sentry.
+  // 2026-11-14: 131 kB (era 130). Funções de celular (PR #870: puxar para atualizar, compartilhar,
+  // deslizar linha, alça do sheet, biometria, háptico, badge do ícone). O código dos gestos já carrega
+  // sob demanda só em tela de toque; sobra na entrada a fiação mínima (~0,5 kB gzip).
+  entry: 131 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
@@ -79,7 +85,14 @@ const BUDGETS = {
   // 2026-11-12: 337 kB (era 336). O convite de instalar o app (PR #834) soma ~0,6 kB gzip ao boot
   // (336,6): a captura do `beforeinstallprompt` precisa rodar no main.tsx, antes do React, e o
   // ManifestDoApp troca o manifest por público. O cartão e o painel de passos seguem fora do boot.
-  initialLoad: 337 * 1024,
+  // 2026-11-13: 338 kB (era 337). O atalho Novidades no trilho da sidebar (PR #846) soma ~0,1 kB
+  // gzip ao boot (337,1): o item só aparece com release não vista, mas o código está no shell.
+  // 2026-11-14: 339 kB (era 338). Mesma fiação mínima do PR #870 (338,7 kB medidos no CI).
+  // 2026-11-16: 340 kB (era 339). Regra de item ativo da sidebar em rota filha (PR #881):
+  // o shell passou 0,1 kB (339,1 kB medidos no CI).
+  // Mesma data, painel "Falar com o escritório" (BEZ-576): o chunk lazy entra na tabela de preload
+  // da entrada (+~0,1 kB) sem mexer no teto.
+  initialLoad: 340 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app

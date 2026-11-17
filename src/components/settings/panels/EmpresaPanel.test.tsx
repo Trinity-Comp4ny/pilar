@@ -1,3 +1,4 @@
+import { itemDeAcao } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -171,9 +172,9 @@ describe("Configurações › Empresa", () => {
     it("botões de editar e remover usuário têm nome acessível", async () => {
       const user = await renderPanel();
       await user.click(screen.getByRole("tab", { name: /Usuários/ }));
-      expect(screen.getByRole("button", { name: "Editar Bia User" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Remover Bia User" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Remover Ana Admin" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Mais ações de Bia User" })).toBeInTheDocument();
+      expect(await itemDeAcao(user, "Bia User", "Editar")).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: "Remover" })).toBeInTheDocument();
     });
 
     it("2FA negado não envia o convite", async () => {

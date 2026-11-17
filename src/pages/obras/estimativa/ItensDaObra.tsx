@@ -177,7 +177,7 @@ function LinhaDoItem({
           <p className="text-sm font-medium text-ink">{item.nome}</p>
           {origem && (
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft">
-              <ChipOrigem tipo={origem.tipo} className="px-2 py-0 text-[11px]" />
+              <ChipOrigem tipo={origem.tipo} className="px-2 py-0 text-2xs" />
               {origem.texto}
             </div>
           )}
@@ -245,7 +245,7 @@ export function ItensDaObra({ ficha, atualizar, erros, insumos, premissas, resul
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-ink-soft">
         <span>Origem do preço:</span>
         {(["sinapi", "empresa", "usuario", "referencia_pilar", "a_definir"] as const).map((t) => (
-          <ChipOrigem key={t} tipo={t} className="px-2 py-0 text-[11px]" />
+          <ChipOrigem key={t} tipo={t} className="px-2 py-0 text-2xs" />
         ))}
       </div>
       {GRUPOS.map((g) => {

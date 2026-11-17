@@ -39,7 +39,8 @@ function renderForm(props: Partial<Parameters<typeof CheckoutForm>[0]> = {}) {
 async function preencherDados(cpfCnpj = CPF_VALIDO) {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Nome completo"), "Ana Souza");
-  await user.type(screen.getByLabelText("Email"), "Ana@Escritorio.com ");
+  await user.type(screen.getByLabelText("E-mail de acesso"), "Ana@Escritorio.com ");
+  await user.type(screen.getByLabelText("Confirme o e-mail"), "Ana@Escritorio.com ");
   await user.type(screen.getByLabelText("CPF ou CNPJ"), cpfCnpj);
   await user.type(screen.getByLabelText("Telefone"), "11987654321");
   await user.type(screen.getByLabelText("Nome do escritório"), "Escritório Souza");
@@ -67,7 +68,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
   it("PIX com dados válidos envia o payload sem cartão, e-mail normalizado e só dígitos", async () => {
     const onSubmit = renderForm();
     const user = await preencherDados();
-    await user.click(screen.getByRole("button", { name: "PIX" }));
+    await user.click(screen.getByRole("button", { name: "Pix Automático" }));
     await user.click(pagar());
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit.mock.calls[0][0]).toEqual({
@@ -78,7 +79,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
       telefone: "11987654321",
       plan_slug: "pro",
       billing_cycle: "monthly",
-      billing_type: "PIX",
+      billing_type: "PIX_AUTOMATICO",
     });
   });
 
@@ -102,7 +103,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
   ])("CPF/CNPJ inválido (%s) é barrado com aviso e não chama o servidor", async (_caso, doc) => {
     const onSubmit = renderForm();
     const user = await preencherDados(doc);
-    await user.click(screen.getByRole("button", { name: "PIX" }));
+    await user.click(screen.getByRole("button", { name: "Pix Automático" }));
     await user.click(pagar());
     expect(onSubmit).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith("CPF/CNPJ inválido", expect.anything());
@@ -186,5 +187,26 @@ describe("CheckoutForm: validação antes do pagamento", () => {
   it("o valor do botão é o do plano no ciclo escolhido", () => {
     renderForm({ planValue: 4990, cycle: "yearly" });
     expect(pagar()).toHaveTextContent("R$ 4.990,00");
+  });
+});
+
+describe("CheckoutForm: confirmação do e-mail", () => {
+  it("avisa e não envia quando os e-mails são diferentes", async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <CheckoutForm
+        planSlug="pro"
+        planNome="Pro"
+        planValue={490}
+        cycle="monthly"
+        onSubmit={onSubmit}
+        isSubmitting={false}
+        errorMessage={null}
+      />
+    );
+    await user.type(screen.getByLabelText("E-mail de acesso"), "ana@escritorio.com");
+    await user.type(screen.getByLabelText("Confirme o e-mail"), "ana@escritorio.co");
+    expect(screen.getByText("Os e-mails não são iguais.")).toBeInTheDocument();
   });
 });

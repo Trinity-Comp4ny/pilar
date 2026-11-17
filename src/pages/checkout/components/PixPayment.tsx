@@ -11,6 +11,8 @@ interface PixPaymentProps {
   expirationDate: string;
   value: number;
   isPolling: boolean;
+  /** Pix Automático: o pagamento deste QR também autoriza os débitos dos meses seguintes. */
+  recorrente?: boolean;
 }
 
 function formatBRL(value: number): string {
@@ -36,7 +38,14 @@ function useCountdown(expirationDate: string) {
   return { secondsLeft, display: `${mm}:${ss}` };
 }
 
-export function PixPayment({ encodedImage, payload, expirationDate, value, isPolling }: PixPaymentProps) {
+export function PixPayment({
+  encodedImage,
+  payload,
+  expirationDate,
+  value,
+  isPolling,
+  recorrente = false,
+}: PixPaymentProps) {
   const [copied, setCopied] = useState(false);
   const { secondsLeft, display } = useCountdown(expirationDate);
   const expired = secondsLeft <= 0;
@@ -75,8 +84,13 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-ink mb-3">
           <QrCode className="w-6 h-6" />
         </div>
-        <h2 className="text-2xl font-medium text-ink">Pague com PIX</h2>
+        <h2 className="text-2xl font-medium text-ink">{recorrente ? "Autorize o Pix Automático" : "Pague com PIX"}</h2>
         <p className="text-sm text-ink-muted mt-1">Valor: {formatBRL(value)}</p>
+        {recorrente && (
+          <p className="text-sm text-ink-muted mt-1">
+            Ao pagar, você autoriza o débito mensal no app do banco. Você pode cancelar quando quiser.
+          </p>
+        )}
       </header>
 
       <div className="bg-white border border-border rounded-2xl p-6 flex flex-col items-center">

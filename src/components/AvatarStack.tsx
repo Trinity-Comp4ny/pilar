@@ -83,12 +83,12 @@ export function AvatarStack({ pessoas, max = 3, size = "sm", className }: Avatar
   const overflow = unique.length - visible.length;
   const dim =
     size === "xs"
-      ? "h-5 w-5 text-[9px]"
+      ? "h-5 w-5 text-3xs"
       : size === "md"
         ? "h-10 w-10 text-sm"
         : size === "lg"
           ? "h-16 w-16 text-lg"
-          : "h-6 w-6 text-[10px]";
+          : "h-6 w-6 text-3xs";
 
   return (
     <div className={cn("flex items-center -space-x-1.5", className)}>

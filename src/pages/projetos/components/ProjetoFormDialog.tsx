@@ -24,7 +24,8 @@ import { PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
-import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
+import { useProjetoForm } from "./useProjetoForm";
+import { EstadoSelectItems } from "./EstadoSelectItems";
 import { getPriorityDotColor } from "../lib/priorityColors";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
@@ -33,7 +34,6 @@ import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 import { BusyMark } from "@/components/motion/BusyMark";
 
 interface ProjetoFormDialogProps {
@@ -238,7 +238,7 @@ export function ProjetoFormDialog({
                       >
                         {s.label}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Passo {s.id}</p>
+                      <p className="text-3xs text-muted-foreground">Passo {s.id}</p>
                     </div>
                   </button>
                   {i < STEPS.length - 1 && (
@@ -371,7 +371,7 @@ export function ProjetoFormDialog({
                 </div>
 
                 <div className="space-y-3 p-3 bg-muted/30 rounded-lg border">
-                  <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
                     <MapPin size={12} /> Localização da Obra
                   </Label>
                   <div className="grid grid-cols-4 gap-3">
@@ -443,11 +443,7 @@ export function ProjetoFormDialog({
                           <SelectValue placeholder="UF" />
                         </SelectTrigger>
                         <SelectContent>
-                          {ESTADOS_BR.map((uf) => (
-                            <SelectItem key={uf} value={uf}>
-                              {uf}
-                            </SelectItem>
-                          ))}
+                          <EstadoSelectItems />
                         </SelectContent>
                       </Select>
                     </div>
@@ -464,7 +460,7 @@ export function ProjetoFormDialog({
                     confuso de salvar um campo que a UI nunca deveria ter oferecido. */}
                 {podeVerValor && (
                   <div className="space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                    <Label className="text-3xs uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
                       <DollarSign size={12} /> Financeiro
                     </Label>
                     <div className="grid grid-cols-2 gap-3">
@@ -506,7 +502,7 @@ export function ProjetoFormDialog({
                           onChange={(e) => form.handleInputChange("dia_pagamento", e.target.value)}
                           placeholder="Ex: 25"
                         />
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-3xs text-muted-foreground">
                           Gera parcelas automáticas vencendo neste dia de cada mês. Pula fim de semana.
                         </p>
                       </div>
@@ -515,7 +511,7 @@ export function ProjetoFormDialog({
                 )}
 
                 <div className="space-y-3 pt-3 border-t">
-                  <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
                     <Calendar size={12} /> Prazos
                   </Label>
                   <div className="grid grid-cols-2 gap-3">
@@ -543,7 +539,7 @@ export function ProjetoFormDialog({
                         placeholder="60"
                         className="h-9"
                       />
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-3xs text-muted-foreground">
                         Só calcula a Previsão ao lado; não fica salvo, por isso volta vazio ao reabrir.
                       </p>
                     </div>
@@ -623,6 +619,7 @@ export function ProjetoFormDialog({
               pessoas={effectivePessoas}
               onUpdateField={form.updateDisciplinaField}
               onUpdateResponsaveis={form.updateDisciplinaResponsaveis}
+              onUpdateExecucao={form.updateDisciplinaExecucao}
               newObservation={form.newObservation}
               onNewObservationChange={form.setNewObservation}
               onAddObservation={form.handleAddObservation}

@@ -4,7 +4,7 @@ import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { monitoring } from "@/lib/monitoring";
 import { analytics } from "@/lib/analytics";
-import { usePlans } from "@/hooks/usePlans";
+import { usePlans, capacidadeDoPlano } from "@/hooks/usePlans";
 import type { BillingCycle } from "@/components/CycleToggle";
 import { CheckoutShell } from "./components/CheckoutShell";
 import { CheckoutForm } from "./components/CheckoutForm";
@@ -15,6 +15,13 @@ import { useCheckoutCreate, type CheckoutResponse } from "./hooks/useCheckoutCre
 import { useCheckoutStatus } from "./hooks/useCheckoutStatus";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
+
+const INCLUSO_EM_TODOS = [
+  "Usuários ilimitados, sem cobrar por cabeça",
+  "Gestão, Projetos e Obras, a plataforma inteira",
+  "Portal do cliente e Pilar Campo",
+  "Agentes de IA com aprovação sua",
+];
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -29,13 +36,13 @@ export default function Checkout() {
   const { data: plans, isLoading: loadingPlans } = usePlans();
   const plan = useMemo(() => plans?.find((p) => p.slug === planSlug), [plans, planSlug]);
 
+  // Mesmos itens que a landing mostra por plano: capacidade + o que todo plano inclui.
+  const resumoItens = useMemo(() => (plan ? [...capacidadeDoPlano(plan), ...INCLUSO_EM_TODOS] : []), [plan]);
+
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResponse | null>(null);
   const createCheckout = useCheckoutCreate();
 
-  const { data: status } = useCheckoutStatus(
-    checkoutResult?.session_token ?? null,
-    !!checkoutResult && checkoutResult.billing_type !== "CREDIT_CARD"
-  );
+  const { data: status } = useCheckoutStatus(checkoutResult?.session_token ?? null, !!checkoutResult);
 
   const effectiveStatus = status?.payment_status ?? checkoutResult?.payment_status ?? null;
   const inviteDispatched = status?.invite_dispatched ?? false;
@@ -85,13 +92,15 @@ export default function Checkout() {
               planNome={plan.nome}
               inviteDispatched={inviteDispatched}
             />
-          ) : checkoutResult?.billing_type === "PIX" && checkoutResult.metadata.pix ? (
+          ) : (checkoutResult?.billing_type === "PIX" || checkoutResult?.billing_type === "PIX_AUTOMATICO") &&
+            checkoutResult.metadata.pix ? (
             <PixPayment
               encodedImage={checkoutResult.metadata.pix.encoded_image}
               payload={checkoutResult.metadata.pix.payload}
               expirationDate={checkoutResult.metadata.pix.expiration_date}
               value={checkoutResult.metadata.value}
               isPolling={effectiveStatus === "pending"}
+              recorrente={checkoutResult.billing_type === "PIX_AUTOMATICO"}
             />
           ) : checkoutResult?.billing_type === "BOLETO" && checkoutResult.metadata.boleto ? (
             <BoletoPayment
@@ -126,13 +135,15 @@ export default function Checkout() {
         <aside className="sticky top-[73px] space-y-4">
           <div className="bg-white rounded-2xl border border-paper-border p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] uppercase tracking-widest text-ink-disabled">Resumo do pedido</p>
-              <Link
-                to="/planos"
-                className="flex items-center gap-1 text-[11px] text-ink-soft hover:text-ink transition-colors font-medium"
-              >
-                Trocar plano <ArrowRight className="w-3 h-3" />
-              </Link>
+              <p className="text-3xs uppercase tracking-widest text-ink-disabled">Resumo do pedido</p>
+              {effectiveStatus !== "paid" && (
+                <Link
+                  to="/planos"
+                  className="flex items-center gap-1 text-2xs text-ink-soft hover:text-ink transition-colors font-medium"
+                >
+                  Trocar plano <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
             </div>
 
             <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
@@ -146,9 +157,9 @@ export default function Checkout() {
               <p className="text-sm font-semibold text-ink whitespace-nowrap">{formatBRL(planValue)}</p>
             </div>
 
-            {plan.features.length > 0 && (
+            {resumoItens.length > 0 && (
               <ul className="mt-4 space-y-2.5">
-                {plan.features.map((feature) => (
+                {resumoItens.map((feature) => (
                   <li key={feature} className="flex items-start gap-2.5 text-xs text-ink-muted">
                     <Check className="w-3.5 h-3.5 text-positive-strong shrink-0 mt-0.5" />
                     {feature}
@@ -161,7 +172,7 @@ export default function Checkout() {
               <span className="text-xs uppercase tracking-wider text-ink-muted">Total</span>
               <div className="text-right">
                 <p className="text-2xl font-semibold text-ink">{formatBRL(planValue)}</p>
-                <p className="text-[11px] text-ink-disabled">{cycle === "yearly" ? "por ano" : "por mês"}</p>
+                <p className="text-2xs text-ink-disabled">{cycle === "yearly" ? "por ano" : "por mês"}</p>
               </div>
             </div>
           </div>

@@ -76,3 +76,25 @@ describe("AtividadeComposer, marcação", () => {
     expect(screen.queryByRole("button", { name: /Carlos Sem Conta/ })).not.toBeInTheDocument();
   });
 });
+
+describe("AtividadeComposer, gravação assíncrona", () => {
+  it("preserva o texto após erro e não duplica envio em andamento", async () => {
+    const { act, waitFor } = await import("@testing-library/react");
+    let rejeitar!: (e: Error) => void;
+    const onSubmit = vi.fn(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejeitar = reject;
+        })
+    );
+    render(<AtividadeComposer pessoas={[]} habilitarMencoes={false} onSubmit={onSubmit} />);
+    const caixa = digitar("Contato com o cliente");
+    fireEvent.keyDown(caixa, { key: "Enter" });
+    fireEvent.keyDown(caixa, { key: "Enter" });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Mencionar alguém" })).not.toBeInTheDocument();
+    await act(async () => rejeitar(new Error("Falha de rede")));
+    await waitFor(() => expect(caixa).not.toBeDisabled());
+    expect(caixa).toHaveValue("Contato com o cliente");
+  });
+});

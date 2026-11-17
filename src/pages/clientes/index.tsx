@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { SortingState } from "@tanstack/react-table";
@@ -14,7 +15,6 @@ import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { PilarPage } from "@/components/PilarPage";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
-import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
@@ -30,6 +30,7 @@ import { ClienteMessageDialog } from "./ClienteMessageDialog";
 import { ClienteFormDialog } from "./ClienteFormDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { CLIENTES_PAGE_SIZE, getTotalPages, clampPage, getPageRange } from "./pagination";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 export default function Clientes() {
   usePageTitle("Clientes");
@@ -240,48 +241,31 @@ export default function Clientes() {
 
   const acoesColumn: ColumnDef<Cliente> = {
     key: "acoes",
-    header: "Ações",
+    header: <span className="sr-only">Ações</span>,
     align: "end",
     cell: (cliente) => (
-      <div className="flex justify-end gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          disabled={!cliente.email}
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedClienteForMessage(cliente);
-            setIsMessageModalOpen(true);
-          }}
-          aria-label="Enviar mensagem"
-          title={cliente.email ? "Enviar mensagem" : "Cliente sem e-mail cadastrado"}
-        >
-          <Mail className="h-4 w-4" />
-        </Button>
-        <Can feature="clientes" action="edit">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={(e) => handleEditClick(cliente, e)}
-            aria-label="Editar cliente"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-        </Can>
-        <Can feature="clientes" action="delete">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-danger-mid"
-            onClick={(e) => handleDeleteClick(cliente.id, e)}
-            aria-label="Excluir cliente"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </Can>
-      </div>
+      <RowActions
+        label={cliente.nome}
+        actions={[
+          {
+            label: cliente.email ? "Enviar mensagem" : "Enviar mensagem (sem e-mail)",
+            icon: Mail,
+            disabled: !cliente.email,
+            onClick: () => {
+              setSelectedClienteForMessage(cliente);
+              setIsMessageModalOpen(true);
+            },
+          },
+          { label: "Editar", icon: Pencil, hidden: !can("clientes", "edit"), onClick: () => handleEditClick(cliente) },
+          {
+            label: "Excluir",
+            icon: Trash2,
+            destructive: true,
+            hidden: !can("clientes", "delete"),
+            onClick: () => handleDeleteClick(cliente.id),
+          },
+        ]}
+      />
     ),
   };
 
@@ -402,8 +386,8 @@ export default function Clientes() {
   return (
     <PilarPage
       toolbar={toolbar}
-      className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
       density="compact"
       title="Clientes"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}

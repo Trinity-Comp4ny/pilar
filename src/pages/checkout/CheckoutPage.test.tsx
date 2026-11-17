@@ -19,7 +19,10 @@ const { invoke, recordMetric, track, planos } = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
 }));
-vi.mock("@/hooks/usePlans", () => ({ usePlans: () => planos }));
+vi.mock("@/hooks/usePlans", async (orig) => ({
+  ...(await orig<typeof import("@/hooks/usePlans")>()),
+  usePlans: () => planos,
+}));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { recordMetric, captureException: vi.fn() } }));
 vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: () => {} }));
@@ -62,22 +65,23 @@ function abrir(url: string) {
 async function preencherEPagarComPix() {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Nome completo"), "Ana Souza");
-  await user.type(screen.getByLabelText("Email"), "ana@escritorio.com");
+  await user.type(screen.getByLabelText("E-mail de acesso"), "ana@escritorio.com");
+  await user.type(screen.getByLabelText("Confirme o e-mail"), "ana@escritorio.com");
   await user.type(screen.getByLabelText("CPF ou CNPJ"), "52998224725");
   await user.type(screen.getByLabelText("Telefone"), "11987654321");
   await user.type(screen.getByLabelText("Nome do escritório"), "Escritório Souza");
-  await user.click(screen.getByRole("button", { name: "PIX" }));
+  await user.click(screen.getByRole("button", { name: "Pix Automático" }));
   await user.click(screen.getByRole("button", { name: /Pagar/ }));
 }
 
 const respostaCheckout = (over: Record<string, unknown> = {}) => ({
   success: true,
   session_token: "tok_sessao_123456789012345",
-  billing_type: "PIX",
+  billing_type: "PIX_AUTOMATICO",
   payment_status: "pending",
   plan: { slug: "pro", nome: "Profissional", cycle: "monthly", value: 499 },
   metadata: {
-    billing_type: "PIX",
+    billing_type: "PIX_AUTOMATICO",
     value: 499,
     cycle: "monthly",
     payment_id: "pay_1",
@@ -191,7 +195,13 @@ describe("Checkout", () => {
     expect(track).toHaveBeenCalledWith("assinatura_ativada", expect.objectContaining({ plano: "pro" }));
   });
 
-  it("cartão aprovado na hora vai direto ao sucesso sem polling", async () => {
+  it("resumo mostra a capacidade do plano e o que todo plano inclui, e oferece trocar de plano antes de pagar", async () => {
+    abrir("/checkout?plano=pro");
+    expect(await screen.findByText("Usuários ilimitados, sem cobrar por cabeça")).toBeInTheDocument();
+    expect(screen.getByText("Trocar plano")).toBeInTheDocument();
+  });
+
+  it("cartão aprovado na hora vai direto ao sucesso e consulta o status para saber do e-mail", async () => {
     invoke.mockResolvedValue({
       data: respostaCheckout({ billing_type: "CREDIT_CARD", payment_status: "paid" }),
       error: null,
@@ -200,7 +210,9 @@ describe("Checkout", () => {
     // Mesmo payload de PIX no formulário; a resposta do servidor é que manda.
     await preencherEPagarComPix();
     expect(await screen.findByText("Pagamento confirmado")).toBeInTheDocument();
-    expect(invoke).toHaveBeenCalledTimes(1);
+    // 1ª chamada cria o checkout; a 2ª é o status, que confirma o envio do e-mail.
+    expect(invoke.mock.calls[0][0]).toBe("pilar-checkout-create");
+    expect(invoke.mock.calls.length).toBeGreaterThanOrEqual(2);
     expect(recordMetric).toHaveBeenCalledTimes(1);
   });
 });

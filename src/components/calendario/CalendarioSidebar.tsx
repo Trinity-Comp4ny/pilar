@@ -45,7 +45,7 @@ export function CalendarioSidebar({
       <MiniMes selecionado={selecionado} diasComEvento={diasComEvento} onSelectDate={onSelectDate} />
 
       <div>
-        <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
+        <h3 className="text-2xs font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5">
           Meus calendários
         </h3>
         {camadas.map((id) => (
@@ -55,7 +55,7 @@ export function CalendarioSidebar({
 
       {children && (
         <div className="space-y-2">
-          <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Filtros</h3>
+          <h3 className="text-2xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Filtros</h3>
           {children}
         </div>
       )}

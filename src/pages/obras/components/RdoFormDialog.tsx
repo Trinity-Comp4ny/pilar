@@ -443,7 +443,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                   {...register("efetivo")}
                 />
                 {efetivoLinhas.length > 0 && (
-                  <p className="text-[11px] text-muted-foreground">Somado a partir das equipes abaixo.</p>
+                  <p className="text-2xs text-muted-foreground">Somado a partir das equipes abaixo.</p>
                 )}
               </div>
             </div>
@@ -470,7 +470,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                     ))}
                   </SelectContent>
                 </Select>
-                {climaAuto && <p className="text-[11px] text-muted-foreground">Sugerido pela previsão do tempo.</p>}
+                {climaAuto && <p className="text-2xs text-muted-foreground">Sugerido pela previsão do tempo.</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="condicao">Condição de trabalho</Label>
@@ -495,7 +495,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
             <div className="space-y-2 rounded-xl border border-black/5 p-3">
               <div className="flex items-center justify-between">
                 <Label className="text-sm">Tarefas do cronograma</Label>
-                <span className="text-[11px] text-muted-foreground">Marque o que andou hoje</span>
+                <span className="text-2xs text-muted-foreground">Marque o que andou hoje</span>
               </div>
 
               {tarefas.length === 0 ? (
@@ -518,7 +518,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                           <label htmlFor={`t-${t.id}`} className="min-w-0 flex-1 cursor-pointer">
                             <span className="block truncate text-sm text-ink">{t.titulo}</span>
                             {t.obra_frente_id && (
-                              <span className="block text-[11px] text-muted-foreground">
+                              <span className="block text-2xs text-muted-foreground">
                                 {frenteNome.get(t.obra_frente_id) ?? ""}
                               </span>
                             )}
@@ -590,8 +590,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarTarefa}
                   disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
                 >
@@ -605,7 +605,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
             <div className="space-y-2 rounded-xl border border-black/5 p-3">
               <div>
                 <Label className="text-sm">Equipes no canteiro</Label>
-                <p className="text-[11px] text-muted-foreground">Quantas pessoas de cada empresa trabalharam hoje.</p>
+                <p className="text-2xs text-muted-foreground">Quantas pessoas de cada empresa trabalharam hoje.</p>
               </div>
               {efetivoLinhas.length > 0 && (
                 <div className="space-y-1">
@@ -669,8 +669,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarEfetivo}
                   disabled={!novoEfetivo.fornecedorId || !novoEfetivo.quantidade}
                 >
@@ -686,9 +686,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                   <AlertTriangle className="h-3.5 w-3.5 text-warning-strong" />
                   Impedimentos
                 </Label>
-                <p className="text-[11px] text-muted-foreground">
-                  O que travou o serviço (falta de material, chuva...).
-                </p>
+                <p className="text-2xs text-muted-foreground">O que travou o serviço (falta de material, chuva...).</p>
               </div>
               {impedimentoLinhas.length > 0 && (
                 <div className="space-y-1">
@@ -747,8 +745,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarImpedimento}
                   disabled={!novoImpedimento.descricao.trim()}
                 >
@@ -761,7 +759,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
             <div className="space-y-2 rounded-xl border border-black/5 p-3">
               <div>
                 <Label className="text-sm">Visitas</Label>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Quem esteve na obra sem trabalhar (cliente, fiscal, arquiteto).
                 </p>
               </div>
@@ -826,8 +824,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarVisita}
                   disabled={!novaVisita.fornecedorId}
                 >
@@ -883,7 +881,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                   className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-black/15 bg-muted/40 text-muted-foreground"
                 >
                   <Camera className="h-5 w-5" />
-                  <span className="text-[10px]">Foto</span>
+                  <span className="text-3xs">Foto</span>
                 </button>
               </div>
             </div>

@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -59,43 +60,35 @@ export function CompanyUsersTab({
         </div>
       ),
     },
-    { key: "email", header: "Email", className: "text-black/70", cell: (u) => u.email },
-    { key: "funcao", header: "Função", className: "text-black/70", cell: (u) => u.role || "-" },
+    { key: "email", header: "Email", className: "text-muted-foreground", cell: (u) => u.email },
+    { key: "funcao", header: "Função", className: "text-muted-foreground", cell: (u) => u.role || "-" },
     {
       key: "acoes",
-      header: "Ações",
+      header: <span className="sr-only">Ações</span>,
       align: "end",
       cell: (u) =>
         isAdmin && !u.id.startsWith("pending-") ? (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              onClick={() => onEditUser(u)}
-              aria-label={`Editar ${u.name}`}
-            >
-              <Pencil className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full text-danger-mid"
-              onClick={() => onDeleteUser(u.id)}
-              disabled={u.id === currentUserId}
-              aria-label={`Remover ${u.name}`}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
+          <RowActions
+            label={u.name}
+            actions={[
+              { label: "Editar", icon: Pencil, onClick: () => onEditUser(u) },
+              {
+                label: "Remover",
+                icon: Trash2,
+                destructive: true,
+                disabled: u.id === currentUserId,
+                onClick: () => onDeleteUser(u.id),
+              },
+            ]}
+          />
         ) : (
-          <span className="text-black/40">-</span>
+          <span className="text-muted-foreground">-</span>
         ),
     },
   ];
 
   return (
-    <Card className="border border-black/5">
+    <Card className="border border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UsersIcon size={20} />
@@ -167,7 +160,7 @@ export function CompanyUsersTab({
               >
                 {isInviting ? "Enviando convite..." : "Adicionar usuário"}
               </Button>
-              <p className="text-xs text-black/50">
+              <p className="text-xs text-muted-foreground">
                 O convite será enviado por email e o usuário aparecerá como pendente.
               </p>
             </div>
@@ -187,10 +180,10 @@ export function CompanyUsersTab({
         {/* Mobile cards */}
         <div className="md:hidden mt-6 space-y-3">
           {users.length === 0 ? (
-            <div className="text-sm text-black/50 bg-black/5 rounded-lg p-4">Nenhum usuário adicionado</div>
+            <div className="text-sm text-muted-foreground bg-muted rounded-lg p-4">Nenhum usuário adicionado</div>
           ) : (
             users.map((u) => (
-              <Card key={u.id} className="border border-black/5">
+              <Card key={u.id} className="border border-border">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -198,8 +191,8 @@ export function CompanyUsersTab({
                         <p className="text-sm font-medium line-clamp-1">{u.name}</p>
                         {u.id.startsWith("pending-") && <Badge variant="secondary">Pendente</Badge>}
                       </div>
-                      <p className="text-xs text-black/60 break-all mt-1">{u.email}</p>
-                      <p className="text-xs text-black/60 mt-1">{u.role || "-"}</p>
+                      <p className="text-xs text-muted-foreground break-all mt-1">{u.email}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{u.role || "-"}</p>
                     </div>
                     {isAdmin && !u.id.startsWith("pending-") ? (
                       <div className="flex flex-col gap-2">

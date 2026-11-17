@@ -42,7 +42,7 @@ describe("isFeatureEnabledForCompany: universal ignora o JSONB da empresa (ADR 0
     // Documenta o estado atual: a lógica de herança pai→filho em
     // isFeatureEnabledForCompany/applyFeatureToggle (ADR 0019) continua no
     // código para uma futura sub-feature não-universal, mas nenhuma existe
-    // hoje: todas as 7 sub-features de Obras já são universais. Se este
+    // hoje: todas as 6 sub-features de Obras já são universais. Se este
     // teste falhar, alguém adicionou uma sub-feature não-universal: ótimo,
     // mas então os testes de herança abaixo precisam de um exemplo real de
     // novo, não mais deste comentário.
@@ -89,17 +89,9 @@ describe("applyFeatureToggle — próximo estado do JSONB (ADR 0019)", () => {
 describe("catálogo de sub-features de Obras", () => {
   const subs = subFeaturesOf("obras");
 
-  it("obras tem 7 sub-features, todas com parent e módulo obras", () => {
+  it("obras tem 6 sub-features, todas com parent e módulo obras", () => {
     expect(subs.map((s) => s.key).sort()).toEqual(
-      [
-        "obras_clima",
-        "obras_conta",
-        "obras_cotacoes",
-        "obras_cronograma",
-        "obras_diario",
-        "obras_estoque",
-        "obras_fornecedores",
-      ].sort()
+      ["obras_clima", "obras_conta", "obras_cotacoes", "obras_cronograma", "obras_diario", "obras_estoque"].sort()
     );
     for (const s of subs) {
       expect(s.parent).toBe("obras");

@@ -193,12 +193,12 @@ function Linha({
           <p className="truncate text-[15px] font-medium leading-snug text-ink">{l.descricao}</p>
           <p className="flex items-center gap-1.5 text-[13px] leading-snug text-muted-foreground">
             {atrasada && (
-              <span className="shrink-0 rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger-mid">
+              <span className="shrink-0 rounded-full bg-danger-soft px-2 py-0.5 text-2xs font-semibold text-danger-mid">
                 Atrasado
               </span>
             )}
             {!atrasada && !paga && (
-              <span className="shrink-0 rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-semibold text-info-mid">
+              <span className="shrink-0 rounded-full bg-info-soft px-2 py-0.5 text-2xs font-semibold text-info-mid">
                 {isReceita ? "A receber" : "A pagar"}
               </span>
             )}

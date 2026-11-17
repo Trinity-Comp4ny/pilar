@@ -122,6 +122,40 @@ beforeEach(() => {
   } as unknown as CronogramaAcoes;
 });
 
+const dia = (n: number) => new Date(`${iso(n)}T00:00:00`);
+
+describe("CronogramaGantt: o filho fica dentro do pai", () => {
+  const sFilho = arvore(
+    { id: "s9", nome: "Sapata B", data_inicio: iso(1), data_fim: iso(5) },
+    { nivel: "servico", periodoProprio: { inicio: iso(1), fim: iso(5) }, periodo: { inicio: iso(1), fim: iso(5) } }
+  );
+  const ePai = arvore(
+    { id: "e9", nome: "Fundação B", data_inicio: iso(0), data_fim: iso(10) },
+    {
+      nivel: "etapa",
+      filhos: [sFilho],
+      periodoProprio: { inicio: iso(0), fim: iso(10) },
+      periodo: { inicio: iso(0), fim: iso(10) },
+    }
+  );
+  const fasePai = arvore(
+    { id: "f9", nome: "Estrutura B" },
+    { filhos: [ePai], periodo: { inicio: iso(0), fim: iso(10) } }
+  );
+
+  it("serviço arrastado para fora da etapa volta para a borda e avisa", async () => {
+    montar({ fases: [fasePai] });
+    await act(() => g.commit!("no:s9", { start: dia(-3), end: dia(12) }));
+    expect(acoes.atualizarNo).toHaveBeenCalledWith({ id: "s9", data_inicio: iso(0), data_fim: iso(10) });
+  });
+
+  it("etapa que encolhe deixando o serviço de fora é esticada para cobri-lo", async () => {
+    montar({ fases: [fasePai] });
+    await act(() => g.commit!("no:e9", { start: dia(3), end: dia(4) }));
+    expect(acoes.atualizarNo).toHaveBeenCalledWith({ id: "e9", data_inicio: iso(1), data_fim: iso(5) });
+  });
+});
+
 describe("CronogramaGantt", () => {
   it("sem nenhum período mostra o vazio que leva para a lista", () => {
     montar({ fases: [faseSemPeriodo] });
@@ -188,8 +222,9 @@ describe("CronogramaGantt", () => {
     fireEvent.mouseDown(direita, { clientX: 70 });
     expect(g.startDrag).toHaveBeenLastCalledWith(70, "no:s1", "right", expect.anything());
 
-    await act(() => g.commit!("no:s1", { start: new Date(2026, 2, 1), end: new Date(2026, 2, 10) }));
-    expect(acoes.atualizarNo).toHaveBeenCalledWith({ id: "s1", data_inicio: "2026-03-01", data_fim: "2026-03-10" });
+    // Cobre a tarefa Concretar (-5 a -1), então o commit passa como veio.
+    await act(() => g.commit!("no:s1", { start: dia(-8), end: dia(10) }));
+    expect(acoes.atualizarNo).toHaveBeenCalledWith({ id: "s1", data_inicio: iso(-8), data_fim: iso(10) });
     await act(() => g.commit!("tarefa:t1", { start: new Date(2026, 2, 2), end: new Date(2026, 2, 3) }));
     expect(acoes.atualizarTarefa).toHaveBeenCalledWith({ id: "t1", data_inicio: "2026-03-02", prazo: "2026-03-03" });
   });

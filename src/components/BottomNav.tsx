@@ -165,7 +165,7 @@ export function BottomNav() {
             <BottomNavItem active={menuOpen} label="Menu">
               <MenuIcon size={21} strokeWidth={menuOpen ? 2.1 : 1.8} />
               {numPendenciasAgentes > 0 && (
-                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-bold leading-none text-white">
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-3xs font-bold leading-none text-white">
                   {numPendenciasAgentes}
                 </span>
               )}

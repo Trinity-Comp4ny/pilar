@@ -1,3 +1,4 @@
+import { clicarAcaoDe, itemDeAcao } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -188,10 +189,14 @@ describe("ProjetoArquivosTab", () => {
     h.baixar.mockImplementation(() => new Promise<void>((r) => (concluir = r)));
     abrir();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("button", { name: "Baixar planta.pdf" }));
-    expect(screen.getByRole("button", { name: "Baixar planta.pdf" })).toBeDisabled();
+    await screen.findByText("planta.pdf");
+    await clicarAcaoDe(user, "planta.pdf", "Baixar");
+    expect(await itemDeAcao(user, "planta.pdf", "Baixar")).toHaveAttribute("aria-disabled", "true");
+    await user.keyboard("{Escape}");
     await act(async () => concluir());
-    await waitFor(() => expect(screen.getByRole("button", { name: "Baixar planta.pdf" })).toBeEnabled());
+    await waitFor(async () =>
+      expect(await itemDeAcao(user, "planta.pdf", "Baixar")).not.toHaveAttribute("aria-disabled", "true")
+    );
   });
 
   it("cria pasta e manda arquivo para a lixeira com confirmação", async () => {
@@ -201,7 +206,7 @@ describe("ProjetoArquivosTab", () => {
     await user.click(screen.getByRole("button", { name: "Criar pasta" }));
     await waitFor(() => expect(h.criar).toHaveBeenCalledWith(raiz.pasta_id, "Revisão 2"));
 
-    await user.click(screen.getByRole("button", { name: "Excluir planta.pdf" }));
+    await clicarAcaoDe(user, "planta.pdf", "Excluir");
     await user.click(await screen.findByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(h.lixeira).toHaveBeenCalledWith("arq-1234567890"));
   });
@@ -210,8 +215,9 @@ describe("ProjetoArquivosTab", () => {
     const user = abrir(false);
     expect(screen.queryByRole("button", { name: /Enviar arquivos/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Nova pasta/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Excluir planta.pdf" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Baixar planta.pdf" }));
+    await user.click(screen.getByRole("button", { name: "Mais ações de planta.pdf" }));
+    expect(screen.queryByRole("menuitem", { name: "Excluir" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("menuitem", { name: "Baixar" }));
     expect(h.baixar).toHaveBeenCalled();
   });
 

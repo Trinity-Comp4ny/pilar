@@ -105,8 +105,7 @@ describe("Equipe (página)", () => {
     renderPage();
     await screen.findAllByText("Rita Alves");
     expect(screen.queryByRole("button", { name: "Nova pessoa" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Mais ações/ })).not.toBeInTheDocument();
   });
 
   it("admin abre o cadastro de nova pessoa", async () => {
@@ -131,7 +130,8 @@ describe("Equipe (página)", () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findAllByText("Rita Alves");
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /^Mais ações/ })[0]);
+    await user.click(await screen.findByRole("menuitem", { name: "Excluir" }));
     expect(await screen.findByText("Excluir pessoa")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(h.toastSuccess).toHaveBeenCalledWith("Pessoa excluída"));
@@ -146,7 +146,8 @@ describe("Equipe (página)", () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findAllByText("Rita Alves");
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /^Mais ações/ })[0]);
+    await user.click(await screen.findByRole("menuitem", { name: "Excluir" }));
     await user.click(await screen.findByRole("button", { name: "Cancelar" }));
     expect(h.calls.some((c) => c.op === "update")).toBe(false);
   });
@@ -158,7 +159,8 @@ describe("Equipe (página)", () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findAllByText("Rita Alves");
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /^Mais ações/ })[0]);
+    await user.click(await screen.findByRole("menuitem", { name: "Excluir" }));
     await user.click(await screen.findByRole("button", { name: "Excluir" }));
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith("Não foi possível excluir a pessoa. Tente novamente.")

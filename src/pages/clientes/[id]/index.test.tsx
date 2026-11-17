@@ -84,10 +84,10 @@ vi.mock("@/pages/portal/PortalFinanceiro", () => ({
     </ul>
   ),
 }));
-vi.mock("@/pages/portal/PortalEntregas", () => ({
+vi.mock("@/components/portal/PortalEntregas", () => ({
   EntregasContent: ({ projetoId }: { projetoId: string }) => <div>Entregas de {projetoId}</div>,
 }));
-vi.mock("@/pages/portal/EntregaFormDialog", () => ({
+vi.mock("@/components/portal/EntregaFormDialog", () => ({
   EntregaFormDialog: ({ projetoId, onCreated }: { projetoId: string; onCreated: () => void }) => (
     <div role="dialog" aria-label="Nova entrega">
       {projetoId}

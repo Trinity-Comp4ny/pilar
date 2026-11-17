@@ -131,7 +131,7 @@ export function LeadFormDialog({
       isPending={isPending}
     >
       <div className="space-y-3">
-        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
+        <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor={`${prefix}nome`} className="text-xs">

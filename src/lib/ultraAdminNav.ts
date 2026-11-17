@@ -19,6 +19,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Siren,
+  Target,
   ToggleRight,
   Users,
   type LucideIcon,
@@ -37,6 +38,7 @@ export type UltraSecaoId =
   | "releases"
   | "ajuda"
   | "satisfacao"
+  | "dores"
   | "comunicados"
   | "previas"
   | "atividade"
@@ -80,6 +82,7 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
   { id: "releases", title: "Releases", url: `${ULTRA_ADMIN_BASE}/releases`, icon: Megaphone, group: "Produto" },
   { id: "ajuda", title: "Lacunas da ajuda", url: `${ULTRA_ADMIN_BASE}/ajuda`, icon: LifeBuoy, group: "Produto" },
   { id: "satisfacao", title: "Satisfação", url: `${ULTRA_ADMIN_BASE}/satisfacao`, icon: Smile, group: "Produto" },
+  { id: "dores", title: "Dores do mercado", url: `${ULTRA_ADMIN_BASE}/dores`, icon: Target, group: "Produto" },
   {
     id: "previas",
     title: "Prévia de recursos",

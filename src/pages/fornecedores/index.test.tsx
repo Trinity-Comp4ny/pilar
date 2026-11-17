@@ -1,3 +1,4 @@
+import { clicarAcao } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -171,7 +172,7 @@ describe("Fornecedores: editar e excluir", () => {
     abrir();
     const linha = (await screen.findByText("Concreto Forte")).closest("tr") as HTMLElement;
 
-    await user.click(within(linha).getByRole("button", { name: "Editar fornecedor" }));
+    await clicarAcao(user, linha, "Editar");
     const f = form();
     expect(within(f).getByLabelText("CNPJ")).toHaveValue("11.222.333/0001-81");
     expect(within(f).getByLabelText("Telefone")).toHaveValue("(14) 99999-8888");
@@ -190,7 +191,7 @@ describe("Fornecedores: editar e excluir", () => {
     abrir();
     const linha = (await screen.findByText("Concreto Forte")).closest("tr") as HTMLElement;
 
-    await user.click(within(linha).getByRole("button", { name: "Excluir fornecedor" }));
+    await clicarAcao(user, linha, "Excluir");
     expect(supabaseFake.rpcCalls.some((c) => c.fn === "rpc_soft_delete")).toBe(false);
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Excluir" }));
 
@@ -215,7 +216,7 @@ describe("Fornecedores: editar e excluir", () => {
     const user = userEvent.setup();
     abrir();
     const linha = (await screen.findByText("Concreto Forte")).closest("tr") as HTMLElement;
-    await user.click(within(linha).getByRole("button", { name: "Excluir fornecedor" }));
+    await clicarAcao(user, linha, "Excluir");
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Excluir" }));
 
     await waitFor(() =>

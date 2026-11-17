@@ -23,6 +23,7 @@ import {
   type GanttDragType,
   type ZoomLevel,
 } from "@/lib/cronograma";
+import { GANTT_GUIDE_LINE, GANTT_GUIDE_CHIP, GANTT_DRAG_TIP } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import { DisciplinaTimelineRows } from "./CronogramaDisciplinaRows";
 import { CronogramaColunaProjetos } from "./CronogramaColunaProjetos";
@@ -52,7 +53,7 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
   [PROJECT_STATUS.REVISAO]: "bg-status-review",
   [PROJECT_STATUS.PARALISADO]: "bg-brand",
-  [PROJECT_STATUS.CONCLUIDO]: "bg-positive",
+  [PROJECT_STATUS.CONCLUIDO]: "bg-brand",
   [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
 };
 
@@ -372,7 +373,7 @@ export function CronogramaProjetosTab({
                   <div className="h-10 border-b flex sticky top-0 bg-background z-10 relative">
                     {columns.map((col, i) => (
                       <div key={i} className="flex-1 border-r last:border-r-0 flex items-center justify-center">
-                        <span className="text-[10px] font-medium text-muted-foreground capitalize">{col.label}</span>
+                        <span className="text-3xs font-medium text-muted-foreground capitalize">{col.label}</span>
                       </div>
                     ))}
 
@@ -382,7 +383,7 @@ export function CronogramaProjetosTab({
                         className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none"
                         style={{ left: `${todayPct}%` }}
                       >
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-fill-danger text-fill-danger-foreground text-[9px] px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-fill-danger text-fill-danger-foreground text-3xs px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
                           HOJE
                         </div>
                       </div>
@@ -408,13 +409,8 @@ export function CronogramaProjetosTab({
 
                     {/* Vertical guide line during drag */}
                     {guideX !== null && (
-                      <div
-                        className="absolute top-0 bottom-0 w-px bg-blue-400/70 z-30 pointer-events-none"
-                        style={{ left: `${guideX}px` }}
-                      >
-                        <div className="absolute top-1 left-2 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
-                          {guideDateLabel()}
-                        </div>
+                      <div className={GANTT_GUIDE_LINE} style={{ left: `${guideX}px` }}>
+                        <div className={GANTT_GUIDE_CHIP}>{guideDateLabel()}</div>
                       </div>
                     )}
 
@@ -509,10 +505,7 @@ export function CronogramaProjetosTab({
                                       }}
                                     >
                                       <span
-                                        className={cn(
-                                          "text-[10px] font-medium truncate",
-                                          textoSobreBarra(row.barClass)
-                                        )}
+                                        className={cn("text-3xs font-medium truncate", textoSobreBarra(row.barClass))}
                                       >
                                         {row.projeto.nome}
                                       </span>
@@ -544,9 +537,9 @@ export function CronogramaProjetosTab({
                                   <div className="space-y-1.5">
                                     <p className="font-semibold text-sm">{row.projeto.nome}</p>
                                     <div className="flex items-center gap-2">
-                                      {cfg && <Badge className={cn("text-[10px]", cfg.color)}>{cfg.label}</Badge>}
+                                      {cfg && <Badge className={cn("text-3xs", cfg.color)}>{cfg.label}</Badge>}
                                       {row.deadlineStatus && (
-                                        <Badge className={cn("text-[10px]", row.deadlineStatus.color)}>
+                                        <Badge className={cn("text-3xs", row.deadlineStatus.color)}>
                                           {row.deadlineStatus.label}
                                           {row.deadlineStatus.days > 0 ? ` (${row.deadlineStatus.days}d)` : ""}
                                         </Badge>
@@ -573,7 +566,7 @@ export function CronogramaProjetosTab({
                                         </p>
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground/60 border-t pt-1 mt-1">
+                                    <p className="text-3xs text-muted-foreground/60 border-t pt-1 mt-1">
                                       {canDrag
                                         ? "Arraste as bordas para ajustar as datas"
                                         : "Clique para abrir o cronograma"}
@@ -588,9 +581,7 @@ export function CronogramaProjetosTab({
                                   className="absolute top-1/2 -translate-y-1/2 z-40 pointer-events-none"
                                   style={{ left: `${guideX + 14}px` }}
                                 >
-                                  <div className="bg-gray-900/90 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium">
-                                    {getDragLabel(geo, dragOverride.type)}
-                                  </div>
+                                  <div className={GANTT_DRAG_TIP}>{getDragLabel(geo, dragOverride.type)}</div>
                                 </div>
                               )}
                             </div>

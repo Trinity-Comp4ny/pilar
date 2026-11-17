@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({
     key: string;
     rota: string;
     done: boolean;
+    bloqueadoPor: unknown[];
     tour?: { selector: string; titulo: string; texto: string };
   }[],
   state: { dismissed: false, tours_seen: [] as string[] },
@@ -43,8 +44,8 @@ beforeEach(() => {
   h.state = { dismissed: false, tours_seen: [] };
   const tour = { selector: "onb-novo-projeto", titulo: "Crie", texto: "Clique aqui" };
   h.steps = [
-    { key: "feito", rota: "/projetos", done: true, tour },
-    { key: "projeto", rota: "/projetos", done: false, tour },
+    { key: "feito", rota: "/projetos", done: true, bloqueadoPor: [], tour },
+    { key: "projeto", rota: "/projetos", done: false, bloqueadoPor: [], tour },
   ];
   h.startStepTour.mockReturnValue({ destroy: h.destroy });
 });
@@ -95,5 +96,14 @@ describe("OnboardingTourController", () => {
     montar("/outra");
     act(() => vi.advanceTimersByTime(1000));
     expect(h.startStepTour).not.toHaveBeenCalled();
+  });
+
+  it("passo bloqueado não dispara o tour (SPEC 165)", () => {
+    const tour = { selector: "onb-novo-projeto", titulo: "Crie", texto: "Clique aqui" };
+    h.steps = [{ key: "projeto", rota: "/projetos", done: false, bloqueadoPor: [{ key: "cliente" }], tour }];
+    const { unmount } = montar();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(h.startStepTour).not.toHaveBeenCalled();
+    unmount();
   });
 });

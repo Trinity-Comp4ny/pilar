@@ -12,6 +12,7 @@ import type { CronogramaAcoes } from "./useCronogramaAcoes";
 
 const navigate = vi.hoisted(() => vi.fn());
 const toast = vi.hoisted(() => ({ error: vi.fn() }));
+vi.mock("@/pages/obras/hooks/useFornecedoresLite", () => ({ useFornecedoresLite: () => ({ data: [] }) }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
 vi.mock("@/components/ui/date-picker", () => ({

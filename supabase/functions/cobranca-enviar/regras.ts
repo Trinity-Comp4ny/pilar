@@ -49,8 +49,12 @@ export function verificarDestinos(destinatarioEmail: string, empresaEmail: strin
 }
 
 /** E-mail que não saiu: o rascunho continua aberto e o usuário sabe o porquê. */
-export function erroDoEnvioPulado(skipped: "suprimido" | "dry_run"): { status: number; error: string } {
-  return skipped === "dry_run"
-    ? { status: 503, error: "O envio de e-mail está desligado neste ambiente; nada foi enviado" }
-    : { status: 422, error: "O e-mail do cliente está bloqueado para envio (descadastro ou devolução)" };
+export function erroDoEnvioPulado(skipped: "suprimido" | "dry_run" | "duplicado"): { status: number; error: string } {
+  if (skipped === "dry_run") {
+    return { status: 503, error: "O envio de e-mail está desligado neste ambiente; nada foi enviado" };
+  }
+  if (skipped === "duplicado") {
+    return { status: 409, error: "Este e-mail já foi enviado nas últimas 24 horas; nada foi reenviado" };
+  }
+  return { status: 422, error: "O e-mail do cliente está bloqueado para envio (descadastro ou devolução)" };
 }

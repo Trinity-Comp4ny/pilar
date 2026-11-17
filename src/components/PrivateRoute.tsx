@@ -1,7 +1,6 @@
-import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
@@ -10,56 +9,24 @@ import { monitoring } from "@/lib/monitoring";
 import { autorizacaoPendente, rotaDeAutorizacao } from "@/lib/oauthPendente";
 import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
-import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { EVENTO_ASSINATURA_SUSPENSA } from "@/lib/assinaturaSuspensa";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 
 const AccountRecoveryScreen = lazy(() =>
   import("./AccountRecoveryScreen").then(({ AccountRecoveryScreen }) => ({ default: AccountRecoveryScreen }))
 );
 
+const SubscriptionSuspendedScreen = lazy(() =>
+  import("./SubscriptionSuspendedScreen").then(({ SubscriptionSuspendedScreen }) => ({
+    default: SubscriptionSuspendedScreen,
+  }))
+);
+
 type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
 
 // Cache somente em memória — sessionStorage era manipulável via DevTools.
 const subStatusCache = new Map<string, SubStatus>();
-
-// SPEC 098: quem não pode regularizar a assinatura (não é admin) não vê o
-// atalho pra tela de pagamento, que ele não tem acesso mesmo. Só orienta a
-// falar com quem administra a empresa.
-function SubscriptionSuspendedScreen({ isAdmin }: { isAdmin: boolean }) {
-  const { openSettings } = useSettingsModal();
-  return (
-    <div className="min-h-dvh flex items-center justify-center bg-muted p-8">
-      <div className="max-w-md text-center space-y-6">
-        <div className="flex justify-center">
-          <div className="p-4 rounded-full bg-warning-soft">
-            <AlertTriangle className="h-10 w-10 text-warning-mid" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-ink">Acesso suspenso</h1>
-          <p className="text-ink-muted text-sm leading-relaxed">
-            {isAdmin
-              ? "Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma."
-              : "A assinatura da sua empresa está suspensa ou cancelada. Fale com o administrador da sua empresa para regularizar o pagamento."}
-          </p>
-        </div>
-        <div className="flex flex-col gap-3">
-          {isAdmin && (
-            <Button variant="brand" onClick={() => openSettings("pagamento")}>
-              Ver assinatura
-            </Button>
-          )}
-          <Button variant="ghost" asChild className="text-ink-muted">
-            <Link to="/" onClick={() => supabase.auth.signOut()}>
-              Sair da conta
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+const REVALIDAR_STATUS_MS = 5 * 60 * 1000;
 
 export function PrivateRoute() {
   const { isAuthenticated, profile, loading, mfaChallengeRequired } = useAuth();
@@ -104,6 +71,50 @@ export function PrivateRoute() {
       active = false;
     };
   }, [isAuthenticated, empresaId, loading, mfaChallengeRequired, mfaBypass, subStatus]);
+
+  // Rechecagem: o status era lido uma vez por sessão, então quem já estava logado
+  // seguia usando o app depois de cancelar ou do convite vencer. Relê ao voltar
+  // para a aba e a cada 5 min. Falha transitória mantém o status atual (não
+  // trava ninguém por erro de rede); o banco recusa a escrita de qualquer forma.
+  const gateAtivo = !!isAuthenticated && !!empresaId && !loading && !(mfaChallengeRequired && !mfaBypass);
+  useEffect(() => {
+    if (!gateAtivo || !empresaId || subStatus === undefined) return;
+    let active = true;
+    const revalidar = async () => {
+      try {
+        const { data, error } = await (supabase
+          .from("pilar_subscriptions" as never)
+          .select("status, current_period_end")
+          .eq("empresa_id", empresaId)
+          .maybeSingle() as unknown as Promise<{
+          data: { status: SubStatus; current_period_end: string | null } | null;
+          error: unknown;
+        }>);
+        if (error || !active) return;
+        const status = statusDeAcesso(data) as SubStatus;
+        if (subStatusCache.get(empresaId) === status) return;
+        subStatusCache.set(empresaId, status);
+        setSubscription({ empresaId, status });
+      } catch {
+        // mantém o status atual
+      }
+    };
+    const aoVoltar = () => {
+      if (document.visibilityState === "visible") void revalidar();
+    };
+    document.addEventListener("visibilitychange", aoVoltar);
+    window.addEventListener("focus", aoVoltar);
+    // Escrita recusada pelo banco (assinatura suspensa): relê na hora, sem esperar.
+    window.addEventListener(EVENTO_ASSINATURA_SUSPENSA, revalidar);
+    const timer = window.setInterval(() => void revalidar(), REVALIDAR_STATUS_MS);
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", aoVoltar);
+      window.removeEventListener("focus", aoVoltar);
+      window.removeEventListener(EVENTO_ASSINATURA_SUSPENSA, revalidar);
+      window.clearInterval(timer);
+    };
+  }, [gateAtivo, empresaId, subStatus]);
 
   // Véu de entrada (SPEC 106): o nome da empresa entra assim que o perfil chega.
   const veilLabel = profile?.empresas?.nome ? `Abrindo ${profile.empresas.nome}` : undefined;
@@ -192,7 +203,11 @@ export function PrivateRoute() {
   const suspended = subStatus === "canceled" || (subStatus === "expired" && !emLeitura);
   if (suspended) {
     const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
-    return <SubscriptionSuspendedScreen isAdmin={isAdmin} />;
+    return (
+      <Suspense fallback={<EntryVeil />}>
+        <SubscriptionSuspendedScreen isAdmin={isAdmin} />
+      </Suspense>
+    );
   }
 
   const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";

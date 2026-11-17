@@ -23,7 +23,7 @@ const SelectTrigger = React.forwardRef<
       "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       // 16 px no celular só no seletor de formulário, para acompanhar os campos. Quem pede
       // tamanho próprio (status da disciplina, prioridade na tabela) mantém: o `max-md:text-base`
-      // ganhava do `text-[11px]` e deixava esses seletores maiores que o texto ao redor.
+      // ganhava do `text-2xs` e deixava esses seletores maiores que o texto ao redor.
       !TAMANHO_EXPLICITO.test(className ?? "") && "max-md:text-base",
       className
     )}

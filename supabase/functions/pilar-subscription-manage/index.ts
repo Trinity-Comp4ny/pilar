@@ -7,6 +7,7 @@
  * Actions:
  *   "update_plan" — body: { new_plan_slug, new_cycle? }
  *   "cancel"      — body: {}
+ *   "list_invoices" — body: {} (cobranças da assinatura com link do recibo)
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -17,6 +18,7 @@ import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import {
   cancelSubscription,
   updateSubscription,
+  getRecentSubscriptionPayments,
   getSubscriptionPayments,
   refundPayment,
 } from "../_shared/asaas-platform.ts";
@@ -27,6 +29,7 @@ import {
   alteracoesDoCancelamento,
   cobrancaParaEstornar,
   dentroDoArrependimento,
+  faturaDaCobranca,
   planejarTrocaDePlano,
   verificarAssinatura,
   verificarCancelamento,
@@ -70,18 +73,21 @@ serve(
       return jsonResponse({ error: "Apenas admin da empresa pode gerenciar a assinatura" }, 403, req);
     }
 
-    // Troca de plano e cancelamento mexem na Asaas e podem estornar: limite por empresa.
-    const limite = await limitarOuResponder(admin, req, {
-      bucket: "subscription_manage",
-      key: `empresa:${profile.empresa_id}`,
-      max: 10,
-      windowSeconds: 3600,
-    });
-    if (limite) return limite;
-
     const entrada = lerEntrada(await req.json().catch(() => null));
     if (!entrada.ok) return jsonResponse({ error: entrada.error }, 400, req);
     const body: Entrada = entrada.data;
+
+    // Troca de plano e cancelamento mexem na Asaas e podem estornar: limite por empresa.
+    // Listar faturas só lê, então abrir a tela não consome o limite.
+    if (body.action !== "list_invoices") {
+      const limite = await limitarOuResponder(admin, req, {
+        bucket: "subscription_manage",
+        key: `empresa:${profile.empresa_id}`,
+        max: 10,
+        windowSeconds: 3600,
+      });
+      if (limite) return limite;
+    }
 
     // --- Fetch subscription ---
     const { data: subLida, error: subErr } = await admin
@@ -93,6 +99,17 @@ serve(
     const verificacao = verificarAssinatura(subErr ? null : subLida);
     if (!verificacao.ok) return jsonResponse({ error: verificacao.error }, verificacao.status, req);
     const sub = verificacao.sub;
+
+    // --- LIST INVOICES (recibos e faturas dentro do Pilar) ---
+    if (body.action === "list_invoices") {
+      try {
+        const cobrancas = await getRecentSubscriptionPayments(sub.asaas_subscription_id, 24);
+        return jsonResponse({ success: true, invoices: cobrancas.map(faturaDaCobranca) }, 200, req);
+      } catch (err) {
+        log.error("asaas list payments failed", err, { subscription_id: sub.id });
+        return jsonResponse({ error: "Não foi possível carregar as faturas agora" }, 502, req);
+      }
+    }
 
     // --- CANCEL ---
     if (body.action === "cancel") {

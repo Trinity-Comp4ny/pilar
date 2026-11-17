@@ -98,10 +98,10 @@ export function AddColumnInline<E = undefined>({
       <ColumnColorPicker colors={colors} value={cor} onChange={setCor} />
       {renderExtra?.(extra, setExtra)}
       <div className="flex items-center gap-2">
-        <Button variant="brand" size="sm" className="h-7" onClick={criar} disabled={!nome.trim() || busy}>
+        <Button variant="brand" size="xs" onClick={criar} disabled={!nome.trim() || busy}>
           Adicionar
         </Button>
-        <Button variant="ghost" size="sm" className="h-7" onClick={fechar}>
+        <Button variant="ghost" size="xs" onClick={fechar}>
           Cancelar
         </Button>
       </div>

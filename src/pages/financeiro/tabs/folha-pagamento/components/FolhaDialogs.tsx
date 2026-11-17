@@ -293,7 +293,7 @@ function EditableField({
       ) : isEditing && readOnlyWhenEditing ? (
         <p className="text-muted-foreground">{formatCurrency(editValue ?? value)}</p>
       ) : (
-        <p className={isBold ? "font-bold text-lg text-positive-strong" : ""}>
+        <p className={isBold ? "font-semibold text-base text-positive-strong" : ""}>
           {isCurrency ? formatCurrency(value) : `${value?.toLocaleString("pt-BR")}${suffix || ""}`}
         </p>
       )}
@@ -379,7 +379,7 @@ export function HistoryDetailDialog({
                       <Badge
                         variant="secondary"
                         className={`capitalize text-xs px-2 py-0.5
-                          ${item.status === "pago" ? "bg-positive text-ink" : ""}
+                          ${item.status === "pago" ? "bg-brand text-ink" : ""}
                           ${item.status === "pendente" ? "bg-warning-soft text-warning-strong" : ""}
                           ${item.status === "cancelado" ? "bg-destructive text-destructive-foreground" : ""}
                         `}
@@ -390,8 +390,8 @@ export function HistoryDetailDialog({
                     <TableCell className="text-right">
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="h-8 gap-1 text-xs"
+                        size="xs"
+                        className="gap-1"
                         loading={pendente(item.p_id)}
                         onClick={() => executar(item.p_id, async () => onDownloadComprovante?.(item))}
                       >

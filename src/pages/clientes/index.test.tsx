@@ -1,3 +1,4 @@
+import { clicarAcao } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -144,7 +145,7 @@ describe("Clientes: excluir", () => {
     abrir();
     const linha = await linhaDe("Ana Lima");
 
-    await user.click(within(linha).getByRole("button", { name: "Excluir cliente" }));
+    await clicarAcao(user, linha, "Excluir");
     const confirm = screen.getByRole("alertdialog");
     expect(within(confirm).getByText(/Ana Lima/)).toBeInTheDocument();
     expect(supabaseFake.rpcCalls.some((c) => c.fn === "rpc_soft_delete")).toBe(false);
@@ -169,7 +170,7 @@ describe("Clientes: excluir", () => {
     const user = userEvent.setup();
     abrir();
     const linha = await linhaDe("Ana Lima");
-    await user.click(within(linha).getByRole("button", { name: "Excluir cliente" }));
+    await clicarAcao(user, linha, "Excluir");
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancelar" }));
     expect(supabaseFake.rpcCalls.some((c) => c.fn === "rpc_soft_delete")).toBe(false);
   });
@@ -179,7 +180,7 @@ describe("Clientes: excluir", () => {
     const user = userEvent.setup();
     abrir();
     const linha = await linhaDe("Ana Lima");
-    await user.click(within(linha).getByRole("button", { name: "Excluir cliente" }));
+    await clicarAcao(user, linha, "Excluir");
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Erro ao excluir", expect.anything()));
     expect(toastSuccess).not.toHaveBeenCalledWith("Cliente excluído", expect.anything());
@@ -191,7 +192,7 @@ describe("Clientes: editar e mensagem", () => {
     const user = userEvent.setup();
     abrir();
     const linha = await linhaDe("Ana Lima");
-    await user.click(within(linha).getByRole("button", { name: "Editar cliente" }));
+    await clicarAcao(user, linha, "Editar");
     expect(screen.getByRole("heading", { name: "Editar cliente" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nome *")).toHaveValue("Ana");
   });
@@ -199,14 +200,15 @@ describe("Clientes: editar e mensagem", () => {
   it("cliente sem e-mail não permite enviar mensagem", async () => {
     abrir();
     const linha = await linhaDe("Alfa Engenharia");
-    expect(within(linha).getByRole("button", { name: "Enviar mensagem" })).toBeDisabled();
+    await userEvent.setup().click(within(linha).getByRole("button", { name: /^Mais ações/ }));
+    expect(await screen.findByRole("menuitem", { name: /Enviar mensagem/ })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("mensagem exige assunto e texto (espaços não contam) e envia pela edge function", async () => {
     const user = userEvent.setup();
     abrir();
     const linha = await linhaDe("Ana Lima");
-    await user.click(within(linha).getByRole("button", { name: "Enviar mensagem" }));
+    await clicarAcao(user, linha, "Enviar mensagem");
     const dlg = screen.getByRole("dialog", { name: "Enviar mensagem" });
     const enviar = within(dlg).getByRole("button", { name: "Enviar" });
 
@@ -235,7 +237,7 @@ describe("Clientes: editar e mensagem", () => {
     const user = userEvent.setup();
     abrir();
     const linha = await linhaDe("Ana Lima");
-    await user.click(within(linha).getByRole("button", { name: "Enviar mensagem" }));
+    await clicarAcao(user, linha, "Enviar mensagem");
     const dlg = screen.getByRole("dialog", { name: "Enviar mensagem" });
     await user.type(within(dlg).getByLabelText("Assunto"), "Assunto");
     await user.type(within(dlg).getByLabelText("Mensagem"), "Texto longo");

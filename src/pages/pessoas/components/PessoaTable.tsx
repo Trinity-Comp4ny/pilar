@@ -1,6 +1,6 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageToolbar } from "@/components/PageSlots";
 import { FilterBar, FilterSelect } from "@/components/filters/FilterBar";
@@ -143,11 +143,6 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
       ),
     },
     {
-      key: "cpf",
-      header: "CPF",
-      cell: (p) => (p.cpf ? `***.***.***-${p.cpf.replace(/\D/g, "").slice(-2)}` : "-"),
-    },
-    {
       key: "cargo",
       mobile: "subtitle",
       header: "Cargo",
@@ -164,32 +159,16 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
       ? [
           {
             key: "acoes",
-            header: "Ações",
+            header: <span className="sr-only">Ações</span>,
             align: "end" as const,
             cell: (p: Pessoa) => (
-              <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => onEditClick(p, e)}
-                  aria-label="Editar"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-danger-mid"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteClick(p.id);
-                  }}
-                  aria-label="Excluir"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <RowActions
+                label={p.nome}
+                actions={[
+                  { label: "Editar", icon: Pencil, onClick: () => onEditClick(p) },
+                  { label: "Excluir", icon: Trash2, destructive: true, onClick: () => onDeleteClick(p.id) },
+                ]}
+              />
             ),
           },
         ]

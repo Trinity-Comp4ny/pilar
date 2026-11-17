@@ -215,7 +215,7 @@ def fix_phonemes(ph):
         else:
             w = re.sub(r"æ(s|z)?$", lambda g: "ɐ" + (g.group(1) or ""), w)
             w = re.sub(r"y(s|z)?$", lambda g: "i" + ("s" if g.group(1) else ""), w)
-            w = re.sub(r"(?<=[^aeiouɐɛɔʊiɪ̃ˈˌ])j$", "i", w)
+            w = re.sub(r"(?<=[^aeiouɐɛɔʊɪ̃ˈˌ])j$", "i", w)
         out.append(w + punct)
     return " ".join(out)
 

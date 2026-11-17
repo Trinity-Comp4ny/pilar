@@ -127,7 +127,7 @@ export function LancamentoDetailSheet({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <p
               className={cn(
-                "text-3xl font-semibold tabular-nums tracking-tight",
+                "text-2xl font-semibold tabular-nums tracking-tight",
                 isReceita ? "text-positive-strong" : "text-ink"
               )}
             >
@@ -222,7 +222,7 @@ export function LancamentoDetailSheet({
                     aria-valuenow={progresso}
                     aria-label="Progresso do parcelamento"
                   >
-                    <div className="h-full rounded-full bg-positive" style={{ width: `${progresso}%` }} />
+                    <div className="h-full rounded-full bg-brand" style={{ width: `${progresso}%` }} />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Saldo em aberto{" "}

@@ -126,8 +126,8 @@ export default function Usuarios() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 w-8 rounded-full p-0"
+                size="xs"
+                className="w-8 rounded-full p-0"
                 aria-label={`Ações de ${u.nome ?? u.email}`}
                 onClick={(e) => e.stopPropagation()}
               >

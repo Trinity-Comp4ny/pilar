@@ -144,6 +144,10 @@ const RETENCAO: Linha[] = [
   ["Áudio gravado no Pilar Campo", "12 meses. Depois o áudio é apagado e o texto do registro continua"],
   ["Cópias de segurança", "30 dias, cifradas"],
   ["Arquivo de exportação dos seus dados", "Link válido por 7 dias"],
+  [
+    "Cópia dos dados da empresa (administrador, assinatura suspensa)",
+    "Link de download válido por 10 minutos; só a última cópia fica guardada",
+  ],
   ["Escolha sobre cookies", "12 meses. Depois disso perguntamos de novo"],
   [
     "Comprovantes de aceite e de consentimento",

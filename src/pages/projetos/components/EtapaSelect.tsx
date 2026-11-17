@@ -80,7 +80,7 @@ export function EtapaSelect({ projetoNome, etapaId, statusFallback, etapas, canE
       <CommandItem key={e.id} value={`${e.nome} ${rotulo ?? ""}`} onSelect={() => escolher(e.id)} className="gap-2">
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: corDaEtapaProjeto(e.cor) }} />
         <span className="text-sm">{e.nome}</span>
-        {rotulo && <span className="text-[11px] text-muted-foreground">{rotulo}</span>}
+        {rotulo && <span className="text-2xs text-muted-foreground">{rotulo}</span>}
         {e.id === etapaId && <Check className="ml-auto h-3.5 w-3.5" aria-hidden />}
       </CommandItem>
     );

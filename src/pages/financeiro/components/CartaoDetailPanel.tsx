@@ -47,7 +47,7 @@ export function CartaoDetailPanel({ cartao, contas, canEdit, onEdit, onDelete }:
 
       <div className="border-t pt-5">
         <p className="text-xs text-muted-foreground mb-1">Disponível</p>
-        <p className="text-3xl font-bold text-positive-strong">
+        <p className="text-xl font-semibold tabular-nums text-positive-strong">
           R$ {cartao.disponivel?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </p>
       </div>
@@ -71,7 +71,7 @@ export function CartaoDetailPanel({ cartao, contas, canEdit, onEdit, onDelete }:
           <div
             className={cn(
               "h-2.5 rounded-full transition-all",
-              pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-positive"
+              pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-brand"
             )}
             style={{ width: `${Math.min(pct, 100)}%` }}
           />

@@ -94,7 +94,7 @@ export function MetaCard({ view, onEdit, onDelete }: MetaCardProps) {
           {!restrito && (
             <span
               className={cn(
-                "text-2xl font-bold tabular-nums leading-none shrink-0",
+                "text-xl font-semibold tabular-nums leading-none shrink-0",
                 isCompleted ? "text-positive-strong" : "text-foreground"
               )}
             >
@@ -103,7 +103,7 @@ export function MetaCard({ view, onEdit, onDelete }: MetaCardProps) {
           )}
         </div>
 
-        <Progress value={restrito ? 0 : percent} className="h-1.5 bg-muted" indicatorClassName="bg-positive" />
+        <Progress value={restrito ? 0 : percent} className="h-1.5 bg-muted" indicatorClassName="bg-brand" />
 
         <div className="flex items-end justify-between">
           <div>
@@ -160,11 +160,7 @@ function Historico({ view, rotulo }: { view: MetaView; rotulo: RotuloUnidade | n
                   {p.restrito ? "Sem acesso" : `${formatarValor(p.atual ?? 0, meta.unidade, rotulo)} (${pct}%)`}
                 </span>
               </div>
-              <Progress
-                value={p.restrito ? 0 : pct}
-                className="h-1 bg-muted"
-                indicatorClassName={pct >= 100 ? "bg-positive" : "bg-brand"}
-              />
+              <Progress value={p.restrito ? 0 : pct} className="h-1 bg-muted" indicatorClassName="bg-brand" />
             </div>
           );
         })}

@@ -74,14 +74,14 @@ export function ProjectCard({
             title={`Prioridade ${priorityConfig?.label || "—"}`}
           />
           {showMargemAlert && (
-            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-medium text-warning-strong">
+            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-3xs font-medium text-warning-strong">
               <AlertTriangle className="h-2.5 w-2.5" />
               Margem baixa
             </span>
           )}
           {planningPending && (
             <span
-              className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-medium text-warning-strong"
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-3xs font-medium text-warning-strong"
               title="Disciplinas sem datas nem responsáveis. Edite o projeto para planejar."
             >
               <Clock className="h-2.5 w-2.5" />
@@ -139,7 +139,7 @@ export function ProjectCard({
       meta={
         <div className="flex w-full items-center gap-2">
           <Progress value={progress} className="h-1 flex-1" />
-          <span className="w-7 text-right text-[11px] tabular-nums">{progress}%</span>
+          <span className="w-7 text-right text-2xs tabular-nums">{progress}%</span>
         </div>
       }
       footer={
@@ -157,7 +157,7 @@ export function ProjectCard({
             {nomesResponsaveis.length > 0 && <AvatarStack pessoas={nomesResponsaveis} max={3} size="xs" />}
             {deadline && (
               <Badge
-                className={cn("inline-flex items-center gap-0.5 px-1.5 py-0 text-[11px] font-normal", deadline.color)}
+                className={cn("inline-flex items-center gap-0.5 px-1.5 py-0 text-2xs font-normal", deadline.color)}
                 title={
                   deadline.status_data === "em_atraso"
                     ? `Em atraso há ${deadline.days} dia(s)`

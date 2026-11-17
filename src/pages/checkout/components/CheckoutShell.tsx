@@ -45,7 +45,7 @@ export function CheckoutShell({
             <Logo size="xs" className="text-ink-soft" />
           </Link>
 
-          <div className="flex items-center gap-1 text-[11px] text-ink-disabled">
+          <div className="flex items-center gap-1 text-2xs text-ink-disabled">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{badgeLabel}</span>
           </div>

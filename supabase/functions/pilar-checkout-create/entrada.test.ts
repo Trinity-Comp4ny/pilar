@@ -148,3 +148,7 @@ Deno.test("cartaoRecusado tolera a mensagem sem acento e em caixa diferente; men
   assertEquals(cartaoRecusado(""), false);
   assertEquals(cartaoRecusado("Asaas: O campo creditCard deve ser informado."), false);
 });
+
+Deno.test("Pix Automático não pede cartão", () => {
+  assertEquals(checkoutSchema.safeParse({ ...base, billing_type: "PIX_AUTOMATICO" }).success, true);
+});

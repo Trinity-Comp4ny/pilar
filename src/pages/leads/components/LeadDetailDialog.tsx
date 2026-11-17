@@ -30,12 +30,15 @@ import { type Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/pages/leads/lib/comercial";
 
+import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
+import { LeadAtividadesPanel } from "./LeadAtividadesPanel";
+import { LeadPropostasPanel } from "./LeadPropostasPanel";
 import { BusyMark } from "@/components/motion/BusyMark";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   Novo: { label: "Novo", color: "bg-info-soft text-info-strong" },
   "Em contato": { label: "Em Contato", color: "bg-highlight-soft text-highlight-strong" },
-  Proposta: { label: "Proposta Enviada", color: "bg-warning-soft text-warning-strong" },
+  Proposta: { label: "Proposta", color: "bg-warning-soft text-warning-strong" },
   Negociação: { label: "Em Negociação", color: "bg-brand text-ink" },
   Ganho: { label: "Ganho", color: "bg-positive/10 text-positive-strong" },
   Perdido: { label: "Perdido", color: "bg-danger-soft text-danger-strong" },
@@ -98,13 +101,13 @@ export function LeadDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-6xl h-[88dvh] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0 border-b px-6 py-4">
           <DialogTitle className="flex flex-wrap items-center gap-2 pr-6">
             {nomeCompleto}
             <Badge className={statusConfig?.color}>{etapaNome ?? statusConfig?.label ?? lead.status}</Badge>
             {lead.status === "Perdido" && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
+              <span className="text-3xs px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
                 <AlertTriangle size={10} /> Perdido
               </span>
             )}
@@ -118,133 +121,140 @@ export function LeadDetailDialog({
           )}
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          {/* Metadados em linha */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-            {lead.email && (
-              <span className="flex items-center gap-1">
-                <Mail className="h-3 w-3" /> {lead.email}
-              </span>
-            )}
-            {lead.contato && (
-              <span className="flex items-center gap-1">
-                <Phone className="h-3 w-3" /> {lead.contato}
-              </span>
-            )}
-            {lead.valor_estimado != null && (
-              <span className="flex items-center gap-1 text-positive-strong font-medium">
-                <DollarSign className="h-3 w-3" /> {formatCurrency(lead.valor_estimado)}
-              </span>
-            )}
-            {lead.previsao_fechamento && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Previsão {new Date(lead.previsao_fechamento + "T00:00:00").toLocaleDateString("pt-BR")}
-              </span>
-            )}
-            {responsavel && (
-              <span className="flex items-center gap-1">
-                <User className="h-3 w-3" /> {responsavel.first_name} {responsavel.last_name}
-              </span>
-            )}
-          </div>
-
-          {onEstimar && lead.status !== "Perdido" && (
-            <div className="space-y-2 rounded-lg border border-brand/40 bg-brand/10 p-3">
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                <Calculator className="h-4 w-4" aria-hidden="true" /> Estimar a obra
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Leve para a reunião uma faixa de custo e um prazo, com fonte de preço. A estimativa fica ligada a este
-                lead.
-              </p>
-              <Button size="sm" variant="outline" onClick={onEstimar}>
-                Estimar obra
-              </Button>
-            </div>
-          )}
-
-          {proposta && (
-            <div className="space-y-2 rounded-lg border border-border p-3">
-              <div className="flex items-center justify-between gap-2">
-                <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <FileText className="h-3 w-3" /> Proposta
-                </Label>
-                {propStatusConfig && <Badge className={propStatusConfig.color}>{propStatusConfig.label}</Badge>}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                {proposta.valor_proposto != null && (
-                  <span className="font-semibold text-foreground tabular-nums">
-                    {formatCurrency(proposta.valor_proposto)}
+        <ResponsiveDetailPanels
+          className="flex-1 min-h-0"
+          primaryLabel="Resumo"
+          secondaryLabel="Atividades"
+          primaryDefaultSize={58}
+          secondaryDefaultSize={42}
+          secondary={<LeadAtividadesPanel key={lead.id} leadId={lead.id} canEdit={canEdit} />}
+          primary={
+            <div className="h-full overflow-y-auto p-5 space-y-4">
+              {/* Metadados em linha */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                {lead.email && (
+                  <span className="flex items-center gap-1">
+                    <Mail className="h-3 w-3" /> {lead.email}
                   </span>
                 )}
-                {proposta.margem_estimada_pct != null && (
-                  <span className="text-muted-foreground">margem {Math.round(proposta.margem_estimada_pct)}%</span>
+                {lead.contato && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-3 w-3" /> {lead.contato}
+                  </span>
                 )}
-                {proposta.validade && (
-                  <span className="text-muted-foreground flex items-center gap-1">
+                {lead.valor_estimado != null && (
+                  <span className="flex items-center gap-1 text-positive-strong font-medium">
+                    <DollarSign className="h-3 w-3" /> {formatCurrency(lead.valor_estimado)}
+                  </span>
+                )}
+                {lead.previsao_fechamento && (
+                  <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    validade {new Date(proposta.validade + "T00:00:00").toLocaleDateString("pt-BR")}
+                    Previsão {new Date(lead.previsao_fechamento + "T00:00:00").toLocaleDateString("pt-BR")}
+                  </span>
+                )}
+                {responsavel && (
+                  <span className="flex items-center gap-1">
+                    <User className="h-3 w-3" /> {responsavel.first_name} {responsavel.last_name}
                   </span>
                 )}
               </div>
-              {onOpenProposta && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-xs"
-                  onClick={() => onOpenProposta(proposta.id)}
-                >
-                  <PencilIcon className="mr-1.5 h-3.5 w-3.5" /> Editar proposta
-                </Button>
+
+              {onEstimar && lead.status !== "Perdido" && (
+                <div className="space-y-2 rounded-lg border border-brand/40 bg-brand/10 p-3">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <Calculator className="h-4 w-4" aria-hidden="true" /> Estimar a obra
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Leve para a reunião uma faixa de custo e um prazo, com fonte de preço. A estimativa fica ligada a
+                    este lead.
+                  </p>
+                  <Button size="sm" variant="outline" onClick={onEstimar}>
+                    Estimar obra
+                  </Button>
+                </div>
+              )}
+
+              {proposta && (
+                <div className="space-y-2 rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-3xs uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> Proposta
+                    </Label>
+                    {propStatusConfig && <Badge className={propStatusConfig.color}>{propStatusConfig.label}</Badge>}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                    {proposta.valor_proposto != null && (
+                      <span className="font-semibold text-foreground tabular-nums">
+                        {formatCurrency(proposta.valor_proposto)}
+                      </span>
+                    )}
+                    {proposta.margem_estimada_pct != null && (
+                      <span className="text-muted-foreground">margem {Math.round(proposta.margem_estimada_pct)}%</span>
+                    )}
+                    {proposta.validade && (
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        validade {new Date(proposta.validade + "T00:00:00").toLocaleDateString("pt-BR")}
+                      </span>
+                    )}
+                  </div>
+                  {onOpenProposta && (
+                    <Button variant="ghost" size="xs" className="px-2" onClick={() => onOpenProposta(proposta.id)}>
+                      <PencilIcon className="mr-1.5 h-3.5 w-3.5" /> Editar proposta
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <LeadPropostasPanel key={lead.id} lead={lead} canEdit={canEdit} />
+
+              {lead.origem && (
+                <div className="space-y-1.5">
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Origem</Label>
+                  <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5">{lead.origem}</p>
+                </div>
+              )}
+
+              {lead.status === "Perdido" && lead.motivo_perda && (
+                <div className="space-y-1.5">
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider text-danger-strong">
+                    Motivo da Perda
+                  </Label>
+                  <p className="text-sm text-danger-mid bg-danger-soft p-3 rounded-lg border border-danger-soft-border">
+                    {lead.motivo_perda}
+                  </p>
+                </div>
+              )}
+
+              {lead.status === "Ganho" && lead.convertido_em && (
+                <div className="space-y-1.5">
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider text-positive-strong">
+                    Convertido em
+                  </Label>
+                  <p className="text-sm text-positive-strong bg-positive/10 p-3 rounded-lg border border-positive/10">
+                    {new Date(lead.convertido_em).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+              )}
+
+              {lead.notas && (
+                <div className="space-y-1.5">
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Notas</Label>
+                  <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5 whitespace-pre-wrap">
+                    {lead.notas}
+                  </p>
+                </div>
+              )}
+
+              {!proposta && !lead.origem && !lead.motivo_perda && !lead.convertido_em && !lead.notas && (
+                <p className="text-xs text-muted-foreground text-center py-6">Nenhuma informação adicional.</p>
               )}
             </div>
-          )}
+          }
+        />
 
-          {lead.origem && (
-            <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Origem</Label>
-              <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5">{lead.origem}</p>
-            </div>
-          )}
-
-          {lead.status === "Perdido" && lead.motivo_perda && (
-            <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider text-danger-strong">
-                Motivo da Perda
-              </Label>
-              <p className="text-sm text-danger-mid bg-danger-soft p-3 rounded-lg border border-danger-soft-border">
-                {lead.motivo_perda}
-              </p>
-            </div>
-          )}
-
-          {lead.status === "Ganho" && lead.convertido_em && (
-            <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider text-positive-strong">
-                Convertido em
-              </Label>
-              <p className="text-sm text-positive-strong bg-positive/10 p-3 rounded-lg border border-positive/10">
-                {new Date(lead.convertido_em).toLocaleDateString("pt-BR")}
-              </p>
-            </div>
-          )}
-
-          {lead.notas && (
-            <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Notas</Label>
-              <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5 whitespace-pre-wrap">
-                {lead.notas}
-              </p>
-            </div>
-          )}
-
-          {!proposta && !lead.origem && !lead.motivo_perda && !lead.convertido_em && !lead.notas && (
-            <p className="text-xs text-muted-foreground text-center py-6">Nenhuma informação adicional.</p>
-          )}
-        </div>
-
-        <DialogFooter className="flex-row flex-wrap items-center gap-2 pt-4 mt-4 border-t sm:justify-start">
+        <DialogFooter className="shrink-0 flex-row flex-wrap items-center gap-2 p-4 border-t sm:justify-start">
           {lead.status === "Ganho" && !lead.cliente_id && (
             <Button size="sm" variant="brand" onClick={onConvert}>
               <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />

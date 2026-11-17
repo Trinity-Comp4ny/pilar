@@ -1,3 +1,4 @@
+import { KPICard } from "@/components/KPICard";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -17,7 +18,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { KpiResumo } from "@/components/KpiResumo";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -44,15 +44,7 @@ function statusBadge(status: StatusProposta) {
 }
 
 function KpiCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
-        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-      </CardContent>
-    </Card>
-  );
+  return <KPICard label={label} value={value} subtitle={hint} />;
 }
 
 type Moeda = (valor: number) => string;
@@ -174,7 +166,7 @@ export default function FornecedorDetalhePage() {
       <PageLayout header={<PageHeader title="Fornecedor não encontrado" breadcrumbs={BREADCRUMB} />}>
         <p className="text-sm text-muted-foreground">
           Este fornecedor não existe ou foi removido.{" "}
-          <button onClick={() => navigate("/obras/fornecedores")} className="underline">
+          <button onClick={() => navigate("/gestao/fornecedores")} className="underline">
             Voltar para Fornecedores
           </button>
         </p>

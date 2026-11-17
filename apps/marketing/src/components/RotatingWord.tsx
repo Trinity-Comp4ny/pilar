@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { EASE } from "../lib/motion";
 
@@ -31,14 +31,22 @@ export function RotatingWord({ palavras, intervalMs = 2600, atraso = 0 }: Rotati
 
   const atual = palavras[i];
 
-  useLayoutEffect(() => {
+  // O ResizeObserver entrega o tamanho do espelho já calculado pelo navegador:
+  // medir com scrollWidth/getBoundingClientRect aqui forçava um reflow síncrono
+  // (Lighthouse: "Forced reflow") no meio da hidratação.
+  useEffect(() => {
     const el = espelho.current;
-    if (!el) return;
-    const corpo = parseFloat(getComputedStyle(el).fontSize) || 16;
-    // 0.12em para a barriga do itálico, que o rect não mede, mais os 0.32em de
-    // respiro da pílula: como a caixa é `border-box`, o padding entra na
-    // largura e comeria a última letra se não fosse somado aqui.
-    setLargura(Math.max(el.scrollWidth, el.getBoundingClientRect().width) + corpo * 0.44);
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([entrada]) => {
+      const corpo = parseFloat(getComputedStyle(el).fontSize) || 16;
+      // 0.12em para a barriga do itálico, que o rect não mede, mais os 0.32em de
+      // respiro da pílula: como a caixa é `border-box`, o padding entra na
+      // largura e comeria a última letra se não fosse somado aqui.
+      const medida = Math.max(el.scrollWidth, entrada.borderBoxSize?.[0]?.inlineSize ?? entrada.contentRect.width);
+      setLargura(medida + corpo * 0.44);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [atual]);
 
   useEffect(() => {

@@ -21,7 +21,7 @@ export function StatusBadge({ status }: { status: MySubscription["status"] }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider border",
+        "inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-medium uppercase tracking-wider border",
         COLORS[status]
       )}
     >

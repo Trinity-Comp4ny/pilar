@@ -2,7 +2,7 @@
 // de novo para cada dia: "faltam 10", "faltam 3", "é amanhã". A data vem de DECISOES (T0 = 19/01).
 import { tl, W, el, pos, scene, lockup, cue, finalize, EXPO } from "./engine.js";
 
-const FALTAM = 10;
+let FALTAM = 10;
 const DUR = 12;
 const S = scene("contagem", 0, DUR, { theme: "dark" });
 S.style.background = "#0C0E0C";

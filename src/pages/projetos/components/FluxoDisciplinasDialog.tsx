@@ -10,11 +10,13 @@ import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/pages/projetos/components/TarefasEditor";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { ExecucaoDisciplinaFields } from "./ExecucaoDisciplinaFields";
 import { AvatarStack } from "@/components/AvatarStack";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoDisciplinaTemplate, FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 import { duracaoEfetiva, responsaveisEfetivos } from "@/lib/fluxoCascata";
+import { SincronizarProjetosDialog } from "./SincronizarProjetosDialog";
 import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 import {
   Plus,
@@ -72,7 +74,12 @@ function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineSt
           key: d._key,
           titulo: d.nome,
           status: "nao_iniciado" as const,
-          responsavelNome: resp.nomes.length ? resp.nomes.join(", ") : undefined,
+          responsavelNome:
+            d.tipo_execucao === "terceirizada"
+              ? `Terceirizado · ${d.prestador_nome || "Prestador a definir"}`
+              : resp.nomes.length
+                ? resp.nomes.join(", ")
+                : undefined,
           metaLabel: dias ? `${dias} dias úteis` : undefined,
           checklistLabel: d.checklist_padrao?.length ? `${d.checklist_padrao.length} itens` : undefined,
         };
@@ -91,6 +98,12 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   const [form, setForm] = useState<FluxoFormState>(emptyForm);
   const [expandedColunas, setExpandedColunas] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Depois de editar um fluxo que já existia, oferece atualizar os projetos que o seguem.
+  const [sincronizar, setSincronizar] = useState<{
+    id: string;
+    nome: string;
+    disciplinas: FluxoDisciplinaTemplate[];
+  } | null>(null);
 
   const resetToList = () => {
     setMode("list");
@@ -134,6 +147,10 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       return;
     }
 
+    if (form.disciplinas.some((d) => d.tipo_execucao === "terceirizada" && !d.prestador_nome?.trim())) {
+      toast.error("Informe o prestador das disciplinas terceirizadas");
+      return;
+    }
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
@@ -144,6 +161,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       if (editingId) {
         await updateFluxo.mutateAsync({ id: editingId, ...payload });
         toast.success("Fluxo atualizado");
+        setSincronizar({ id: editingId, nome: payload.nome, disciplinas: payload.disciplinas });
       } else {
         await createFluxo.mutateAsync(payload);
         toast.success("Fluxo criado");
@@ -263,18 +281,18 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               <p className="text-xs text-muted-foreground mt-0.5 truncate">{fluxo.descricao}</p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary" className="text-[10px]">
+                              <Badge variant="secondary" className="text-3xs">
                                 {fluxoOrdens.length} coluna{fluxoOrdens.length !== 1 ? "s" : ""}
                               </Badge>
-                              <Badge variant="outline" className="text-[10px]">
+                              <Badge variant="outline" className="text-3xs">
                                 {fluxo.disciplinas.length} disciplina{fluxo.disciplinas.length !== 1 ? "s" : ""}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-1 mt-2 flex-wrap">
                               {fluxoOrdens.map((ordem, i) => (
                                 <div key={ordem} className="flex items-center gap-1">
-                                  {i > 0 && <span className="text-muted-foreground text-[10px]">→</span>}
-                                  <span className="text-[10px] bg-white border rounded px-1.5 py-0.5">
+                                  {i > 0 && <span className="text-muted-foreground text-3xs">→</span>}
+                                  <span className="text-3xs bg-white border rounded px-1.5 py-0.5">
                                     {fluxo.disciplinas
                                       .filter((d) => d.ordem === ordem)
                                       .map((d) => d.nome)
@@ -287,16 +305,16 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                           <div className="flex gap-1 shrink-0">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-info-mid"
+                              size="xs"
+                              className="w-8 p-0 text-info-mid"
                               onClick={() => handleEdit(fluxo)}
                             >
                               <Edit size={16} />
                             </Button>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-danger-mid"
+                              size="xs"
+                              className="w-8 p-0 text-danger-mid"
                               onClick={() => setConfirmDeleteId(fluxo.id)}
                             >
                               <Trash2 size={16} />
@@ -386,8 +404,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                 <Button
                                   type="button"
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
+                                  size="xs"
+                                  className="w-8 p-0"
                                   disabled={ordemIdx === 0}
                                   onClick={() => moveColuna(ordem, "up")}
                                 >
@@ -396,8 +414,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                 <Button
                                   type="button"
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
+                                  size="xs"
+                                  className="w-8 p-0"
                                   disabled={ordemIdx === ordens.length - 1}
                                   onClick={() => moveColuna(ordem, "down")}
                                 >
@@ -437,7 +455,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                             }
                                             className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0 disabled:opacity-100"
                                           />
-                                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap">
+                                          <span className="flex items-center gap-1 text-2xs text-muted-foreground whitespace-nowrap">
                                             dias úteis
                                             {duracaoTravada && <Lock className="h-3 w-3" />}
                                           </span>
@@ -451,9 +469,19 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         </button>
                                       </div>
 
+                                      <ExecucaoDisciplinaFields
+                                        tipo={disc.tipo_execucao}
+                                        prestador={disc.prestador_nome}
+                                        onChange={(tipo, prestador) =>
+                                          updateDisciplina(disc._key, {
+                                            tipo_execucao: tipo,
+                                            prestador_nome: prestador,
+                                          })
+                                        }
+                                      />
                                       {responsavelTravado ? (
                                         <div
-                                          className="flex items-center gap-2 text-[11px] text-muted-foreground"
+                                          className="flex items-center gap-2 text-2xs text-muted-foreground"
                                           title="Definidos por tarefa"
                                         >
                                           <AvatarStack pessoas={resp.nomes} size="xs" />
@@ -467,14 +495,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                             pessoas={pessoas}
                                             onChange={(ids) => updateResponsaveis(disc._key, ids)}
                                           />
-                                          <p className="text-[10px] text-muted-foreground">
+                                          <p className="text-3xs text-muted-foreground">
                                             Usado se nenhuma tarefa tiver responsável
                                           </p>
                                         </div>
                                       )}
 
                                       <div className="border-t pt-2">
-                                        <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
+                                        <Label className="text-2xs text-muted-foreground mb-1 flex items-center gap-1">
                                           <ListChecks className="h-3 w-3" /> Tarefas (responsável e dias úteis por
                                           tarefa)
                                         </Label>
@@ -557,6 +585,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
         </DialogContent>
       </Dialog>
 
+      <SincronizarProjetosDialog fluxo={sincronizar} onOpenChange={(v) => !v && setSincronizar(null)} />
+
       <ConfirmDialog
         open={!!confirmDeleteId}
         onOpenChange={(v) => {
@@ -564,7 +594,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
         }}
         onConfirm={handleDelete}
         title="Excluir fluxo?"
-        description="Esta ação não pode ser desfeita. Projetos que já usaram este fluxo não serão afetados."
+        description="Esta ação não pode ser desfeita. Os projetos que já o usam continuam como estão."
         confirmText="Excluir"
       />
     </>

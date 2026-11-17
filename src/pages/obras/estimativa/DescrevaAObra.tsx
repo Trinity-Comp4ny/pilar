@@ -408,7 +408,7 @@ function LinhaLida({
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-ink">
           <Check className="h-3.5 w-3.5" aria-hidden="true" />
           {nome}
-          {origem && <ChipOrigem tipo={origem.tipo} className="px-2 py-0 text-[11px]" />}
+          {origem && <ChipOrigem tipo={origem.tipo} className="px-2 py-0 text-2xs" />}
         </p>
         {item.trecho && <p className="ml-5 mt-0.5 text-xs text-ink-soft">&quot;{item.trecho}&quot;</p>}
       </div>

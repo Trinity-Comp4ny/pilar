@@ -166,7 +166,15 @@ function ensurePosthogInit(ph: PostHog) {
     capture_pageleave: true,
     autocapture: false,
     person_profiles: "identified_only",
-    disable_session_recording: true,
+    // Replay só liga com o aceite (withPosthog) E com o replay ligado no projeto PostHog.
+    // Tudo mascarado: o vídeo mostra layout, cliques e navegação, nunca texto, campo ou
+    // imagem (docs/ROPA.md, item 11), mesmo padrão do replay do Sentry (OPCOES_REPLAY).
+    disable_session_recording: false,
+    session_recording: {
+      maskAllInputs: true,
+      maskTextSelector: "*",
+      blockSelector: "img, video, canvas, iframe",
+    },
     bootstrap: { distinctID: ensureAnonId() },
     sanitize_properties: (props) => scrub(props) as Record<string, unknown>,
   });

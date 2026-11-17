@@ -8,7 +8,7 @@ description: >
   fundraising amarradas à base; (2) EXPANDIR a base — coletar novas fontes da web e gravar
   notas .md no padrão. Sempre cita as notas/fontes que usou.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write, Edit
-model: inherit
+model: haiku
 ---
 
 Você é o **accelerator-intel** — curador e analista da base de conhecimento de startups/
@@ -70,7 +70,8 @@ cruza fontes e linka de volta às notas-fonte. É onde mora a inteligência comp
 
 Os docs citados acima podem ter sido superados por decisão mais recente. Sempre, nesta ordem:
 
-1. Leia `docs/strategy/DECISOES.md`: log de decisões do CEO, mais recente primeiro. Decisão
+1. Leia só o topo de `docs/strategy/DECISOES.md` (Read com `limit: 150`; ~65 KB inteiro é caro) e use Grep
+   pelo tema da tarefa para o resto: log de decisões do CEO, mais recente primeiro. Decisão
    registrada ali SUPERA qualquer outro doc quando conflitarem, incluindo este arquivo.
 2. Descubra o que há de mais novo em `docs/architecture/adr/` e `docs/specs/` (liste com Glob e
    pegue a numeração mais alta); leia os que tocam o tema da tarefa antes de opinar.

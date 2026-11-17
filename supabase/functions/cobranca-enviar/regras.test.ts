@@ -61,6 +61,7 @@ Deno.test("cliente sem e-mail válido: 400; empresa sem e-mail: 422", () => {
 Deno.test("e-mail que não saiu: ambiente sem envio é 503, destinatário bloqueado é 422", () => {
   assertEquals(erroDoEnvioPulado("dry_run").status, 503);
   assertEquals(erroDoEnvioPulado("suprimido").status, 422);
+  assertEquals(erroDoEnvioPulado("duplicado").status, 409);
   assertEquals(
     erroDoEnvioPulado("suprimido").error,
     "O e-mail do cliente está bloqueado para envio (descadastro ou devolução)"

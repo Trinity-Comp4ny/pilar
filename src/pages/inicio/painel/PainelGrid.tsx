@@ -97,7 +97,7 @@ function Card({
         {fase2 && (
           <span
             title={fase2}
-            className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="rounded-full bg-muted px-1.5 py-0.5 text-3xs font-medium uppercase tracking-wide text-muted-foreground"
           >
             fase 2
           </span>
@@ -261,7 +261,7 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
           aria-label={`Tamanho de ${w.titulo}`}
           value={item.s}
           onChange={(e) => trocar(item, { s: e.target.value as Tamanho })}
-          className="rounded-md border border-black/10 bg-white px-1.5 py-0.5 text-[11px] text-ink-soft"
+          className="rounded-md border border-black/10 bg-white px-1.5 py-0.5 text-2xs text-ink-soft"
         >
           {w.tamanhos.map((t) => (
             <option key={t} value={t}>

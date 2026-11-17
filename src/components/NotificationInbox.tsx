@@ -31,6 +31,8 @@ import {
 } from "@/lib/notificacoes";
 import { usePermissions } from "@/hooks/usePermissions";
 import { setFaviconBadge } from "@/lib/favicon";
+import { SwipeRow } from "@/components/mobile/SwipeRow";
+import { definirBadgeApp } from "@/lib/badgeApp";
 import { PreferenciasDialog } from "@/pages/notificacoes/PreferenciasDialog";
 
 interface NotificationInboxProps {
@@ -92,7 +94,12 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
   // Espelha o não-lido no favicon (bolinha vermelha estilo GitHub).
   useEffect(() => {
     void setFaviconBadge(naoLidas > 0);
+    // E o número no ícone do app instalado (PWA).
+    definirBadgeApp(naoLidas);
   }, [naoLidas]);
+
+  // Sair (ou desmontar a casca) zera o número do ícone.
+  useEffect(() => () => definirBadgeApp(0), []);
 
   const abrir = (n: Notificacao) => {
     if (!n.lido_em) marcarLida.mutate(n.id);
@@ -218,44 +225,67 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                 const Icon = iconeCategoria(n.categoria);
                 const link = resolveLink(n);
                 return (
-                  <div
+                  <SwipeRow
                     key={n.id}
-                    role={link ? "button" : undefined}
-                    className={cn(
-                      "group flex items-start gap-3 border-b px-3 py-3 transition-colors last:border-0",
-                      link && "cursor-pointer hover:bg-muted/50",
-                      !n.lido_em && "bg-info-soft/40"
-                    )}
-                    onClick={() => abrir(n)}
+                    acaoEsquerda={
+                      aba === "inbox" && !n.lido_em
+                        ? {
+                            tipo: "lida",
+                            onAcionar: () => marcarLida.mutate(n.id),
+                          }
+                        : undefined
+                    }
+                    acaoDireita={
+                      aba === "inbox"
+                        ? {
+                            tipo: "arquivar",
+                            onAcionar: () => arquivar.mutate(n.id),
+                          }
+                        : undefined
+                    }
                   >
-                    <div className={cn("mt-0.5 rounded-full p-1.5", toneSeveridade(n.severidade))}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={cn("truncate text-sm", !n.lido_em ? "font-semibold text-ink" : "text-foreground")}>
-                        {n.titulo}
-                      </p>
-                      {n.mensagem && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.mensagem}</p>}
-                      <p className="mt-1 text-[11px] text-muted-foreground">{formatTimeAgo(n.created_at)}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {!n.lido_em && <span className="h-2 w-2 shrink-0 rounded-full bg-chart-danger" />}
-                      {aba === "inbox" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                          aria-label="Arquivar"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            arquivar.mutate(n.id);
-                          }}
-                        >
-                          <Archive className="h-3.5 w-3.5" />
-                        </Button>
+                    <div
+                      role={link ? "button" : undefined}
+                      className={cn(
+                        "group flex items-start gap-3 border-b px-3 py-3 transition-colors last:border-0",
+                        link && "cursor-pointer hover:bg-muted/50",
+                        !n.lido_em && "bg-info-soft/40"
                       )}
+                      onClick={() => abrir(n)}
+                    >
+                      <div className={cn("mt-0.5 rounded-full p-1.5", toneSeveridade(n.severidade))}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={cn("truncate text-sm", !n.lido_em ? "font-semibold text-ink" : "text-foreground")}
+                        >
+                          {n.titulo}
+                        </p>
+                        {n.mensagem && (
+                          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.mensagem}</p>
+                        )}
+                        <p className="mt-1 text-2xs text-muted-foreground">{formatTimeAgo(n.created_at)}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {!n.lido_em && <span className="h-2 w-2 shrink-0 rounded-full bg-chart-danger" />}
+                        {aba === "inbox" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                            aria-label="Arquivar"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              arquivar.mutate(n.id);
+                            }}
+                          >
+                            <Archive className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </SwipeRow>
                 );
               })
             )}
@@ -266,8 +296,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
             <div className="flex items-center justify-between border-t px-2 py-1.5">
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground"
+                size="xs"
+                className="text-muted-foreground"
                 disabled={naoLidasNoFiltro === 0}
                 onClick={() => marcarTodas.mutate(filtro)}
               >
@@ -276,8 +306,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground"
+                size="xs"
+                className="text-muted-foreground"
                 onClick={() => arquivarTodas.mutate(filtro)}
               >
                 <Archive className="mr-1.5 h-3.5 w-3.5" />

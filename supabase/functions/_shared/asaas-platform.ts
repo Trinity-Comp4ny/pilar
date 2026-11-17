@@ -165,6 +165,8 @@ export interface AsaasPayment {
   paymentDate?: string;
   billingType: string;
   invoiceUrl?: string;
+  /** Comprovante da cobrança paga (página do Asaas). */
+  transactionReceiptUrl?: string | null;
   bankSlipUrl?: string;
   identificationField?: string;
   nossoNumero?: string;
@@ -303,4 +305,109 @@ export async function refundPayment(paymentId: string): Promise<AsaasPayment> {
   return asaasFetch<AsaasPayment>(`/payments/${paymentId}/refund`, {
     method: "POST",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Pix Automático (ADR 0028, SPEC 053). Recurso distinto de Assinatura: o pagador
+// autoriza uma vez no QR Code do primeiro pagamento e o banco debita todo ciclo.
+// Com paymentCreationMode SUBSCRIPTION o Asaas cria as cobranças do ciclo sozinho.
+// ---------------------------------------------------------------------------
+
+export interface PixAutomaticAuthorization {
+  id: string;
+  status: "CREATED" | "ACTIVE" | "CANCELLED" | "REFUSED" | "EXPIRED";
+  /** QR Code composto (primeiro pagamento + autorização), no topo da resposta. */
+  payload?: string;
+  encodedImage?: string;
+  immediateQrCode?: { conciliationIdentifier?: string; expirationDate?: string };
+  contractId?: string;
+  customerId?: string;
+  /** Assinatura que o Asaas liga à autorização no modo SUBSCRIPTION (pode vir depois). */
+  subscriptionId?: string | null;
+}
+
+export interface CreatePixAutomaticAuthorizationParams {
+  customerId: string;
+  frequency: "MONTHLY" | "ANNUALLY";
+  /** Até 35 caracteres: usamos o id do pilar_pending_signups (uuid, 36), sem os hifens. */
+  contractId: string;
+  startDate: string; // YYYY-MM-DD
+  value: number;
+  description?: string;
+  immediateQrCode: { expirationSeconds: number; originalValue: number; description?: string };
+}
+
+export async function createPixAutomaticAuthorization(
+  params: CreatePixAutomaticAuthorizationParams
+): Promise<PixAutomaticAuthorization> {
+  return asaasFetch<PixAutomaticAuthorization>("/pix/automatic/authorizations", {
+    method: "POST",
+    body: JSON.stringify({
+      ...params,
+      paymentCreationMode: "SUBSCRIPTION",
+      retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
+    }),
+  });
+}
+
+export async function getPixAutomaticAuthorization(authorizationId: string): Promise<PixAutomaticAuthorization> {
+  return asaasFetch<PixAutomaticAuthorization>(`/pix/automatic/authorizations/${authorizationId}`);
+}
+
+export async function cancelPixAutomaticAuthorization(authorizationId: string): Promise<{ id: string }> {
+  return asaasFetch<{ id: string }>(`/pix/automatic/authorizations/${authorizationId}`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------------------
+// Notificações do cliente. O Asaas manda e-mail e SMS por conta própria, com a marca dele.
+// "Cobrança recebida" repete o que o Pilar já diz (boas-vindas, recibo na tela de assinatura),
+// então é desligada. Vencimento e atraso ficam: hoje são a única cobrança que o cliente de
+// Pix e boleto recebe (a régua do Pilar é a SPEC 053).
+// ---------------------------------------------------------------------------
+
+export interface AsaasNotification {
+  id: string;
+  event: string;
+  enabled: boolean;
+  emailEnabledForCustomer?: boolean;
+  smsEnabledForCustomer?: boolean;
+  whatsappEnabledForCustomer?: boolean;
+  phoneCallEnabledForCustomer?: boolean;
+}
+
+export async function getCustomerNotifications(customerId: string): Promise<AsaasNotification[]> {
+  const resp = await asaasFetch<{ data: AsaasNotification[] }>(`/customers/${customerId}/notifications`);
+  return resp.data ?? [];
+}
+
+export async function updateNotification(
+  notificationId: string,
+  params: Partial<Omit<AsaasNotification, "id" | "event">>
+): Promise<AsaasNotification> {
+  return asaasFetch<AsaasNotification>(`/notifications/${notificationId}`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
+}
+
+/** Notificações de "cobrança recebida" que ainda falam com o cliente. */
+export function avisosDeRecebimentoLigados(notificacoes: AsaasNotification[]): AsaasNotification[] {
+  return notificacoes.filter(
+    (n) =>
+      n.event === "PAYMENT_RECEIVED" &&
+      (n.emailEnabledForCustomer || n.smsEnabledForCustomer || n.whatsappEnabledForCustomer)
+  );
+}
+
+/** Idempotente: cliente já silenciado não gera chamada de escrita. */
+export async function desligarAvisoDeRecebimento(customerId: string): Promise<number> {
+  const ligados = avisosDeRecebimentoLigados(await getCustomerNotifications(customerId));
+  for (const n of ligados) {
+    await updateNotification(n.id, {
+      emailEnabledForCustomer: false,
+      smsEnabledForCustomer: false,
+      whatsappEnabledForCustomer: false,
+    });
+  }
+  return ligados.length;
 }

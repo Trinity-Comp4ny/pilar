@@ -20,9 +20,9 @@ export function LancamentosBulkBar({ count, canEdit, onMarkPaid, onDelete, onCle
         {canEdit && (
           <Button
             variant="outline"
-            size="sm"
+            size="xs"
             onClick={onMarkPaid}
-            className="h-7 text-xs gap-1 bg-white border-positive text-positive-strong hover:bg-positive/10"
+            className="gap-1 bg-white border-positive text-positive-strong hover:bg-positive/10"
           >
             <Check className="h-3 w-3" />
             Marcar pago/recebido
@@ -31,15 +31,15 @@ export function LancamentosBulkBar({ count, canEdit, onMarkPaid, onDelete, onCle
         {canEdit && (
           <Button
             variant="outline"
-            size="sm"
+            size="xs"
             onClick={onDelete}
-            className="h-7 text-xs gap-1 bg-white border-danger-mid-border text-danger-mid hover:bg-danger-soft"
+            className="gap-1 bg-white border-danger-mid-border text-danger-mid hover:bg-danger-soft"
           >
             <Trash2 className="h-3 w-3" />
             Excluir
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={onClear} className="h-7 text-xs text-muted-foreground gap-1">
+        <Button variant="ghost" size="xs" onClick={onClear} className="text-muted-foreground gap-1">
           <X className="h-3 w-3" />
           Limpar seleção
         </Button>

@@ -86,23 +86,14 @@ usar, o que é proibido). Regras que valem sempre:
 
 ## Mudança visual: antes e depois no PR (REGRA DO DONO)
 
-Todo PR (ou fase de uma sprint) que muda a aparência de uma tela mostra **o antes e o depois**
-no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança visual.
+Todo PR (ou fase) que muda a aparência de uma tela mostra **antes e depois** no corpo.
+**O PR só é aberto depois que a imagem existe e vai embutida no corpo** (uma imagem lado a
+lado "ANTES | DEPOIS", fixada por SHA, 1440px; mobile 390px se o layout mobile muda). "Sem
+Docker" não dispensa: use mock do Supabase ou Playwright. Nunca abrir PR visual "sem print".
+Antes = `origin/staging` numa worktree separada, nunca de memória. Só dado seed. Editar o corpo
+com `gh pr edit --body-file`. PR visual sem imagem no corpo está incompleto.
+**Passo a passo (SHA, pastas, worktree, label `atualizar-visual`): `docs/design/ANTES_DEPOIS_PR.md`.**
 
-- **Antes** = como a tela era na base do PR (`origin/staging` no momento de abrir). Suba a base
-  numa worktree separada (`git worktree add --detach /tmp/pilar-antes <base>`, `node_modules`
-  por symlink, `vite --port 8081`) e capture ali. Nunca "reconstrua de memória".
-- **Depois** = a branch do PR, mesma rota, mesmo viewport (1440px; mobile 390px quando o
-  layout mobile muda), mesmo dado seed (`dev@local.test`).
-- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (`antes-<tela>.jpg`,
-  `depois-<tela>.jpg`) com um `README.md` na mesma pasta: tabela `Antes | Depois` por
-  tela, imagens por caminho relativo (`![antes](antes-tela.jpg)`). No corpo do PR vai um
-  link comum para esse README na branch (`https://github.com/Trinity-Comp4ny/pilar/blob/<branch>/docs/design/antes-depois/<pasta>/README.md`).
-  Não embutir imagem no corpo do PR pela ferramenta do GitHub da sessão: ela troca
-  `![](url)` e `<img>` por texto em crases e a imagem aparece quebrada (11/11, PR #812).
-  Cada nova fase do mesmo PR acrescenta as suas telas ao README.
-- Dado seed apenas (repo público): nada de dado real de cliente nos prints.
-- Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
 
 ## O dono trabalha pelo celular (REGRA DO DONO)
 
@@ -156,34 +147,31 @@ migrations. Esquecer de rodar o `gen:types` reprova o PR, não vaza para runtime
 
 ## Git, branches e release (REGRA INQUEBRÁVEL)
 
-Fluxo e higiene não negociáveis. Aplicar sempre, sem perguntar, em toda mudança:
+Aplicar sempre, sem perguntar. Repo permite squash e rebase, BLOQUEIA merge commit.
+- Feature/fix nasce de `origin/staging`, PR SEMPRE para `staging`; zero commit direto em `staging`/`main`.
+- Merge de feature: `gh pr merge <n> --rebase --delete-branch` (curar commits antes).
+- NUNCA PR direto `staging`→`main`. Release: branch `release/staging-AAAA-MM-DD[-slug]` de `origin/main`,
+  `git read-tree --reset -u origin/staging`, `git commit --no-verify`, PR para `main`,
+  `gh pr merge <n> --admin --squash --delete-branch`, só com TODOS os checks verdes.
+- Commit de feedback do Ultra leva `Feedback: <id>`; issue resolvida leva `Closes #N`.
+- Após cada merge: deletar branch local e remota, `staging` + `git pull --ff-only`. Só `main` e `staging` sobrevivem.
+- Após release: `git diff --stat origin/main origin/staging` vazio.
+**Detalhe e motivos: `docs/operations/GIT_E_RELEASE.md`.**
 
-O repo permite squash e rebase, mas BLOQUEIA merge commit.
+## Economia de tokens (sessões longas são o maior custo)
 
-**Branches**
+- Sessão grande custa a cada turno (o contexto inteiro é relido). Ao terminar uma tarefa ou mudar
+  de assunto, avise que vale `/clear` (ou `/compact` com foco) em vez de seguir na mesma conversa.
+- Navegador: prefira `read_page`/`get_page_text`/`find` a screenshot; screenshot só para validar
+  visual, com `scale` ≤ 0.5. Não usar `zoom` com `save_to_disk` repetidas vezes. Cada imagem entra no
+  contexto até o fim da sessão. Não encadear `screenshot` a cada passo dentro de `browser_batch`:
+  um só, no fim.
+- Não ler `src/integrations/supabase/types.ts` inteiro (364 KB): Grep pelo tipo. Ler arquivo grande
+  com `offset`/`limit`. Varredura ampla de código vai para subagente `Explore`.
+- Saída de comando enxuta: `--reporter=dot` no vitest, `tsc --noEmit | head -40`, `git diff --stat`
+  antes do diff inteiro. O hook do RTK já resume a saída de Bash.
 
-- Feature/fix nasce de `origin/staging` e o PR vai SEMPRE para `staging`, nunca direto para `main`.
-- Merge do PR de feature com `gh pr merge <n> --rebase --delete-branch`: preserva os commits em linha e mantém `staging` linear. Curar a branch antes (sem commits "wip/typo"), porque o rebase reaplica todos no log.
-- Zero commit direto em `staging` ou `main`.
-- Entre trabalhos só sobrevivem `main` e `staging`. Nenhuma branch órfã.
+# Compact instructions
 
-**Promoção staging→main (release)**
-
-- NUNCA PR direto de `staging` para `main`: o histórico divergiu (releases antigos foram squash) e qualquer método por replay (rebase ou merge) dá conflito falso.
-- Método correto: branch `release/staging-AAAA-MM-DD[-slug]` a partir de `origin/main`, depois `git read-tree --reset -u origin/staging`, `git commit --no-verify`, e PR para `main`. Isso vira UM commit cuja árvore = `staging`, sem replay de histórico.
-- Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (`enforce_admins=false` deixa o admin passar o review requerido). Como a branch release já é 1 commit, squash e rebase são equivalentes aqui.
-- Só mergear com TODOS os checks verdes, incluindo Security audit e "types.ts em sync".
-
-**Feedback de cliente (SPEC 145)**
-
-- Commit que corrige um feedback do Ultra leva a linha `Feedback: <id>` (botão "Copiar linha do commit" no detalhe). O merge em `staging` move o feedback para `planejado` e o release para `resolvido`.
-
-**Limpeza obrigatória após CADA merge**
-
-- Deletar a branch merged, local e remota (`--delete-branch`, ou `git branch -D` + `git push origin --delete`).
-- Issues resolvidas: escrever `Closes #N` (ou `Fixes`/`Resolves`) na mensagem do commit. O `Closes` nativo não dispara em `staging`, então o workflow `fechar-issues-staging.yml` fecha a issue quando o commit chega lá, com link para ele. Sem a linha no commit, fechar à mão.
-- Trocar para `staging`, `git pull --ff-only`, e apagar as branches locais já merged.
-
-**Verificação de fecho**
-
-- Após o release, confirmar `git diff --stat origin/main origin/staging` vazio (árvore idêntica = promoção completa).
+Ao compactar, preservar: tarefa em andamento, arquivos alterados, decisões tomadas, erros ainda
+abertos e próximos passos. Descartar saída bruta de ferramentas e screenshots.

@@ -1,3 +1,5 @@
+import { Prop } from "./DisciplinaProp";
+import { DisciplinaExecucaoEditor } from "./ExecucaoDisciplinaFields";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +65,7 @@ interface DisciplinaDetailDialogProps {
   pessoas: { id: string; nome: string }[];
   onUpdateField: (field: keyof DisciplinaResponsavel, value: string) => void;
   onUpdateResponsaveis: (ids: string[]) => void;
+  onUpdateExecucao?: (tipo: "interna" | "terceirizada", prestador: string) => void | Promise<void>;
   /** Opcionais: só a disciplina persistida (detalhe do projeto) edita estes. */
   onUpdateLabels?: (next: string[]) => void;
   onUpdateLinks?: (next: LinkItem[]) => void;
@@ -101,28 +104,6 @@ function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
 }
 
 /** Linha de propriedade no padrão ClickUp: ícone + rótulo cinza + controle. */
-function Prop({
-  icon: Icon,
-  label,
-  className,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`flex items-center gap-3 ${className ?? ""}`}>
-      <span className="flex w-32 shrink-0 items-center gap-2 text-sm text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        {label}
-      </span>
-      <div className="flex-1 min-w-0">{children}</div>
-    </div>
-  );
-}
-
 export function DisciplinaDetailDialog(props: DisciplinaDetailDialogProps) {
   const { open, onOpenChange, disciplina } = props;
   return (
@@ -141,6 +122,7 @@ function DisciplinaDetailBody({
   pessoas,
   onUpdateField,
   onUpdateResponsaveis,
+  onUpdateExecucao,
   onUpdateLabels,
   onUpdateLinks,
   onUpdateComentarios,
@@ -253,7 +235,7 @@ function DisciplinaDetailBody({
       {/* Cabeçalho */}
       <div className="shrink-0 border-b px-4 pt-3 pb-4 md:px-8 md:pt-6">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             <Layers className="h-3 w-3" /> {disciplina.codigo || "Disciplina"}
           </span>
         </div>
@@ -397,6 +379,11 @@ function DisciplinaDetailBody({
                 </Select>
               </Prop>
 
+              {onUpdateExecucao && (
+                <Prop icon={Layers} label="Execução" className="md:col-span-2">
+                  <DisciplinaExecucaoEditor disciplina={disciplina} onSave={onUpdateExecucao} />
+                </Prop>
+              )}
               <Prop icon={Layers} label="Disciplina">
                 <Select value={disciplina.disciplina} onValueChange={(val) => onUpdateField("disciplina", val)}>
                   <SelectTrigger className="h-9">

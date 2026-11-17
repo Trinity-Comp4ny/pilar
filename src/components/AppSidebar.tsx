@@ -141,10 +141,25 @@ export function AppSidebar() {
     navigate("/admin");
   };
 
+  // Rota filha (ex.: /gestao/clientes/:id) mantém o item do pai marcado. O item mais
+  // específico que casa vence, para /projetos não engolir /projetos/disciplinas.
+  const casaRota = (itemPath: string) => currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
+  const isItemActive = (itemPath: string, itemView: string | null) => {
+    if (!casaRota(itemPath)) return false;
+    if (currentPath === itemPath && currentView !== itemView) return false;
+    const maisEspecifico = moduleGroups.some(({ entries }) =>
+      entries.some(({ item: outro }) => {
+        const outroPath = outro.url.split("?")[0];
+        return outroPath.length > itemPath.length && casaRota(outroPath);
+      })
+    );
+    return !maisEspecifico;
+  };
+
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
     const [itemPath, itemQuery] = item.url.split("?");
     const itemView = itemQuery ? new URLSearchParams(itemQuery).get("view") : null;
-    const isActive = currentPath === itemPath && currentView === itemView;
+    const isActive = isItemActive(itemPath, itemView);
     const Icon = item.icon;
 
     if (navProps.disabled) {
@@ -310,6 +325,21 @@ export function AppSidebar() {
 
       {/* Busca/comandos (⌘K) + sino + conta */}
       <div className="flex shrink-0 flex-col items-center gap-2 pt-2">
+        {/* Há release publicada que a pessoa ainda não viu: atalho direto para Novidades. */}
+        {novidades.temDestaque && (
+          <NavLink
+            to="/novidades"
+            className={railItemClass(currentPath.startsWith("/novidades"))}
+            aria-label="Temos novidades na Pilar"
+            title="Temos novidades"
+          >
+            <span className={railIconClass(currentPath.startsWith("/novidades"))}>
+              <Megaphone size={18} strokeWidth={1.5} />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
+            </span>
+            Novidades
+          </NavLink>
+        )}
         <CommandPaletteHint />
         <NotificationInbox />
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>

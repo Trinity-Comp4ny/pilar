@@ -337,6 +337,20 @@ describe("useClientes: listas completas e bordas", () => {
     await expect(result.current.fetchPortalEmail("c1")).resolves.toBeNull();
   });
 
+  it("motivo escrito pela função (422) chega ao toast, sem virar 'Tente novamente'", async () => {
+    const motivo = "Cadastre o e-mail da empresa em Configurações para enviar ao cliente";
+    supabaseFake.respondInvoke("invite-cliente-portal", {
+      error: {
+        message: "Edge Function returned a non-2xx status code",
+        context: { json: async () => ({ error: motivo }) },
+      },
+    });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+
+    await expect(result.current.invitePortal({ clienteId: "c1", email: "a@b.c" })).rejects.toThrow(motivo);
+    expect(toastError).toHaveBeenCalledWith("Não foi possível criar o acesso", { description: motivo });
+  });
+
   it("erro HTTP sem corpo usa a mensagem do erro; sem mensagem, genérico", async () => {
     supabaseFake.respondInvoke("invite-cliente-portal", { error: new Error("Edge Function returned 500") });
     const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });

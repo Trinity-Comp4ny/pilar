@@ -1,3 +1,4 @@
+import { terceirizadaPendenteAnterior } from "@/pages/projetos/lib/terceirizadas";
 import { useMemo, useState } from "react";
 import type { DisciplinaResponsavel } from "@/types/projetos";
 import { formatDate, formatDateShort } from "@/lib/format";
@@ -94,12 +95,16 @@ export function FluxoPipeline({
         const status = statusPorKey.get(key)!;
         const counts = disc.id ? checklistCounts?.[disc.id] : undefined;
         const data = rotuloData(disc, status, projecao.porNo[key]?.atrasoDiasUteis ?? 0);
+        const bloqueio = status !== "concluido" ? terceirizadaPendenteAnterior(disc, disciplinas) : null;
         return {
           key,
           titulo: disc.disciplina,
           status: statusVisual(status),
-          responsavelNome: disc.responsavel_nome || undefined,
-          metaLabel: data.label,
+          responsavelNome:
+            disc.tipo_execucao === "terceirizada"
+              ? `Terceirizado · ${disc.prestador_nome || "Prestador a definir"}`
+              : disc.responsavel_nome || undefined,
+          metaLabel: bloqueio ? `Aguardando ${bloqueio.disciplina}` : data.label,
           metaTone: data.tone,
           checklistLabel: counts && counts.total > 0 ? `${counts.concluidos}/${counts.total}` : undefined,
         };
@@ -117,7 +122,7 @@ export function FluxoPipeline({
     }
 
     return { discPorKey, statusPorKey, etapaDaKey, projecao, stages, conectoresCriticos };
-  }, [etapas, checklistCounts, hoje]);
+  }, [etapas, checklistCounts, hoje, disciplinas]);
 
   if (etapas.length === 0) return null;
 

@@ -91,7 +91,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                   <Badge variant="secondary" className="font-mono text-xs bg-positive/10 text-positive-strong">
                     {`{{${varName}}}`}
                   </Badge>
-                  <p className="text-[11px] text-muted-foreground">{description}</p>
+                  <p className="text-2xs text-muted-foreground">{description}</p>
                 </div>
                 <span className="text-sm text-muted-foreground truncate">{VARIABLE_EXAMPLES[varName] || "—"}</span>
                 <Button

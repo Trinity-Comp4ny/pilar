@@ -30,7 +30,7 @@ Cinco regras valem para qualquer peça:
 ## 2. O perfil
 
 | Item                             | Regra                                                                                                                                                                                                                                                            |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | Nome de usuário                  | `@pilarsoft.app`                                                                                                                                                                                                                                                 |
 | Nome (campo de busca)            | `Pilar                                                                                                                                                                                                                                                           | Gestão com agentes de IA` |
 | Foto                             | `assets/social/avatar.png`: o ícone do app (coluna de três caneluras em Ink sobre o tile verde), 1080 × 1080, gerado por `scripts/brand/build.py`. O Instagram corta em círculo; o símbolo ocupa menos da metade da largura e sobra respiro. Sem o nome na foto. |
@@ -38,12 +38,13 @@ Cinco regras valem para qualquer peça:
 | Link                             | Landing com UTM: `utm_source=instagram&utm_medium=bio&utm_campaign=perfil`                                                                                                                                                                                       |
 | Categoria                        | Software (ou Serviço de tecnologia)                                                                                                                                                                                                                              |
 | Botão de contato                 | WhatsApp do Matheus, quando o fundador aprovar                                                                                                                                                                                                                   |
-| Destaques                        | Como funciona, Clientes, Dicas, Bastidores, Planos                                                                                                                                                                                                               |
-| Capas dos destaques              | `assets/social/destaque-*.png`: ícone de linha em verde sobre Ink, 1080 × 1920, ícone no centro. O Instagram mostra um círculo central, então nada fora do centro.                                                                                               |
+| Destaques                        | Comece aqui, Planos, Gestão, Projetos, Obras, Agentes (kit de lançamento: [social/lancamento.md](./social/lancamento.md))                                                                                                                                        |
+| Capas dos destaques              | `assets/social/lancamento/destaque-*.png`: ícone de linha em Ink sobre o verde cheio da marca, 1080 × 1920, ícone no centro. O Instagram mostra um círculo central, então nada fora do centro.                                                                   |
 
-As capas dos destaques são Ink com ícone verde de propósito: formam uma faixa escura e pequena no
-topo do perfil, que contrasta com o feed claro e leva o olho aos destaques. É um uso de verde
-**sobre Ink**, permitido.
+As capas dos destaques são verde cheio com ícone de linha grosso em Ink, a mesma família do ícone
+do app (`pilar-app-icon-verde`): seis círculos verdes formam uma faixa clara e reconhecível no topo
+do perfil, e o traço grosso lê a 60 px. Ícone de linha fina ou sobre fundo claro some nesse tamanho. Kit e ordem em
+[social/lancamento.md](./social/lancamento.md).
 
 ### Os cinco ícones
 

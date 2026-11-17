@@ -108,7 +108,7 @@ export function ComentarioCard({ comentario, pessoas, destacado, onExcluir }: Co
           )
         )}
       </p>
-      <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
+      <div className="mt-1.5 flex justify-between text-3xs text-muted-foreground">
         <span>{comentario.autor}</span>
         <span>{formatDateTime(comentario.data)}</span>
       </div>

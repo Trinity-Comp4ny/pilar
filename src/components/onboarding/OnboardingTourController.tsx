@@ -10,17 +10,33 @@ import { startStepTour, type TourInstance } from "@/lib/onboarding/tour";
  * Layout, acompanha a rota. Vale para admin e convidado (SPEC 149): o passo de admin
  * já some na filtragem. Nada visual próprio.
  */
+/** A rota do passo pode trazer `?tab=`: o caminho e a aba precisam bater. */
+export function rotaCasa(rota: string, pathname: string, search: string): boolean {
+  const [caminho, query] = rota.split("?");
+  if (caminho !== pathname) return false;
+  if (!query) return true;
+  const atual = new URLSearchParams(search);
+  return [...new URLSearchParams(query)].every(([k, v]) => atual.get(k) === v);
+}
+
 export function OnboardingTourController() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { steps, loading } = useOnboardingProgress();
   const { state, markTourSeen } = useOnboardingState();
   const activeRef = useRef<TourInstance | null>(null);
 
   const candidate = useMemo(() => {
     if (loading || state.dismissed) return null;
-    const passo = steps.find((s) => s.rota === pathname && !s.done && !state.tours_seen.includes(s.key));
+    const passo = steps.find(
+      // Passo bloqueado não ganha tour: a pessoa ainda não deve estar fazendo isso (SPEC 165).
+      (s) =>
+        rotaCasa(s.rota, pathname, search) &&
+        !s.done &&
+        s.bloqueadoPor.length === 0 &&
+        !state.tours_seen.includes(s.key)
+    );
     return passo?.tour ? { ...passo, tour: passo.tour } : null;
-  }, [loading, state.dismissed, state.tours_seen, steps, pathname]);
+  }, [loading, state.dismissed, state.tours_seen, steps, pathname, search]);
 
   const candidateKey = candidate?.key ?? null;
 

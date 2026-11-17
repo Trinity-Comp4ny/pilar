@@ -1,0 +1,84 @@
+{
+  "workflow_run_id": 43869838239,
+  "workflow_run_url": "https://github.com/Trinity-Comp4ny/pilar/actions/runs/43869838239",
+  "artifact_id": 14227801316,
+  "artifact_zip_sha256": "c435671d3701d70d930bc11fd2f94a84a4f87789a2c8ca388f82a49c1c9aa6c9",
+  "before_sha": "efc534fdf0e42a56eb65dd6739ed9a81a5c8df27",
+  "after_sha": "49513dbdb33854a01ec7218620fbf8e53820f4c1",
+  "commercial_head_sha": "a46c53ae8476b8b1007455059ef528b9c81cdd9f",
+  "staging_verified_sha": "efc534fdf0e42a56eb65dd6739ed9a81a5c8df27",
+  "visual_review_status": "static inspection of all 10 pairs complete; no apparent visual regression",
+  "images": [
+    {
+      "file": "arquitetura-desktop.jpg",
+      "sha256": "35e1ef62187957bbd3c1e91c9f889421920191b70578cc7a1509125240319691",
+      "bytes": 1278590,
+      "width": 2904,
+      "height": 4497
+    },
+    {
+      "file": "arquitetura-mobile.jpg",
+      "sha256": "60e32c7acb68db542852e1a904b4b0bdb393878b0f4c921f368f403f8b725c23",
+      "bytes": 846503,
+      "width": 804,
+      "height": 7458
+    },
+    {
+      "file": "engenharia-desktop.jpg",
+      "sha256": "5ebe849408245e56ede66b4a3b21263e6d645928debe36965b52b7415f63c8dd",
+      "bytes": 1299891,
+      "width": 2904,
+      "height": 4539
+    },
+    {
+      "file": "engenharia-mobile.jpg",
+      "sha256": "c0c9d130fb7ffcef9afdf4d07288972cf1be82432b2005c72b9064ec72f021e3",
+      "bytes": 865361,
+      "width": 804,
+      "height": 7568
+    },
+    {
+      "file": "faq-desktop.jpg",
+      "sha256": "8fe6e510c91034a699238f5bffffdda69b9f808ac5c452c4a4c6c890ce573dc1",
+      "bytes": 626905,
+      "width": 2904,
+      "height": 2173
+    },
+    {
+      "file": "faq-mobile.jpg",
+      "sha256": "49564e82d5b5b2d3e7b506c239129e7a061c1d4bfeb2105779a7929bd72b7304",
+      "bytes": 331349,
+      "width": 804,
+      "height": 3248
+    },
+    {
+      "file": "home-desktop.jpg",
+      "sha256": "ee643e378916a7cc985cb10a284994b7d238b1527355ce0fe7d522aab8bbae9a",
+      "bytes": 1697972,
+      "width": 2904,
+      "height": 6468
+    },
+    {
+      "file": "home-mobile.jpg",
+      "sha256": "14d140deadf9e4700b4222ef5f622ddd01ccb1eeea4d8240fc8914507265e33b",
+      "bytes": 997201,
+      "width": 804,
+      "height": 8539
+    },
+    {
+      "file": "planos-desktop.jpg",
+      "sha256": "3c9da6f7c540ca9e404795c1f329eba06060655b5b3c4f9ca7580fdead52e346",
+      "bytes": 910271,
+      "width": 2904,
+      "height": 3017
+    },
+    {
+      "file": "planos-mobile.jpg",
+      "sha256": "0a9f19389504cef438f2a96a85a3d042d2e746f13c965c8185d6d00a5d363728",
+      "bytes": 617811,
+      "width": 804,
+      "height": 5636
+    }
+  ],
+  "interaction_validation": "marketing automated tests only; screenshots do not validate interactions"
+}

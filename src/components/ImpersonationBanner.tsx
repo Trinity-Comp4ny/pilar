@@ -21,7 +21,7 @@ export function ImpersonationBanner() {
         <span className="text-xs opacity-80 hidden sm:inline">
           dados sensíveis seguem o papel simulado, não só o menu
         </span>
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-black hover:bg-black/10" onClick={stopImpersonation}>
+        <Button size="xs" variant="ghost" className="px-2 text-black hover:bg-black/10" onClick={stopImpersonation}>
           <X className="w-3.5 h-3.5 mr-1" />
           Sair
         </Button>

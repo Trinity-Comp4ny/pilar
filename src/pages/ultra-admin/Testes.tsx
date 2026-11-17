@@ -323,8 +323,8 @@ export default function Testes() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-full p-0"
+              size="xs"
+              className="w-8 rounded-full p-0"
               aria-label={`Ações de ${r.empresaNome}`}
               onClick={parar}
             >
@@ -405,8 +405,8 @@ export default function Testes() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-full p-0"
+              size="xs"
+              className="w-8 rounded-full p-0"
               aria-label={`Ações de ${r.empresaNome}`}
               onClick={parar}
             >

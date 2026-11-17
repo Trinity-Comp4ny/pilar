@@ -72,9 +72,9 @@ function LimiteCell({
       </Button>
       {membro.limiteMensal !== null && (
         <Button
-          size="sm"
+          size="xs"
           variant="ghost"
-          className="h-8 w-8 p-0 rounded-full text-black/40 hover:text-danger-mid"
+          className="w-8 p-0 rounded-full text-black/40 hover:text-danger-mid"
           disabled={salvando}
           onClick={() => {
             onRemover();
@@ -133,33 +133,33 @@ function PedidoPendente({
               autoFocus
             />
             <Button
-              size="sm"
+              size="xs"
               variant="brand"
-              className="h-8 rounded-full"
+              className="rounded-full"
               disabled={resolvendo}
               onClick={() => onAprovar(valor ? creditosParaTokens(Number(valor)) : null)}
             >
               Confirmar
             </Button>
-            <Button size="sm" variant="ghost" className="h-8 rounded-full" onClick={() => setAprovando(false)}>
+            <Button size="xs" variant="ghost" className="rounded-full" onClick={() => setAprovando(false)}>
               Cancelar
             </Button>
           </div>
         ) : (
           <div className="flex items-center gap-2 pt-1">
             <Button
-              size="sm"
+              size="xs"
               variant="brand"
-              className="h-8 rounded-full"
+              className="rounded-full"
               disabled={resolvendo}
               onClick={() => setAprovando(true)}
             >
               Aprovar
             </Button>
             <Button
-              size="sm"
+              size="xs"
               variant="ghost"
-              className="h-8 rounded-full text-black/60"
+              className="rounded-full text-black/60"
               disabled={resolvendo}
               onClick={onNegar}
             >

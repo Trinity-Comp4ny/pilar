@@ -6,6 +6,10 @@ import { LeadDetailDialog } from "./LeadDetailDialog";
 
 /** Botão "Estimar obra" do lead (SPEC 136, BEZ-24): só aparece com a estimativa ligada e em lead ainda vivo. */
 
+vi.mock("./LeadAtividadesPanel", () => ({ LeadAtividadesPanel: () => <div>Histórico do lead</div> }));
+vi.mock("./LeadPropostasPanel", () => ({ LeadPropostasPanel: () => <div>PDFs do lead</div> }));
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
+
 const lead = (status: Lead["status"]): Lead => ({ id: "l1", nome: "Família", sobrenome: "Almeida", status });
 
 const abrir = (status: Lead["status"], onEstimar?: () => void) =>

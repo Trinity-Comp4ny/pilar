@@ -6,13 +6,45 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ArrowDownCircle, ArrowUpCircle, Receipt, ExternalLink, Percent } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteObraConta } from "@/pages/cliente/useClienteObraData";
+import { useClienteObraOrcamento } from "@/pages/portal/useClienteObraOrcamento";
+import { RelatorioOrcadoRealizado } from "@/components/obras/RelatorioOrcadoRealizado";
+
+/** Orçado x realizado da obra, linha por linha. Some em silêncio se a obra ainda não tem orçamento nem gasto. */
+function OrcadoRealizadoDaObra({ obraId }: { obraId: string }) {
+  const { dados, loading } = useClienteObraOrcamento(obraId);
+  if (loading || !dados) return null;
+  const temValor = dados.linhas.some((l) => l.previsto > 0 || l.realizado > 0) || dados.sem_frente > 0;
+  if (!temValor) return null;
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6">
+        <div>
+          <h3 className="text-sm font-semibold">Orçado x realizado</h3>
+          <p className="text-xs text-muted-foreground">
+            Quanto foi previsto para cada etapa e quanto já foi gasto, sem a taxa de administração.
+          </p>
+        </div>
+        <RelatorioOrcadoRealizado linhas={dados.linhas} semFrente={dados.sem_frente} />
+      </CardContent>
+    </Card>
+  );
+}
 
 /**
  * Prestação de contas da obra para o dono (regime administração). Aportes vs
  * despesas confirmadas, saldo e a taxa de administração como linha própria. As
  * despesas já vêm filtradas pelo backend (só confirmada_portal = true).
  */
-export function ContaObraContent({ conta, taxaPct }: { conta: ClienteObraConta; taxaPct: number }) {
+export function ContaObraContent({
+  conta,
+  taxaPct,
+  obraId,
+}: {
+  conta: ClienteObraConta;
+  taxaPct: number;
+  /** Com o id da obra, a prestação de contas mostra também o orçado x realizado linha a linha. */
+  obraId?: string;
+}) {
   const formatCurrency = useMoneyMask();
   return (
     <div className="space-y-4">
@@ -22,6 +54,8 @@ export function ContaObraContent({ conta, taxaPct }: { conta: ClienteObraConta; 
         <KPICard label="Gasto na obra" value={conta.total_gasto} tone="warning" />
         <KPICard label="Saldo em conta" value={conta.saldo} tone={conta.saldo < 0 ? "danger" : "positive"} />
       </div>
+
+      {obraId && <OrcadoRealizadoDaObra obraId={obraId} />}
 
       {/* Taxa de administração */}
       <Card>

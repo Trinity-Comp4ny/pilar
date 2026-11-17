@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs } from "@/components/SectionTabs";
 import { toast } from "sonner";
 import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { reportInvokeError } from "@/lib/monitoring";
@@ -26,6 +26,7 @@ import { normalizarSite } from "@/lib/perfilEscritorio";
 // aqui, as tabs continuam presentacionais. Mutações sensíveis passam por requireAal2.
 export function EmpresaPanel() {
   const requireAal2 = useRequireAal2();
+  const [tab, setTab] = useState("dados");
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -399,7 +400,7 @@ export function EmpresaPanel() {
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-5">
         <CompanySummaryCard
           companyData={companyData}
           usersCount={users.length}
@@ -408,26 +409,21 @@ export function EmpresaPanel() {
           onLogoPreview={() => setIsLogoPreviewOpen(true)}
         />
 
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="dados" className="w-full">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <TabsList className="w-full sm:w-auto">
-                <TabsTrigger value="dados" className="gap-2">
-                  <Building2 size={16} /> Dados
-                </TabsTrigger>
-                <TabsTrigger value="usuarios" className="gap-2">
-                  <UsersIcon size={16} /> Usuários{" "}
-                  <Badge variant="secondary" className="ml-1">
-                    {users.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="visual" className="gap-2">
-                  <Palette size={16} /> Personalização
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        <div>
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <SectionTabs
+              ariaLabel="Seções da empresa"
+              className="border-b border-border px-0 md:px-0"
+              value={tab}
+              onValueChange={setTab}
+              tabs={[
+                { id: "dados", label: "Dados", icon: Building2 },
+                { id: "usuarios", label: "Usuários", icon: UsersIcon, badge: users.length },
+                { id: "visual", label: "Personalização", icon: Palette },
+              ]}
+            />
 
-            <TabsContent value="dados" className="mt-6">
+            <TabsContent value="dados" className="mt-5">
               <CompanyDataTab
                 companyData={companyData}
                 editing={editingCompany}
@@ -442,7 +438,7 @@ export function EmpresaPanel() {
               />
             </TabsContent>
 
-            <TabsContent value="usuarios" className="mt-6">
+            <TabsContent value="usuarios" className="mt-5">
               <CompanyUsersTab
                 users={users}
                 isAdmin={isAdmin}
@@ -465,7 +461,7 @@ export function EmpresaPanel() {
               />
             </TabsContent>
 
-            <TabsContent value="visual" className="mt-6">
+            <TabsContent value="visual" className="mt-5">
               <CompanyVisualTab
                 companyData={companyData}
                 editing={editingVisual}

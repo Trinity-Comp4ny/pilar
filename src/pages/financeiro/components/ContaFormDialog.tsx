@@ -45,7 +45,13 @@ export function ContaFormDialog({
 }: ContaFormDialogProps) {
   return (
     <>
-      <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar conta">
+      <Button
+        variant="ghost"
+        className="h-6 w-6"
+        onClick={onAddClick}
+        aria-label="Adicionar conta"
+        data-tour="onb-nova-conta"
+      >
         <Plus className="h-3.5 w-3.5" />
       </Button>
       <FormDialog
@@ -106,7 +112,7 @@ export function ContaFormDialog({
             <Label className="flex items-center gap-2">
               Chave PIX
               {chavePix && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                <Badge variant="secondary" className="text-3xs h-4 px-1.5">
                   {TIPO_CHAVE_PIX_LABEL[detectTipoChavePix(chavePix) as TipoChavePix] ?? "Detectando..."}
                 </Badge>
               )}

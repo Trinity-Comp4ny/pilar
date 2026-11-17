@@ -166,9 +166,7 @@ function FiltersPanel({
             );
           })}
         </div>
-        <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Vale a prioridade da disciplina; sem ela, a do projeto.
-        </p>
+        <p className="mt-1.5 text-2xs text-muted-foreground">Vale a prioridade da disciplina; sem ela, a do projeto.</p>
       </FilterSection>
 
       {/* Atraso */}
@@ -266,7 +264,7 @@ function FilterSection({
           {icon}
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</span>
           {count !== undefined && count > 0 && (
-            <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] tabular-nums">
+            <span className="text-3xs bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] tabular-nums">
               {count}
             </span>
           )}
@@ -334,7 +332,7 @@ function CheckboxSearchSection({
           )}
         </div>
         {selected.length > 0 && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs w-full" onClick={onClear}>
+          <Button variant="ghost" size="xs" className="w-full" onClick={onClear}>
             {clearLabel}
           </Button>
         )}
@@ -382,11 +380,11 @@ function PeriodoSection({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[10px] uppercase text-muted-foreground">De</label>
+            <label className="text-3xs uppercase text-muted-foreground">De</label>
             <DatePicker value={filters.dataInicio} onChange={(v) => onChange({ ...filters, dataInicio: v })} />
           </div>
           <div>
-            <label className="text-[10px] uppercase text-muted-foreground">Até</label>
+            <label className="text-3xs uppercase text-muted-foreground">Até</label>
             <DatePicker
               value={filters.dataFim}
               onChange={(v) => onChange({ ...filters, dataFim: v })}
@@ -397,8 +395,8 @@ function PeriodoSection({
         <div className="flex gap-1.5">
           <Button
             variant="ghost"
-            size="sm"
-            className="h-7 text-xs flex-1"
+            size="xs"
+            className="flex-1"
             onClick={() => {
               const today = new Date();
               const in30 = new Date();
@@ -413,12 +411,7 @@ function PeriodoSection({
             <Clock className="h-3 w-3 mr-1" /> Próximos 30d
           </Button>
           {hasDate && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => onChange({ ...filters, dataInicio: "", dataFim: "" })}
-            >
+            <Button variant="ghost" size="xs" onClick={() => onChange({ ...filters, dataInicio: "", dataFim: "" })}>
               Limpar
             </Button>
           )}

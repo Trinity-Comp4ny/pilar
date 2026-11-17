@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -97,11 +98,11 @@ const OBRA = {
   ],
 };
 
-function renderPage() {
+function renderPage(aba?: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/cliente/obra/o1"]}>
+      <MemoryRouter initialEntries={[`/cliente/obra/o1${aba ? `?aba=${aba}` : ""}`]}>
         <Routes>
           <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
             <Route path="obra/:id" element={<ClienteObraDetail />} />
@@ -137,11 +138,21 @@ describe("ClienteObraDetail", () => {
     expect(h.rpc).toHaveBeenCalledWith("get_cliente_obra_detail", { p_token: "tok", p_obra_id: "o1" });
     expect(screen.getByText("01/09/2026")).toBeInTheDocument();
     expect(screen.getByText("A definir")).toBeInTheDocument();
-    expect(screen.getByText("Fundação", { selector: "p, span, div" })).toBeInTheDocument();
+    expect(screen.getByText("1 de 3 etapas concluídas")).toBeInTheDocument();
+    expect(screen.getByText("Estrutura")).toBeInTheDocument();
+  });
+
+  it("aba Cronograma mostra as etapas com período e o Gantt", async () => {
+    renderPage();
+    await userEvent.setup().click(await screen.findByRole("tab", { name: "Cronograma" }));
+    expect(await screen.findByText("Linha do tempo")).toBeInTheDocument();
+    expect(screen.getByText("Etapas")).toBeInTheDocument();
+    expect(screen.getByText("Prazo a definir")).toBeInTheDocument();
+    expect(screen.getAllByText("Fundação").length).toBeGreaterThan(0);
   });
 
   it("prestação de contas com saldo negativo, taxa e nota da despesa", async () => {
-    renderPage();
+    renderPage("financeiro");
     expect(await screen.findByText("Prestação de contas")).toBeInTheDocument();
     expect(screen.getByText("12% sobre o gasto da obra")).toBeInTheDocument();
     expect(screen.getByText("Aporte inicial")).toBeInTheDocument();
@@ -150,7 +161,7 @@ describe("ClienteObraDetail", () => {
   });
 
   it("registros liberados trazem o resumo da semana e as fotos", async () => {
-    renderPage();
+    renderPage("rdo");
     expect(await screen.findByText("Formas da laje prontas")).toBeInTheDocument();
     expect(await screen.findByText("Semana de laje.")).toBeInTheDocument();
     await waitFor(() =>
@@ -161,7 +172,7 @@ describe("ClienteObraDetail", () => {
   });
 
   it("diário mostra os dias e só as fotos com URL assinada", async () => {
-    renderPage();
+    renderPage("rdo");
     expect(await screen.findByText("Concretagem da laje")).toBeInTheDocument();
     await waitFor(() =>
       expect(h.invoke).toHaveBeenCalledWith("portal-obra-fotos", {
@@ -174,7 +185,7 @@ describe("ClienteObraDetail", () => {
 
   it("obra sem diário e sem registros não chama o resumo", async () => {
     h.rpcs.get_cliente_obra_detail = { data: { ...OBRA, diario: [], registros: [] }, error: null };
-    renderPage();
+    renderPage("rdo");
     expect(await screen.findByText("Nenhum registro ainda")).toBeInTheDocument();
     expect(h.invoke).not.toHaveBeenCalled();
   });

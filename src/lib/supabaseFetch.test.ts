@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   createInstrumentedFetch,
   fingerprintFor,
+  jaReportadoPelaRede,
   routeOf,
   redactQuery,
   SupabaseRequestError,
@@ -287,5 +288,24 @@ describe("fingerprintFor", () => {
 
   it("403 continua separado por rota", () => {
     expect(fingerprintFor("GET", "rest/v1/projetos", 403)).not.toEqual(fingerprintFor("GET", "rest/v1/pessoas", 403));
+  });
+});
+
+describe("jaReportadoPelaRede", () => {
+  it("reconhece o que a camada de rede já enviou ao Sentry", () => {
+    expect(jaReportadoPelaRede(new SupabaseRequestError("HEAD rest/v1/projetos → 403", 403, "rest/v1/projetos"))).toBe(
+      true
+    );
+    expect(jaReportadoPelaRede({ code: "42501", message: "x", details: null, hint: null })).toBe(true);
+    expect(jaReportadoPelaRede(new TypeError("Failed to fetch"))).toBe(true);
+    expect(jaReportadoPelaRede(new TypeError("Load failed"))).toBe(true);
+  });
+
+  it("deixa passar o que só o react-query viu", () => {
+    expect(jaReportadoPelaRede(new Error("Cannot read properties of undefined"))).toBe(false);
+    expect(jaReportadoPelaRede(new TypeError("x is not a function"))).toBe(false);
+    expect(jaReportadoPelaRede({ message: "sem código" })).toBe(false);
+    expect(jaReportadoPelaRede("texto")).toBe(false);
+    expect(jaReportadoPelaRede(null)).toBe(false);
   });
 });

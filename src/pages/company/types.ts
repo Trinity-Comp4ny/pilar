@@ -1,3 +1,5 @@
+import { TONE_BADGE } from "@/lib/status";
+
 export type CompanyUser = {
   id: string;
   name: string;
@@ -35,14 +37,8 @@ export const STATUS_OPTIONS = [
 
 export function getStatusBadge(status: string) {
   const s = (status || "").toLowerCase();
-  if (s === "active") {
-    return { label: "Ativa", className: "bg-emerald-600/15 text-emerald-700 border border-emerald-600/20" };
-  }
-  if (s === "suspended") {
-    return { label: "Suspensa", className: "bg-amber-600/15 text-amber-700 border border-amber-600/20" };
-  }
-  if (s === "cancelled") {
-    return { label: "Cancelada", className: "bg-red-600/15 text-red-700 border border-red-600/20" };
-  }
-  return { label: status || "-", className: "bg-black/10 text-black/70 border border-black/10" };
+  if (s === "active") return { label: "Ativa", className: TONE_BADGE.positive };
+  if (s === "suspended") return { label: "Suspensa", className: TONE_BADGE.attention };
+  if (s === "cancelled") return { label: "Cancelada", className: TONE_BADGE.danger };
+  return { label: status || "-", className: TONE_BADGE.neutral };
 }
