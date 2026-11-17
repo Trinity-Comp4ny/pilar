@@ -9,12 +9,17 @@ import { monitoring } from "@/lib/monitoring";
 import { autorizacaoPendente, rotaDeAutorizacao } from "@/lib/oauthPendente";
 import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
-import { SubscriptionSuspendedScreen } from "./SubscriptionSuspendedScreen";
 import { EVENTO_ASSINATURA_SUSPENSA } from "@/lib/assinaturaSuspensa";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 
 const AccountRecoveryScreen = lazy(() =>
   import("./AccountRecoveryScreen").then(({ AccountRecoveryScreen }) => ({ default: AccountRecoveryScreen }))
+);
+
+const SubscriptionSuspendedScreen = lazy(() =>
+  import("./SubscriptionSuspendedScreen").then(({ SubscriptionSuspendedScreen }) => ({
+    default: SubscriptionSuspendedScreen,
+  }))
 );
 
 type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
@@ -198,7 +203,11 @@ export function PrivateRoute() {
   const suspended = subStatus === "canceled" || (subStatus === "expired" && !emLeitura);
   if (suspended) {
     const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
-    return <SubscriptionSuspendedScreen isAdmin={isAdmin} />;
+    return (
+      <Suspense fallback={<EntryVeil />}>
+        <SubscriptionSuspendedScreen isAdmin={isAdmin} />
+      </Suspense>
+    );
   }
 
   const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";
