@@ -38,7 +38,14 @@ function useCountdown(expirationDate: string) {
   return { secondsLeft, display: `${mm}:${ss}` };
 }
 
-export function PixPayment({ encodedImage, payload, expirationDate, value, isPolling, recorrente = false }: PixPaymentProps) {
+export function PixPayment({
+  encodedImage,
+  payload,
+  expirationDate,
+  value,
+  isPolling,
+  recorrente = false,
+}: PixPaymentProps) {
   const [copied, setCopied] = useState(false);
   const { secondsLeft, display } = useCountdown(expirationDate);
   const expired = secondsLeft <= 0;
