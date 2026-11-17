@@ -20,6 +20,8 @@ async function syncResponsaveis(disciplinaId: string, responsavelIds: string[]) 
 }
 
 interface RawDisciplinaRow {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string | null;
   id: string;
   projeto_id: string;
   codigo: string | null;
@@ -53,6 +55,8 @@ function mapRowToDb(row: RawDisciplinaRow): ProjetoDisciplinaDB {
     projeto_id: row.projeto_id,
     codigo: row.codigo,
     nome: row.nome,
+    tipo_execucao: row.tipo_execucao ?? "interna",
+    prestador_nome: row.prestador_nome,
     status: row.status,
     data_inicio: row.data_inicio,
     data_fim: row.data_fim,
@@ -108,6 +112,8 @@ export function useProjetoDisciplinas(projetoId: string | undefined) {
 }
 
 interface UpsertDisciplinaInput {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string | null;
   id?: string;
   projeto_id: string;
   nome: string;
@@ -138,6 +144,8 @@ export function useUpsertDisciplina() {
         id,
         projeto_id,
         nome,
+        tipo_execucao,
+        prestador_nome,
         status = "Não Iniciado",
         data_inicio,
         data_fim,
@@ -175,6 +183,8 @@ export function useUpsertDisciplina() {
         // observacoes só é sobrescrito quando explicitamente informado.
         // Assim adicionar/remover responsável (que não passa observacoes) não apaga
         // as observações já gravadas na disciplina.
+        if (tipo_execucao !== undefined) updatePayload.tipo_execucao = tipo_execucao;
+        if (prestador_nome !== undefined) updatePayload.prestador_nome = prestador_nome;
         if (observacoes !== undefined) updatePayload.observacoes = observacoes || null;
         // labels/links/etc: mesma regra — só grava quando o chamador informa.
         if (labels !== undefined) updatePayload.labels = labels;
@@ -195,6 +205,8 @@ export function useUpsertDisciplina() {
           .insert({
             projeto_id,
             nome,
+            tipo_execucao: tipo_execucao ?? "interna",
+            prestador_nome: prestador_nome ?? null,
             status,
             data_inicio: data_inicio || null,
             data_fim: data_fim || null,
@@ -324,6 +336,8 @@ export function useUpdateDisciplinaStatus() {
 }
 
 interface NovaDisciplinaInput {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string | null;
   nome: string;
   status?: string;
   data_inicio?: string | null;
@@ -353,6 +367,8 @@ async function inserirDisciplina(projetoId: string, disc: NovaDisciplinaInput): 
     .insert({
       projeto_id: projetoId,
       nome: disc.nome,
+      tipo_execucao: disc.tipo_execucao ?? "interna",
+      prestador_nome: disc.prestador_nome ?? null,
       status: disc.status || "Não Iniciado",
       data_inicio: disc.data_inicio || null,
       data_fim: disc.data_fim || null,
@@ -415,6 +431,8 @@ export function useBulkSaveDisciplinas() {
       projetoId: string;
       disciplinas: Array<{
         id?: string;
+        tipo_execucao?: "interna" | "terceirizada";
+        prestador_nome?: string | null;
         nome: string;
         status?: string;
         data_inicio?: string | null;
@@ -459,6 +477,8 @@ export function useBulkSaveDisciplinas() {
             .from("projeto_disciplinas")
             .update({
               nome: disc.nome,
+              tipo_execucao: disc.tipo_execucao ?? "interna",
+              prestador_nome: disc.prestador_nome ?? null,
               status: disc.status || "Não Iniciado",
               data_inicio: disc.data_inicio || null,
               data_fim: disc.data_fim || null,

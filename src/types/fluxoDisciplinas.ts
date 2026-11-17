@@ -9,6 +9,8 @@ export interface FluxoChecklistItemTemplate {
 }
 
 export interface FluxoDisciplinaTemplate {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string;
   /** Posição/coluna no fluxo. Disciplinas com o mesmo `ordem` rodam em paralelo. */
   ordem: number;
   nome: string;

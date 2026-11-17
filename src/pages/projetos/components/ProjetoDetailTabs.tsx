@@ -235,7 +235,14 @@ export function ProjetoDetailTabs({
     patch: Partial<
       Pick<
         ProjetoDisciplinaDB,
-        "labels" | "links" | "comentarios" | "descricao" | "horas_estimadas" | "horas_realizadas"
+        | "labels"
+        | "links"
+        | "comentarios"
+        | "descricao"
+        | "horas_estimadas"
+        | "horas_realizadas"
+        | "tipo_execucao"
+        | "prestador_nome"
       >
     >
   ) => {
@@ -424,6 +431,12 @@ export function ProjetoDetailTabs({
         pessoas={pessoas}
         onUpdateField={handleDiscUpdateField}
         onUpdateResponsaveis={handleDiscUpdateResponsaveis}
+        onUpdateExecucao={
+          canEdit
+            ? (tipo, prestador) =>
+                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            : undefined
+        }
         onUpdateLabels={handleDiscUpdateLabels}
         onUpdateLinks={handleDiscUpdateLinks}
         onUpdateComentarios={handleDiscUpdateComentarios}

@@ -119,6 +119,8 @@ export function dataInicioPadraoFluxo(dataInicioProjeto: string | undefined, hoj
 }
 
 export interface DisciplinaNovaDoFluxo {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string;
   nome: string;
   ordem_etapa: number;
   data_inicio: string | null;
@@ -166,6 +168,9 @@ export function planejarAplicacaoFluxo(
     }
     novas.push({
       nome: d.nome,
+      ...(d.tipo_execucao === "terceirizada"
+        ? { tipo_execucao: d.tipo_execucao, prestador_nome: d.prestador_nome?.trim() || "Prestador a definir" }
+        : {}),
       ordem_etapa: d.ordem,
       data_inicio: datas[i]?.data_inicio ?? null,
       data_fim: datas[i]?.data_previsao ?? null,

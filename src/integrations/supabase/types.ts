@@ -3748,6 +3748,68 @@ export type Database = {
           },
         ]
       }
+      lead_atividades: {
+        Row: {
+          autor_id: string
+          autor_nome: string
+          created_at: string
+          empresa_id: string
+          id: string
+          lead_id: string
+          ocorrido_em: string
+          texto: string
+        }
+        Insert: {
+          autor_id?: string
+          autor_nome?: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          lead_id: string
+          ocorrido_em?: string
+          texto: string
+        }
+        Update: {
+          autor_id?: string
+          autor_nome?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          lead_id?: string
+          ocorrido_em?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_atividades_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_etapas: {
         Row: {
           bucket: string
@@ -7503,9 +7565,11 @@ export type Database = {
           nome: string
           observacoes: string | null
           ordem_etapa: number | null
+          prestador_nome: string | null
           prioridade: string | null
           projeto_id: string
           status: string | null
+          tipo_execucao: string
           updated_at: string | null
         }
         Insert: {
@@ -7526,9 +7590,11 @@ export type Database = {
           nome: string
           observacoes?: string | null
           ordem_etapa?: number | null
+          prestador_nome?: string | null
           prioridade?: string | null
           projeto_id: string
           status?: string | null
+          tipo_execucao?: string
           updated_at?: string | null
         }
         Update: {
@@ -7549,9 +7615,11 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           ordem_etapa?: number | null
+          prestador_nome?: string | null
           prioridade?: string | null
           projeto_id?: string
           status?: string | null
+          tipo_execucao?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -8076,6 +8144,79 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposta_versoes: {
+        Row: {
+          arquivo_path: string
+          condicoes_pagamento: string
+          created_at: string
+          criado_por: string
+          empresa_id: string
+          enviado_em: string | null
+          id: string
+          motivo_revisao: string
+          nome_arquivo: string
+          numero: number
+          proposta_id: string
+          tamanho: number
+          validade: string | null
+          valor_proposto: number
+        }
+        Insert: {
+          arquivo_path: string
+          condicoes_pagamento?: string
+          created_at?: string
+          criado_por?: string
+          empresa_id: string
+          enviado_em?: string | null
+          id?: string
+          motivo_revisao?: string
+          nome_arquivo: string
+          numero?: number
+          proposta_id: string
+          tamanho: number
+          validade?: string | null
+          valor_proposto: number
+        }
+        Update: {
+          arquivo_path?: string
+          condicoes_pagamento?: string
+          created_at?: string
+          criado_por?: string
+          empresa_id?: string
+          enviado_em?: string | null
+          id?: string
+          motivo_revisao?: string
+          nome_arquivo?: string
+          numero?: number
+          proposta_id?: string
+          tamanho?: number
+          validade?: string | null
+          valor_proposto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposta_versoes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
             referencedColumns: ["id"]
           },
         ]
@@ -11394,6 +11535,10 @@ export type Database = {
         Returns: boolean
       }
       pilar_status_bucket: { Args: { p_status: string }; Returns: string }
+      pode_acessar_proposta_pdf: {
+        Args: { p_escrita?: boolean; p_path: string }
+        Returns: boolean
+      }
       portal_aprovar_entrega: {
         Args: { p_entrega_id: string; p_token: string }
         Returns: undefined
