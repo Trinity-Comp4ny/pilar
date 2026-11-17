@@ -6307,6 +6307,7 @@ export type Database = {
           activated_at: string | null
           asaas_customer_id: string | null
           asaas_payment_id: string | null
+          asaas_pix_authorization_id: string | null
           asaas_subscription_id: string | null
           billing_cycle: string
           billing_type: string
@@ -6330,6 +6331,7 @@ export type Database = {
           activated_at?: string | null
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
+          asaas_pix_authorization_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string
           billing_type: string
@@ -6353,6 +6355,7 @@ export type Database = {
           activated_at?: string | null
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
+          asaas_pix_authorization_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string
           billing_type?: string

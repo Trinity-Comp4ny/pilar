@@ -13,6 +13,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import {
   createCustomer,
+  createPixAutomaticAuthorization,
   createSubscription,
   findCustomerByCpfCnpj,
   getPixQrCode,
@@ -23,7 +24,15 @@ import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
 import { cartaoRecusado, type CheckoutPayload, checkoutSchema } from "./entrada.ts";
-import { metadataDaCobranca, statusInicialDoSignup, valorDoPlano } from "./regras.ts";
+import {
+  contratoDoSignup,
+  frequenciaPixAutomatico,
+  metadataDaCobranca,
+  metadataDoPixAutomatico,
+  statusInicialDoSignup,
+  valorDoPlano,
+  VALIDADE_QR_PIX_AUTOMATICO_SEGUNDOS,
+} from "./regras.ts";
 
 const log = createLogger("pilar-checkout-create");
 
@@ -179,6 +188,63 @@ serve(
     }
 
     await admin.from("pilar_pending_signups").update({ asaas_customer_id: customerId }).eq("id", signup.id);
+
+    // --- Asaas: Pix Automático (autorização no lugar de subscription) ---
+    if (body.billing_type === "PIX_AUTOMATICO") {
+      try {
+        const autorizacao = await createPixAutomaticAuthorization({
+          customerId,
+          frequency: frequenciaPixAutomatico(body.billing_cycle),
+          contractId: contratoDoSignup(signup.id),
+          startDate: todayISO(),
+          value,
+          description: `Pilar ${plan.nome}`.slice(0, 35),
+          immediateQrCode: {
+            expirationSeconds: VALIDADE_QR_PIX_AUTOMATICO_SEGUNDOS,
+            originalValue: value,
+            description: `Pilar ${plan.nome}`.slice(0, 35),
+          },
+        });
+
+        const metadata = metadataDoPixAutomatico(value, body.billing_cycle, autorizacao, new Date());
+        await admin
+          .from("pilar_pending_signups")
+          .update({
+            asaas_pix_authorization_id: autorizacao.id,
+            asaas_subscription_id: autorizacao.subscriptionId ?? null,
+            payment_metadata: metadata,
+            payment_status: "pending",
+          })
+          .eq("id", signup.id);
+
+        return jsonResponse(
+          {
+            success: true,
+            session_token: signup.checkout_session_token,
+            billing_type: body.billing_type,
+            payment_status: "pending",
+            plan: { slug: plan.slug, nome: plan.nome, cycle: body.billing_cycle, value },
+            metadata,
+          },
+          200,
+          req
+        );
+      } catch (err) {
+        // Conta não liberada, CNPJ novo demais ou banco fora da cobertura: o usuário
+        // precisa de caminho. 422 com código estável para o front oferecer cartão/boleto.
+        await admin.from("pilar_pending_signups").update({ payment_status: "failed" }).eq("id", signup.id);
+        const msg = err instanceof Error ? err.message : "Erro Asaas";
+        log.warn("pix automático indisponível", { signup_id: signup.id, error: msg });
+        return jsonResponse(
+          {
+            error: "O Pix Automático não está disponível para este cadastro. Escolha cartão ou boleto para continuar.",
+            code: "pix_automatico_indisponivel",
+          },
+          422,
+          req
+        );
+      }
+    }
 
     // --- Asaas: subscription ---
     const remoteIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? undefined;

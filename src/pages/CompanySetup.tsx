@@ -24,7 +24,7 @@ import { EscolhaChips } from "@/components/forms/EscolhaChips";
 import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
 import { cn } from "@/lib/utils";
 import { useConsultaCnpj, type ConsultaCnpj } from "@/hooks/useConsultaCnpj";
-import { DISCIPLINAS, PORTES, normalizarSite, sugerirSite } from "@/lib/perfilEscritorio";
+import { PORTES, normalizarSite } from "@/lib/perfilEscritorio";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { useOnboardingRespostas } from "@/hooks/useOnboardingRespostas";
@@ -46,7 +46,7 @@ function formatarCnpj(v: string): string {
 
 /**
  * Configuração do escritório pelo dono (SPEC 149), etapas 3 e 4 de 4:
- * "Seu escritório" (nome, CNPJ, site, porte, disciplinas) e
+ * "Seu escritório" (nome, CNPJ, site, porte) e
  * "Por onde começar" (pilar de partida e convite opcional de colegas). Tudo
  * que o ultra-admin anotou na criação já vem preenchido.
  */
@@ -56,8 +56,7 @@ export default function CompanySetup() {
   const [isLoading, setIsLoading] = useState(false);
   const [concluindo, setConcluindo] = useState(false);
   const navigate = useNavigate();
-  const { profile, user, refreshProfile } = useAuth();
-  const siteSugerido = sugerirSite(user?.email);
+  const { profile, refreshProfile } = useAuth();
 
   const form = useForm<CompanySetupFormInput, unknown, CompanySetupFormData>({
     resolver: zodResolver(companySetupSchema),
@@ -189,8 +188,6 @@ export default function CompanySetup() {
     }
   };
 
-  const site = form.watch("site");
-
   if (etapa === "wizard") {
     if (carregando) return <PageLoader size="page" label="Preparando seu onboarding" />;
     const nome = profile?.first_name?.trim() || "bem-vindo";
@@ -307,20 +304,11 @@ export default function CompanySetup() {
                             <Globe className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                             <Input
                               {...field}
-                              placeholder={siteSugerido ?? "seuescritorio.com.br"}
+                              placeholder="meusite.com.br"
                               className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                             />
                           </div>
                         </FormControl>
-                        {siteSugerido && !site && (
-                          <button
-                            type="button"
-                            className="text-xs text-ink-soft underline-offset-2 hover:underline"
-                            onClick={() => form.setValue("site", siteSugerido, { shouldDirty: true })}
-                          >
-                            Usar {siteSugerido}
-                          </button>
-                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -328,26 +316,6 @@ export default function CompanySetup() {
                 </div>
 
                 <ResultadoReceita consulta={receita} />
-
-                <FormField
-                  control={form.control}
-                  name="disciplinas"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-ink-soft font-medium">Disciplinas do escritório</FormLabel>
-                      <FormControl>
-                        <EscolhaChips
-                          multiplo
-                          ariaLabel="Disciplinas do escritório"
-                          opcoes={DISCIPLINAS}
-                          value={field.value ?? []}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={form.control}

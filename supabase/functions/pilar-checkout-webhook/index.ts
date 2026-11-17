@@ -21,6 +21,7 @@ import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { sendEmail, templateBoasVindasAssinatura } from "../_shared/email/index.ts";
+import { getPixAutomaticAuthorization } from "../_shared/asaas-platform.ts";
 import { autorizarWebhook } from "./autorizacao.ts";
 import { dataPagamento, planejarWebhook } from "./plano.ts";
 
@@ -42,6 +43,11 @@ interface WebhookPayload {
     id: string;
     status: string;
   };
+  /** Eventos PIX_AUTOMATIC_RECURRING_AUTHORIZATION_*. */
+  authorization?: { id: string; status?: string; contractId?: string };
+  /** Eventos PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_*. */
+  paymentInstruction?: { id: string; paymentId?: string; authorization?: { id: string } };
+  id?: string;
 }
 
 const ALLOWED_ORIGINS_APP = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
@@ -81,8 +87,23 @@ serve(
     const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
     const { event, payment, subscription } = payload;
-    const paymentId = payment?.id ?? null;
+    const paymentId = payment?.id ?? payload.paymentInstruction?.paymentId ?? null;
     const subId = payment?.subscription ?? subscription?.id ?? null;
+    const pixAuthId = payload.authorization?.id ?? payload.paymentInstruction?.authorization?.id ?? null;
+
+    // Eventos de Pix Automático não têm payment nem subscription: os índices únicos por
+    // (event, payment) e (event, subscription) não pegam a repetição (NULL nunca colide).
+    // O id do evento no Asaas é o mesmo nas reentregas, então a deduplicação é por ele.
+    if (event.startsWith("PIX_AUTOMATIC_") && payload.id) {
+      const { data: jaRecebido } = await admin
+        .from("pilar_checkout_webhook_logs")
+        .select("id")
+        .eq("event", event)
+        .eq("payload->>id", payload.id)
+        .limit(1)
+        .maybeSingle();
+      if (jaRecebido) return new Response("OK (duplicate, ignored)", { status: 200 });
+    }
 
     // Log sempre (auditoria).
     // Idempotência: índices únicos em (event, asaas_payment_id) e (event, asaas_subscription_id)
@@ -144,6 +165,15 @@ serve(
         signup = data ?? null;
       }
 
+      if (!signup && pixAuthId) {
+        const { data } = await admin
+          .from("pilar_pending_signups")
+          .select("id, email, nome, company_name, payment_status, invite_dispatched_at, empresa_owner_pending_id")
+          .eq("asaas_pix_authorization_id", pixAuthId)
+          .maybeSingle();
+        signup = data ?? null;
+      }
+
       // Subscription ativa — atualizar período/status
       let activeSub: { id: string; empresa_id: string; billing_cycle: string | null } | null = null;
       if (subId) {
@@ -151,6 +181,17 @@ serve(
           .from("pilar_subscriptions")
           .select("id, empresa_id, billing_cycle")
           .eq("asaas_subscription_id", subId)
+          .maybeSingle();
+        activeSub = data ?? null;
+      }
+
+      // Pix Automático: o débito recusado chega sem subscription. Acha a assinatura pelo signup
+      // que originou a autorização.
+      if (!activeSub && signup && event.startsWith("PIX_AUTOMATIC_")) {
+        const { data } = await admin
+          .from("pilar_subscriptions")
+          .select("id, empresa_id, billing_cycle")
+          .eq("pending_signup_id", signup.id)
           .maybeSingle();
         activeSub = data ?? null;
       }
@@ -315,21 +356,24 @@ serve(
         }
       }
 
-      // 3. trial_ends_at para novos signups
-      // Para signups novos, a subscription é criada pelo trigger
-      // tg_pilar_link_subscription_on_owner_used (migration 027) durante o profile-setup,
-      // não no momento do pagamento. Por isso, buscamos a subscription pelo pending_signup_id
-      // e definimos trial_ends_at se ainda não estiver preenchido.
-      if (signup && plano.definirTrial) {
-        const { data: newSub } = await admin
-          .from("pilar_subscriptions")
-          .select("id, trial_ends_at")
-          .eq("pending_signup_id", signup.id)
-          .maybeSingle();
-
-        if (newSub && !newSub.trial_ends_at) {
-          const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-          await admin.from("pilar_subscriptions").update({ trial_ends_at: trialEnd }).eq("id", newSub.id);
+      // 3. Autorização de Pix Automático ativa: guarda a assinatura que o Asaas ligou a ela,
+      // porque é por ela que chegam as cobranças e os avisos de renovação dos ciclos seguintes.
+      if (signup && event === "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED" && pixAuthId) {
+        try {
+          const autorizacao = await getPixAutomaticAuthorization(pixAuthId);
+          if (autorizacao.subscriptionId) {
+            await admin
+              .from("pilar_pending_signups")
+              .update({ asaas_subscription_id: autorizacao.subscriptionId })
+              .eq("id", signup.id);
+            await admin
+              .from("pilar_subscriptions")
+              .update({ asaas_subscription_id: autorizacao.subscriptionId })
+              .eq("pending_signup_id", signup.id)
+              .is("asaas_subscription_id", null);
+          }
+        } catch (err) {
+          log.warn("não conseguiu ler a assinatura da autorização", { signup_id: signup.id, error: String(err) });
         }
       }
 

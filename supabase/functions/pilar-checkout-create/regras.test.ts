@@ -1,6 +1,13 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import type { AsaasPayment } from "../_shared/asaas-platform.ts";
-import { metadataDaCobranca, statusInicialDoSignup, valorDoPlano } from "./regras.ts";
+import {
+  contratoDoSignup,
+  frequenciaPixAutomatico,
+  metadataDaCobranca,
+  metadataDoPixAutomatico,
+  statusInicialDoSignup,
+  valorDoPlano,
+} from "./regras.ts";
 
 const plano = { preco_mensal: 690, preco_anual: 6900 };
 
@@ -80,4 +87,30 @@ Deno.test("metadata sem 1ª cobrança (Asaas não devolveu) não quebra: ids nul
     payment_id: null,
     invoice_url: null,
   });
+});
+
+Deno.test("Pix Automático: contrato cabe nos 35 caracteres do Asaas e a frequência segue o ciclo", () => {
+  const contrato = contratoDoSignup("a132b89d-8740-472f-8e01-f7f917d48af2");
+  assertEquals(contrato, "a132b89d8740472f8e01f7f917d48af2");
+  assertEquals(contrato.length <= 35, true);
+  assertEquals(frequenciaPixAutomatico("monthly"), "MONTHLY");
+  assertEquals(frequenciaPixAutomatico("yearly"), "ANNUALLY");
+});
+
+Deno.test("Pix Automático: o front recebe o QR no mesmo formato do PIX e a cobrança nasce pendente", () => {
+  const agora = new Date("2026-11-17T12:00:00.000Z");
+  const metadata = metadataDoPixAutomatico(
+    299,
+    "monthly",
+    { id: "pixauth_1", payload: "000201...", encodedImage: "iVBOR" },
+    agora
+  );
+  assertEquals(metadata.billing_type, "PIX_AUTOMATICO");
+  assertEquals(metadata.authorization_id, "pixauth_1");
+  assertEquals(metadata.pix, {
+    encoded_image: "iVBOR",
+    payload: "000201...",
+    expiration_date: "2026-11-17T13:00:00.000Z",
+  });
+  assertEquals(statusInicialDoSignup("PIX_AUTOMATICO", undefined), "pending");
 });

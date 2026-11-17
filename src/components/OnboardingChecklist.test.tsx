@@ -115,6 +115,15 @@ describe("OnboardingChecklist", () => {
     expect(screen.getByText(/1 de 3 concluído ·/)).toBeInTheDocument();
   });
 
+  it("só a primeira seção com passo pendente vem aberta, para o painel caber na tela", async () => {
+    const user = userEvent.setup();
+    render(<OnboardingChecklist />);
+    expect(screen.getByText("Convidar equipe")).toBeInTheDocument();
+    expect(screen.queryByText("Criar projeto")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Projetos/ }));
+    expect(screen.getByText("Criar projeto")).toBeInTheDocument();
+  });
+
   it("seção recolhe e expande", async () => {
     const user = userEvent.setup();
     render(<OnboardingChecklist />);
