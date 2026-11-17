@@ -49,6 +49,28 @@ export function templateConviteUsuario(link: string, nome?: string): EmailTempla
   };
 }
 
+export function templateBoasVindasCriarConta(link: string, nome?: string): EmailTemplate {
+  return {
+    subject: `Bem-vindo à ${BRAND.nome}: crie sua senha`,
+    html: shell({
+      preview: `Sua assinatura está ativa. Crie sua senha e comece.`,
+      footerNote: FOOTER_AUTH,
+      hero: {
+        titulo: html`Bem-vindo à ${em(BRAND.nome)}`,
+        lead: nome
+          ? html`Olá, ${strong(nome)}. Seu pagamento foi confirmado e sua assinatura está ativa. Crie sua senha para
+            entrar e configurar seu escritório.`
+          : html`Seu pagamento foi confirmado e sua assinatura está ativa. Crie sua senha para entrar e configurar seu
+            escritório.`,
+      },
+      content: [
+        button("Criar minha conta", link, { mt: 0 }),
+        small(html`O link vale por ${strong("24 horas")}. Se expirar, é só pedir outro na tela de login.`),
+      ],
+    }),
+  };
+}
+
 export function templateMagicLink(link: string): EmailTemplate {
   return {
     subject: "Seu link de acesso",

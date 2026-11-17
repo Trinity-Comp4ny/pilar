@@ -19,6 +19,7 @@ import {
   sendEmail,
   templateConfirmacaoCadastro,
   templateConviteUsuario,
+  templateBoasVindasCriarConta,
   templateMagicLink,
   templateRecuperacaoSenha,
 } from "../_shared/email/index.ts";
@@ -70,6 +71,16 @@ serve(
           break;
 
         case "invite":
+          // Convite de assinante (pós-checkout) é boas-vindas, não "alguém te convidou".
+          if (user.user_metadata?.is_pilar_subscriber) {
+            await sendEmail({
+              classe: "plataforma",
+              tipo: "auth_boas_vindas_assinante",
+              to,
+              ...templateBoasVindasCriarConta(link, userName),
+            });
+            break;
+          }
           await sendEmail({ classe: "plataforma", tipo: "auth_invite", to, ...templateConviteUsuario(link, userName) });
           break;
 
