@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, Lock, X, Rocket } from "lucide-react";
+import { Check, CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, Lock, X, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useOnboardingProgress,
@@ -26,7 +26,9 @@ export function OnboardingChecklist() {
   const { state, dismiss, setCompleted } = useOnboardingState();
 
   const [open, setOpen] = useState(true);
-  const [collapsed, setCollapsed] = useState<Set<OnboardingPilar>>(new Set());
+  // Só a primeira seção com passo pendente vem aberta: a lista inteira passava da altura da tela.
+  // O que a pessoa abrir ou fechar à mão vale por cima disso.
+  const [manual, setManual] = useState<Map<OnboardingPilar, boolean>>(new Map());
 
   useEffect(() => {
     if (allDone && !state.completed_at) void setCompleted();
@@ -36,13 +38,10 @@ export function OnboardingChecklist() {
     return null;
   }
 
+  const primeiraPendente = sections.find((sec) => sec.done < sec.total)?.pilar;
+  const estaFechada = (pilar: OnboardingPilar) => manual.get(pilar) ?? pilar !== primeiraPendente;
   const toggleSection = (pilar: OnboardingPilar) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(pilar)) next.delete(pilar);
-      else next.add(pilar);
-      return next;
-    });
+    setManual((prev) => new Map(prev).set(pilar, !estaFechada(pilar)));
   };
 
   if (!open) {
@@ -126,12 +125,12 @@ export function OnboardingChecklist() {
 
           <Progress value={percent} className="h-1.5" />
 
-          <div className="space-y-2">
+          <div className="max-h-[min(50dvh,26rem)] space-y-2 overflow-y-auto overscroll-contain">
             {sections.map((section) => (
               <SectionBlock
                 key={section.pilar}
                 section={section}
-                collapsed={collapsed.has(section.pilar)}
+                collapsed={estaFechada(section.pilar)}
                 onToggle={() => toggleSection(section.pilar)}
                 onStep={(rota) => navigate(rota)}
               />
@@ -163,7 +162,7 @@ function SectionBlock({
           <span
             className={cn(
               "rounded-full px-1.5 py-0.5 text-2xs font-semibold tabular-nums",
-              done ? "bg-success-soft text-positive-strong" : "bg-surface-muted text-ink/60"
+              done ? "bg-brand-soft text-ink" : "bg-surface-muted text-ink/60"
             )}
           >
             {section.done}/{section.total}
@@ -199,11 +198,13 @@ function StepRow({ step, onClick }: { step: OnboardingStepView; onClick: () => v
       aria-label={bloqueado ? `${step.titulo}. Antes: ${step.bloqueadoPor.map((p) => p.titulo).join("; ")}` : undefined}
       className={cn(
         "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
-        done ? "cursor-default bg-success-soft/50" : "hover:bg-brand/5"
+        done ? "cursor-default bg-brand-soft/50" : "hover:bg-brand/5"
       )}
     >
       {done ? (
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-positive-strong" />
+        <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-brand">
+          <Check className="h-2.5 w-2.5 text-ink" strokeWidth={3} />
+        </span>
       ) : bloqueado ? (
         <Lock className="h-4 w-4 shrink-0 text-ink/30" />
       ) : (
@@ -213,7 +214,7 @@ function StepRow({ step, onClick }: { step: OnboardingStepView; onClick: () => v
         <span
           className={cn(
             "block text-[13px] font-medium",
-            done ? "text-positive-strong line-through" : bloqueado ? "text-ink/50" : "text-ink"
+            done ? "text-ink/50 line-through" : bloqueado ? "text-ink/50" : "text-ink"
           )}
         >
           {step.titulo}
