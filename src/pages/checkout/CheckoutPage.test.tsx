@@ -19,7 +19,10 @@ const { invoke, recordMetric, track, planos } = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
 }));
-vi.mock("@/hooks/usePlans", async (orig) => ({ ...(await orig<typeof import("@/hooks/usePlans")>()), usePlans: () => planos }));
+vi.mock("@/hooks/usePlans", async (orig) => ({
+  ...(await orig<typeof import("@/hooks/usePlans")>()),
+  usePlans: () => planos,
+}));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { recordMetric, captureException: vi.fn() } }));
 vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: () => {} }));

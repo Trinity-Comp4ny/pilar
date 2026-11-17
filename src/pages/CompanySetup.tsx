@@ -188,7 +188,6 @@ export default function CompanySetup() {
     }
   };
 
-
   if (etapa === "wizard") {
     if (carregando) return <PageLoader size="page" label="Preparando seu onboarding" />;
     const nome = profile?.first_name?.trim() || "bem-vindo";
@@ -317,7 +316,6 @@ export default function CompanySetup() {
                 </div>
 
                 <ResultadoReceita consulta={receita} />
-
 
                 <FormField
                   control={form.control}
