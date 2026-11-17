@@ -109,17 +109,10 @@ describe("ChangePlanDialog", () => {
     expect(screen.getByText("400 créditos de IA por mês")).toBeInTheDocument();
   });
 
-  it("no anual mostra o equivalente mensal do preço anual", async () => {
+  it("sem seletor de ciclo (a landing só vende mensal) e sem troca, confirmar fica desabilitado", () => {
     comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
-    await userEvent.click(screen.getByRole("tab", { name: /anual/i }));
-    // 2990 / 12
-    expect(screen.getByText("R$ 249,17")).toBeInTheDocument();
-  });
-
-  it("confirmar sem mudar plano nem ciclo avisa e não chama o servidor", async () => {
-    comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
-    await userEvent.click(screen.getByRole("button", { name: "Confirmar mudança" }));
-    expect(toast.info).toHaveBeenCalledWith("Nenhuma alteração selecionada");
+    expect(screen.queryByRole("tab", { name: /anual/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirmar mudança" })).toBeDisabled();
     expect(invoke).not.toHaveBeenCalled();
   });
 
@@ -134,19 +127,6 @@ describe("ChangePlanDialog", () => {
       body: { action: "update_plan", new_plan_slug: "pro", new_cycle: "monthly" },
     });
     expect(toast.success).toHaveBeenCalledWith("Plano atualizado", expect.anything());
-  });
-
-  it("mudar só o ciclo (mesmo plano) também é uma troca válida", async () => {
-    invoke.mockResolvedValue({ data: { success: true }, error: null });
-    comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
-    await userEvent.click(screen.getByRole("tab", { name: /anual/i }));
-    await userEvent.click(screen.getByRole("button", { name: "Confirmar mudança" }));
-    await waitFor(() => expect(invoke).toHaveBeenCalled());
-    expect(invoke.mock.calls[0][1].body).toEqual({
-      action: "update_plan",
-      new_plan_slug: "starter",
-      new_cycle: "yearly",
-    });
   });
 
   it("erro do servidor (ex.: Asaas recusou) mostra a mensagem e mantém o diálogo aberto", async () => {
@@ -184,7 +164,7 @@ describe("ChangePlanDialog", () => {
     await userEvent.click(screen.getByText("Profissional"));
     const confirmar = screen.getByRole("button", { name: "Confirmar mudança" });
     await userEvent.dblClick(confirmar);
-    expect(await screen.findByRole("button", { name: /Atualizando/ })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole("button", { name: /Confirmar mudança/ })).toBeDisabled());
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
     expect(invoke).toHaveBeenCalledTimes(1);
     voo.resolver({ data: { success: true }, error: null });

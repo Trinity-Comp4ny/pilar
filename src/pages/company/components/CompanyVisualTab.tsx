@@ -37,7 +37,7 @@ export function CompanyVisualTab({
   };
 
   return (
-    <Card className={"border border-black/5 " + (editing ? "ring-1 ring-brand/25" : "")}>
+    <Card className={"border border-border " + (editing ? "ring-1 ring-brand/25" : "")}>
       <CardHeader className={"flex flex-row items-center justify-between " + (editing ? "bg-brand/5" : "")}>
         <div>
           <CardTitle className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export function CompanyVisualTab({
               Logo da Empresa
             </Label>
             <Input type="file" accept="image/*" onChange={onLogoFileChange} disabled={!editing} />
-            <p className="text-xs text-black/50">Recomendado: PNG/SVG com fundo transparente.</p>
+            <p className="text-xs text-muted-foreground">Recomendado: PNG/SVG com fundo transparente.</p>
           </div>
 
           <div className="space-y-3">
@@ -84,7 +84,7 @@ export function CompanyVisualTab({
             <div
               role="button"
               tabIndex={0}
-              className="p-4 bg-black/5 rounded-xl min-h-[180px] border border-black/10 flex items-center justify-center cursor-pointer"
+              className="p-4 bg-muted rounded-xl min-h-[180px] border border-border flex items-center justify-center cursor-pointer"
               onClick={openPreview}
               onKeyDown={(e) => {
                 if (e.key === "Enter") openPreview();
@@ -99,7 +99,7 @@ export function CompanyVisualTab({
               ) : companyData.logoUrl ? (
                 <img src={companyData.logoUrl} alt="Logo" className="max-h-[240px] w-full object-contain" />
               ) : (
-                <span className="text-sm text-black/50">Nenhuma logo enviada</span>
+                <span className="text-sm text-muted-foreground">Nenhuma logo enviada</span>
               )}
             </div>
           </div>
