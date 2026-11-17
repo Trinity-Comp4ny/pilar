@@ -86,7 +86,7 @@ export default function Checkout() {
               inviteDispatched={inviteDispatched}
             />
           ) : (checkoutResult?.billing_type === "PIX" || checkoutResult?.billing_type === "PIX_AUTOMATICO") &&
-          checkoutResult.metadata.pix ? (
+            checkoutResult.metadata.pix ? (
             <PixPayment
               encodedImage={checkoutResult.metadata.pix.encoded_image}
               payload={checkoutResult.metadata.pix.payload}
