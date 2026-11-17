@@ -15,6 +15,8 @@ const h = vi.hoisted(() => ({
   calls: [] as ChainQuery[],
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  openSettings: vi.fn(),
+  assinatura: null as unknown,
 }));
 
 vi.mock("@/integrations/supabase/client", async () => {
@@ -23,6 +25,11 @@ vi.mock("@/integrations/supabase/client", async () => {
   h.calls = chain.calls;
   return { supabase: { from: chain.from } };
 });
+vi.mock("@/pages/billing/hooks/useMySubscription", () => ({ useMySubscription: () => ({ data: h.assinatura }) }));
+vi.mock("@/pages/billing/components/ChangePlanDialog", () => ({
+  ChangePlanDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Trocar plano" /> : null),
+}));
+vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings: h.openSettings }) }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 
 globalThis.ResizeObserver ??= class {
@@ -38,6 +45,7 @@ const stat = (label: string) => screen.getByText(label).parentElement!;
 beforeEach(() => {
   vi.clearAllMocks();
   h.calls.length = 0;
+  h.assinatura = null;
   h.resolve.mockImplementation((q) => ({ count: CONTAGEM[q.table] }));
 });
 
@@ -46,7 +54,7 @@ describe("PlanoTab", () => {
     render(<PlanoTab empresaId={null} currentPlan="starter" />);
     expect(h.calls).toHaveLength(0);
     expect(within(stat("Usuários ativos")).getByText("0")).toBeInTheDocument();
-    expect(screen.getAllByText(/Starter/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Essencial/).length).toBeGreaterThan(0);
   });
 
   it("conta usuários ativos, projetos (view segura) e clientes da empresa", async () => {
@@ -54,7 +62,7 @@ describe("PlanoTab", () => {
     await waitFor(() => expect(within(stat("Clientes")).getByText("30")).toBeInTheDocument());
     expect(within(stat("Usuários ativos")).getByText("4")).toBeInTheDocument();
     expect(within(stat("Projetos")).getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("Acesso completo à Pilar no plano Pro")).toBeInTheDocument();
+    expect(screen.getByText("Acesso completo à Pilar no plano Profissional")).toBeInTheDocument();
 
     const perfis = h.calls.find((c) => c.table === "profiles")!;
     expect(perfis.filters).toContainEqual(["eq", "empresa_id", "e1"]);
@@ -69,13 +77,21 @@ describe("PlanoTab", () => {
     render(<PlanoTab empresaId="e1" currentPlan="enterprise" />);
     await waitFor(() => expect(h.calls).toHaveLength(3));
     expect(within(stat("Projetos")).getByText("0")).toBeInTheDocument();
-    expect(screen.getAllByText(/Enterprise/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Escala/).length).toBeGreaterThan(0);
   });
 
-  it("abre o contato com o comercial", async () => {
+  it("assinatura ativa: Mudar de plano abre a troca de plano", async () => {
+    h.assinatura = { status: "active", plan: null };
     render(<PlanoTab empresaId={null} currentPlan="starter" />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Falar com comercial" }));
-    expect(screen.getByRole("dialog", { name: /Falar com o comercial/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Falar com comercial" })).toBeNull();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Mudar de plano" }));
+    expect(screen.getByRole("dialog", { name: "Trocar plano" })).toBeInTheDocument();
+  });
+
+  it("sem assinatura ativa: Mudar de plano leva ao Pagamento", async () => {
+    render(<PlanoTab empresaId={null} currentPlan="starter" />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Mudar de plano" }));
+    expect(h.openSettings).toHaveBeenCalledWith("pagamento");
   });
 });
 
