@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // Cliente mínimo da API do Sentry para a triagem automática (workflow sentry-triagem.yml).
 //
-//   node sentry.mjs listar                 → escolhe issues, ignora ruído, escreve `ids` em $GITHUB_OUTPUT
-//   node sentry.mjs detalhe PILAR-1T OUT   → escreve o contexto da issue (markdown) em OUT
+//   node sentry.mjs listar                 → escolhe issues, ignora ruído, imprime `ids=[...]` (o workflow redireciona para $GITHUB_OUTPUT)
+//   node sentry.mjs detalhe PILAR-1T       → imprime o contexto da issue (markdown); o workflow redireciona para arquivo
+//
+// O script só escreve na saída padrão: dado do Sentry nunca é gravado em arquivo pelo JS (o redirecionamento
+// fica no workflow). Logs de progresso vão para stderr para não misturar com a saída.
 //   node sentry.mjs ignorar PILAR-1T "motivo"   → ignora a issue (até escalar) e comenta o motivo
 //   node sentry.mjs comentar PILAR-1T "texto"
 //
@@ -10,9 +13,8 @@
 // MAX_ISSUES, GH_TOKEN (listar: consulta PR/issue já abertos para não repetir trabalho).
 // Texto que vem do Sentry é dado não confiável: tudo passa por sanitizarTexto antes de ir ao agente.
 
-import { appendFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { caminhoDeSaidaValido, sanitizarTexto, selecionar, shortIdValido } from "./lib.mjs";
+import { sanitizarTexto, selecionar, shortIdValido } from "./lib.mjs";
 
 const HOST = process.env.SENTRY_HOST ?? "us.sentry.io";
 const ORG = process.env.SENTRY_ORG ?? "bez-company";
@@ -66,13 +68,12 @@ async function listar() {
 
   for (const { issue, motivo } of ruido) {
     await ignorar(issue.shortId, `ruído conhecido (${motivo}), sem ação no código.`);
-    console.log(`ignorada ${issue.shortId}: ${motivo}`);
+    console.error(`ignorada ${issue.shortId}: ${motivo}`);
   }
-  console.log(`candidatas: ${candidatas.map((i) => i.shortId).join(", ") || "nenhuma"}`);
+  console.error(`candidatas: ${candidatas.map((i) => i.shortId).join(", ") || "nenhuma"}`);
   // Só códigos no formato do Sentry chegam ao $GITHUB_OUTPUT (e dali à matrix do workflow).
   const saida = JSON.stringify(candidatas.map((i) => i.shortId).filter(shortIdValido));
-  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `ids=${saida}\n`);
-  else console.log(saida);
+  process.stdout.write(`ids=${saida}\n`);
 }
 
 function frames(evento) {
@@ -86,8 +87,8 @@ function frames(evento) {
   );
 }
 
-async function detalhe(shortId, saida) {
-  if (!shortIdValido(shortId) || !caminhoDeSaidaValido(saida)) throw new Error("issue ou caminho de saída inválido");
+async function detalhe(shortId) {
+  if (!shortIdValido(shortId)) throw new Error("código de issue inválido");
   const id = await idDaIssue(shortId);
   const issue = await api(`organizations/${ORG}/issues/${id}/`);
   const evento = await api(`organizations/${ORG}/issues/${id}/events/latest/`);
@@ -115,17 +116,17 @@ async function detalhe(shortId, saida) {
     ...(migalhas?.length ? migalhas : ["(sem breadcrumbs)"]),
     "",
   ].join("\n");
-  writeFileSync(saida, md);
+  process.stdout.write(md);
 }
 
 const [, , cmd, a, b] = process.argv;
 if (!TOKEN) {
-  console.log("::notice::SENTRY_TOKEN ausente: triagem desligada.");
+  console.error("SENTRY_TOKEN ausente: triagem desligada.");
   process.exit(0);
 }
-const comandos = { listar, detalhe: () => detalhe(a, b), ignorar: () => ignorar(a, b), comentar: () => comentar(a, b) };
+const comandos = { listar, detalhe: () => detalhe(a), ignorar: () => ignorar(a, b), comentar: () => comentar(a, b) };
 if (!comandos[cmd]) {
-  console.error("uso: sentry.mjs listar | detalhe <ID> <saida> | ignorar <ID> <motivo> | comentar <ID> <texto>");
+  console.error("uso: sentry.mjs listar | detalhe <ID> | ignorar <ID> <motivo> | comentar <ID> <texto>");
   process.exit(2);
 }
 await comandos[cmd]();

@@ -56,7 +56,7 @@ jobs:
             [[ "$ISSUE" =~ ^[A-Z0-9]+-[A-Z0-9]+$ ]] || { echo "::error::Código de issue inválido"; exit 1; }
             echo "ids=[\"$ISSUE\"]" >> "$GITHUB_OUTPUT"
           else
-            node scripts/sentry-triagem/sentry.mjs listar
+            node scripts/sentry-triagem/sentry.mjs listar >> "$GITHUB_OUTPUT"
           fi
           grep -q '^ids=' "$GITHUB_OUTPUT" || echo 'ids=[]' >> "$GITHUB_OUTPUT"
 
@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .sentry-triagem
-          node scripts/sentry-triagem/sentry.mjs detalhe "$ISSUE" .sentry-triagem/issue.md
+          node scripts/sentry-triagem/sentry.mjs detalhe "$ISSUE" > .sentry-triagem/issue.md
           cp scripts/sentry-triagem/prompt.md .sentry-triagem/prompt.md
 
       - name: Agente (triagem e correção)
