@@ -122,6 +122,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     rota: "/profile",
     opcional: true,
     check: { tipo: "perfil", campo: "avatar_url" },
+    tour: {
+      selector: "onb-foto",
+      titulo: "Sua foto",
+      texto: "Clique na foto para enviar uma imagem de até 2MB. O time passa a te reconhecer nos projetos e obras.",
+    },
   },
 
   // ————— Gestão —————
