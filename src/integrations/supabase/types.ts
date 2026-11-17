@@ -3788,6 +3788,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_atividades_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "lead_atividades_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
@@ -8204,6 +8211,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "proposta_versoes_empresa_id_fkey"
