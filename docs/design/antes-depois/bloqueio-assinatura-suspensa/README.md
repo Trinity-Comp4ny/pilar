@@ -1,4 +1,4 @@
-# Tela "Acesso suspenso": exportar dados (BEZ-585)
+# Tela "Acesso suspenso": exportar dados (BEZ-586)
 
 Antes (`origin/staging`, código real da tela) e depois (esta branch), 1440px e 390px, admin da empresa.
 Gerado com um harness do componente real, sem Supabase (só dado de exemplo, nenhum dado real).
