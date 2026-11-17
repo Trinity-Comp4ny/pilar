@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
 import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
+import { avisarAssinaturaSuspensa, ehErroDeAssinaturaSuspensa } from "@/lib/assinaturaSuspensa";
 import { jaReportadoPelaRede } from "@/lib/supabaseFetch";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -158,6 +159,7 @@ const queryClient = new QueryClient({
     mutations: {
       onError: (error, variables) => {
         toast.error(getSafeErrorMessage(error));
+        if (ehErroDeAssinaturaSuspensa(error)) avisarAssinaturaSuspensa();
         reportarFalha("mutation", error, { variables });
       },
     },

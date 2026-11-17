@@ -5,6 +5,9 @@ const KNOWN_USER_ERRORS: Record<string, string> = {
   // do queryClient (App.tsx) MESMO já tratando o erro localmente pra abrir o
   // desbloqueio (ver src/lib/capacidade.ts) — os dois toasts/diálogos coexistem,
   // então a mensagem aqui precisa fazer sentido sozinha, não repetir o diálogo.
+  empresa_assinatura_suspensa:
+    "A assinatura da sua empresa está suspensa. Regularize o pagamento para voltar a editar.",
+  empresa_em_leitura: "Sua empresa está em modo somente leitura. Assine para voltar a editar.",
   "capacidade:projetos": "Limite de projetos ativos atingido.",
   "capacidade:obras": "Limite de obras ativas atingido.",
   "capacidade:leads": "Limite de leads ativos atingido.",
