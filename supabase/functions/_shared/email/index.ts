@@ -11,6 +11,7 @@ export type { EmailTemplate } from "./templates/types.ts";
 export {
   templateConfirmacaoCadastro,
   templateConviteUsuario,
+  templateBoasVindasCriarConta,
   templateMagicLink,
   templateRecuperacaoSenha,
 } from "./templates/auth.ts";

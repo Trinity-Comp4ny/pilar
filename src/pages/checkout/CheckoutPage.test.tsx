@@ -201,7 +201,7 @@ describe("Checkout", () => {
     expect(screen.getByText("Trocar plano")).toBeInTheDocument();
   });
 
-  it("cartão aprovado na hora vai direto ao sucesso sem polling", async () => {
+  it("cartão aprovado na hora vai direto ao sucesso e consulta o status para saber do e-mail", async () => {
     invoke.mockResolvedValue({
       data: respostaCheckout({ billing_type: "CREDIT_CARD", payment_status: "paid" }),
       error: null,
@@ -210,7 +210,9 @@ describe("Checkout", () => {
     // Mesmo payload de PIX no formulário; a resposta do servidor é que manda.
     await preencherEPagarComPix();
     expect(await screen.findByText("Pagamento confirmado")).toBeInTheDocument();
-    expect(invoke).toHaveBeenCalledTimes(1);
+    // 1ª chamada cria o checkout; a 2ª é o status, que confirma o envio do e-mail.
+    expect(invoke.mock.calls[0][0]).toBe("pilar-checkout-create");
+    expect(invoke.mock.calls.length).toBeGreaterThanOrEqual(2);
     expect(recordMetric).toHaveBeenCalledTimes(1);
   });
 });

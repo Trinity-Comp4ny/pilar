@@ -42,10 +42,7 @@ export default function Checkout() {
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResponse | null>(null);
   const createCheckout = useCheckoutCreate();
 
-  const { data: status } = useCheckoutStatus(
-    checkoutResult?.session_token ?? null,
-    !!checkoutResult && checkoutResult.billing_type !== "CREDIT_CARD"
-  );
+  const { data: status } = useCheckoutStatus(checkoutResult?.session_token ?? null, !!checkoutResult);
 
   const effectiveStatus = status?.payment_status ?? checkoutResult?.payment_status ?? null;
   const inviteDispatched = status?.invite_dispatched ?? false;

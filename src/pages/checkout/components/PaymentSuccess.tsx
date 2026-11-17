@@ -24,7 +24,7 @@ export function PaymentSuccess({ email, planNome, inviteDispatched }: PaymentSuc
           <div>
             <p className="text-sm font-medium text-ink">{inviteDispatched ? "Email enviado" : "Enviando email..."}</p>
             <p className="text-xs text-ink-muted">
-              Verifique <span className="font-medium text-ink-soft">{email}</span> pra definir sua senha e entrar no
+              Verifique <span className="font-medium text-ink-soft">{email}</span> pra definir sua senha e entrar na
               Pilar.
             </p>
           </div>
