@@ -24,7 +24,7 @@ import { defaultValues, rateiosValidos, schema, type FormData, type FormInput } 
 import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
-import { CategoriaManager } from "./CategoriaManager";
+import { CategoriaCampo } from "./CategoriaManager";
 import { registrarLancamentoCriado } from "../lib/lancamentoCriado";
 import type { Json } from "@/integrations/supabase/types";
 import { montarLinhasNovas, statusEmAberto } from "../lib/lancamentoLinhas";
@@ -59,7 +59,6 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   const [saving, setSaving] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [ccManagerOpen, setCcManagerOpen] = useState(false);
-  const [catManagerOpen, setCatManagerOpen] = useState(false);
   const [rateios, setRateios] = useState<{ centro_custo_id: string; percentual: string }[]>([]);
   const [rateioOn, setRateioOn] = useState(false);
 
@@ -485,30 +484,12 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs flex items-center justify-between">
-                Categoria
-                <button
-                  type="button"
-                  className="text-3xs text-ink hover:underline inline-flex items-center gap-0.5"
-                  onClick={() => setCatManagerOpen(true)}
-                >
-                  <Settings2 className="h-3 w-3" /> gerenciar
-                </button>
-              </Label>
-              <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
-                <SelectTrigger aria-label="Categoria" className="h-9">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {aux.categorias.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <CategoriaCampo
+              value={form.watch("categoriaId")}
+              onChange={(v) => form.setValue("categoriaId", v)}
+              categorias={aux.categorias}
+              tipo={isReceita ? "Receita" : "Despesa"}
+            />
 
             {isCartaoPayment && !isReceita ? (
               <div className="space-y-1.5">
@@ -746,8 +727,6 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           </CollapsibleContent>
         </Collapsible>
       </FormDialog>
-
-      <CategoriaManager open={catManagerOpen} onOpenChange={setCatManagerOpen} tipo={isReceita ? "Receita" : "Despesa"} />
 
       <CentroCustoManager
         open={ccManagerOpen}

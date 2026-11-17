@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Tags, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Settings2, Tags, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
@@ -8,6 +8,7 @@ import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -82,7 +83,9 @@ export function CategoriaManager({ open, onOpenChange, tipo }: Props) {
       } else {
         const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
         if (!empresaId) throw new Error("Sem empresa");
-        const { error } = await supabase.from("categorias_financeiras").insert({ nome: limpo, tipo, empresa_id: empresaId });
+        const { error } = await supabase
+          .from("categorias_financeiras")
+          .insert({ nome: limpo, tipo, empresa_id: empresaId });
         if (error) throw error;
         toast.success("Categoria criada");
       }
@@ -215,5 +218,49 @@ export function CategoriaManager({ open, onOpenChange, tipo }: Props) {
         }}
       />
     </>
+  );
+}
+
+interface CampoProps {
+  value: string;
+  onChange: (id: string) => void;
+  categorias: { id: string; nome: string }[];
+  tipo: "Receita" | "Despesa";
+}
+
+/** Campo Categoria do lançamento, com o atalho "gerenciar" para criar categorias. */
+export function CategoriaCampo({ value, onChange, categorias, tipo }: CampoProps) {
+  const [open, setOpen] = useState(false);
+  // Monta o gerenciador só depois da primeira abertura (poupa a consulta e o hook).
+  const [jaAbriu, setJaAbriu] = useState(false);
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs flex items-center justify-between">
+        Categoria
+        <button
+          type="button"
+          className="text-3xs text-ink hover:underline inline-flex items-center gap-0.5"
+          onClick={() => {
+            setJaAbriu(true);
+            setOpen(true);
+          }}
+        >
+          <Settings2 className="h-3 w-3" /> gerenciar
+        </button>
+      </Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger aria-label="Categoria" className="h-9">
+          <SelectValue placeholder="Selecione" />
+        </SelectTrigger>
+        <SelectContent>
+          {categorias.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {jaAbriu && <CategoriaManager open={open} onOpenChange={setOpen} tipo={tipo} />}
+    </div>
   );
 }

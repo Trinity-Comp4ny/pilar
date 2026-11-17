@@ -11,7 +11,10 @@ describe("xlsx: datas da planilha chegam em dd/mm/aaaa", () => {
       A2: { t: "d", v: new Date(Date.UTC(2025, 10, 16)), z: "m/d/yy" },
       "!ref": "A1:A2",
     };
-    const buf = XLSX.write({ SheetNames: ["a"], Sheets: { a: ws } }, { type: "array", bookType: "xlsx", cellDates: true });
+    const buf = XLSX.write(
+      { SheetNames: ["a"], Sheets: { a: ws } },
+      { type: "array", bookType: "xlsx", cellDates: true }
+    );
     const sheet = XLSX.read(buf, { type: "array", cellDates: true }).Sheets.a;
     for (const [ref, cell] of Object.entries(sheet)) {
       if (ref.startsWith("!") || cell.t !== "d") continue;
