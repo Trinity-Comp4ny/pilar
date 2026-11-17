@@ -108,6 +108,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     adminOnly: true,
     sugereAntes: ["equipe"],
     check: { tipo: "tabela", source: "profiles", ativos: "desativado_em", minimo: 2 },
+    tour: {
+      selector: "onb-convidar",
+      titulo: "Convide seu time",
+      texto: "Clique aqui, informe nome e e-mail e escolha o nível de acesso. A pessoa recebe o convite na hora.",
+    },
   },
   {
     key: "foto",
