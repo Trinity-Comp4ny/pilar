@@ -485,7 +485,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             </div>
 
             <CategoriaCampo
-              value={form.watch("categoriaId")}
+              value={form.watch("categoriaId") ?? ""}
               onChange={(v) => form.setValue("categoriaId", v)}
               categorias={aux.categorias}
               tipo={isReceita ? "Receita" : "Despesa"}
