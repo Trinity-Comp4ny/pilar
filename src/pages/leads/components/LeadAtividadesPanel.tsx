@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ComentariosLista } from "@/components/atividades/ComentariosLista";
-import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposer";
 import { useLeadAtividades } from "../hooks/useLeadAtividades";
 import { useAuth } from "@/contexts/AuthContext";
 import { BusyMark } from "@/components/motion/BusyMark";

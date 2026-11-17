@@ -24,7 +24,8 @@ import { PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
-import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
+import { useProjetoForm } from "./useProjetoForm";
+import { EstadoSelectItems } from "./EstadoSelectItems";
 import { getPriorityDotColor } from "../lib/priorityColors";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
@@ -33,7 +34,6 @@ import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 import { BusyMark } from "@/components/motion/BusyMark";
 
 interface ProjetoFormDialogProps {
@@ -443,11 +443,7 @@ export function ProjetoFormDialog({
                           <SelectValue placeholder="UF" />
                         </SelectTrigger>
                         <SelectContent>
-                          {ESTADOS_BR.map((uf) => (
-                            <SelectItem key={uf} value={uf}>
-                              {uf}
-                            </SelectItem>
-                          ))}
+                          <EstadoSelectItems />
                         </SelectContent>
                       </Select>
                     </div>

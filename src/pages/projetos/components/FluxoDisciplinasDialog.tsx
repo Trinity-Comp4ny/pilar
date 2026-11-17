@@ -10,7 +10,7 @@ import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/pages/projetos/components/TarefasEditor";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
-import { ExecucaoDisciplinaFields } from "@/components/ExecucaoDisciplinaFields";
+import { ExecucaoDisciplinaFields } from "./ExecucaoDisciplinaFields";
 import { AvatarStack } from "@/components/AvatarStack";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";

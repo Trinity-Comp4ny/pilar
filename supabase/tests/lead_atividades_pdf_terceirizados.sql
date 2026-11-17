@@ -36,9 +36,15 @@ SELECT lives_ok($$ INSERT INTO public.proposta_versoes(id,empresa_id,proposta_id
 SELECT is((SELECT numero FROM public.proposta_versoes LIMIT 1),1,'numeração definida no servidor');
 SELECT ok((SELECT enviado_em IS NULL FROM public.proposta_versoes LIMIT 1),'importar não envia');
 SELECT is((SELECT status FROM public.propostas WHERE id='d1700000-0000-0000-0000-000000000001'),'rascunho','importar mantém rascunho');
+-- O Storage API mantém um trigger que proíbe DELETE SQL direto, mesmo sem linhas.
+-- Este trecho testa somente a RLS; a proteção de transporte fica fora do teste SQL.
+RESET ROLE;
+SET LOCAL session_replication_role = replica;
+SET LOCAL ROLE authenticated;
 WITH apagados AS (DELETE FROM storage.objects WHERE bucket_id='proposta-pdfs' RETURNING id)
 SELECT is((SELECT count(*)::int FROM apagados),0,'PDF de revisão gravada não pode ser removido pelo navegador');
 RESET ROLE;
+SET LOCAL session_replication_role = origin;
 SELECT set_config('request.jwt.claims','{"sub":"b1700000-0000-0000-0000-000000000002","role":"authenticated","aal":"aal2"}',true);
 SET LOCAL ROLE authenticated;
 SELECT is((SELECT count(*)::int FROM public.lead_atividades WHERE lead_id='c1700000-0000-0000-0000-000000000001'),0,'outra empresa não lê atividades');
