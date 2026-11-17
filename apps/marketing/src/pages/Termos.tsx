@@ -254,6 +254,11 @@ const SECTIONS: Secao[] = [
           somente leitura por {forte("90 dias")}, com exportação disponível. Depois, os dados são eliminados, salvo os
           que a lei obriga a guardar, que são anonimizados quando possível.
         </li>
+        <li>
+          Com a assinatura suspensa ou cancelada, o administrador da empresa continua podendo baixar uma cópia dos dados
+          em CSV na tela de acesso suspenso, com login recente. Arquivos anexados (documentos e fotos) não vão nessa
+          cópia e podem ser pedidos ao suporte dentro do mesmo prazo.
+        </li>
       </ul>
     ),
   },
