@@ -11,7 +11,7 @@ Marcado `[x]` ao mergear em `staging`. Estado em 17/11/2026: tudo mergeado (#890
 
 ## B. E-mail pós-compra
 - [x] B1. Hoje usa `inviteUserByEmail` (template "Seu convite chegou", parece convite de equipe). Trocar por e-mail de boas-vindas + "Criar minha conta/senha". `supabase/functions/pilar-checkout-webhook/index.ts:249`, `auth-email-hook`, `_shared/email`
-- [x] B2. Link do convite (`redirectTo` `/profile-setup`) pede a senha e segue ao onboarding. Conferido no código; falta um teste ponta a ponta com e-mail real em sandbox.
+- [x] B2. Testado no navegador com Supabase simulado (17/11): a pessoa convidada cai em `/profile-setup` com o campo de senha, o envio grava a senha (`PUT /auth/v1/user`) e segue para `/company-setup` (etapa 3 de 4). Falta só o e-mail real, que depende de um ambiente com Docker.
 
 ## C. Onboarding passo 2 ("Seu escritório")
 - [x] C1. Site: placeholder `meusite.com.br`, sem valor pré-preenchido do e-mail. `src/pages/CompanySetup.tsx`
