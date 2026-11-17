@@ -178,7 +178,7 @@ export function OnboardingWizard({
                       className={cn(
                         "flex items-center gap-3 rounded-xl border p-3.5 text-left text-sm transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10 disabled:opacity-50",
                         marcada
-                          ? "border-ink bg-paper-alt text-ink"
+                          ? "border-brand bg-brand-soft/40 text-ink ring-1 ring-brand"
                           : "border-paper-border bg-paper text-ink-soft hover:border-black/20"
                       )}
                     >
