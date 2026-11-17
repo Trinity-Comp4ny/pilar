@@ -55,7 +55,13 @@ export function CartaoFormDialog({
   return (
     <>
       {showTrigger && (
-        <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar cartão">
+        <Button
+          variant="ghost"
+          className="h-6 w-6"
+          onClick={onAddClick}
+          aria-label="Adicionar cartão"
+          data-tour="onb-novo-cartao"
+        >
           <Plus className="h-3.5 w-3.5" />
         </Button>
       )}
