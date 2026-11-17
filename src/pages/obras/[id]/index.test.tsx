@@ -19,6 +19,8 @@ vi.mock("@/hooks/usePermissions", () => ({
     can: (f: string, a = "view") => !perms.negadas.has(`${f}:${a}`) && !perms.negadas.has(f),
   }),
 }));
+const auth = vi.hoisted(() => ({ empresaId: "emp-1" }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: { empresa_id: auth.empresaId } }) }));
 const mobile = vi.hoisted(() => ({ value: false }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => mobile.value }));
 vi.mock("@/components/ui/sidebar", async (orig) => ({
@@ -69,6 +71,7 @@ import ObraDetalhePage from "./index";
 
 const obra = {
   id: "obra-1",
+  empresa_id: "emp-1",
   nome: "Residência Silva",
   status: "em_andamento",
   projeto_id: "proj-1",
@@ -115,6 +118,7 @@ describe("ObraDetalhePage", () => {
     fake.reset();
     rpcComEmpresa();
     perms.negadas = new Set();
+    auth.empresaId = "emp-1";
     mobile.value = false;
     clima.alertas = [];
   });
@@ -257,5 +261,13 @@ describe("ObraDetalhePage", () => {
       expect(toast.error).toHaveBeenCalledWith("Não foi possível remover", { description: "sem permissão" })
     );
     expect(screen.queryByText("lista-obras")).not.toBeInTheDocument();
+  });
+
+  it("esconde a aba Acessos quando a obra é de outra empresa", async () => {
+    auth.empresaId = "emp-2";
+    comObra();
+    montar();
+    expect(await screen.findByRole("heading", { name: "Residência Silva" })).toBeInTheDocument();
+    expect(abas()).not.toContain("Acessos");
   });
 });

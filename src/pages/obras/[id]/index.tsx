@@ -26,6 +26,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useObra, useDeleteObra } from "@/pages/obras/hooks/useObras";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
@@ -51,6 +52,7 @@ export default function ObraDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { can } = usePermissions();
+  const { profile } = useAuth();
   const isMobile = useIsMobile();
   const canEdit = can("obras", "edit");
   const canDelete = can("obras", "delete");
@@ -113,6 +115,10 @@ export default function ObraDetalhePage() {
   };
 
   // Abas de seção (SPEC 124): mesmas regras de visibilidade de antes, agora no slot do header.
+  // Os acessos de campo são da empresa dona da obra. Quem abre obra de outra empresa (ex.: ultra_admin
+  // no suporte) não os vê: a RPC responde "Obra não encontrada" e isso virava erro no Sentry.
+  const mostrarAcessos = canEdit && !!profile?.empresa_id && obra.empresa_id === profile.empresa_id;
+
   const secoes: SectionTab[] = [
     { id: "timeline", label: "Visão geral", icon: LayoutList },
     ...(showDiario ? [{ id: "diario", label: "Diário", icon: ClipboardList }] : []),
@@ -122,7 +128,7 @@ export default function ObraDetalhePage() {
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Financeiro", icon: Wallet }] : []),
     ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
-    ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
+    ...(mostrarAcessos ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
 
   return (
@@ -261,7 +267,7 @@ export default function ObraDetalhePage() {
             <SolicitacoesDoCliente obraId={obra.id} />
           </TabsContent>
         )}
-        {canEdit && (
+        {mostrarAcessos && (
           <TabsContent value="acessos">
             <ObraAcessosTab obraId={obra.id} canEdit={canEdit} />
           </TabsContent>
