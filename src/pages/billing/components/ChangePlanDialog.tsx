@@ -58,8 +58,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
     >
       <div className="grid gap-3 sm:grid-cols-3">
         {(plans ?? []).map((plan) => {
-          const price =
-            cycle === "yearly" ? (plan.preco_anual ?? plan.preco_mensal * 12) / 12 : plan.preco_mensal;
+          const price = cycle === "yearly" ? (plan.preco_anual ?? plan.preco_mensal * 12) / 12 : plan.preco_mensal;
           const isSelected = plan.slug === selectedSlug;
           const isCurrent = plan.slug === current.plan?.slug;
           return (

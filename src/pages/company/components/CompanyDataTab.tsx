@@ -37,9 +37,7 @@ export function CompanyDataTab({
   onStatusChange,
   onDisciplinasChange,
 }: CompanyDataTabProps) {
-  const inputClass = !editing
-    ? "bg-muted border-border text-ink"
-    : "";
+  const inputClass = !editing ? "bg-muted border-border text-ink" : "";
   const readonlyClass = "bg-muted border-border text-ink";
 
   return (
@@ -234,7 +232,8 @@ export function CompanyDataTab({
                 <span className="text-sm font-semibold">Pix nos emails de cobrança</span>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                Aparece no email que o Pilar envia ao cliente quando você cobra uma fatura. Deixe em branco se não cobra por Pix.
+                Aparece no email que o Pilar envia ao cliente quando você cobra uma fatura. Deixe em branco se não cobra
+                por Pix.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
