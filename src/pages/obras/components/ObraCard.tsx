@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { KanbanCard } from "@/components/kanban/KanbanCard";
-import { formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ObraResumo } from "@/pages/obras/hooks/useObras";
+import { lerCusto, type ResumoCusto, type SemaforoCusto } from "@/pages/obras/lib/semaforoCusto";
 
 export const STATUS_OBRA = [
   { status: "planejada", titulo: "Planejada" },
@@ -32,20 +33,30 @@ function prazoDaObra(obra: ObraResumo): { dias: number; atrasada: boolean } | nu
   return { dias: Math.abs(dias), atrasada: dias < 0 };
 }
 
+const COR_SEMAFORO: Record<SemaforoCusto, { barra: string; texto: string; rotulo: string }> = {
+  verde: { barra: "bg-positive", texto: "text-positive-strong", rotulo: "Custo no ritmo" },
+  amarelo: { barra: "bg-warning-mid", texto: "text-warning-strong", rotulo: "Custo acima do ritmo" },
+  vermelho: { barra: "bg-danger", texto: "text-danger-strong", rotulo: "Custo muito acima do ritmo" },
+};
+
 /** Card de obra no quadro: mesma peça (`KanbanCard`) do card de projeto, com os dados da obra. */
 export function ObraCard({
   obra,
   isDragging = false,
   canEdit = false,
   onMoveStatus,
+  custo,
 }: {
   obra: ObraResumo;
   isDragging?: boolean;
   canEdit?: boolean;
   onMoveStatus?: (obra: ObraResumo, status: string) => void;
+  /** Previsto e realizado da obra; sem previsto, o card não mostra a linha de custo. */
+  custo?: ResumoCusto;
 }) {
   const navigate = useNavigate();
   const prazo = prazoDaObra(obra);
+  const leitura = lerCusto(custo, obra.avanco);
 
   return (
     <KanbanCard
@@ -97,9 +108,29 @@ export function ObraCard({
       title={obra.nome}
       subtitle={obra.projeto?.nome ?? "Sem projeto"}
       meta={
-        <div className="flex w-full items-center gap-2">
-          <Progress value={obra.avanco} className="h-1 flex-1" />
-          <span className="w-7 text-right text-[11px] tabular-nums">{obra.avanco}%</span>
+        <div className="flex w-full flex-col gap-1">
+          <div className="flex w-full items-center gap-2">
+            <Progress value={obra.avanco} className="h-1 flex-1" aria-label="Avanço da obra" />
+            <span className="w-7 text-right text-[11px] tabular-nums">{obra.avanco}%</span>
+          </div>
+          {leitura && custo && (
+            <div
+              className="flex w-full items-center gap-2"
+              title={`${COR_SEMAFORO[leitura.semaforo].rotulo}: ${formatCurrency(custo.realizado)} de ${formatCurrency(custo.previsto)}`}
+              data-testid="obra-custo"
+              data-semaforo={leitura.semaforo}
+            >
+              <Progress
+                value={Math.min(leitura.gastoPct, 100)}
+                className="h-1 flex-1"
+                indicatorClassName={COR_SEMAFORO[leitura.semaforo].barra}
+                aria-label="Custo realizado sobre o orçado"
+              />
+              <span className={cn("w-7 text-right text-[11px] tabular-nums", COR_SEMAFORO[leitura.semaforo].texto)}>
+                {leitura.gastoPct}%
+              </span>
+            </div>
+          )}
         </div>
       }
       footer={
