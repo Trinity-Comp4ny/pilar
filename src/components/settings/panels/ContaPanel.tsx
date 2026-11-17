@@ -28,6 +28,8 @@ import { EmailChangeCard } from "@/components/profile/EmailChangeCard";
 import { SobrePilar } from "@/components/settings/SobrePilar";
 import { PreviasRecursos } from "@/components/settings/PreviasRecursos";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
+import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
+import { startStepTour } from "@/lib/onboarding/tour";
 import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
 
 const AVATAR_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -38,11 +40,35 @@ const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB, mesmo limite do logo de empresa
 export function ContaPanel() {
   const { user, profile, profileError, refreshProfile } = useAuth();
   const [retrying, setRetrying] = useState(false);
-  const { reset: resetOnboarding } = useOnboardingState();
+  const { reset: resetOnboarding, state: onboardingState, markTourSeen } = useOnboardingState();
+  const { steps: passosOnboarding, loading: carregandoPassos } = useOnboardingProgress();
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isRemoveAvatarConfirmOpen, setIsRemoveAvatarConfirmOpen] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const tourRef = useRef<ReturnType<typeof startStepTour>>(null);
+
+  // /profile redireciona para este painel, então o tour da foto nasce aqui, não na rota.
+  const passoFoto = passosOnboarding.find((s) => s.key === "foto");
+  const mostrarTourFoto =
+    !carregandoPassos &&
+    !onboardingState.dismissed &&
+    !!passoFoto?.tour &&
+    !passoFoto.done &&
+    !onboardingState.tours_seen.includes("foto");
+  useEffect(() => {
+    if (!mostrarTourFoto || !passoFoto?.tour) return;
+    const passo = { ...passoFoto, tour: passoFoto.tour };
+    const timer = setTimeout(() => {
+      tourRef.current = startStepTour(passo, () => void markTourSeen("foto"));
+    }, 700);
+    return () => {
+      clearTimeout(timer);
+      tourRef.current?.destroy();
+      tourRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mostrarTourFoto]);
   const queryClient = useQueryClient();
 
   const handleRefazerTour = async () => {
@@ -227,7 +253,7 @@ export function ContaPanel() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
-          <div className="group relative shrink-0">
+          <div className="group relative shrink-0" data-tour="onb-foto">
             <AvatarStack
               pessoas={[
                 {
