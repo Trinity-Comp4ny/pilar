@@ -43,6 +43,19 @@ export function capacidadeDoPlano(plan: Plan): string[] {
   return linhas;
 }
 
+/**
+ * O que todo plano inclui (espelho de INCLUSO_EM_TODOS em apps/marketing/src/lib/planos.ts).
+ * O app e a landing são builds separados: mudou lá, muda aqui.
+ */
+export const INCLUSO_EM_TODOS = [
+  "Usuários ilimitados, sem cobrar por cabeça",
+  "Gestão, Projetos e Obras, a plataforma inteira",
+  "Portal do cliente e Pilar Campo",
+  "Agentes de IA com aprovação sua",
+  "Todos os relatórios e exportações",
+  "Atualizações da plataforma",
+];
+
 export function usePlans() {
   return useQuery({
     queryKey: ["pilar-subscription-plans"],
