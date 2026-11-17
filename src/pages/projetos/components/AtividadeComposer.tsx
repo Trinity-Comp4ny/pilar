@@ -10,7 +10,8 @@ const TODOS_ID = "__todos__";
 
 interface AtividadeComposerProps {
   pessoas: { id: string; nome: string }[];
-  onSubmit: (texto: string, mencionados: string[]) => void;
+  onSubmit: (texto: string, mencionados: string[]) => void | Promise<void>;
+  habilitarMencoes?: boolean;
   placeholder?: string;
 }
 
@@ -23,8 +24,10 @@ interface AtividadeComposerProps {
  * depois (sem precisar clicar no botão); o botão @ continua como atalho que abre
  * a lista completa na posição do cursor.
  */
-export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeComposerProps) {
+export function AtividadeComposer({ pessoas, onSubmit, placeholder, habilitarMencoes = true }: AtividadeComposerProps) {
   const [texto, setTexto] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const envioEmCurso = useRef(false);
   const [mentionStart, setMentionStart] = useState<number | null>(null);
   const [mentionQuery, setMentionQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
@@ -33,7 +36,7 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
 
   const segmentos = useMemo(() => segmentarMencoes(texto, pessoas), [texto, pessoas]);
 
-  const mentionOpen = mentionStart !== null;
+  const mentionOpen = habilitarMencoes && mentionStart !== null;
   const semConta = usePessoasSemConta();
   const consulta = mentionQuery.toLowerCase();
   const sugestoes = mentionOpen
@@ -55,6 +58,7 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
   };
 
   const detectarMencao = (value: string, cursor: number) => {
+    if (!habilitarMencoes) return;
     const antesDoCursor = value.slice(0, cursor);
     const arroba = antesDoCursor.lastIndexOf("@");
     const resto = arroba === -1 ? "" : antesDoCursor.slice(arroba + 1);
@@ -87,12 +91,22 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
     });
   };
 
-  const enviar = () => {
+  const enviar = async () => {
     const t = texto.trim();
-    if (!t) return;
-    onSubmit(t, idsMencionados(t, pessoas));
-    setTexto("");
-    fecharMencao();
+    if (!t || envioEmCurso.current) return;
+    envioEmCurso.current = true;
+    setEnviando(true);
+    try {
+      const resultado = onSubmit(t, habilitarMencoes ? idsMencionados(t, pessoas) : []);
+      if (resultado) await resultado;
+      setTexto("");
+      fecharMencao();
+    } catch {
+      // O chamador apresenta o erro; o texto permanece para tentar de novo.
+    } finally {
+      envioEmCurso.current = false;
+      setEnviando(false);
+    }
   };
 
   return (
@@ -119,6 +133,8 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
               <Textarea
                 ref={textareaRef}
                 value={texto}
+                disabled={enviando}
+                maxLength={10000}
                 onChange={(e) => {
                   setTexto(e.target.value);
                   detectarMencao(e.target.value, e.target.selectionStart);
@@ -192,25 +208,28 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
           </PopoverContent>
         </Popover>
         <div className="flex items-center gap-1 px-2 pb-2">
-          <button
-            type="button"
-            onClick={() => {
-              const cursor = textareaRef.current?.selectionStart ?? texto.length;
-              setMentionStart(cursor);
-              setMentionQuery("");
-              setHighlight(0);
-              textareaRef.current?.focus();
-            }}
-            className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Mencionar alguém"
-          >
-            <AtSign className="h-4 w-4" />
-          </button>
+          {habilitarMencoes && (
+            <button
+              type="button"
+              onClick={() => {
+                const cursor = textareaRef.current?.selectionStart ?? texto.length;
+                setMentionStart(cursor);
+                setMentionQuery("");
+                setHighlight(0);
+                textareaRef.current?.focus();
+              }}
+              className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={enviando}
+              aria-label="Mencionar alguém"
+            >
+              <AtSign className="h-4 w-4" />
+            </button>
+          )}
 
           <button
             type="button"
             onClick={enviar}
-            disabled={!texto.trim()}
+            disabled={!texto.trim() || enviando}
             aria-label="Enviar"
             className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >

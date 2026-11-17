@@ -4,6 +4,9 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 const mutateAsync = vi.hoisted(() => vi.fn());
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
+vi.mock("@/pages/projetos/hooks/useSincronizarFluxoProjetos", () => ({
+  vincularProjetoAoFluxo: vi.fn(async () => undefined),
+}));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("@/hooks/useProjetoDisciplinas", () => ({
   useAplicarFluxoNoProjeto: () => ({ mutateAsync, isPending: false }),

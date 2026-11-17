@@ -52,6 +52,7 @@ export function DisciplinaNovaLinha({
             <SelectValue placeholder="Responsável" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="__terceirizada__">Serviço terceirizado</SelectItem>
             {pessoas.map((p) => (
               <SelectItem key={p.id} value={p.id} className="text-xs">
                 {p.nome}

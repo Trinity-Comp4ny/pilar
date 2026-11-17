@@ -10,6 +10,7 @@ import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/pages/projetos/components/TarefasEditor";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { ExecucaoDisciplinaFields } from "@/components/ExecucaoDisciplinaFields";
 import { AvatarStack } from "@/components/AvatarStack";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
@@ -73,7 +74,12 @@ function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineSt
           key: d._key,
           titulo: d.nome,
           status: "nao_iniciado" as const,
-          responsavelNome: resp.nomes.length ? resp.nomes.join(", ") : undefined,
+          responsavelNome:
+            d.tipo_execucao === "terceirizada"
+              ? `Terceirizado · ${d.prestador_nome || "Prestador a definir"}`
+              : resp.nomes.length
+                ? resp.nomes.join(", ")
+                : undefined,
           metaLabel: dias ? `${dias} dias úteis` : undefined,
           checklistLabel: d.checklist_padrao?.length ? `${d.checklist_padrao.length} itens` : undefined,
         };
@@ -141,6 +147,10 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       return;
     }
 
+    if (form.disciplinas.some((d) => d.tipo_execucao === "terceirizada" && !d.prestador_nome?.trim())) {
+      toast.error("Informe o prestador das disciplinas terceirizadas");
+      return;
+    }
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
@@ -459,6 +469,16 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         </button>
                                       </div>
 
+                                      <ExecucaoDisciplinaFields
+                                        tipo={disc.tipo_execucao}
+                                        prestador={disc.prestador_nome}
+                                        onChange={(tipo, prestador) =>
+                                          updateDisciplina(disc._key, {
+                                            tipo_execucao: tipo,
+                                            prestador_nome: prestador,
+                                          })
+                                        }
+                                      />
                                       {responsavelTravado ? (
                                         <div
                                           className="flex items-center gap-2 text-2xs text-muted-foreground"

@@ -361,6 +361,7 @@ export function ProjectDetailDialog({
                         <SelectValue placeholder="Responsável" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="__terceirizada__">Serviço terceirizado</SelectItem>
                         {pessoas.map((p) => (
                           <SelectItem key={p.id} value={p.id} className="text-xs">
                             {p.nome}
@@ -539,6 +540,12 @@ export function ProjectDetailDialog({
         pessoas={pessoas}
         onUpdateField={discOnUpdateField}
         onUpdateResponsaveis={discOnUpdateResponsaveis}
+        onUpdateExecucao={
+          canEdit
+            ? (tipo, prestador) =>
+                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            : undefined
+        }
         onUpdateLabels={(n) => saveDiscPatch({ labels: n })}
         onUpdateLinks={(n) => saveDiscPatch({ links: n })}
         onUpdateComentarios={(n: DisciplinaComentario[]) => saveDiscPatch({ comentarios: n })}

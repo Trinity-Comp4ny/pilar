@@ -327,6 +327,17 @@ export function useProjetoForm({
     setProjetosDisciplinas(updatedDisciplinas);
   };
 
+  const updateDisciplinaExecucao = (tipo: "interna" | "terceirizada", prestador: string) => {
+    if (selectedDisciplinaIndex === null) return;
+    setProjetosDisciplinas((prev) =>
+      prev.map((d, i) =>
+        i === selectedDisciplinaIndex
+          ? { ...d, tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null }
+          : d
+      )
+    );
+  };
+
   const updateDisciplinaResponsaveis = (ids: string[]) => {
     if (selectedDisciplinaIndex === null) return;
     const resps = ids.map((id) => ({
@@ -350,6 +361,11 @@ export function useProjetoForm({
 
     const novaDisciplina: DisciplinaResponsavel = {
       disciplina: tempDisciplina.disciplina,
+      tipo_execucao: tempDisciplina.tipo_execucao ?? "interna",
+      prestador_nome:
+        tempDisciplina.tipo_execucao === "terceirizada"
+          ? tempDisciplina.prestador_nome?.trim() || "Prestador a definir"
+          : undefined,
       responsavel_id: tempDisciplina.responsavel_id || "",
       responsavel_nome: pessoa?.nome || "",
       data_inicio: tempDisciplina.data_inicio,
@@ -497,6 +513,9 @@ export function useProjetoForm({
       const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
       return {
         disciplina: d.nome,
+        tipo_execucao: d.tipo_execucao ?? "interna",
+        prestador_nome:
+          d.tipo_execucao === "terceirizada" ? d.prestador_nome?.trim() || "Prestador a definir" : undefined,
         responsavel_id: responsaveisIds[0] || "",
         responsavel_nome: responsaveisNomes[0] || "",
         status: "Não Iniciado",
@@ -545,6 +564,11 @@ export function useProjetoForm({
       const pessoa = pessoas.find((p) => p.id === tempDisciplina.responsavel_id);
       const novaDisciplina: DisciplinaResponsavel = {
         disciplina: tempDisciplina.disciplina,
+        tipo_execucao: tempDisciplina.tipo_execucao ?? "interna",
+        prestador_nome:
+          tempDisciplina.tipo_execucao === "terceirizada"
+            ? tempDisciplina.prestador_nome?.trim() || "Prestador a definir"
+            : undefined,
         responsavel_id: tempDisciplina.responsavel_id || "",
         responsavel_nome: pessoa?.nome || "",
         data_inicio: tempDisciplina.data_inicio,
@@ -639,6 +663,8 @@ export function useProjetoForm({
           return {
             id: d.id,
             nome: d.disciplina,
+            tipo_execucao: d.tipo_execucao ?? "interna",
+            prestador_nome: d.prestador_nome ?? null,
             status: d.status || "Não Iniciado",
             data_inicio: d.data_inicio || null,
             data_fim: d.data_previsao || null,
@@ -698,6 +724,8 @@ export function useProjetoForm({
             const resps = getResponsaveisList(d);
             return {
               nome: d.disciplina,
+              tipo_execucao: d.tipo_execucao ?? "interna",
+              prestador_nome: d.prestador_nome ?? null,
               status: d.status || "Não Iniciado",
               data_inicio: d.data_inicio || null,
               data_fim: d.data_previsao || null,
@@ -853,6 +881,7 @@ export function useProjetoForm({
     setIsDisciplinaDetailOpen,
     handleOpenDisciplinaDetail,
     updateDisciplinaField,
+    updateDisciplinaExecucao,
     updateDisciplinaResponsaveis,
     newObservation,
     setNewObservation,

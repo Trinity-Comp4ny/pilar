@@ -97,6 +97,8 @@ export function useProjetosData() {
           id: string;
           projeto_id: string;
           nome: string;
+          tipo_execucao?: "interna" | "terceirizada";
+          prestador_nome?: string | null;
           status: string;
           data_inicio: string | null;
           data_fim: string | null;
@@ -118,6 +120,8 @@ export function useProjetosData() {
           id: d.id,
           projeto_id: d.projeto_id,
           nome: d.nome,
+          tipo_execucao: d.tipo_execucao,
+          prestador_nome: d.prestador_nome,
           status: d.status,
           data_inicio: d.data_inicio,
           data_fim: d.data_fim,

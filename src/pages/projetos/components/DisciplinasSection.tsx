@@ -1,3 +1,4 @@
+import { ExecucaoDisciplinaFields } from "@/components/ExecucaoDisciplinaFields";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,10 @@ function buildWizardPreviewStages(groups: ReturnType<typeof groupByEtapa>): Flux
         key: disc.id ?? `${group.etapa}-${i}`,
         titulo: disc.disciplina,
         status: "nao_iniciado" as const,
-        responsavelNome: disc.responsavel_nome || undefined,
+        responsavelNome:
+          disc.tipo_execucao === "terceirizada"
+            ? `Terceirizado · ${disc.prestador_nome || "Prestador a definir"}`
+            : disc.responsavel_nome || undefined,
         metaLabel: disc.data_previsao ? formatDateShort(disc.data_previsao) : undefined,
         checklistLabel: disc.checklist_padrao?.length ? `${disc.checklist_padrao.length} itens` : undefined,
       })),
@@ -267,7 +271,11 @@ export function DisciplinasSection({
                     {/* Responsável + status row */}
                     <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
                       <User className="h-3 w-3 shrink-0" />
-                      <span>{resps.map((r) => r.responsavel_nome).join(", ")}</span>
+                      <span>
+                        {pd.tipo_execucao === "terceirizada"
+                          ? `Terceirizado · ${pd.prestador_nome || "Prestador a definir"}`
+                          : resps.map((r) => r.responsavel_nome).join(", ")}
+                      </span>
                       <span
                         className={`ml-auto text-3xs font-medium ${
                           pd.status === "Concluído"
@@ -509,6 +517,13 @@ export function DisciplinasSection({
                 </p>
               )}
             </div>
+            <ExecucaoDisciplinaFields
+              tipo={tempDisciplina.tipo_execucao}
+              prestador={tempDisciplina.prestador_nome}
+              onChange={(tipo, prestador) =>
+                onTempDisciplinaChange({ ...tempDisciplina, tipo_execucao: tipo, prestador_nome: prestador })
+              }
+            />
             <div className="space-y-1">
               <Label className="text-xs">Responsável</Label>
               <Select

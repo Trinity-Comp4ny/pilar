@@ -31,6 +31,8 @@ export interface ResponsavelDatas {
 }
 
 export interface DisciplinaResponsavel {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string | null;
   /** ID na tabela relacional projeto_disciplinas. Presente para registros já persistidos. */
   id?: string;
   disciplina: string;
@@ -176,6 +178,8 @@ export interface Projeto {
 }
 
 export interface ProjetoDisciplinaDB {
+  tipo_execucao?: "interna" | "terceirizada";
+  prestador_nome?: string | null;
   id: string;
   projeto_id: string;
   codigo?: string | null;
@@ -215,6 +219,8 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
     id: d.id,
     codigo: d.codigo ?? undefined,
     disciplina: d.nome,
+    tipo_execucao: d.tipo_execucao ?? "interna",
+    prestador_nome: d.prestador_nome,
     responsavel_id: resps[0]?.responsavel_id || "",
     responsavel_nome: resps[0]?.responsavel_nome || "",
     data_inicio: d.data_inicio || undefined,

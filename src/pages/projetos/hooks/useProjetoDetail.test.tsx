@@ -250,7 +250,7 @@ describe("useProjetoDetail: disciplinas", () => {
       await result.current.applyDiscStatusChange(9, "Pausada");
     });
     expect(monitor.captureException).toHaveBeenCalledTimes(1);
-    expect(toast.error).toHaveBeenCalledWith("Erro ao atualizar");
+    expect(toast.error).toHaveBeenCalledWith("Erro ao atualizar", { description: "RLS" });
   });
 
   it("remover disciplina: sucesso, índice inválido e erro", async () => {

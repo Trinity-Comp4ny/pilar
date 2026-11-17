@@ -1,3 +1,4 @@
+import { ExecucaoDisciplinaFields } from "@/components/ExecucaoDisciplinaFields";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,7 @@ interface DisciplinaDetailDialogProps {
   pessoas: { id: string; nome: string }[];
   onUpdateField: (field: keyof DisciplinaResponsavel, value: string) => void;
   onUpdateResponsaveis: (ids: string[]) => void;
+  onUpdateExecucao?: (tipo: "interna" | "terceirizada", prestador: string) => void | Promise<void>;
   /** Opcionais: só a disciplina persistida (detalhe do projeto) edita estes. */
   onUpdateLabels?: (next: string[]) => void;
   onUpdateLinks?: (next: LinkItem[]) => void;
@@ -141,6 +143,7 @@ function DisciplinaDetailBody({
   pessoas,
   onUpdateField,
   onUpdateResponsaveis,
+  onUpdateExecucao,
   onUpdateLabels,
   onUpdateLinks,
   onUpdateComentarios,
@@ -161,6 +164,11 @@ function DisciplinaDetailBody({
   const disciplina = sincronizada ? comEstadoDaDisciplina(disciplinaDoPai, sincronizada) : disciplinaDoPai;
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [execucao, setExecucao] = useState({
+    tipo: disciplina.tipo_execucao ?? "interna",
+    prestador: disciplina.prestador_nome ?? "",
+  });
+  const [salvandoExecucao, setSalvandoExecucao] = useState(false);
   const persistida = !!disciplina.id;
   const comentarios = disciplina.comentarios ?? [];
   const { autorId } = useComentarioAutoria(autorNome);
@@ -397,6 +405,32 @@ function DisciplinaDetailBody({
                 </Select>
               </Prop>
 
+              {onUpdateExecucao && (
+                <Prop icon={Layers} label="Execução" className="md:col-span-2">
+                  <div className="space-y-2">
+                    <ExecucaoDisciplinaFields
+                      tipo={execucao.tipo}
+                      prestador={execucao.prestador}
+                      onChange={(tipo, prestador) => setExecucao({ tipo, prestador })}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={salvandoExecucao || (execucao.tipo === "terceirizada" && !execucao.prestador.trim())}
+                      onClick={async () => {
+                        setSalvandoExecucao(true);
+                        try {
+                          await onUpdateExecucao(execucao.tipo, execucao.prestador.trim());
+                        } finally {
+                          setSalvandoExecucao(false);
+                        }
+                      }}
+                    >
+                      Salvar execução
+                    </Button>
+                  </div>
+                </Prop>
+              )}
               <Prop icon={Layers} label="Disciplina">
                 <Select value={disciplina.disciplina} onValueChange={(val) => onUpdateField("disciplina", val)}>
                   <SelectTrigger className="h-9">
