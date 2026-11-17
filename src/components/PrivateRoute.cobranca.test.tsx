@@ -123,6 +123,29 @@ describe("PrivateRoute: acesso por status da assinatura", () => {
     expect(screen.queryByRole("button", { name: "Assinar agora" })).not.toBeInTheDocument();
   });
 
+  it("sessão aberta: cancelamento detectado ao voltar para a aba derruba o acesso", async () => {
+    await entrar("admin", { status: "active", current_period_end: null });
+    expect(await screen.findByTestId("layout")).toBeInTheDocument();
+
+    resposta = { data: { status: "canceled", current_period_end: passado() }, error: null };
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    expect(await screen.findByText("Acesso suspenso")).toBeInTheDocument();
+    expect(screen.queryByTestId("layout")).not.toBeInTheDocument();
+  });
+
+  it("sessão aberta: falha de rede na rechecagem mantém o acesso atual", async () => {
+    await entrar("admin", { status: "active", current_period_end: null });
+    expect(await screen.findByTestId("layout")).toBeInTheDocument();
+
+    resposta = { data: null, error: { message: "network down" } };
+    document.dispatchEvent(new Event("visibilitychange"));
+    await Promise.resolve();
+
+    expect(screen.getByTestId("layout")).toBeInTheDocument();
+    expect(screen.queryByText("Acesso suspenso")).not.toBeInTheDocument();
+  });
+
   it("empresa sem assinatura (convidada antiga) entra normalmente", async () => {
     await entrar("admin", null);
     expect(await screen.findByTestId("layout")).toBeInTheDocument();

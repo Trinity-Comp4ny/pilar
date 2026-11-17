@@ -22,6 +22,7 @@ type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | nu
 
 // Cache somente em memória — sessionStorage era manipulável via DevTools.
 const subStatusCache = new Map<string, SubStatus>();
+const REVALIDAR_STATUS_MS = 5 * 60 * 1000;
 
 // SPEC 098: quem não pode regularizar a assinatura (não é admin) não vê o
 // atalho pra tela de pagamento, que ele não tem acesso mesmo. Só orienta a
@@ -104,6 +105,47 @@ export function PrivateRoute() {
       active = false;
     };
   }, [isAuthenticated, empresaId, loading, mfaChallengeRequired, mfaBypass, subStatus]);
+
+  // Rechecagem: o status era lido uma vez por sessão, então quem já estava logado
+  // seguia usando o app depois de cancelar ou do convite vencer. Relê ao voltar
+  // para a aba e a cada 5 min. Falha transitória mantém o status atual (não
+  // trava ninguém por erro de rede); o banco recusa a escrita de qualquer forma.
+  const gateAtivo = !!isAuthenticated && !!empresaId && !loading && !(mfaChallengeRequired && !mfaBypass);
+  useEffect(() => {
+    if (!gateAtivo || !empresaId || subStatus === undefined) return;
+    let active = true;
+    const revalidar = async () => {
+      try {
+        const { data, error } = await (supabase
+          .from("pilar_subscriptions" as never)
+          .select("status, current_period_end")
+          .eq("empresa_id", empresaId)
+          .maybeSingle() as unknown as Promise<{
+          data: { status: SubStatus; current_period_end: string | null } | null;
+          error: unknown;
+        }>);
+        if (error || !active) return;
+        const status = statusDeAcesso(data) as SubStatus;
+        if (subStatusCache.get(empresaId) === status) return;
+        subStatusCache.set(empresaId, status);
+        setSubscription({ empresaId, status });
+      } catch {
+        // mantém o status atual
+      }
+    };
+    const aoVoltar = () => {
+      if (document.visibilityState === "visible") void revalidar();
+    };
+    document.addEventListener("visibilitychange", aoVoltar);
+    window.addEventListener("focus", aoVoltar);
+    const timer = window.setInterval(() => void revalidar(), REVALIDAR_STATUS_MS);
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", aoVoltar);
+      window.removeEventListener("focus", aoVoltar);
+      window.clearInterval(timer);
+    };
+  }, [gateAtivo, empresaId, subStatus]);
 
   // Véu de entrada (SPEC 106): o nome da empresa entra assim que o perfil chega.
   const veilLabel = profile?.empresas?.nome ? `Abrindo ${profile.empresas.nome}` : undefined;
