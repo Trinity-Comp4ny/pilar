@@ -31,6 +31,17 @@ type Fixtures = {
 };
 
 export const test = base.extend<Fixtures>({
+  // O cartão de consentimento de análise (canto inferior direito) cobre botões da tela e derruba
+  // clique de spec. A decisão já vem tomada (recusada) para o navegador de teste.
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      if (document.cookie.includes("pilar_cookie_consent=")) return;
+      const valor = encodeURIComponent(JSON.stringify({ analytics: false, decidedAt: new Date().toISOString() }));
+      document.cookie = `pilar_cookie_consent=${valor}; path=/; max-age=31536000; samesite=lax`;
+    });
+    await use(page);
+  },
+
   testEmpresa: async ({}, use, testInfo) => {
     const safe = testInfo.title
       .replace(/[^a-z0-9]+/gi, "-")
