@@ -86,14 +86,17 @@ function corClima(cat: CategoriaClima, ehDia: boolean | undefined): string {
 type Alvo = { label: string; latitude: number; longitude: number };
 
 const LAST_KEY = "pilar.clima.ultimo";
-const lerUltimo = (): Alvo | null => {
+// Só o rótulo vai para o storage; as coordenadas são reencontradas nas obras/cidades salvas.
+const lerUltimo = (): string | null => {
   try {
     const raw = localStorage.getItem(LAST_KEY);
-    return raw ? (JSON.parse(raw) as Alvo) : null;
+    const v = raw ? (JSON.parse(raw) as { label?: unknown }) : null;
+    return typeof v?.label === "string" ? v.label : null;
   } catch {
     return null;
   }
 };
+const rotuloObra = (o: { nome: string; cidade?: string | null }) => (o.cidade ? `${o.nome} · ${o.cidade}` : o.nome);
 const perto = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) =>
   Math.abs(a.latitude - b.latitude) < 0.02 && Math.abs(a.longitude - b.longitude) < 0.02;
 
@@ -210,7 +213,15 @@ export default function ObraClimaPage() {
   const comLocal = useMemo(() => obras.filter((o) => o.latitude != null && o.longitude != null), [obras]);
   const { cidades, adicionar, remover, salva } = useCidadesSalvas();
 
-  const [alvo, setAlvo] = useState<Alvo | null>(lerUltimo);
+  const [ultimoLabel] = useState<string | null>(lerUltimo);
+  const [escolhido, setAlvo] = useState<Alvo | null>(null);
+  const alvo = useMemo<Alvo | null>(() => {
+    if (escolhido) return escolhido;
+    if (!ultimoLabel) return null;
+    const obra = comLocal.find((o) => rotuloObra(o) === ultimoLabel);
+    if (obra) return { label: ultimoLabel, latitude: obra.latitude!, longitude: obra.longitude! };
+    return cidades.find((c) => c.label === ultimoLabel) ?? null;
+  }, [escolhido, ultimoLabel, comLocal, cidades]);
   const [modoLocal, setModoLocal] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [localizando, setLocalizando] = useState(false);
@@ -219,7 +230,7 @@ export default function ObraClimaPage() {
     // Posição do aparelho nunca vai para o storage: só obra ou cidade escolhida.
     if (!alvo || modoLocal) return;
     try {
-      localStorage.setItem(LAST_KEY, JSON.stringify(alvo));
+      localStorage.setItem(LAST_KEY, JSON.stringify({ label: alvo.label }));
     } catch {
       /* modo privado: sem persistência */
     }
@@ -306,7 +317,7 @@ export default function ObraClimaPage() {
               key={o.id}
               onClick={() =>
                 selecionar({
-                  label: o.cidade ? `${o.nome} · ${o.cidade}` : o.nome,
+                  label: rotuloObra(o),
                   latitude: o.latitude!,
                   longitude: o.longitude!,
                 })
