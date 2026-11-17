@@ -111,7 +111,7 @@ export function ObraCard({
         <div className="flex w-full flex-col gap-1">
           <div className="flex w-full items-center gap-2">
             <Progress value={obra.avanco} className="h-1 flex-1" aria-label="Avanço da obra" />
-            <span className="w-7 text-right text-[11px] tabular-nums">{obra.avanco}%</span>
+            <span className="w-8 text-right text-[11px] tabular-nums">{obra.avanco}%</span>
           </div>
           {leitura && custo && (
             <div
@@ -126,7 +126,7 @@ export function ObraCard({
                 indicatorClassName={COR_SEMAFORO[leitura.semaforo].barra}
                 aria-label="Custo realizado sobre o orçado"
               />
-              <span className={cn("w-7 text-right text-[11px] tabular-nums", COR_SEMAFORO[leitura.semaforo].texto)}>
+              <span className={cn("w-8 text-right text-[11px] tabular-nums", COR_SEMAFORO[leitura.semaforo].texto)}>
                 {leitura.gastoPct}%
               </span>
             </div>
