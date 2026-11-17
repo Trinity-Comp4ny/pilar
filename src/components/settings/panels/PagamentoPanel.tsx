@@ -237,15 +237,11 @@ export function PagamentoPanel() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">O que está incluso</CardTitle>
-              <p className="text-sm text-ink-muted">
-                Todo plano tem a plataforma inteira. O que muda é a capacidade.
-              </p>
+              <p className="text-sm text-ink-muted">Todo plano tem a plataforma inteira. O que muda é a capacidade.</p>
             </CardHeader>
             <CardContent className="grid gap-6 sm:grid-cols-2">
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-disabled">
-                  No seu plano
-                </p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-disabled">No seu plano</p>
                 <ul className="space-y-1.5 text-sm">
                   {capacidadeDoPlano(subscription.plan).map((linha) => (
                     <li key={linha} className="flex items-center gap-2 text-ink-soft">
