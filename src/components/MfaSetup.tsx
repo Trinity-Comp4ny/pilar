@@ -299,7 +299,7 @@ export function MfaSetup() {
   }
 
   return (
-    <>
+    <div className="space-y-4">
       <div className="rounded-lg border p-4 space-y-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className={`h-5 w-5 ${verifiedFactor ? "text-positive-strong" : "text-muted-foreground"}`} />
@@ -363,6 +363,6 @@ export function MfaSetup() {
         confirmText="Continuar"
         variant="default"
       />
-    </>
+    </div>
   );
 }

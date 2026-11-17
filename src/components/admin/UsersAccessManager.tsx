@@ -153,7 +153,7 @@ export function UsersAccessManager({
           <CardDescription>{description}</CardDescription>
         </div>
         {canManage && (
-          <Button type="button" onClick={openInvite} variant="brand" className="rounded-full">
+          <Button type="button" onClick={openInvite} variant="brand" className="rounded-full" data-tour="onb-convidar">
             <UserPlus size={16} strokeWidth={1.75} />
             Convidar usuário
           </Button>

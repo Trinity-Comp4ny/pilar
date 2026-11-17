@@ -35,6 +35,7 @@ const CRUZADOS_ACEITOS: Record<string, number> = {
 
 // Genérico por natureza (não sabe de domínio), mesmo usado por um módulo hoje.
 const GENERICOS = new Set([
+  "components/billing/TrocarPlano.ts", // ponte para a troca de plano: Admin e o aviso de limite a usam sem importar de pages/billing
   "components/DuplicateWarningDialog.tsx",
   "components/filters/FilterBar.tsx", // SPEC 124: toolbar padrão, vai a todas as listas (fase 2 em diante)
   "components/filters/filterStyles.ts",

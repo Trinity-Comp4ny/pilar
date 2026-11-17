@@ -2,6 +2,7 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { KANBAN_BOARD_CLASS } from "@/components/kanban/kanbanLayout";
 import { KanbanColumn, KanbanDraggable } from "@/components/kanban/KanbanColumn";
 import type { ObraResumo } from "@/pages/obras/hooks/useObras";
+import type { ResumoCusto } from "@/pages/obras/lib/semaforoCusto";
 import { ObraCard, STATUS_OBRA } from "./ObraCard";
 
 const COR_COLUNA: Record<string, string> = {
@@ -16,10 +17,12 @@ export function ObrasQuadro({
   obras,
   podeEditar,
   onMudarStatus,
+  custos,
 }: {
   obras: ObraResumo[];
   podeEditar: boolean;
   onMudarStatus: (obra: ObraResumo, status: string) => void;
+  custos?: ReadonlyMap<string, ResumoCusto>;
 }) {
   const onDragEnd = (r: DropResult) => {
     if (!r.destination || r.destination.droppableId === r.source.droppableId) return;
@@ -44,7 +47,13 @@ export function ObrasQuadro({
               {doStatus.map((obra, index) => (
                 <KanbanDraggable key={obra.id} id={obra.id} index={index}>
                   {(isDragging) => (
-                    <ObraCard obra={obra} isDragging={isDragging} canEdit={podeEditar} onMoveStatus={onMudarStatus} />
+                    <ObraCard
+                      obra={obra}
+                      isDragging={isDragging}
+                      canEdit={podeEditar}
+                      onMoveStatus={onMudarStatus}
+                      custo={custos?.get(obra.id)}
+                    />
                   )}
                 </KanbanDraggable>
               ))}

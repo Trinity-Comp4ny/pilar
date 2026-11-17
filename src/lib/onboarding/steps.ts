@@ -108,6 +108,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     adminOnly: true,
     sugereAntes: ["equipe"],
     check: { tipo: "tabela", source: "profiles", ativos: "desativado_em", minimo: 2 },
+    tour: {
+      selector: "onb-convidar",
+      titulo: "Convide seu time",
+      texto: "Clique aqui, informe nome e e-mail e escolha o nível de acesso. A pessoa recebe o convite na hora.",
+    },
   },
   {
     key: "foto",
@@ -173,6 +178,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     rota: "/gestao/financeiro?tab=carteira",
     feature: "financeiro",
     check: { tipo: "tabela", source: "contas", ativos: "deleted_at" },
+    tour: {
+      selector: "onb-nova-conta",
+      titulo: "Cadastre a conta do escritório",
+      texto: "Clique no + para informar o nome, o banco e o saldo inicial. Os lançamentos usam essa conta.",
+    },
   },
   {
     key: "cartao",
@@ -183,6 +193,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     feature: "financeiro",
     opcional: true,
     check: { tipo: "tabela", source: "cartoes", ativos: "deleted_at" },
+    tour: {
+      selector: "onb-novo-cartao",
+      titulo: "Cadastre um cartão",
+      texto: "Clique no + para informar fechamento, vencimento e limite. As faturas passam a aparecer no fluxo.",
+    },
   },
   {
     key: "financeiro",

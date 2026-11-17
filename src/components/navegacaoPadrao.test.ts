@@ -93,7 +93,6 @@ describe("varredura: tabelas com <table> própria seguem o visual do DataTable (
 // há motivo registrado (SPEC 124, limpeza). A lista só encolhe.
 const TABSLIST_PERMITIDO: Record<string, string> = {
   "src/components/ui/responsive-detail-panels.tsx": "painel de detalhe responsivo (primitivo de UI)",
-  "src/components/settings/panels/EmpresaPanel.tsx": "dentro do modal de configurações, outro contexto de navegação",
   "src/pages/Timesheet.tsx": "módulo dormente",
 };
 

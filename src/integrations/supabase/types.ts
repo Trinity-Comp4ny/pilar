@@ -10857,6 +10857,10 @@ export type Database = {
         Args: { p_comunicado_id: string }
         Returns: undefined
       }
+      empresa_assinatura_suspensa: {
+        Args: { p_empresa_id: string }
+        Returns: boolean
+      }
       excluir_empresa_retencao: {
         Args: { p_empresa_id: string; p_motivo: string }
         Returns: undefined

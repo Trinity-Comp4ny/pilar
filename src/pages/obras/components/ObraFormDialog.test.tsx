@@ -57,11 +57,12 @@ vi.mock("@/pages/meu-trabalho/hooks", () => ({
 let isAdmin = true;
 vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin }) }));
 let assinaturaStatus: string | null = null;
-const openSettings = vi.fn();
 vi.mock("@/pages/billing/hooks/useMySubscription", () => ({
   useMySubscription: () => ({ data: assinaturaStatus ? { status: assinaturaStatus } : null }),
 }));
-vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings }) }));
+vi.mock("@/pages/billing/components/ChangePlanDialog", () => ({
+  ChangePlanDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Trocar plano" /> : null),
+}));
 const lookupCEP = vi.fn();
 vi.mock("@/lib/brasilApi", () => ({ lookupCEP: (...a: unknown[]) => lookupCEP(...a) }));
 const geocodarCidade = vi.fn();
@@ -252,8 +253,8 @@ describe("ObraFormDialog: nova obra", () => {
     criar();
     expect(await screen.findByText("Você atingiu um limite do plano")).toBeInTheDocument();
     expect(screen.getByText(/o limite de 10 obras ativas do seu plano/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Ver planos" }));
-    expect(openSettings).toHaveBeenCalledWith("pagamento");
+    fireEvent.click(screen.getByRole("button", { name: "Fazer upgrade" }));
+    expect(await screen.findByRole("dialog", { name: "Trocar plano", hidden: true })).toBeInTheDocument();
   });
 
   it("sem acesso a projetos o vínculo de projeto some", () => {
