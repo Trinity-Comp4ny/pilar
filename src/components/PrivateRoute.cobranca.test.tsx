@@ -134,6 +134,16 @@ describe("PrivateRoute: acesso por status da assinatura", () => {
     expect(screen.queryByTestId("layout")).not.toBeInTheDocument();
   });
 
+  it("sessão aberta: escrita recusada pelo banco (evento) derruba o acesso na hora", async () => {
+    await entrar("admin", { status: "active", current_period_end: null });
+    expect(await screen.findByTestId("layout")).toBeInTheDocument();
+
+    resposta = { data: { status: "canceled", current_period_end: passado() }, error: null };
+    window.dispatchEvent(new Event("pilar:assinatura-suspensa"));
+
+    expect(await screen.findByText("Acesso suspenso")).toBeInTheDocument();
+  });
+
   it("sessão aberta: falha de rede na rechecagem mantém o acesso atual", async () => {
     await entrar("admin", { status: "active", current_period_end: null });
     expect(await screen.findByTestId("layout")).toBeInTheDocument();
