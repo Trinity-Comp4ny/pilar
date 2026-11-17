@@ -42,10 +42,15 @@ VALUES
 -- A: cancelada com periodo encerrado. B: cancelada com periodo pago ainda correndo.
 -- C: em atraso. D: ativa. Upsert (nao UPDATE): o teste nao depende de o cadastro ja
 -- ter criado a linha de assinatura.
+-- O banco de teste nao traz plano: cria um (a transacao e revertida no fim).
+INSERT INTO public.pilar_subscription_plans (slug, nome, preco_mensal)
+VALUES ('teste-bloqueio-suspensa', 'Teste bloqueio', 100)
+ON CONFLICT (slug) DO NOTHING;
+
 CREATE OR REPLACE FUNCTION test_assinatura(p_owner uuid, p_status text, p_fim timestamptz)
 RETURNS VOID LANGUAGE sql AS $f$
   INSERT INTO public.pilar_subscriptions (empresa_id, plan_id, status, current_period_end)
-  SELECT e.id, (SELECT id FROM public.pilar_subscription_plans ORDER BY created_at LIMIT 1), p_status, p_fim
+  SELECT e.id, (SELECT id FROM public.pilar_subscription_plans WHERE slug = 'teste-bloqueio-suspensa'), p_status, p_fim
     FROM public.empresas e WHERE e.owner_id = p_owner
   ON CONFLICT (empresa_id) DO UPDATE SET status = EXCLUDED.status, current_period_end = EXCLUDED.current_period_end;
 $f$;
