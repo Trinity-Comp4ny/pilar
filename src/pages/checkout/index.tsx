@@ -37,10 +37,7 @@ export default function Checkout() {
   const plan = useMemo(() => plans?.find((p) => p.slug === planSlug), [plans, planSlug]);
 
   // Mesmos itens que a landing mostra por plano: capacidade + o que todo plano inclui.
-  const resumoItens = useMemo(
-    () => (plan ? [...capacidadeDoPlano(plan), ...INCLUSO_EM_TODOS] : []),
-    [plan]
-  );
+  const resumoItens = useMemo(() => (plan ? [...capacidadeDoPlano(plan), ...INCLUSO_EM_TODOS] : []), [plan]);
 
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResponse | null>(null);
   const createCheckout = useCheckoutCreate();
