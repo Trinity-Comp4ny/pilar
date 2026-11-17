@@ -67,6 +67,11 @@
     "descricao": "Ultra admin aprova ou recusa pedido de exclusão (LGPD art. 18 VI): aprovar apaga o dado pessoal, anonimiza e bloqueia a conta (SPEC 116).",
     "chamada_externa": "aba Pedidos LGPD do ultra admin"
   },
+  "exportar-dados-empresa": {
+    "dominio": "billing",
+    "descricao": "Admin exporta os dados da empresa em CSV (zip, link assinado de 10 min), inclusive com a assinatura suspensa.",
+    "chamada_externa": "botão Exportar dados na tela Acesso suspenso (a ligar na etapa 3)"
+  },
   "exportar-dados-titular": {
     "dominio": "comunicacao",
     "descricao": "Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115).",
