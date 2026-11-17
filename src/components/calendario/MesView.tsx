@@ -34,7 +34,7 @@ export function MesView({ cursor, eventosPorDia, onEventoClick, renderNovoNoDia 
       <CardContent className="p-0">
         <div className="grid grid-cols-7 border-b bg-muted/30">
           {WEEKDAYS.map((wd) => (
-            <div key={wd} className="text-[11px] font-medium text-muted-foreground p-2 text-center">
+            <div key={wd} className="text-2xs font-medium text-muted-foreground p-2 text-center">
               {wd}
             </div>
           ))}
@@ -77,9 +77,7 @@ export function MesView({ cursor, eventosPorDia, onEventoClick, renderNovoNoDia 
                           <EventoChip key={i} evento={e} />
                         ))}
                         {eventosDoDia.length > 3 && (
-                          <div className="text-[11px] text-muted-foreground px-1.5">
-                            +{eventosDoDia.length - 3} mais
-                          </div>
+                          <div className="text-2xs text-muted-foreground px-1.5">+{eventosDoDia.length - 3} mais</div>
                         )}
                       </div>
                     </button>

@@ -81,7 +81,7 @@ export function DisciplinaGrupoAcoes({ nome, projetos, catalogo, onChanged }: Pr
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Ações da disciplina ${nome}`}>
+          <Button variant="ghost" size="icon-sm" className="shrink-0" aria-label={`Ações da disciplina ${nome}`}>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

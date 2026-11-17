@@ -114,7 +114,15 @@ serve(
     let enviados = 0;
     let falhas = 0;
 
+    // Empresa com assinatura suspensa não recebe e-mail automático (o sino segue no app).
+    const suspensas = new Set<string>();
+    for (const empresaId of new Set(lotes.map((l) => l.empresaId))) {
+      const { data: suspensa } = await admin.rpc("empresa_assinatura_suspensa", { p_empresa_id: empresaId });
+      if (suspensa === true) suspensas.add(empresaId);
+    }
+
     for (const lote of lotes) {
+      if (suspensas.has(lote.empresaId)) continue;
       const email = templateNotificacoes({
         nome: lote.nome,
         modo,

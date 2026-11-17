@@ -242,13 +242,13 @@ export function ProjectDetailDialog({
                     <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
                     {priorityConfig && (
                       <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}
+                        className={`text-3xs px-2 py-0.5 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}
                       >
                         {priorityConfig.label}
                       </span>
                     )}
                     {deadline && (
-                      <Badge className={deadline.color + " text-[10px]"}>
+                      <Badge className={deadline.color + " text-3xs"}>
                         {deadline.label} {deadline.days > 0 ? `(${deadline.days}d)` : ""}
                       </Badge>
                     )}
@@ -261,7 +261,7 @@ export function ProjectDetailDialog({
                 {canEdit && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1" aria-label="Mais opções">
+                      <Button variant="ghost" size="icon-sm" className="-mr-2 -mt-1" aria-label="Mais opções">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -330,7 +330,7 @@ export function ProjectDetailDialog({
                     Disciplinas ({disciplinasLegacy.length})
                   </Label>
                   {canEdit && !isAddingDisc && (
-                    <Button size="sm" variant="brand" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                    <Button size="xs" variant="brand" onClick={() => setIsAddingDisc(true)}>
                       <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
                     </Button>
                   )}
@@ -361,6 +361,7 @@ export function ProjectDetailDialog({
                         <SelectValue placeholder="Responsável" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="__terceirizada__">Serviço terceirizado</SelectItem>
                         {pessoas.map((p) => (
                           <SelectItem key={p.id} value={p.id} className="text-xs">
                             {p.nome}
@@ -370,9 +371,8 @@ export function ProjectDetailDialog({
                     </Select>
                     <div className="flex justify-end gap-2">
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="ghost"
-                        className="h-7 text-xs"
                         onClick={() => {
                           setIsAddingDisc(false);
                           setNewDisc({ disciplina: "", responsavel_id: "" });
@@ -381,9 +381,8 @@ export function ProjectDetailDialog({
                         Cancelar
                       </Button>
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="brand"
-                        className="h-7 text-xs"
                         disabled={!newDisc.disciplina || !newDisc.responsavel_id}
                         onClick={onAddDisc}
                       >
@@ -398,7 +397,7 @@ export function ProjectDetailDialog({
                     <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
                       <span>Nenhuma disciplina definida.</span>
                       {canEdit && (
-                        <Button size="sm" variant="brand" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                        <Button size="xs" variant="brand" onClick={() => setIsAddingDisc(true)}>
                           <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
                         </Button>
                       )}
@@ -431,12 +430,12 @@ export function ProjectDetailDialog({
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-medium">{disc.disciplina}</span>
                                   {atrasada && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                                    <span className="text-3xs px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                                       <AlertTriangle size={10} /> Atrasada
                                     </span>
                                   )}
                                 </div>
-                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-muted-foreground">
                                   <span className="inline-flex items-center gap-1">
                                     <User className="h-3 w-3" />
                                     {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
@@ -453,7 +452,7 @@ export function ProjectDetailDialog({
                                   )}
                                 </div>
                                 {atrasada && disc.justificativa_atraso && (
-                                  <p className="text-[10px] text-danger-mid mt-1 italic line-clamp-1">
+                                  <p className="text-3xs text-danger-mid mt-1 italic line-clamp-1">
                                     {disc.justificativa_atraso}
                                   </p>
                                 )}
@@ -469,8 +468,8 @@ export function ProjectDetailDialog({
                           {canEdit && (
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-danger-mid"
+                              size="icon-sm"
+                              className="shrink-0 text-muted-foreground hover:text-danger-mid"
                               onClick={() => setConfirmDeleteIdx(idx)}
                               aria-label="Excluir disciplina"
                             >
@@ -485,7 +484,7 @@ export function ProjectDetailDialog({
 
                 {projeto.observacao && (
                   <div className="mt-4 pt-3 border-t">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
+                    <Label className="text-3xs uppercase text-muted-foreground">Observações</Label>
                     <p className="text-xs text-ink-soft mt-1">{projeto.observacao}</p>
                   </div>
                 )}
@@ -541,6 +540,12 @@ export function ProjectDetailDialog({
         pessoas={pessoas}
         onUpdateField={discOnUpdateField}
         onUpdateResponsaveis={discOnUpdateResponsaveis}
+        onUpdateExecucao={
+          canEdit
+            ? (tipo, prestador) =>
+                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            : undefined
+        }
         onUpdateLabels={(n) => saveDiscPatch({ labels: n })}
         onUpdateLinks={(n) => saveDiscPatch({ links: n })}
         onUpdateComentarios={(n: DisciplinaComentario[]) => saveDiscPatch({ comentarios: n })}
@@ -606,14 +611,13 @@ export function ProjectDetailDialog({
               onChange={(v) => setConcludingDate(v || "")}
               maxDate={new Date().toISOString().split("T")[0]}
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Use a data em que o trabalho foi de fato entregue, não a data administrativa de hoje.
             </p>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-positive hover:bg-positive/90"
               disabled={!concludingDate}
               onClick={async () => {
                 if (concludingDiscIdx === null || !concludingDate) return;

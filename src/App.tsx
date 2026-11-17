@@ -1,13 +1,16 @@
 import { Suspense, lazy, useEffect } from "react";
+import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ManifestDoApp } from "@/components/instalar/ManifestDoApp";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
 import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
+import { avisarAssinaturaSuspensa, ehErroDeAssinaturaSuspensa } from "@/lib/assinaturaSuspensa";
+import { jaReportadoPelaRede } from "@/lib/supabaseFetch";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
@@ -31,6 +34,10 @@ import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
+// Lazy: puxar para atualizar só serve em tela de toque; fora do bundle de entrada (teto apertado).
+const PullToRefresh = lazy(() =>
+  import("@/components/mobile/PullToRefresh").then((m) => ({ default: m.PullToRefresh }))
+);
 const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );
@@ -46,6 +53,13 @@ const ArtigoAjuda = lazy(() => import("./pages/ajuda/Artigo"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
 const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
+// Links antigos (aviso de reunião) abriam a Agenda como visão de Tarefas.
+function TarefasOuAgenda() {
+  const [params] = useSearchParams();
+  if (params.get("visao") === "agenda") return <Navigate to="/gestao/agenda" replace />;
+  return <MeuTrabalho />;
+}
+const Agenda = lazy(() => import("./pages/meu-trabalho/AgendaPagina"));
 const Obras = lazy(() => import("./pages/obras"));
 const ObraClima = lazy(() => import("./pages/obras/clima"));
 const ObraDetalhe = lazy(() => import("./pages/obras/[id]"));
@@ -102,6 +116,7 @@ const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback
 const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases })));
 const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
 const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
+const UltraDoresMercado = lazy(() => ultraAdmin().then((m) => ({ default: m.DoresMercado })));
 const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
 const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
@@ -117,6 +132,22 @@ const PasswordReset = lazy(() => import("./pages/PasswordReset"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const SemAcesso = lazy(() => import("./pages/SemAcesso"));
 
+/**
+ * Falha do react-query que a camada de rede (supabaseFetch) ainda não reportou: sem duplicar, e
+ * com fingerprint por origem para não virar tudo uma issue só, "Erro inesperado".
+ */
+function reportarFalha(origem: "query" | "mutation", err: unknown, extra: Record<string, unknown>, chave = "") {
+  if (jaReportadoPelaRede(err)) return;
+  // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
+  // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
+  const raw = getRawErrorMessage(err) || "Erro inesperado";
+  monitoring.captureException(
+    err instanceof Error ? err : new Error(raw),
+    { source: `react-query.${origem}`, ...extra },
+    { fingerprint: ["react-query", origem, chave, raw] }
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -128,13 +159,8 @@ const queryClient = new QueryClient({
     mutations: {
       onError: (error, variables) => {
         toast.error(getSafeErrorMessage(error));
-        // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
-        // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
-        const raw = getRawErrorMessage(error) || "Erro inesperado";
-        monitoring.captureException(error instanceof Error ? error : new Error(raw), {
-          source: "react-query.mutation",
-          variables,
-        });
+        if (ehErroDeAssinaturaSuspensa(error)) avisarAssinaturaSuspensa();
+        reportarFalha("mutation", error, { variables });
       },
     },
   },
@@ -142,12 +168,8 @@ const queryClient = new QueryClient({
 
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === "updated" && event.action.type === "error") {
-    const err = event.action.error;
-    const raw = getRawErrorMessage(err) || "Erro inesperado";
-    monitoring.captureException(err instanceof Error ? err : new Error(raw), {
-      source: "react-query.query",
-      queryKey: event.query.queryKey,
-    });
+    const { queryKey } = event.query;
+    reportarFalha("query", event.action.error, { queryKey }, String(queryKey[0]));
   }
 });
 
@@ -232,6 +254,11 @@ const App = () => {
           <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
+            {TELA_DE_TOQUE && (
+              <Suspense fallback={null}>
+                <PullToRefresh />
+              </Suspense>
+            )}
             <ManifestDoApp />
             <AuthProvider>
               <ImpersonationProvider>
@@ -287,11 +314,6 @@ const App = () => {
                             <Route element={<FeatureRoute feature="obras_clima" />}>
                               <Route path="/obras/clima" element={<ObraClima />} />
                             </Route>
-                            {/* Fornecedor mora no módulo Obra (spec 026). */}
-                            <Route element={<FeatureRoute feature="obras_fornecedores" />}>
-                              <Route path="/obras/fornecedores" element={<Fornecedores />} />
-                              <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
-                            </Route>
                             {/* Estimativa paramétrica (SPEC 136): feature opt-in por empresa. */}
                             <Route element={<FeatureRoute feature="estimativa_obra" />}>
                               <Route path="/obras/estimativas" element={<EstimativasObra />} />
@@ -306,7 +328,8 @@ const App = () => {
                           {/* Gestão: /gestao abre a primeira aba; cada aba vive em /gestao/*. */}
                           <Route path="/gestao" element={<Navigate to="/gestao/tarefas" replace />} />
                           <Route element={<FeatureRoute feature="meu_trabalho" />}>
-                            <Route path="/gestao/tarefas" element={<MeuTrabalho />} />
+                            <Route path="/gestao/tarefas" element={<TarefasOuAgenda />} />
+                            <Route path="/gestao/agenda" element={<Agenda />} />
                           </Route>
                           <Route element={<FeatureRoute feature="leads" />}>
                             <Route path="/gestao/leads" element={<Leads />} />
@@ -317,6 +340,11 @@ const App = () => {
                           </Route>
                           <Route element={<FeatureRoute feature="propostas" />}>
                             <Route path="/gestao/propostas" element={<Propostas />} />
+                          </Route>
+                          {/* Fornecedor é cadastro da empresa: serve a projeto e a obra. */}
+                          <Route element={<FeatureRoute feature="obras_fornecedores" />}>
+                            <Route path="/gestao/fornecedores" element={<Fornecedores />} />
+                            <Route path="/gestao/fornecedores/:id" element={<FornecedorDetalhe />} />
                           </Route>
                           {/* Financeiro: gate de módulo da empresa + RLS. Desde o
                           ADR 0029 não há recorte por usuário. */}
@@ -394,7 +422,11 @@ const App = () => {
                           />
                           <Route
                             path="/fornecedores/*"
-                            element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
+                            element={<RedirectPrefix from="/fornecedores" to="/gestao/fornecedores" />}
+                          />
+                          <Route
+                            path="/obras/fornecedores/*"
+                            element={<RedirectPrefix from="/obras/fornecedores" to="/gestao/fornecedores" />}
                           />
                           <Route path="/calendario/*" element={<Navigate to="/projetos/cronograma" replace />} />
                           <Route path="/disciplinas" element={<Navigate to="/projetos/disciplinas" replace />} />
@@ -435,6 +467,7 @@ const App = () => {
                               <Route path="releases" element={<UltraReleases />} />
                               <Route path="ajuda" element={<UltraAjudaLacunas />} />
                               <Route path="satisfacao" element={<UltraSatisfacao />} />
+                              <Route path="dores" element={<UltraDoresMercado />} />
                               <Route path="comunicados" element={<UltraComunicados />} />
                               <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />

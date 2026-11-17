@@ -73,7 +73,16 @@ export interface SendEmailInput {
 
 export type SendEmailResult =
   | { ok: true; resendId: string | null; envioId: string | null }
-  | { ok: false; skipped: "suprimido" | "dry_run"; envioId: string | null };
+  | { ok: false; skipped: "suprimido" | "dry_run" | "duplicado"; envioId: string | null };
+
+/**
+ * O Resend devolve 409 `invalid_idempotent_request` quando a mesma Idempotency-Key já foi usada nas
+ * últimas 24h com outro corpo. A chave existe para garantir "um e-mail por evento": se ela já foi
+ * usada, o e-mail daquele evento já saiu, então não é falha de envio (nem merece alerta no Sentry).
+ */
+export function ehConflitoDeIdempotencia(status: number, corpo: string): boolean {
+  return status === 409 && corpo.includes("invalid_idempotent_request");
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -264,6 +273,14 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       }
 
       const errBody = await res.text();
+      if (ehConflitoDeIdempotencia(res.status, errBody)) {
+        await logUpdate(envioId, {
+          status: "falhou",
+          erro: "duplicado: a chave de idempotência já foi usada nas últimas 24h, o e-mail deste evento já saiu",
+        });
+        console.warn(`[email] ${input.tipo}: chave de idempotência já usada, envio duplicado ignorado`);
+        return { ok: false, skipped: "duplicado", envioId };
+      }
       lastError = new Error(`Resend ${res.status}: ${errBody}`);
       // 4xx (fora 429) não melhora repetindo: registra a falha e sai.
       if (res.status < 500 && res.status !== 429) break;

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
+import { Check, CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, Lock, X, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useOnboardingProgress,
@@ -26,7 +26,9 @@ export function OnboardingChecklist() {
   const { state, dismiss, setCompleted } = useOnboardingState();
 
   const [open, setOpen] = useState(true);
-  const [collapsed, setCollapsed] = useState<Set<OnboardingPilar>>(new Set());
+  // Só a primeira seção com passo pendente vem aberta: a lista inteira passava da altura da tela.
+  // O que a pessoa abrir ou fechar à mão vale por cima disso.
+  const [manual, setManual] = useState<Map<OnboardingPilar, boolean>>(new Map());
 
   useEffect(() => {
     if (allDone && !state.completed_at) void setCompleted();
@@ -36,13 +38,10 @@ export function OnboardingChecklist() {
     return null;
   }
 
+  const primeiraPendente = sections.find((sec) => sec.done < sec.total)?.pilar;
+  const estaFechada = (pilar: OnboardingPilar) => manual.get(pilar) ?? pilar !== primeiraPendente;
   const toggleSection = (pilar: OnboardingPilar) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(pilar)) next.delete(pilar);
-      else next.add(pilar);
-      return next;
-    });
+    setManual((prev) => new Map(prev).set(pilar, !estaFechada(pilar)));
   };
 
   if (!open) {
@@ -126,12 +125,12 @@ export function OnboardingChecklist() {
 
           <Progress value={percent} className="h-1.5" />
 
-          <div className="space-y-2">
+          <div className="max-h-[min(50dvh,26rem)] space-y-2 overflow-y-auto overscroll-contain">
             {sections.map((section) => (
               <SectionBlock
                 key={section.pilar}
                 section={section}
-                collapsed={collapsed.has(section.pilar)}
+                collapsed={estaFechada(section.pilar)}
                 onToggle={() => toggleSection(section.pilar)}
                 onStep={(rota) => navigate(rota)}
               />
@@ -162,8 +161,8 @@ function SectionBlock({
           {section.label}
           <span
             className={cn(
-              "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
-              done ? "bg-success-soft text-positive-strong" : "bg-surface-muted text-ink/60"
+              "rounded-full px-1.5 py-0.5 text-2xs font-semibold tabular-nums",
+              done ? "bg-brand-soft text-ink" : "bg-surface-muted text-ink/60"
             )}
           >
             {section.done}/{section.total}
@@ -175,7 +174,7 @@ function SectionBlock({
       {!collapsed && (
         <div className="space-y-1 px-2 pb-2">
           {section.steps.map((step) => (
-            <StepRow key={step.key} step={step} onClick={() => onStep(step.rota)} />
+            <StepRow key={step.key} step={step} onClick={() => onStep(step.bloqueadoPor[0]?.rota ?? step.rota)} />
           ))}
         </div>
       )}
@@ -185,27 +184,54 @@ function SectionBlock({
 
 function StepRow({ step, onClick }: { step: OnboardingStepView; onClick: () => void }) {
   const { done } = step;
+  const bloqueado = !done && step.bloqueadoPor.length > 0;
+  // Bloqueado: o botão leva ao primeiro pré-requisito, e a linha diz o que falta (SPEC 165).
+  const falta = step.bloqueadoPor.map((p) =>
+    p.titulo.replace(/^(Cadastre|Crie|Abra|Faça|Convide|Monte)\s+(um|uma|seu|sua)?\s*/i, "").toLowerCase()
+  );
+  const dica = !bloqueado && !done && step.sugeridoAntes.length > 0 ? step.sugeridoAntes[0].titulo : null;
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={done}
+      aria-label={bloqueado ? `${step.titulo}. Antes: ${step.bloqueadoPor.map((p) => p.titulo).join("; ")}` : undefined}
       className={cn(
         "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
-        done ? "cursor-default bg-success-soft/50" : "hover:bg-brand/5"
+        done ? "cursor-default bg-brand-soft/50" : "hover:bg-brand/5"
       )}
     >
       {done ? (
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-positive-strong" />
+        <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-brand">
+          <Check className="h-2.5 w-2.5 text-ink" strokeWidth={3} />
+        </span>
+      ) : bloqueado ? (
+        <Lock className="h-4 w-4 shrink-0 text-ink/30" />
       ) : (
         <Circle className="h-4 w-4 shrink-0 text-ink/25" />
       )}
       <span className="min-w-0 flex-1">
-        <span className={cn("block text-[13px] font-medium", done ? "text-positive-strong line-through" : "text-ink")}>
+        <span
+          className={cn(
+            "block text-[13px] font-medium",
+            done ? "text-ink/50 line-through" : bloqueado ? "text-ink/50" : "text-ink"
+          )}
+        >
           {step.titulo}
-          {step.opcional && !done && <span className="ml-1.5 text-[11px] font-normal text-ink/40">opcional</span>}
+          {step.opcional && !done && <span className="ml-1.5 text-2xs font-normal text-ink/40">opcional</span>}
         </span>
-        {!done && <span className="mt-0.5 block text-[11px] leading-snug text-ink/50">{step.descricao}</span>}
+        {bloqueado ? (
+          <span className="mt-0.5 block text-2xs leading-snug text-ink/50">
+            Falta: {falta.join(" e ")}. Toque para fazer primeiro.
+          </span>
+        ) : (
+          !done && (
+            <span className="mt-0.5 block text-2xs leading-snug text-ink/50">
+              {step.descricao}
+              {dica && <span className="block text-ink/40">Antes, de preferência: {dica.toLowerCase()}.</span>}
+            </span>
+          )
+        )}
       </span>
       {!done && <ChevronRight className="h-4 w-4 shrink-0 text-ink/30" />}
     </button>

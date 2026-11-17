@@ -8,6 +8,7 @@ import type { ObraResumo } from "@/pages/obras/hooks/useObras";
 // Conta da obra: saldo e extrato, ações só com permissão, exclusão sob confirmação
 // (despesa estorna a taxa via RPC) e falha na exclusão avisada.
 
+vi.mock("@/pages/obras/hooks/useFornecedoresLite", () => ({ useFornecedoresLite: () => ({ data: [] }) }));
 vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/pages/obras/testing/supabaseFake")).fake.supabase,
 }));

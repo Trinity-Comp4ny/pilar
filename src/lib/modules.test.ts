@@ -14,7 +14,7 @@ describe("routeToModule", () => {
   it("resolve rota exata de cada item de menu", () => {
     expect(routeToModule("/gestao/financeiro")).toBe("gestao");
     expect(routeToModule("/gestao/equipe")).toBe("gestao");
-    expect(routeToModule("/obras/fornecedores")).toBe("obras");
+    expect(routeToModule("/gestao/fornecedores")).toBe("gestao");
     expect(routeToModule("/gestao/leads")).toBe("gestao");
     expect(routeToModule("/gestao/propostas")).toBe("gestao");
     expect(routeToModule("/gestao/clientes")).toBe("gestao");

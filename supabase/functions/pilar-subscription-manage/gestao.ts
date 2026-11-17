@@ -102,3 +102,41 @@ export function planejarTrocaDePlano(
     },
   };
 }
+
+export interface FaturaDaAssinatura {
+  id: string;
+  status: string;
+  value: number;
+  due_date: string;
+  payment_date: string | null;
+  billing_type: string;
+  /** Comprovante quando paga; fatura/boleto/QR enquanto aberta. */
+  url: string | null;
+  paga: boolean;
+}
+
+const STATUS_PAGOS = ["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"];
+
+/** Só o que a tela precisa de uma cobrança do Asaas, sem repassar o payload inteiro. */
+export function faturaDaCobranca(p: {
+  id: string;
+  status: string;
+  value: number;
+  dueDate: string;
+  paymentDate?: string;
+  billingType: string;
+  invoiceUrl?: string;
+  transactionReceiptUrl?: string | null;
+}): FaturaDaAssinatura {
+  const paga = STATUS_PAGOS.includes(p.status);
+  return {
+    id: p.id,
+    status: p.status,
+    value: p.value,
+    due_date: p.dueDate,
+    payment_date: p.paymentDate ?? null,
+    billing_type: p.billingType,
+    url: (paga ? p.transactionReceiptUrl : null) ?? p.invoiceUrl ?? null,
+    paga,
+  };
+}

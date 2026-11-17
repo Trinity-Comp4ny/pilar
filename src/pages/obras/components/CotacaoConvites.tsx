@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CompartilharButton } from "@/components/mobile/CompartilharButton";
 import { toast } from "sonner";
 import { Copy, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,7 @@ export function CotacaoConvites({ obraId, cotacao }: Props) {
         <h3 className="text-sm font-medium text-ink">Links para fornecedores</h3>
         <span className="text-xs text-muted-foreground">{convites.length}</span>
         {podeGerar && (
-          <Button variant="outline" size="sm" className="ml-auto h-7" onClick={() => setGerando(true)}>
+          <Button variant="outline" size="xs" className="ml-auto" onClick={() => setGerando(true)}>
             Gerar link
           </Button>
         )}
@@ -79,8 +80,7 @@ export function CotacaoConvites({ obraId, cotacao }: Props) {
                 {podeRevogarConvite(estado) && (
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="h-7"
+                    size="xs"
                     disabled={revogar.isPending}
                     onClick={() =>
                       revogar.mutate(c.id, {
@@ -250,6 +250,17 @@ function LinkGeradoDialog({
             <Copy className="mr-1.5 h-4 w-4" />
             Copiar link
           </Button>
+          <CompartilharButton
+            dados={() =>
+              gerado
+                ? {
+                    titulo: "Cotação",
+                    texto: `Cotação para ${gerado.fornecedor}: informe preço e prazo pelo link.`,
+                    url: gerado.link,
+                  }
+                : null
+            }
+          />
           <Button variant="outline" onClick={onClose}>
             Fechar
           </Button>

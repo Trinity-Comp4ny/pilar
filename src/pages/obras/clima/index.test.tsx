@@ -157,18 +157,20 @@ describe("ObraClimaPage", () => {
     expect(screen.getByText("1.2 mm")).toBeInTheDocument();
     expect(screen.getByText("12 mm")).toBeInTheDocument();
     expect(await screen.findByText(/choveu em 3 dias · 42 mm/)).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("pilar.clima.ultimo")!)).toMatchObject({ label: "Casa · Campinas" });
+    expect(JSON.parse(localStorage.getItem("pilar.clima.ultimo")!)).toEqual({ label: "Casa · Campinas" });
   });
 
   it("histórico sem chuva e um dia de chuva", async () => {
-    localStorage.setItem("pilar.clima.ultimo", JSON.stringify({ label: "Último", latitude: 1, longitude: 2 }));
+    localStorage.setItem("pilar.clima.cidades", JSON.stringify([{ label: "Último", latitude: 1, longitude: 2 }]));
+    localStorage.setItem("pilar.clima.ultimo", JSON.stringify({ label: "Último" }));
     api.buscarHistorico.mockResolvedValueOnce({ totalDias: 14, diasChuva: 0, chuvaMm: 0 });
     montar();
     expect(await screen.findByText(/sem chuva registrada/)).toBeInTheDocument();
   });
 
   it("erro na previsão mostra o estado de erro", async () => {
-    localStorage.setItem("pilar.clima.ultimo", JSON.stringify({ label: "Último", latitude: 1, longitude: 2 }));
+    localStorage.setItem("pilar.clima.cidades", JSON.stringify([{ label: "Último", latitude: 1, longitude: 2 }]));
+    localStorage.setItem("pilar.clima.ultimo", JSON.stringify({ label: "Último" }));
     api.buscarPrevisao.mockRejectedValue(new Error("open-meteo fora"));
     montar();
     expect(await screen.findByText("Não foi possível obter o clima")).toBeInTheDocument();
@@ -181,7 +183,9 @@ describe("ObraClimaPage", () => {
   });
 
   it("salvar a cidade vira aba; remover tira", async () => {
-    localStorage.setItem("pilar.clima.ultimo", JSON.stringify({ label: "Sorocaba", latitude: 5, longitude: 6 }));
+    localStorage.setItem("pilar.clima.ultimo", JSON.stringify({ label: "Sorocaba" }));
+    localStorage.setItem("pilar.clima.cidades", JSON.stringify([]));
+    obrasMock.data = [{ id: "o-9", nome: "Sorocaba", cidade: null, latitude: 5, longitude: 6 }];
     montar();
     fireEvent.click(await screen.findByRole("button", { name: "Salvar" }));
     expect(screen.getByRole("button", { name: "Salva" })).toBeInTheDocument();

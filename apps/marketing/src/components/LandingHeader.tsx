@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { trackCta } from "../analytics";
 import { useAcesso } from "../loginHint";
-import { MODULOS } from "../lib/modules";
+import { MODULOS_NAV } from "../lib/navegacao";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
 
@@ -147,14 +147,14 @@ export function LandingHeader() {
                       : "opacity-0 invisible -translate-y-1"
                   }`}
                 >
-                  {MODULOS.map((mo) => (
+                  {MODULOS_NAV.map((mo) => (
                     <Link
                       key={mo.slug}
                       to={`/${mo.slug}`}
                       onClick={() => fechar()}
                       className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
                     >
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${mo.cor.strong}`} />
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
                         <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
@@ -217,7 +217,7 @@ export function LandingHeader() {
             <p className="px-3.5 pt-2.5 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
               Produto
             </p>
-            {MODULOS.map((mo) => {
+            {MODULOS_NAV.map((mo) => {
               const atual = pathname === `/${mo.slug}`;
               return (
                 <Link
@@ -229,7 +229,7 @@ export function LandingHeader() {
                     atual ? "bg-card-brand-soft" : ""
                   }`}
                 >
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${mo.cor.strong}`} />
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
                     <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>

@@ -226,7 +226,7 @@ function TarefaFormBody({
           Propriedades e descrição à esquerda; atividades à direita.
         </DialogDescription>
         <div className="mb-2 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             <CheckSquare className="h-3 w-3" /> Tarefa
           </span>
           {tarefa?.numero != null && (

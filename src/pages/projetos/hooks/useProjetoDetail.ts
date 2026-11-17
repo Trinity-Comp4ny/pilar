@@ -147,7 +147,7 @@ export function useProjetoDetail(id: string | undefined) {
         // (spec 102), para valer em qualquer tela que conclua a disciplina.
       } catch (err: unknown) {
         monitoring.captureException(err, { context: "handleStatusChange" });
-        toast.error("Erro ao atualizar");
+        toast.error("Erro ao atualizar", { description: errorMessage(err) });
       }
     },
     [projeto, dbDisciplinas, updateStatusMut, toast]
@@ -176,7 +176,10 @@ export function useProjetoDetail(id: string | undefined) {
           projeto_id: projeto.id,
           nome: newDisc.disciplina,
           status: "Não Iniciado",
-          responsavel_ids: [newDisc.responsavel_id],
+          responsavel_ids: newDisc.responsavel_id === "__terceirizada__" ? [] : [newDisc.responsavel_id],
+          ...(newDisc.responsavel_id === "__terceirizada__"
+            ? { tipo_execucao: "terceirizada" as const, prestador_nome: "Prestador a definir" }
+            : {}),
         });
         toast.success("Disciplina adicionada");
       } catch (err: unknown) {
@@ -195,6 +198,8 @@ export function useProjetoDetail(id: string | undefined) {
           id: editingDiscLocal.id,
           projeto_id: projeto.id,
           nome: editingDiscLocal.nome,
+          tipo_execucao: editingDiscLocal.tipo_execucao,
+          prestador_nome: editingDiscLocal.prestador_nome,
           status: editingDiscLocal.status,
           data_inicio: editingDiscLocal.data_inicio,
           data_fim: editingDiscLocal.data_fim,
@@ -262,7 +267,7 @@ export function useProjetoDetail(id: string | undefined) {
       if (!dbDisc) return;
       const currentIds = (dbDisc.responsaveis || []).map((r) => r.id);
 
-      if (currentIds.length <= 1) {
+      if (currentIds.length <= 1 && dbDisc.tipo_execucao !== "terceirizada") {
         toast.error("A disciplina precisa ter ao menos um responsável");
         return;
       }

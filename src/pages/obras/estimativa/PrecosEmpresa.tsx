@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useMemo, useState } from "react";
 import { Info, Tags } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +8,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { PilarPage } from "@/components/PilarPage";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -133,19 +133,16 @@ export default function PrecosEmpresa() {
   if (isAdmin) {
     colunas.push({
       key: "acoes",
-      header: "",
+      header: <span className="sr-only">Ações</span>,
       align: "end",
       cell: (l) => (
-        <span className="flex justify-end gap-2">
-          {l.ajustado && (
-            <Button variant="ghost" size="sm" onClick={() => setVoltando(l)}>
-              Voltar à referência
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={() => setEditando(l)}>
-            {l.ajustado ? "Editar" : "Definir valor"}
-          </Button>
-        </span>
+        <RowActions
+          label={l.adicional.rotulo}
+          actions={[
+            { label: l.ajustado ? "Editar" : "Definir valor", onClick: () => setEditando(l) },
+            { label: "Voltar à referência", hidden: !l.ajustado, onClick: () => setVoltando(l) },
+          ]}
+        />
       ),
     });
   }

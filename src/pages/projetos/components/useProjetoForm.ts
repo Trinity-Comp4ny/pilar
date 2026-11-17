@@ -21,42 +21,13 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { analytics } from "@/lib/analytics";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { vincularProjetoAoFluxo } from "@/pages/projetos/hooks/useSincronizarFluxoProjetos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { gerarParcelasDoProjeto, parcelasDoForm } from "../lib/parcelasDoForm";
 
 const PROJETO_DRAFT_KEY = "projeto-novo";
-
-export const ESTADOS_BR = [
-  "AC",
-  "AL",
-  "AP",
-  "AM",
-  "BA",
-  "CE",
-  "DF",
-  "ES",
-  "GO",
-  "MA",
-  "MT",
-  "MS",
-  "MG",
-  "PA",
-  "PB",
-  "PR",
-  "PE",
-  "PI",
-  "RJ",
-  "RN",
-  "RS",
-  "RO",
-  "RR",
-  "SC",
-  "SP",
-  "SE",
-  "TO",
-];
 
 const EMPTY_FORM = {
   codigo_projeto: "",
@@ -178,6 +149,7 @@ export function useProjetoForm({
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [projetosDisciplinas, setProjetosDisciplinas] = useState<DisciplinaResponsavel[]>([]);
+  const fluxoAplicadoRef = useRef<string | null>(null);
   const [tempDisciplina, setTempDisciplina] = useState<Partial<DisciplinaResponsavel>>(EMPTY_TEMP_DISCIPLINA);
   const [selectedDisciplinaIndex, setSelectedDisciplinaIndex] = useState<number | null>(null);
   const [isDisciplinaDetailOpen, setIsDisciplinaDetailOpen] = useState(false);
@@ -325,6 +297,17 @@ export function useProjetoForm({
     setProjetosDisciplinas(updatedDisciplinas);
   };
 
+  const updateDisciplinaExecucao = (tipo: "interna" | "terceirizada", prestador: string) => {
+    if (selectedDisciplinaIndex === null) return;
+    setProjetosDisciplinas((prev) =>
+      prev.map((d, i) =>
+        i === selectedDisciplinaIndex
+          ? { ...d, tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null }
+          : d
+      )
+    );
+  };
+
   const updateDisciplinaResponsaveis = (ids: string[]) => {
     if (selectedDisciplinaIndex === null) return;
     const resps = ids.map((id) => ({
@@ -348,6 +331,11 @@ export function useProjetoForm({
 
     const novaDisciplina: DisciplinaResponsavel = {
       disciplina: tempDisciplina.disciplina,
+      tipo_execucao: tempDisciplina.tipo_execucao ?? "interna",
+      prestador_nome:
+        tempDisciplina.tipo_execucao === "terceirizada"
+          ? tempDisciplina.prestador_nome?.trim() || "Prestador a definir"
+          : undefined,
       responsavel_id: tempDisciplina.responsavel_id || "",
       responsavel_nome: pessoa?.nome || "",
       data_inicio: tempDisciplina.data_inicio,
@@ -479,6 +467,7 @@ export function useProjetoForm({
 
   const applyFluxo = (fluxoId: string | null) => {
     if (!fluxoId) {
+      fluxoAplicadoRef.current = null;
       setProjetosDisciplinas([]);
       return;
     }
@@ -494,6 +483,9 @@ export function useProjetoForm({
       const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
       return {
         disciplina: d.nome,
+        tipo_execucao: d.tipo_execucao ?? "interna",
+        prestador_nome:
+          d.tipo_execucao === "terceirizada" ? d.prestador_nome?.trim() || "Prestador a definir" : undefined,
         responsavel_id: responsaveisIds[0] || "",
         responsavel_nome: responsaveisNomes[0] || "",
         status: "Não Iniciado",
@@ -513,6 +505,7 @@ export function useProjetoForm({
     });
 
     const colunas = new Set(fluxo.disciplinas.map((d) => d.ordem)).size;
+    fluxoAplicadoRef.current = fluxoId;
     setProjetosDisciplinas(novasDisciplinas);
     toast.success("Fluxo aplicado", {
       description: `${novasDisciplinas.length} disciplina(s) em ${colunas} coluna(s) de "${fluxo.nome}"`,
@@ -541,6 +534,11 @@ export function useProjetoForm({
       const pessoa = pessoas.find((p) => p.id === tempDisciplina.responsavel_id);
       const novaDisciplina: DisciplinaResponsavel = {
         disciplina: tempDisciplina.disciplina,
+        tipo_execucao: tempDisciplina.tipo_execucao ?? "interna",
+        prestador_nome:
+          tempDisciplina.tipo_execucao === "terceirizada"
+            ? tempDisciplina.prestador_nome?.trim() || "Prestador a definir"
+            : undefined,
         responsavel_id: tempDisciplina.responsavel_id || "",
         responsavel_nome: pessoa?.nome || "",
         data_inicio: tempDisciplina.data_inicio,
@@ -635,6 +633,8 @@ export function useProjetoForm({
           return {
             id: d.id,
             nome: d.disciplina,
+            tipo_execucao: d.tipo_execucao ?? "interna",
+            prestador_nome: d.prestador_nome ?? null,
             status: d.status || "Não Iniciado",
             data_inicio: d.data_inicio || null,
             data_fim: d.data_previsao || null,
@@ -694,6 +694,8 @@ export function useProjetoForm({
             const resps = getResponsaveisList(d);
             return {
               nome: d.disciplina,
+              tipo_execucao: d.tipo_execucao ?? "interna",
+              prestador_nome: d.prestador_nome ?? null,
               status: d.status || "Não Iniciado",
               data_inicio: d.data_inicio || null,
               data_fim: d.data_previsao || null,
@@ -718,7 +720,8 @@ export function useProjetoForm({
             throw discErr;
           }
         }
-
+        if (newProjetoId && fluxoAplicadoRef.current && projetosDisciplinas.length > 0)
+          await vincularProjetoAoFluxo(newProjetoId as string, fluxoAplicadoRef.current).catch(() => undefined);
         if (newProjetoId && parcelas.geraParcelas) await gerarParcelasDoProjeto(newProjetoId as string, parcelas);
 
         toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });
@@ -848,6 +851,7 @@ export function useProjetoForm({
     setIsDisciplinaDetailOpen,
     handleOpenDisciplinaDetail,
     updateDisciplinaField,
+    updateDisciplinaExecucao,
     updateDisciplinaResponsaveis,
     newObservation,
     setNewObservation,

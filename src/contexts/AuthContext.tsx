@@ -53,6 +53,18 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
+/** Uma vez por sessão do navegador (recarregar a página não conta como novo login). */
+function registrarLogin(userId: string, role: string | undefined) {
+  const chave = "pilar_login_registrado";
+  try {
+    if (sessionStorage.getItem(chave) === userId) return;
+    sessionStorage.setItem(chave, userId);
+  } catch {
+    // sem sessionStorage: registra mesmo assim, melhor contar a mais que perder o login
+  }
+  analytics.track("login_realizado", { role });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
@@ -108,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       empresa_id: p.empresa_id ?? undefined,
       role: p.role ?? undefined,
     });
+    registrarLogin(p.id, p.role ?? undefined);
   }, []);
 
   const refreshMfaLevel = useCallback(async () => {

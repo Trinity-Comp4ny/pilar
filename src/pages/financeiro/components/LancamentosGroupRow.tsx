@@ -141,7 +141,7 @@ export function LancamentosGroupRow({
           {isReceita ? "+" : "−"} {formatCurrency(totalPlano)}
         </div>
         {status !== "quitado" && saldo > 0 && (
-          <div className="text-[11px] text-muted-foreground">falta {formatCurrency(saldo)}</div>
+          <div className="text-2xs text-muted-foreground">falta {formatCurrency(saldo)}</div>
         )}
       </td>
       <td className={cellPad}>
@@ -149,7 +149,7 @@ export function LancamentosGroupRow({
           variant="secondary"
           className={cn(
             "text-xs",
-            status === "quitado" && isReceita && "bg-positive text-white",
+            status === "quitado" && isReceita && "bg-brand text-ink",
             status === "quitado" && !isReceita && "bg-negative text-white",
             status === "parcial" && "bg-warning-soft text-warning-strong"
           )}

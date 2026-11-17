@@ -346,7 +346,7 @@ export function GerarPropostaDialog({
                 <div key={s} className="flex items-center gap-1.5">
                   <span
                     className={
-                      "text-[11px] font-medium px-2 py-0.5 rounded-full " +
+                      "text-2xs font-medium px-2 py-0.5 rounded-full " +
                       (active
                         ? "bg-brand text-ink"
                         : done
@@ -435,7 +435,7 @@ export function GerarPropostaDialog({
                       <div key={v} className="space-y-1.5">
                         <Label className="text-sm flex items-center gap-2">
                           {humanizeVar(v)}
-                          <Badge variant="secondary" className="text-[10px] bg-warning-soft text-warning-mid font-mono">
+                          <Badge variant="secondary" className="text-3xs bg-warning-soft text-warning-mid font-mono">
                             {`{{${v.replace(/[{}]/g, "")}}}`}
                           </Badge>
                         </Label>

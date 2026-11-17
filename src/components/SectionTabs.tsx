@@ -111,7 +111,7 @@ export function SectionTabs({ tabs, value, onValueChange, ariaLabel = "Seções"
             {Icon && <Icon size={15} strokeWidth={1.75} aria-hidden className="shrink-0" />}
             {tab.label}
             {tab.badge !== undefined && (
-              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] leading-none tabular-nums text-muted-foreground">
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs leading-none tabular-nums text-muted-foreground">
                 {tab.badge}
               </span>
             )}

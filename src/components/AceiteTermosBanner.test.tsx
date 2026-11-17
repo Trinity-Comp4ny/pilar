@@ -121,6 +121,12 @@ describe("AceiteTermosBanner", () => {
     expect(screen.queryByText(/Atualizamos os Termos/)).not.toBeInTheDocument();
   });
 
+  it("não aparece na confirmação do escritório do primeiro acesso", async () => {
+    renderizar("/company-setup");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByText(/Atualizamos os Termos/)).not.toBeInTheDocument();
+  });
+
   // App renderiza só a janela e o Layout só a faixa, depois do skip link (o 1º Tab é dele).
   it("modo janela: antes da vigência não mostra a faixa", async () => {
     renderizar("/inicio", "janela");

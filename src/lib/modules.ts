@@ -22,6 +22,7 @@ import {
   HardHat,
   Layers,
   LayoutGrid,
+  CalendarDays,
   ListTodo,
   MapPin,
   Sparkles,
@@ -78,6 +79,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     items: [
       // Empresa (primeiro grupo: Tarefas é a home do módulo)
       { title: "Tarefas", url: "/gestao/tarefas", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
+      { title: "Agenda", url: "/gestao/agenda", icon: CalendarDays, feature: "meu_trabalho", group: "Empresa" },
       {
         title: "Financeiro",
         url: "/gestao/financeiro",
@@ -100,6 +102,14 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
         icon: Target,
         feature: "metas",
         hiddenWhenLockedForUser: true,
+        group: "Empresa",
+      },
+      // Fornecedor é cadastro da empresa (serve a projeto e a obra): mora em Gestão.
+      {
+        title: "Fornecedores",
+        url: "/gestao/fornecedores",
+        icon: Truck,
+        feature: "obras_fornecedores",
         group: "Empresa",
       },
       // Comercial (movido de Projetos: dono da relação com o cliente é gestão/comercial)
@@ -131,11 +141,6 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     items: [
       { title: "Obras", url: "/obras", icon: HardHat, feature: "obras" },
       { title: "Estimativas", url: "/obras/estimativas", icon: Calculator, feature: "estimativa_obra" },
-      // Fornecedor é cadastro global da empresa (empresa_id, sem obra_id), reusado
-      // por cotação/conta da obra e pela despesa do escritório. A porta de gerência
-      // mora aqui na Obra; o escritório mantém o SupplierManager embutido na despesa.
-      // Sub-features gated por obras_* (spec 035): herdam o módulo Obras ligado.
-      { title: "Fornecedores", url: "/obras/fornecedores", icon: Truck, feature: "obras_fornecedores" },
       { title: "Clima", url: "/obras/clima", icon: CloudSun, feature: "obras_clima" },
     ],
   },

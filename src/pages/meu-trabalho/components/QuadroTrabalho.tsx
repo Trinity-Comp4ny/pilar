@@ -3,6 +3,8 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { AddColumnInline } from "@/components/kanban/AddColumnInline";
 import { KANBAN_ADD_COLUMN_CLASSES, KANBAN_BOARD_CLASS } from "@/components/kanban/kanbanLayout";
 import { KanbanColumn, KanbanDraggable } from "@/components/kanban/KanbanColumn";
+import { KanbanMobile } from "@/components/kanban/KanbanMobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ordenarKanban, type KanbanSort } from "@/lib/kanbanSort";
 import { TAREFAS_SORT_ACESSORES } from "../ordenacao";
 import { agruparPorEtapa, type ItemTrabalho } from "../useItensTrabalho";
@@ -33,6 +35,7 @@ type Props = {
 
 export function QuadroTrabalho({ itens, sort, onAbrir, onPrioridade, onExcluir, onMover, etapaControls }: Props) {
   const { etapas } = etapaControls;
+  const isMobile = useIsMobile();
   const grupos = useMemo(
     () => agruparPorEtapa(ordenarKanban(itens, sort, TAREFAS_SORT_ACESSORES), etapas),
     [itens, sort, etapas]
@@ -46,6 +49,36 @@ export function QuadroTrabalho({ itens, sort, onAbrir, onPrioridade, onExcluir, 
     if (!item) return;
     onMover(item, destination.droppableId);
   };
+
+  // Celular: colunas que passam com o dedo, sem arraste; mover é pelo menu do card.
+  if (isMobile) {
+    return (
+      <KanbanMobile
+        ariaLabel="Quadro de tarefas"
+        colunas={grupos.map((grupo) => {
+          const etapa = etapas.find((e) => e.id === grupo.chave);
+          return {
+            id: grupo.chave,
+            titulo: grupo.titulo,
+            cor: corDaEtapa(etapa?.cor ?? null, etapa?.bucket ?? null),
+            quantidade: grupo.itens.length,
+            children: grupo.itens.map((item) => (
+              <CardTrabalho
+                key={item.key}
+                item={item}
+                onAbrir={onAbrir}
+                onPrioridade={onPrioridade}
+                onExcluir={onExcluir}
+                etapas={etapas}
+                etapaAtualId={grupo.chave}
+                onMover={onMover}
+              />
+            )),
+          };
+        })}
+      />
+    );
+  }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>

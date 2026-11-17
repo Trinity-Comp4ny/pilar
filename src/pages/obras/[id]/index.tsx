@@ -11,6 +11,7 @@ import {
   MapPin,
   Pencil,
   Scale,
+  Send,
   Trash2,
   User,
   Wallet,
@@ -25,6 +26,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useObra, useDeleteObra } from "@/pages/obras/hooks/useObras";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
@@ -34,6 +36,7 @@ import { sensivelClimaLabel } from "@/lib/obras";
 import { cn } from "@/lib/utils";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraAcessosTab } from "../components/ObraAcessosTab";
+import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
@@ -49,6 +52,7 @@ export default function ObraDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { can } = usePermissions();
+  const { profile } = useAuth();
   const isMobile = useIsMobile();
   const canEdit = can("obras", "edit");
   const canDelete = can("obras", "delete");
@@ -111,15 +115,20 @@ export default function ObraDetalhePage() {
   };
 
   // Abas de seção (SPEC 124): mesmas regras de visibilidade de antes, agora no slot do header.
+  // Os acessos de campo são da empresa dona da obra. Quem abre obra de outra empresa (ex.: ultra_admin
+  // no suporte) não os vê: a RPC responde "Obra não encontrada" e isso virava erro no Sentry.
+  const mostrarAcessos = canEdit && !!profile?.empresa_id && obra.empresa_id === profile.empresa_id;
+
   const secoes: SectionTab[] = [
-    { id: "timeline", label: "Visão", icon: LayoutList },
+    { id: "timeline", label: "Visão geral", icon: LayoutList },
     ...(showDiario ? [{ id: "diario", label: "Diário", icon: ClipboardList }] : []),
     ...(showCronograma ? [{ id: "cronograma", label: "Cronograma", icon: CalendarClock }] : []),
     { id: "tarefas", label: "Tarefas", icon: ListChecks },
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
-    ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
-    ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
+    ...(showConta ? [{ id: "conta", label: "Financeiro", icon: Wallet }] : []),
+    ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
+    ...(mostrarAcessos ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
 
   return (
@@ -222,7 +231,13 @@ export default function ObraDetalhePage() {
         )}
         {showCronograma && (
           <TabsContent value="cronograma">
-            <ObraCronogramaTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
+            <ObraCronogramaTab
+              obraId={obra.id}
+              projetoId={obra.projeto_id}
+              canEdit={canEdit}
+              inicioPrevisto={obra.data_inicio_prevista}
+              nomeDaObra={obra.nome}
+            />
           </TabsContent>
         )}
         <TabsContent value="tarefas">
@@ -240,10 +255,19 @@ export default function ObraDetalhePage() {
         )}
         {showConta && (
           <TabsContent value="conta">
-            <ObraContaTab obra={obra} canEdit={canEdit} />
+            <ObraContaTab
+              obra={obra}
+              canEdit={canEdit}
+              onIrParaCronograma={showCronograma ? () => setTab("cronograma") : undefined}
+            />
           </TabsContent>
         )}
-        {canEdit && (
+        {obra.modelo_cobranca === "administracao" && (
+          <TabsContent value="cliente">
+            <SolicitacoesDoCliente obraId={obra.id} />
+          </TabsContent>
+        )}
+        {mostrarAcessos && (
           <TabsContent value="acessos">
             <ObraAcessosTab obraId={obra.id} canEdit={canEdit} />
           </TabsContent>

@@ -234,13 +234,7 @@ export function DatePicker({
           />
           {hojePermitido && (
             <div className="flex justify-end border-t px-3 py-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => escolher(hoje)}
-              >
+              <Button type="button" variant="ghost" size="xs" className="px-2" onClick={() => escolher(hoje)}>
                 Hoje
               </Button>
             </div>

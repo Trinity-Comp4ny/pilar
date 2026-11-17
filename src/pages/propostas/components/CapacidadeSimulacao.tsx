@@ -113,7 +113,7 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Users className="h-4 w-4" /> Simulação de Capacidade
           {temAlertas && (
-            <Badge variant="destructive" className="text-[10px]">
+            <Badge variant="destructive" className="text-3xs">
               <AlertTriangle className="h-3 w-3 mr-1" />
               Atenção
             </Badge>
@@ -152,7 +152,7 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
                           <span className="text-muted-foreground">{p.horas_livres.toFixed(0)}h livres</span>
                           <Badge
                             variant={p.pode_absorver ? "success" : p.utilizacao_pct > 90 ? "danger" : "secondary"}
-                            className="text-[9px]"
+                            className="text-3xs"
                           >
                             {p.utilizacao_pct.toFixed(0)}% utilizado
                           </Badge>

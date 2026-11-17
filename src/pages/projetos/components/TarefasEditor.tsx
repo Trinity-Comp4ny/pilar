@@ -82,7 +82,7 @@ export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) 
               aria-label={`Dias úteis de ${item.texto}`}
               className="h-7 w-9 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
             />
-            <span className="text-[10px] text-muted-foreground">dias</span>
+            <span className="text-3xs text-muted-foreground">dias</span>
           </div>
           <button
             type="button"

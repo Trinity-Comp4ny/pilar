@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useRef, useState, type DragEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -274,12 +275,12 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
           )}
           <span className="truncate">{i.name}</span>
           {pastaDeDisciplina.has(i.id) && (
-            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-2xs text-muted-foreground">
               disciplina
             </span>
           )}
           {i.id === pastaDoCliente && (
-            <span className="shrink-0 rounded-full bg-brand/20 px-2 py-0.5 text-[11px] text-ink">
+            <span className="shrink-0 rounded-full bg-brand/20 px-2 py-0.5 text-2xs text-ink">
               aparece no portal do cliente
             </span>
           )}
@@ -306,31 +307,25 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
       header: <span className="sr-only">Ações</span>,
       align: "end",
       cell: (i) => (
-        <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          {!ehPasta(i) && (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Baixar ${i.name}`}
-              loading={pendente(i.id)}
-              onClick={() => baixar(i)}
-            >
-              {!pendente(i.id) && <Download className="h-4 w-4" />}
-            </Button>
-          )}
-          {i.webViewLink && (
-            <Button variant="ghost" size="icon" asChild>
-              <a href={i.webViewLink} target="_blank" rel="noopener noreferrer" aria-label={`Abrir ${i.name} no Drive`}>
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          )}
-          {canEdit && !pastaFixa(i.id) && (
-            <Button variant="ghost" size="icon" aria-label={`Excluir ${i.name}`} onClick={() => setExcluir(i)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <RowActions
+          label={i.name}
+          actions={[
+            { label: "Baixar", icon: Download, hidden: ehPasta(i), disabled: pendente(i.id), onClick: () => baixar(i) },
+            {
+              label: "Abrir no Drive",
+              icon: ExternalLink,
+              hidden: !i.webViewLink,
+              onClick: () => window.open(i.webViewLink, "_blank", "noopener,noreferrer"),
+            },
+            {
+              label: "Excluir",
+              icon: Trash2,
+              destructive: true,
+              hidden: !canEdit || pastaFixa(i.id),
+              onClick: () => setExcluir(i),
+            },
+          ]}
+        />
       ),
     },
   ];

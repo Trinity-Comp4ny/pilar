@@ -110,6 +110,14 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Celular: cala o "puxar" nativo do Chrome (que recarrega a página inteira); quem atualiza
+     é o PullToRefresh, que só refaz as consultas. */
+  @media (pointer: coarse) {
+    html {
+      overscroll-behavior-y: contain;
+    }
+  }
 }
 @layer utilities {
   .text-balance {

@@ -35,11 +35,11 @@ function Numero({ valor, rotulo, chip, destaque, onClick }: NumeroProps) {
       )}
     >
       <span className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold leading-none tabular-nums text-ink">{valor}</span>
+        <span className="text-xl font-semibold leading-none tabular-nums text-ink">{valor}</span>
         {chip && (
           <span
             className={cn(
-              "rounded-md px-1.5 py-0.5 text-[10px] font-medium",
+              "rounded-md px-1.5 py-0.5 text-3xs font-medium",
               statusBadgeClasses(chip.dominio, chip.status)
             )}
           >
@@ -130,9 +130,7 @@ export function ListaStatusProjetos({ data }: { data: PainelGestao }) {
     <div className="flex flex-col">
       {itens.map((s) => (
         <div key={s.status} className="flex items-center gap-2.5 border-b border-border py-2 last:border-b-0">
-          <span
-            className={cn("rounded-md px-2 py-0.5 text-[11px] font-medium", statusBadgeClasses("projeto", s.status))}
-          >
+          <span className={cn("rounded-md px-2 py-0.5 text-2xs font-medium", statusBadgeClasses("projeto", s.status))}>
             {statusLabel("projeto", s.status)}
           </span>
           <span className="ml-auto text-sm font-semibold tabular-nums">{s.n}</span>

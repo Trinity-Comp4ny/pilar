@@ -29,3 +29,12 @@ supabase/functions/ai-proposta-copilot/
 supabase/functions/ai-radar-cliente/
 supabase/functions/ai-relatorio-executivo/
 supabase/functions/ai-simulacao-impacto/
+
+# Tipos gerados do Supabase (364 KB, regenerados por npm run gen:types).
+# Para consultar um tipo, use grep/Grep, não leia o arquivo inteiro.
+src/integrations/supabase/types.ts
+
+# Conteúdo de marketing renderizado e pesquisa (mídia pesada, raramente útil p/ código)
+docs/marketing/conteudo/
+docs/marketing/video/renders/
+research/

@@ -19,6 +19,9 @@
          fallback de @font-face caso Geist falhe, e não deve ser baixada de
          propósito. Preload forçava os dois downloads em toda visita. -->
     <link rel="preload" href="/fonts/geist-variable.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Itálico: a palavra giratória do H1 usa, acima da dobra. Sem o preload ela só
+         começava a baixar depois do CSS, no fim da cadeia crítica. -->
+    <link rel="preload" href="/fonts/geist-variable-italic.woff2" as="font" type="font/woff2" crossorigin />
     <meta property="og:title" content="Pilar | Gestão com agentes de IA para engenharia e arquitetura" />
     <meta
       property="og:description"

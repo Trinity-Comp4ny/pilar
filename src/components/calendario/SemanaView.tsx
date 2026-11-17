@@ -34,7 +34,7 @@ export function SemanaView({ cursor, eventosPorDia, onEventoClick }: SemanaViewP
                     isToday && "bg-brand/5"
                   )}
                 >
-                  <span className="text-[11px] font-medium text-muted-foreground uppercase">{WEEKDAYS[idx]}</span>
+                  <span className="text-2xs font-medium text-muted-foreground uppercase">{WEEKDAYS[idx]}</span>
                   <span
                     className={cn(
                       "text-sm",
@@ -48,7 +48,7 @@ export function SemanaView({ cursor, eventosPorDia, onEventoClick }: SemanaViewP
                 </div>
                 <div className="flex-1 p-1.5 space-y-1 overflow-y-auto">
                   {eventosDoDia.length === 0 ? (
-                    <div className="text-[10px] text-muted-foreground/50 text-center pt-4" aria-hidden>
+                    <div className="text-3xs text-muted-foreground/50 text-center pt-4" aria-hidden>
                       —
                     </div>
                   ) : (

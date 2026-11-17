@@ -116,12 +116,12 @@ function Local() {
   return <div data-testid="local">{useLocation().pathname}</div>;
 }
 
-function renderPagina(path = "/obras/fornecedores/f1") {
+function renderPagina(path = "/gestao/fornecedores/f1") {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhePage />} />
-        <Route path="/obras/fornecedores" element={<FornecedorDetalhePage />} />
+        <Route path="/gestao/fornecedores/:id" element={<FornecedorDetalhePage />} />
+        <Route path="/gestao/fornecedores" element={<FornecedorDetalhePage />} />
         <Route path="*" element={<Local />} />
       </Routes>
     </MemoryRouter>

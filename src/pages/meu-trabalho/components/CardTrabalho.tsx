@@ -1,15 +1,19 @@
-import { CalendarDays, FolderOpen, HardHat, Link2, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, FolderOpen, HardHat, Link2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { AvatarStack } from "@/components/AvatarStack";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KanbanCard, KanbanChip, KanbanPriority } from "@/components/kanban/KanbanCard";
 import { cn } from "@/lib/utils";
 import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "../status";
 import type { ItemTrabalho } from "../useItensTrabalho";
+import type { Etapa } from "../useEtapas";
 
 function prazoInfo(prazo: string | null, concluida: boolean): { texto: string; atrasado: boolean } | null {
   if (!prazo) return null;
@@ -26,11 +30,25 @@ type Props = {
   onPrioridade: (item: ItemTrabalho, prioridade: Prioridade) => void;
   onExcluir: (item: ItemTrabalho) => void;
   isDragging?: boolean;
+  /** Celular: sem arraste, a troca de coluna vem do menu "Mover para". */
+  etapas?: Etapa[];
+  etapaAtualId?: string;
+  onMover?: (item: ItemTrabalho, destinoEtapaId: string) => void;
 };
 
-export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir, isDragging }: Props) {
+export function CardTrabalho({
+  item,
+  onAbrir,
+  onPrioridade,
+  onExcluir,
+  isDragging,
+  etapas,
+  etapaAtualId,
+  onMover,
+}: Props) {
   const prazo = prazoInfo(item.prazo, item.status === "concluida");
   const ehTarefa = item.tipo === "tarefa";
+  const destinos = (etapas ?? []).filter((e) => e.id !== etapaAtualId);
   const temMeta = item.responsaveis.length > 0 || !!prazo || !!item.projetoNome || !!item.obraCaminho;
   const prioridade = (
     <KanbanPriority label={PRIORIDADE_LABEL[item.prioridade]} dotClass={PRIORIDADE_DOT_CLASS[item.prioridade]} />
@@ -66,14 +84,32 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir, isDraggin
       }
       tag={ehTarefa ? "Tarefa" : "Disciplina"}
       menu={
-        ehTarefa ? (
+        ehTarefa || destinos.length > 0 ? (
           <>
-            <DropdownMenuItem onClick={() => onAbrir(item)}>
-              <Pencil className="mr-2 h-4 w-4" /> Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onExcluir(item)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Excluir
-            </DropdownMenuItem>
+            {ehTarefa && (
+              <DropdownMenuItem onClick={() => onAbrir(item)}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar
+              </DropdownMenuItem>
+            )}
+            {onMover && destinos.length > 0 && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <ArrowRight className="mr-2 h-4 w-4" /> Mover para
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {destinos.map((e) => (
+                    <DropdownMenuItem key={e.id} onClick={() => onMover(item, e.id)}>
+                      {e.nome}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
+            {ehTarefa && (
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onExcluir(item)}>
+                <Trash2 className="mr-2 h-4 w-4" /> Excluir
+              </DropdownMenuItem>
+            )}
           </>
         ) : undefined
       }

@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   CalendarClock,
-  CalendarDays,
+  FolderKanban,
+  HardHat,
   LayoutGrid,
   List,
   ListChecks,
@@ -25,7 +26,6 @@ import { useKanbanSort } from "@/hooks/useKanbanSort";
 import { ordenarKanban } from "@/lib/kanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
-import { AbaAgenda } from "./components/AbaAgenda";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { FiltroPessoa } from "./components/FiltrosTrabalho";
@@ -42,6 +42,7 @@ import {
   type TarefaItem,
 } from "./hooks";
 import { resolverPessoaIds } from "./filtroPessoas";
+import { bate, obraIdDoItem, TODOS, useFiltroProjetoObra } from "./useFiltroProjetoObra";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
 import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
@@ -53,13 +54,12 @@ import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const LS_VISAO_OBRA = "pilar.obra-tarefas.visao";
 
-type Visao = "lista" | "quadro" | "agenda";
+type Visao = "lista" | "quadro";
 type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
 
 const VISAO_OPCOES: ViewOption<Visao>[] = [
   { value: "lista", label: "Lista", icon: List },
   { value: "quadro", label: "Quadro", icon: LayoutGrid },
-  { value: "agenda", label: "Agenda", icon: CalendarDays },
 ];
 
 const TIPO_LABEL: Record<FiltroTipo, string> = {
@@ -132,11 +132,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
 
   const chaveVisao = obra ? LS_VISAO_OBRA : LS_VISAO;
   const [visao, setVisao] = useState<Visao>(() => {
-    // Link do aviso de reunião (SPEC 164) abre direto na Agenda.
-    if (!obra && searchParams.get("visao") === "agenda") return "agenda";
     try {
       const v = localStorage.getItem(chaveVisao);
-      if (v === "agenda" && !obra) return "agenda";
       if (v === "quadro") return "quadro";
       return "lista";
     } catch {
@@ -188,10 +185,16 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     tipo,
   });
 
+  const { filtroProjeto, filtroObra, setFiltroUrl, opcoesProjeto, opcoesObra } = useFiltroProjetoObra(
+    !!obra,
+    itens,
+    projetos
+  );
   const itensFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return itens.filter((i) => {
       if (obra && i.tarefa?.obra?.id !== obra.id) return false;
+      if (!bate(i.projetoId, filtroProjeto) || !bate(obraIdDoItem(i), filtroObra)) return false;
       if (!noPeriodo(i.prazo, filtroData)) return false;
       if (!termo) return true;
       const numeroTermo = termo.replace(/^#/, "");
@@ -204,7 +207,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
     });
-  }, [itens, busca, filtroData, obra]);
+  }, [itens, busca, filtroData, obra, filtroProjeto, filtroObra]);
 
   // A lista usa a mesma ordenação do quadro (o controle "Ordenar" vale para as duas visões).
   const itensOrdenados = useMemo(
@@ -500,14 +503,23 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
   const filtraTipo = temProjetos && !obra;
   const tipoPadrao: FiltroTipo = filtraTipo ? "tudo" : "tarefa";
   const filtrosAtivos =
-    (filtroPessoas.length > 0 ? 1 : 0) + (filtraTipo && tipo !== "tudo" ? 1 : 0) + (filtroData !== "todas" ? 1 : 0);
+    (filtroPessoas.length > 0 ? 1 : 0) +
+    (filtraTipo && tipo !== "tudo" ? 1 : 0) +
+    (filtroData !== "todas" ? 1 : 0) +
+    (filtroProjeto !== TODOS ? 1 : 0) +
+    (filtroObra !== TODOS ? 1 : 0);
   const limparFiltros = () => {
-    setFiltroPessoas([]);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const chave of ["pessoas", "projeto", "obra"]) next.delete(chave);
+        return next;
+      },
+      { replace: true }
+    );
     setTipo(tipoPadrao);
     setFiltroData("todas");
   };
-
-  const [slotAgenda, setSlotAgenda] = useState<HTMLDivElement | null>(null);
 
   // Toolbar (SPEC 124): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
   const toolbar = (
@@ -523,66 +535,66 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         ) : undefined
       }
     >
-      <ViewSwitcher
-        options={obra ? VISAO_OPCOES.filter((o) => o.value !== "agenda") : VISAO_OPCOES}
-        value={visao}
-        onChange={trocarVisao}
-        iconOnlyOnMobile
-      />
-      {/* Na Agenda, a navegação do calendário (anterior/próximo, Hoje, Mês/Semana) entra aqui. */}
-      {visao === "agenda" && <div ref={setSlotAgenda} className="flex items-center" />}
-      {visao !== "agenda" && (
-        <>
-          <FiltroPessoa
-            value={filtroPessoas}
-            pessoas={pessoas ?? []}
-            minhaPessoaId={minhaPessoaId}
-            onChange={setFiltroPessoas}
-          />
-          {filtraTipo && (
-            <FilterSelect
-              label="Tipo"
-              icon={ListFilter}
-              value={tipo}
-              emptyValue="tudo"
-              onChange={(v) => setTipo(v as FiltroTipo)}
-              options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
-            />
-          )}
+      <ViewSwitcher options={VISAO_OPCOES} value={visao} onChange={trocarVisao} iconOnlyOnMobile />
+      <>
+        <FiltroPessoa
+          value={filtroPessoas}
+          pessoas={pessoas ?? []}
+          minhaPessoaId={minhaPessoaId}
+          onChange={setFiltroPessoas}
+        />
+        {filtraTipo && (
           <FilterSelect
-            label="Prazo"
-            icon={CalendarClock}
-            value={filtroData}
-            emptyValue="todas"
-            onChange={(v) => setFiltroData(v as FiltroData)}
-            options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
+            label="Tipo"
+            icon={ListFilter}
+            value={tipo}
+            emptyValue="tudo"
+            onChange={(v) => setTipo(v as FiltroTipo)}
+            options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
           />
-          <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
-        </>
-      )}
+        )}
+        {!obra && (
+          <>
+            <FilterSelect
+              label="Projeto"
+              icon={FolderKanban}
+              value={filtroProjeto}
+              emptyValue={TODOS}
+              onChange={(v) => setFiltroUrl("projeto", v)}
+              options={opcoesProjeto}
+              searchable
+            />
+            <FilterSelect
+              label="Obra"
+              icon={HardHat}
+              value={filtroObra}
+              emptyValue={TODOS}
+              onChange={(v) => setFiltroUrl("obra", v)}
+              options={opcoesObra}
+              searchable
+            />
+          </>
+        )}
+        <FilterSelect
+          label="Prazo"
+          icon={CalendarClock}
+          value={filtroData}
+          emptyValue="todas"
+          onChange={(v) => setFiltroData(v as FiltroData)}
+          options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
+        />
+        <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
+      </>
     </FilterBar>
   );
 
   return (
     <Moldura
       toolbar={toolbar}
-      search={
-        visao !== "agenda"
-          ? { value: busca, onChange: setBusca, placeholder: obra ? "Buscar nesta obra" : "Buscar no meu trabalho" }
-          : undefined
-      }
-      primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined}
+      search={{ value: busca, onChange: setBusca, placeholder: obra ? "Buscar nesta obra" : "Buscar no meu trabalho" }}
+      primaryAction={{ label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() }}
     >
-      {visao === "agenda" ? (
-        <AbaAgenda
-          pessoaIds={pessoaIdsEfetivos}
-          minhaPessoaId={minhaPessoaId}
-          canEdit
-          temProjetos={temProjetos}
-          podeEscolherResponsavel={isAdmin}
-          toolbarSlot={slotAgenda}
-        />
-      ) : isLoading ? (
+      {isLoading ? (
         <PageLoader label={obra ? "Carregando as tarefas da obra" : "Carregando seu trabalho"} />
       ) : isError ? (
         <p className="py-12 text-center text-sm text-destructive">

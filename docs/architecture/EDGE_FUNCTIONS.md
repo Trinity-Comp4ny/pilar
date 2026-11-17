@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-65 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+68 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -26,6 +26,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
 | `ativar-plano` | Tokeniza o cartão no trial sem cobrar e grava o consentimento datado (SPEC 098). | app | JWT | `ALLOWED_ORIGINS` `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `exportar-dados-empresa` | Admin exporta os dados da empresa em CSV (zip, link assinado de 10 min), inclusive com a assinatura suspensa. | app, botão Exportar dados na tela Acesso suspenso (a ligar na etapa 3) | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-create` | Checkout público da Pilar: cria cliente e cobrança na Asaas da plataforma. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-status` | Consulta pública do status de pagamento do checkout. | app | própria | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-webhook` | Eventos da Asaas da plataforma: libera signup, renova assinatura, credita tokens, inadimplência. | Asaas da plataforma (webhook) | própria | `ALLOWED_ORIGINS` `ASAAS_PLATFORM_WEBHOOK_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
@@ -46,6 +47,8 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-aprovar-proposta` | Cliente aprova proposta pelo portal (auth pelo token do portal). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-arquivos` | Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163). | app | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `portal-avisar-mensagem` | Avisa por e-mail o cliente do portal quando o escritório escreve na conversa (um e-mail por janela de 30 minutos). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `portal-avisar-solicitacao` | Avisa por e-mail os acessos do portal do cliente quando o escritório cria uma solicitação (projeto ou obra). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-entrega-download` | URL assinada de 5 minutos para arquivo de entrega do portal. | **sem chamador conhecido** | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-get-projeto` | Dados do projeto para o portal (auth pelo token do portal). | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-obra-fotos` | URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |

@@ -97,6 +97,8 @@ export interface AtualizaFrente {
   ordem?: number;
   data_inicio?: string | null;
   data_fim?: string | null;
+  /** Prestador padrão do serviço. */
+  fornecedor_id?: string | null;
 }
 
 export function useUpdateFrente(obraId: string) {

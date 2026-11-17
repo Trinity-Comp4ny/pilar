@@ -257,7 +257,7 @@ export function PessoaDetailDialog({
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">{conta.banco}</span>
                             {conta.is_primary && (
-                              <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded font-medium">
+                              <span className="text-3xs bg-brand text-ink px-1.5 py-0.5 rounded font-medium">
                                 Principal
                               </span>
                             )}
@@ -305,11 +305,7 @@ export function PessoaDetailDialog({
                           {percent}%
                         </span>
                       </div>
-                      <Progress
-                        value={percent}
-                        className="h-1.5 bg-muted"
-                        indicatorClassName={isCompleted ? "bg-positive" : "bg-brand"}
-                      />
+                      <Progress value={percent} className="h-1.5 bg-muted" indicatorClassName="bg-brand" />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>
                           {formatarValor(atual, meta.unidade, rotulo)} de{" "}

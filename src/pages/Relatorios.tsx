@@ -418,7 +418,7 @@ export default function Relatorios() {
     const cfg = statusConfig[status];
     if (!cfg) return <span>{status}</span>;
     return (
-      <Badge variant="outline" className={cn("text-[11px] font-medium", cfg.className)}>
+      <Badge variant="outline" className={cn("text-2xs font-medium", cfg.className)}>
         {cfg.label}
       </Badge>
     );
@@ -428,7 +428,7 @@ export default function Relatorios() {
     const cfg = tipoConfig[tipo];
     if (!cfg) return <span>{tipo}</span>;
     return (
-      <Badge variant="outline" className={cn("text-[11px] font-medium", cfg.className)}>
+      <Badge variant="outline" className={cn("text-2xs font-medium", cfg.className)}>
         {tipo}
       </Badge>
     );
@@ -580,11 +580,11 @@ export default function Relatorios() {
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                    <Button variant="outline" size="xs" className="gap-1.5">
                       <Columns3 size={13} />
                       Colunas
                       {visibleColumns.size < ALL_COLUMNS.length && (
-                        <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
+                        <span className="text-3xs bg-brand text-ink rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
                           {visibleColumns.size}
                         </span>
                       )}
@@ -599,7 +599,7 @@ export default function Relatorios() {
                             setVisibleColumns(new Set(ALL_COLUMNS));
                             localStorage.setItem("relatorios.columns", JSON.stringify(ALL_COLUMNS));
                           }}
-                          className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-1"
+                          className="text-3xs text-muted-foreground hover:text-foreground underline underline-offset-1"
                         >
                           Todas
                         </button>
@@ -622,7 +622,7 @@ export default function Relatorios() {
                 </Popover>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="brand" className="h-8 text-xs gap-1.5" disabled={!filteredData.length}>
+                    <Button size="xs" variant="brand" className="gap-1.5" disabled={!filteredData.length}>
                       <Download size={13} />
                       Exportar
                       <ChevronDown size={13} className="opacity-70" />

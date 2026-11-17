@@ -17,9 +17,12 @@ function useEscala(alvo: React.RefObject<HTMLDivElement>) {
     if (!el) return;
 
     const aplicar = (largura: number) => el.style.setProperty("--escala", String(largura / PALCO.largura));
-    aplicar(el.getBoundingClientRect().width);
-
-    if (typeof ResizeObserver === "undefined") return;
+    // O ResizeObserver dispara já na primeira observação, antes da pintura: ler
+    // getBoundingClientRect aqui só forçava um reflow síncrono (Lighthouse).
+    if (typeof ResizeObserver === "undefined") {
+      aplicar(el.getBoundingClientRect().width);
+      return;
+    }
     const ro = new ResizeObserver(([entrada]) => aplicar(entrada.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();

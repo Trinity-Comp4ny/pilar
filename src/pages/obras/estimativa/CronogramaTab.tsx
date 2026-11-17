@@ -184,7 +184,7 @@ function Gantt({ fases }: { fases: Fase[] }) {
                   style={{ width: larguraMes }}
                 >
                   {i % passo === 0 && i + passo <= colunas.length && (
-                    <span className="absolute left-1 top-2 whitespace-nowrap text-[10px]">
+                    <span className="absolute left-1 top-2 whitespace-nowrap text-3xs">
                       {rotuloCurtoDoMes(c.start)}
                     </span>
                   )}

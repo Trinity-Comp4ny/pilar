@@ -12,11 +12,9 @@ import {
   Pencil,
   Plus,
   Trash2,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   DropdownMenu,
@@ -39,30 +37,28 @@ import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
 import type { PessoaOpcao } from "@/pages/meu-trabalho/hooks";
 import { EtiquetasCell, ResponsavelCell } from "@/pages/meu-trabalho/components/CelulasLista";
-import { ESTADO_FILL, ESTADO_LABEL } from "./estado";
+import { ESTADO_FILL, ESTADO_LABEL, NIVEL_COR } from "./estado";
 import type { CronogramaAcoes } from "./useCronogramaAcoes";
+import {
+  NOVO_LABEL,
+  BotaoNovo,
+  NomeEditavel,
+  NovoItem,
+  PrestadorDoServico,
+  ValoresDoNo,
+  recuo,
+} from "./CronogramaListaPartes";
 
 type Arvore = NoArvore<ObraFrenteRow, ObraTarefa>;
 
 /** Colunas da lista no desktop; no mobile a linha vira nome + prazo + menu. */
 const GRID = "md:grid md:grid-cols-[minmax(0,1fr)_140px_110px_136px_136px_96px_32px] md:items-center md:gap-2";
+/** Com o financeiro ligado, entram as colunas Orçado e Realizado depois das Etiquetas. */
+const GRID_FIN =
+  "md:grid md:grid-cols-[minmax(0,1fr)_140px_110px_108px_108px_136px_136px_96px_32px] md:items-center md:gap-2";
+const gridDe = (comFinanceiro: boolean) => (comFinanceiro ? GRID_FIN : GRID);
 /** Recuo por nível: menor no mobile, senão o nome some em 390px. */
-const recuo = (profundidade: number, extra = 0) => `calc(var(--recuo) * ${profundidade} + ${extra}px)`;
 const SEM_CLIMA = "__nenhum__";
-
-const NOVO_LABEL: Record<NivelCronograma | "tarefa", string> = {
-  fase: "Nova fase",
-  etapa: "Nova etapa",
-  servico: "Novo serviço",
-  tarefa: "Nova tarefa",
-};
-
-const NOVO_PLACEHOLDER: Record<NivelCronograma | "tarefa", string> = {
-  fase: "Nome da fase (ex.: Estrutura)",
-  etapa: "Nome da etapa (ex.: Fundação)",
-  servico: "Nome do serviço (ex.: Sapatas)",
-  tarefa: "Nome da tarefa (ex.: Concretar sapata S1)",
-};
 
 /** Onde o campo "novo item" está aberto: id do pai (null = nova fase). */
 type Adicionando = { parentId: string | null } | null;
@@ -80,6 +76,8 @@ interface ListaProps {
   acoes: CronogramaAcoes;
   adicionando: Adicionando;
   setAdicionando: (a: Adicionando) => void;
+  /** Orçado e realizado de cada nó, quando quem vê tem acesso ao financeiro. Sem isso, sem as colunas. */
+  financeiro?: ReadonlyMap<string, { previsto: number; realizado: number }>;
 }
 
 export function CronogramaLista(props: ListaProps) {
@@ -90,9 +88,18 @@ export function CronogramaLista(props: ListaProps) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-black/5 bg-white [--recuo:10px] md:[--recuo:20px]">
-      <div className={cn(GRID, "hidden border-b bg-muted/30 px-3 py-2")}>
-        {["Fase, etapa, serviço e tarefa", "Responsável", "Etiquetas", "Início", "Fim", "Avanço", ""].map((c, i) => (
-          <span key={i} className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className={cn(gridDe(!!props.financeiro), "hidden border-b bg-muted/30 px-3 py-2")}>
+        {[
+          "Item",
+          "Responsável / prestador",
+          "Etiquetas",
+          ...(props.financeiro ? ["Orçado", "Realizado"] : []),
+          "Início",
+          "Fim",
+          "Avanço",
+          "",
+        ].map((c, i) => (
+          <span key={i} className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
             {c}
           </span>
         ))}
@@ -257,6 +264,7 @@ function NoLinha({
   canEdit,
   acoes,
   onExcluir,
+  financeiro,
 }: ListaProps & ComExcluir & { arvore: Arvore; profundidade: number; aberto: boolean; onNovoFilho: () => void }) {
   const { no, nivel } = arvore;
   const [editando, setEditando] = useState(false);
@@ -284,7 +292,12 @@ function NoLinha({
 
   return (
     <div
-      className={cn(GRID, "group flex min-h-11 items-center gap-2 border-b px-3 py-1.5", LINHA_CLASSE[nivel])}
+      className={cn(
+        gridDe(!!financeiro),
+        "group flex min-h-11 items-center gap-2 border-b border-l-4 px-3 py-1.5",
+        LINHA_CLASSE[nivel]
+      )}
+      style={{ borderLeftColor: NIVEL_COR[nivel] }}
       data-testid={`no-${no.id}`}
     >
       <div className="relative flex min-w-0 flex-1 items-center gap-1" style={{ paddingLeft: recuo(profundidade) }}>
@@ -297,9 +310,6 @@ function NoLinha({
         >
           {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-        <span className="hidden shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground md:inline">
-          {NIVEL_LABEL[nivel]}
-        </span>
         {editando ? (
           <NomeEditavel
             valor={no.nome}
@@ -335,8 +345,17 @@ function NoLinha({
         )}
       </div>
 
+      {nivel === "servico" ? (
+        <PrestadorDoServico
+          valor={(no as { fornecedor_id?: string | null }).fornecedor_id ?? null}
+          canEdit={canEdit}
+          onChange={(id) => acoes.atualizarNo({ id: no.id, fornecedor_id: id })}
+        />
+      ) : (
+        <span className="hidden md:block" />
+      )}
       <span className="hidden md:block" />
-      <span className="hidden md:block" />
+      {financeiro && <ValoresDoNo valores={financeiro.get(no.id)} />}
 
       <div className="hidden md:block">
         <DatePicker
@@ -418,6 +437,7 @@ function TarefaLinha({
   servicos,
   caminho,
   onExcluir,
+  financeiro,
 }: ListaProps & ComExcluir & { tarefa: ObraTarefa; profundidade: number }) {
   const navigate = useNavigate();
   const [editando, setEditando] = useState(false);
@@ -445,7 +465,8 @@ function TarefaLinha({
 
   return (
     <div
-      className={cn(GRID, "group flex min-h-10 items-center gap-2 border-b px-3 py-1")}
+      className={cn(gridDe(!!financeiro), "group flex min-h-10 items-center gap-2 border-b border-l-4 px-3 py-1")}
+      style={{ borderLeftColor: NIVEL_COR.tarefa }}
       data-testid={`tarefa-${tarefa.id}`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2" style={{ paddingLeft: recuo(profundidade, 4) }}>
@@ -500,6 +521,12 @@ function TarefaLinha({
           onChange={(labels) => acoes.atualizarTarefa({ id: tarefa.id, labels })}
         />
       </div>
+      {financeiro && (
+        <>
+          <span className="hidden md:block" />
+          <span className="hidden md:block" />
+        </>
+      )}
       <div className="hidden md:block">
         <DatePicker
           value={tarefa.data_inicio ?? ""}
@@ -596,107 +623,3 @@ function TarefaLinha({
 }
 
 // --- Peças pequenas ---------------------------------------------------------
-
-function NomeEditavel({
-  valor,
-  onSalvar,
-  onCancelar,
-}: {
-  valor: string;
-  onSalvar: (v: string) => void;
-  onCancelar: () => void;
-}) {
-  const [texto, setTexto] = useState(valor);
-  const salvar = () => {
-    const limpo = texto.trim();
-    if (!limpo) return onCancelar();
-    onSalvar(limpo);
-  };
-  return (
-    <Input
-      autoFocus
-      value={texto}
-      onChange={(e) => setTexto(e.target.value)}
-      onBlur={salvar}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") salvar();
-        if (e.key === "Escape") onCancelar();
-      }}
-      className="h-7 min-w-0 flex-1 text-[13px]"
-      aria-label="Nome"
-    />
-  );
-}
-
-function NovoItem({
-  nivel,
-  profundidade,
-  onCriar,
-  onFechar,
-}: {
-  nivel: NivelCronograma | "tarefa";
-  profundidade: number;
-  onCriar: (nome: string) => Promise<boolean>;
-  onFechar: () => void;
-}) {
-  const [nome, setNome] = useState("");
-  const [salvando, setSalvando] = useState(false);
-
-  const criar = async () => {
-    const limpo = nome.trim();
-    if (!limpo || salvando) return;
-    setSalvando(true);
-    const ok = await onCriar(limpo);
-    setSalvando(false);
-    // Fica aberto para criar o próximo em sequência.
-    if (ok) setNome("");
-  };
-
-  return (
-    <div
-      className="flex min-h-10 items-center gap-2 border-b px-3 py-1"
-      style={{ paddingLeft: recuo(profundidade, 40) }}
-    >
-      <Input
-        autoFocus
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") criar();
-          if (e.key === "Escape") onFechar();
-        }}
-        placeholder={NOVO_PLACEHOLDER[nivel]}
-        className="h-8 max-w-md flex-1 text-[13px]"
-        aria-label={NOVO_LABEL[nivel]}
-      />
-      <Button size="sm" variant="brand" className="h-8" onClick={criar} disabled={!nome.trim() || salvando}>
-        Criar
-      </Button>
-      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onFechar} aria-label="Fechar">
-        <X className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-}
-
-function BotaoNovo({
-  nivel,
-  profundidade,
-  onClick,
-}: {
-  nivel: NivelCronograma | "tarefa";
-  profundidade: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-8 w-full items-center gap-1 border-b text-left text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-ink"
-      style={{ paddingLeft: recuo(profundidade, 40) }}
-    >
-      <Plus className="h-3.5 w-3.5" />
-      {NOVO_LABEL[nivel]}
-    </button>
-  );
-}

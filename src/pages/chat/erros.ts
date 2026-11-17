@@ -78,6 +78,9 @@ export function msgErroChat(e: unknown, porTimeout = false, motivoBloqueio?: str
     if (motivoBloqueio === "limite_usuario") {
       return "Você atingiu seu limite de créditos de IA deste mês. Peça mais créditos ao administrador da sua empresa em Configurações > Uso.";
     }
+    if (motivoBloqueio === "assinatura_suspensa") {
+      return "A assinatura da empresa está suspensa, então a IA está pausada. Regularize o pagamento para voltar a usar.";
+    }
     if (motivoBloqueio === "trial_pausado") {
       return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";
     }

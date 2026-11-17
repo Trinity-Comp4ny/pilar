@@ -212,7 +212,7 @@ function CampoDataDigitada({
 
   return (
     <label className="min-w-0 flex-1 space-y-0.5">
-      <span className="block text-[11px] text-muted-foreground">{rotulo}</span>
+      <span className="block text-2xs text-muted-foreground">{rotulo}</span>
       <input
         type="text"
         inputMode="numeric"

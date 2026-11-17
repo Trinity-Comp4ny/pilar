@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Reveal } from "../components/Reveal";
+import { PERGUNTAS_IMPLANTACAO } from "../lib/implantacao";
 import { useJsonLd, usePageMeta } from "../lib/seo";
 
 /**
@@ -52,6 +53,7 @@ const FAQS = [
     pergunta: "É mais um sistema para alimentar?",
     resposta: "O dado entra na proposta e segue até a cobrança e o diário. Você alimenta menos, não mais.",
   },
+  ...PERGUNTAS_IMPLANTACAO,
 ];
 
 export function Faq() {

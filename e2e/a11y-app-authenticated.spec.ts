@@ -28,7 +28,7 @@ const TELAS = [
   ["cronograma de projetos", "/projetos/cronograma"],
   ["mapa de projetos", "/projetos/mapa"],
   ["agentes", "/agentes"],
-  ["fornecedores", "/obras/fornecedores"],
+  ["fornecedores", "/gestao/fornecedores"],
   ["relatórios", "/relatorios"],
   ["financeiro, visão geral", "/financeiro"],
   ["administração, usuários", "/admin?tab=usuarios"],

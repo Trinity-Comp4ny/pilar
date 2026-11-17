@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { translateAuthError } from "@/lib/authErrors";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { PasskeysConta } from "@/components/settings/PasskeysConta";
 import { NavegadoresConta } from "@/components/settings/NavegadoresConta";
 
 // Encerra as outras sessões e mantém esta. O Supabase revoga os refresh tokens
@@ -71,6 +72,8 @@ export function SegurancaPanel() {
           <MfaSetup />
         </CardContent>
       </Card>
+
+      <PasskeysConta />
 
       <PasswordChangeCard currentEmail={email} />
 

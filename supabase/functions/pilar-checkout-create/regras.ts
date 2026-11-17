@@ -4,7 +4,7 @@
  * banco e Asaas; separado para teste porque é regra de dinheiro.
  */
 
-import type { AsaasPayment } from "../_shared/asaas-platform.ts";
+import type { AsaasPayment, PixAutomaticAuthorization } from "../_shared/asaas-platform.ts";
 import type { CheckoutPayload } from "./entrada.ts";
 
 /** Valor do ciclo escolhido, sempre do plano no banco. null = plano sem preço válido nesse ciclo. */
@@ -49,4 +49,44 @@ export function metadataDaCobranca(
     };
   }
   return metadata;
+}
+
+/** O Asaas aceita contractId de até 35 caracteres; o uuid do signup tem 36 com hifens. */
+export function contratoDoSignup(signupId: string): string {
+  return signupId.replace(/-/g, "");
+}
+
+export function frequenciaPixAutomatico(ciclo: CheckoutPayload["billing_cycle"]): "MONTHLY" | "ANNUALLY" {
+  return ciclo === "yearly" ? "ANNUALLY" : "MONTHLY";
+}
+
+/** QR do primeiro pagamento vale 1 hora: tempo de abrir o app do banco e autorizar. */
+export const VALIDADE_QR_PIX_AUTOMATICO_SEGUNDOS = 3600;
+
+/**
+ * O front reaproveita o QR do PIX: o Pix Automático devolve a mesma forma (imagem, payload,
+ * expiração), com a diferença de que o pagamento do QR também autoriza os débitos seguintes.
+ */
+export function metadataDoPixAutomatico(
+  value: number,
+  cycle: CheckoutPayload["billing_cycle"],
+  autorizacao: Pick<PixAutomaticAuthorization, "id" | "payload" | "encodedImage" | "immediateQrCode">,
+  agora: Date
+): Record<string, unknown> {
+  const expiraEm =
+    autorizacao.immediateQrCode?.expirationDate ??
+    new Date(agora.getTime() + VALIDADE_QR_PIX_AUTOMATICO_SEGUNDOS * 1000).toISOString();
+  return {
+    billing_type: "PIX_AUTOMATICO",
+    value,
+    cycle,
+    payment_id: null,
+    invoice_url: null,
+    authorization_id: autorizacao.id,
+    pix: {
+      encoded_image: autorizacao.encodedImage ?? "",
+      payload: autorizacao.payload ?? "",
+      expiration_date: expiraEm,
+    },
+  };
 }

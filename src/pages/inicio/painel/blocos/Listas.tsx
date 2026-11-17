@@ -48,7 +48,7 @@ export function ListaPrazos({ data }: { data: PainelGestao }) {
               <span className="block truncate">
                 {p.disciplina} · {p.projeto}
               </span>
-              {p.responsavel && <small className="block text-[11px] text-muted-foreground">{p.responsavel}</small>}
+              {p.responsavel && <small className="block text-2xs text-muted-foreground">{p.responsavel}</small>}
             </span>
             <span
               className={cn(
@@ -111,7 +111,7 @@ export function ListaRdo({ data }: { data: PainelGestao }) {
         >
           <span className="min-w-0 text-[12.5px] text-ink-soft">
             <span className="block truncate">{o.obra}</span>
-            <small className="block text-[11px] text-muted-foreground">
+            <small className="block text-2xs text-muted-foreground">
               {o.ultimoRdo ? `último em ${formatDate(o.ultimoRdo)}` : "nenhum RDO lançado"}
             </small>
           </span>

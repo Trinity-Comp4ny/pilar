@@ -15,8 +15,10 @@
   var TONES = ["hsl(160 45% 72%)", "#A4EC86", "hsl(78 62% 58%)"];
   var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var ratio = window.devicePixelRatio || 1;
-  var w = canvas.clientWidth || 112;
-  var h = canvas.clientHeight || 112;
+  // Tamanho fixo do CSS do boot (.boot-ring, 112px): ler clientWidth aqui forçava
+  // um reflow síncrono antes de o CSS chegar.
+  var w = 112;
+  var h = 112;
   canvas.width = Math.round(w * ratio);
   canvas.height = Math.round(h * ratio);
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);

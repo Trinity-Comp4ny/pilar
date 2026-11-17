@@ -30,6 +30,23 @@ export class SupabaseRequestError extends Error {
   }
 }
 
+/**
+ * A falha já foi enviada ao Sentry pela camada de rede (reportFailure ou o catch de rede)?
+ * O react-query reportava a mesma falha de novo, com título genérico ("Erro inesperado") que
+ * misturava telas diferentes: ~70% do volume de produção era essa duplicata (PILAR-7 contra
+ * PILAR-1T, 13/11). Cobre o erro do PostgREST (objeto com `code` e `details`/`hint`), o fetch
+ * que não chegou ao servidor e o erro sintético desta camada.
+ */
+export function jaReportadoPelaRede(err: unknown): boolean {
+  if (err instanceof SupabaseRequestError) return true;
+  if (err instanceof TypeError) return /^(failed to fetch|load failed|networkerror)/i.test(err.message);
+  if (typeof err === "object" && err !== null) {
+    const o = err as { code?: unknown; details?: unknown; hint?: unknown };
+    return typeof o.code === "string" && ("details" in o || "hint" in o);
+  }
+  return false;
+}
+
 type FetchInput = Parameters<typeof fetch>[0];
 type FetchInit = Parameters<typeof fetch>[1];
 

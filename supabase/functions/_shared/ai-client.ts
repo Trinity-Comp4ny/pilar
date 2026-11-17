@@ -111,7 +111,7 @@ export interface AiSaldo {
  * quem paga). `gate_tokens` já resolve a prioridade (trial_pausado > saldo_empresa >
  * limite_usuario): o front só troca a mensagem por este campo, não recalcula nada.
  */
-export type TokenBlockMotivo = "saldo_empresa" | "limite_usuario" | "trial_pausado";
+export type TokenBlockMotivo = "saldo_empresa" | "limite_usuario" | "trial_pausado" | "assinatura_suspensa";
 
 /**
  * Gate de tokens (Fase 2, spec 075; extensão por usuário na spec 094): garante a
@@ -163,6 +163,9 @@ export async function verificarTokens(
 export function mensagemBloqueioTokens(motivo: TokenBlockMotivo): string {
   if (motivo === "limite_usuario") {
     return "Você atingiu seu limite de créditos de IA deste mês. Peça mais créditos ao administrador da sua empresa.";
+  }
+  if (motivo === "assinatura_suspensa") {
+    return "A assinatura da empresa está suspensa, então a IA está pausada. Regularize o pagamento para voltar a usar.";
   }
   if (motivo === "trial_pausado") {
     return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";

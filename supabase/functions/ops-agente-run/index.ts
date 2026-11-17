@@ -23,6 +23,7 @@
  * do dia por e-mail para os ultra admins.
  */
 
+import { configPosthog, indicadoresPosthog, resumoPosthog, usoDoPosthog } from "./posthog.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { withSentry, captureException } from "../_shared/sentry.ts";
@@ -303,6 +304,19 @@ async function rodarArea(
     candidatos = candidatosProduto(p, agora);
     indicadores = indicadoresProduto(p);
     resumoNumeros = resumoNumerosProduto(p);
+    // PostHog é complemento: sem chave ou fora do ar o agente segue com o banco e avisa no resumo.
+    const cfgPosthog = configPosthog((k) => Deno.env.get(k));
+    if (cfgPosthog) {
+      try {
+        const uso = await usoDoPosthog(cfgPosthog);
+        indicadores = { ...indicadores, ...indicadoresPosthog(uso) };
+        resumoNumeros = `${resumoNumeros} ${resumoPosthog(uso)}`;
+      } catch (e) {
+        resumoNumeros = `${resumoNumeros} ${resumoPosthog(null, e instanceof Error ? e.message : String(e))}`;
+      }
+    } else {
+      resumoNumeros = `${resumoNumeros} ${resumoPosthog(null)}`;
+    }
   } else if (agente === "qualidade") {
     const cfg = configSentry((k) => Deno.env.get(k));
     if (!cfg) throw new Error(SEM_TOKEN);

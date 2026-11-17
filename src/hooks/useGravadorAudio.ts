@@ -23,7 +23,12 @@ export interface DepsGravador {
 }
 
 const depsReais: DepsGravador = {
-  getUserMedia: () => navigator.mediaDevices.getUserMedia({ audio: true }),
+  getUserMedia: () =>
+    navigator.mediaDevices.getUserMedia({
+      // Sem cancelamento de eco, supressão e ganho automático: o aparelho abre o microfone bem mais rápido
+      // e a voz vai crua para a transcrição (que lida bem com ruído de obra).
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
+    }),
   criarRecorder: (stream, mimeType) => (mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)),
   mimeSuportado: (m) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(m) === true,
   agora: () => Date.now(),
@@ -147,7 +152,8 @@ export function useGravadorAudio({ onPronta, limiteS = LIMITE_GRAVACAO_S, deps =
       };
       recorderRef.current = recorder;
       inicioRef.current = deps.agora();
-      recorder.start();
+      // timeslice: o áudio vai sendo entregue em pedaços, sem montar tudo só ao parar.
+      recorder.start(1000);
       setEstado("gravando");
       setSegundos(0);
       iniciarOnda(stream);

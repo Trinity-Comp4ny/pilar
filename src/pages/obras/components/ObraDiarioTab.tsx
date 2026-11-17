@@ -52,7 +52,7 @@ function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
   if (!texto) return null;
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{titulo}</p>
+      <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">{titulo}</p>
       <p className="whitespace-pre-wrap text-sm text-ink/90">{texto}</p>
     </div>
   );
@@ -199,7 +199,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                 onClick={canEdit ? () => abrirEdicao(r) : undefined}
                 extra={
                   badges.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 border-t border-black/5 pt-2 text-[11px] text-muted-foreground">
+                    <div className="flex flex-wrap gap-1.5 border-t border-black/5 pt-2 text-2xs text-muted-foreground">
                       {badges.map((b) => (
                         <span key={b}>{b}</span>
                       ))}
@@ -249,11 +249,11 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                   if (doDia.length === 0) return null;
                   return (
                     <div className="space-y-1.5 border-t border-black/5 pt-3">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Tarefas</p>
+                      <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Tarefas</p>
                       {doDia.map((v) => (
                         <div key={v.id} className="flex items-start gap-2 text-sm">
                           <span
-                            className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${RESULTADO_TONE[v.resultado]}`}
+                            className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-3xs font-medium ${RESULTADO_TONE[v.resultado]}`}
                           >
                             {RESULTADO_LABEL[v.resultado]}
                           </span>
@@ -272,7 +272,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                   if (doDia.length === 0) return null;
                   return (
                     <div className="space-y-1.5 border-t border-black/5 pt-3">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
                         Efetivo por fornecedor
                       </p>
                       <div className="flex flex-wrap gap-1.5">
@@ -295,7 +295,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                   if (doDia.length === 0) return null;
                   return (
                     <div className="space-y-1.5 rounded-lg border border-warning-mid-border bg-warning-soft p-2.5">
-                      <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-warning-strong">
+                      <p className="inline-flex items-center gap-1.5 text-2xs font-medium uppercase tracking-wide text-warning-strong">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         Impedimentos
                       </p>
@@ -313,7 +313,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                   if (doDia.length === 0) return null;
                   return (
                     <div className="space-y-1.5 border-t border-black/5 pt-3">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Visitas</p>
+                      <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Visitas</p>
                       {doDia.map((v) => (
                         <div key={v.id} className="flex items-start gap-2 text-sm">
                           <UserCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -337,7 +337,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
 
                 {(fotosPorRdo[r.id]?.length ?? 0) > 0 && (
                   <div className="space-y-1.5 border-t border-black/5 pt-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Fotos</p>
+                    <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Fotos</p>
                     <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                       {fotosPorRdo[r.id].map((f) => (
                         <a
@@ -356,7 +356,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
 
                 {(medicoesPorRdo[r.id]?.length ?? 0) > 0 && (
                   <div className="space-y-1.5 border-t border-black/5 pt-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Medição</p>
+                    <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Medição</p>
                     <div className="flex flex-wrap gap-1.5">
                       {medicoesPorRdo[r.id].map((m) => (
                         <span key={m.id} className="rounded-full bg-muted px-2.5 py-1 text-xs text-ink/90">

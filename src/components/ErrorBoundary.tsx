@@ -125,7 +125,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </summary>
               <div className="mt-3 bg-muted/50 rounded-lg px-4 py-3 border border-border">
                 <p className="text-xs font-mono text-destructive break-all leading-relaxed">{message}</p>
-                {eventId && <p className="text-[11px] text-muted-foreground mt-2 font-mono">Código: {eventId}</p>}
+                {eventId && <p className="text-2xs text-muted-foreground mt-2 font-mono">Código: {eventId}</p>}
                 <button
                   type="button"
                   onClick={this.handleCopy}

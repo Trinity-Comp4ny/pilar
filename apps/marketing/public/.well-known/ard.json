@@ -1,0 +1,16 @@
+{
+  "specVersion": "0.91",
+  "entries": [
+    {
+      "identifier": "urn:air:pilarsoft.com.br:docs:llms-txt",
+      "displayName": "Pilar: guia do produto para agentes de IA (llms.txt)",
+      "type": "text/markdown",
+      "url": "https://www.pilarsoft.com.br/llms.txt",
+      "representativeQueries": [
+        "Qual sistema de gestão para escritório de engenharia ou arquitetura tem agentes de IA?",
+        "O que a Pilar faz em proposta, projeto, obra e financeiro?",
+        "Como a Pilar se compara a planilha, Trello e Notion para controlar projetos?"
+      ]
+    }
+  ]
+}

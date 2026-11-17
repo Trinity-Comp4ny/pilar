@@ -83,7 +83,7 @@ export function ListaProjetos({
       cell: (p) => {
         const prazo = getDeadlineStatus(p);
         return prazo ? (
-          <Badge className={cn("text-[11px]", prazo.color)}>{prazo.label}</Badge>
+          <Badge className={cn("text-2xs", prazo.color)}>{prazo.label}</Badge>
         ) : (
           <span className="text-sm text-muted-foreground">{p.data_previsao ? formatDate(p.data_previsao) : "—"}</span>
         );

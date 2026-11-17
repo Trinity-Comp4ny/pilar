@@ -4,7 +4,11 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import { useRestaurarFoco } from "@/components/ui/useRestaurarFoco";
+
+// Lazy: o gesto de arrastar só serve em tela de toque e fica fora do bundle de entrada (teto apertado).
+const AlcaArrastar = React.lazy(() => import("./AlcaArrastar").then((m) => ({ default: m.AlcaArrastar })));
 
 const Sheet = SheetPrimitive.Root;
 
@@ -58,6 +62,11 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
       <SheetPortal>
         <SheetOverlay />
         <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props} {...foco}>
+          {side === "bottom" && TELA_DE_TOQUE && (
+            <React.Suspense fallback={null}>
+              <AlcaArrastar />
+            </React.Suspense>
+          )}
           {children}
           <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
             <X className="h-4 w-4" />

@@ -243,15 +243,15 @@ export function PendenciasTab() {
         <>
           <div className="grid grid-cols-3 gap-2" role="group" aria-label="Resumo das pendências">
             <div className="rounded-xl border border-brand bg-surface-card p-3">
-              <p className="text-2xl font-semibold text-foreground">{prontos}</p>
+              <p className="text-xl font-semibold tabular-nums text-foreground">{prontos}</p>
               <p className="text-xs text-muted-foreground">Prontos para aprovar</p>
             </div>
             <div className="rounded-xl border bg-surface-card p-3">
-              <p className="text-2xl font-semibold text-danger-strong">{grupos.urgentes.length}</p>
+              <p className="text-xl font-semibold tabular-nums text-danger-strong">{grupos.urgentes.length}</p>
               <p className="text-xs text-muted-foreground">Urgentes</p>
             </div>
             <div className="rounded-xl border bg-surface-card p-3">
-              <p className="text-2xl font-semibold text-foreground">{total}</p>
+              <p className="text-xl font-semibold tabular-nums text-foreground">{total}</p>
               <p className="text-xs text-muted-foreground">Em aberto</p>
             </div>
           </div>

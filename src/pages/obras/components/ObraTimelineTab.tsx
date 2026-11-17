@@ -14,6 +14,7 @@ import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
 import { useObraRdos } from "@/pages/obras/hooks/useObraRdo";
 import type { ObraResumo } from "@/pages/obras/hooks/useObras";
 import { ObraCurvaS } from "./ObraCurvaS";
+import { NIVEL_COR } from "./cronograma/estado";
 
 /** Marcos de faturamento do projeto (somente leitura no MVP — spec 015). */
 function useMarcosProjeto(projetoId: string | null) {
@@ -116,12 +117,19 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
             {fases.map((f) => {
               const abertas = f.total - f.concluidas;
               return (
-                <li key={f.no.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="truncate text-ink">{f.no.nome}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {f.total > 0 && `${f.progresso}% · `}
-                    {abertas === 0 ? "sem pendências" : `${abertas} pendente${abertas > 1 ? "s" : ""}`}
-                  </span>
+                <li
+                  key={f.no.id}
+                  className="space-y-1 border-l-4 pl-2.5 text-sm"
+                  style={{ borderLeftColor: NIVEL_COR.fase }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium text-ink">{f.no.nome}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {f.total > 0 && `${f.progresso}% · `}
+                      {abertas === 0 ? "sem pendências" : `${abertas} pendente${abertas > 1 ? "s" : ""}`}
+                    </span>
+                  </div>
+                  {f.total > 0 && <Progress value={f.progresso} className="h-1" />}
                 </li>
               );
             })}
@@ -133,7 +141,7 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         {rdosRecentes.length === 0 ? (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
-            <Button variant="outline" size="sm" onClick={onIrParaDiario}>
+            <Button variant="brand" size="sm" onClick={onIrParaDiario}>
               <ClipboardList className="mr-1.5 h-4 w-4" />
               Registrar dia
             </Button>

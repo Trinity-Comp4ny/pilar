@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FolderKanban, ArrowRight, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
 import { ConviteInstalarApp } from "@/components/instalar/ConviteInstalarApp";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
 import { useClienteObras } from "./useClienteObraData";
@@ -42,6 +43,12 @@ export default function ClienteDashboard() {
 
         {/* Celular aberto pelo navegador: convite para pôr o portal na tela inicial. */}
         <ConviteInstalarApp publico="portal" />
+
+        {/* Pendências: o que o escritório pediu ao cliente, de todos os projetos e obras. */}
+        <section aria-label="Pendências" className="space-y-3">
+          <h2 className="text-sm font-semibold text-ink">Pendências</h2>
+          <EntregasContent apenasPendentes mostrarOrigem vazioTexto="Nada pendente. Você está em dia." />
+        </section>
 
         {/* Loading */}
         {loading && (
@@ -95,11 +102,7 @@ export default function ClienteDashboard() {
                         <div className="min-w-0">
                           <h3 className="text-sm font-semibold text-ink truncate mt-0.5">{projeto.projeto_nome}</h3>
                         </div>
-                        <StatusBadge
-                          domain="projeto"
-                          status={projeto.projeto_status}
-                          className="text-[10px] shrink-0"
-                        />
+                        <StatusBadge domain="projeto" status={projeto.projeto_status} className="text-3xs shrink-0" />
                       </div>
 
                       {/* Barra de progresso */}
@@ -158,7 +161,7 @@ export default function ClienteDashboard() {
                           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                           <h3 className="text-sm font-semibold text-ink truncate">{obra.nome}</h3>
                         </div>
-                        <StatusBadge domain="obra" status={obra.status} className="text-[10px] shrink-0" />
+                        <StatusBadge domain="obra" status={obra.status} className="text-3xs shrink-0" />
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1.5">

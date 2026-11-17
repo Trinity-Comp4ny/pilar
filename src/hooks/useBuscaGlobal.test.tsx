@@ -42,7 +42,7 @@ describe("useBuscaGlobal", () => {
     expect(result.current.grupos.map((g) => [g.tipo, g.itens[0].rota, g.itens[0].label])).toEqual([
       ["cliente", "/gestao/clientes/c1", "Ana"],
       ["projeto", "/projetos/p1", "Torre"],
-      ["fornecedor", "/obras/fornecedores/f1", "Aço"],
+      ["fornecedor", "/gestao/fornecedores/f1", "Aço"],
       ["lead", "/gestao/leads", "Lead"],
       ["proposta", "/gestao/propostas", "Proposta"],
     ]);

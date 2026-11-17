@@ -67,7 +67,7 @@ export function ProjetoDetailHeader({
         <Select value={projeto.prioridade} onValueChange={(v) => onUpdatePrioridade(v as ProjectPriority)}>
           <SelectTrigger
             className={cn(
-              "h-6 w-auto text-[10px] font-medium rounded-full border-0 px-2.5 gap-1",
+              "h-6 w-auto text-3xs font-medium rounded-full border-0 px-2.5 gap-1",
               priorityConfig?.bgColor,
               priorityConfig?.color
             )}
@@ -89,7 +89,7 @@ export function ProjetoDetailHeader({
       ) : (
         priorityConfig && (
           <span
-            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}
+            className={`text-3xs px-2 py-0.5 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}
           >
             {priorityConfig.label}
           </span>
@@ -97,7 +97,7 @@ export function ProjetoDetailHeader({
       )}
 
       {deadline && (
-        <Badge className={deadline.color + " text-[10px]"}>
+        <Badge className={deadline.color + " text-3xs"}>
           {deadline.label} {deadline.days > 0 ? `(${deadline.days}d)` : ""}
         </Badge>
       )}

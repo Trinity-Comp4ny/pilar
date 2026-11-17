@@ -54,12 +54,8 @@ export function PreferenciasDialog({ open, onOpenChange }: PreferenciasDialogPro
 
         <div className="mt-2 grid grid-cols-[1fr_auto_auto] items-center gap-x-6 gap-y-1">
           <span />
-          <span className="text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            No app
-          </span>
-          <span className="text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            E-mail
-          </span>
+          <span className="text-center text-2xs font-medium uppercase tracking-wide text-muted-foreground">No app</span>
+          <span className="text-center text-2xs font-medium uppercase tracking-wide text-muted-foreground">E-mail</span>
 
           {CATEGORIAS.map((c) => {
             const Icon = iconeCategoria(c);

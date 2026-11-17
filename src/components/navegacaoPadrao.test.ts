@@ -48,6 +48,9 @@ const TABELA_A_MAO: Record<string, string> = {
   // Listas com comportamento que o DataTable ainda não cobre (SPEC 127):
   "src/pages/financeiro/components/LancamentosTable.tsx":
     "server-side, agrupada, virtualizada: <table> própria, mas com o visual do DataTable (constantes compartilhadas)",
+  // Grade pivô: colunas de mês geradas do dado, primeira coluna fixa, rodapé de acumulado (SPEC 165):
+  "src/pages/obras/components/FisicoFinanceiroGrade.tsx":
+    "grade pivô (meses em colunas, linhas em árvore, rodapé): o DataTable não cobre coluna dinâmica nem árvore",
   // Dormente (CLAUDE.md): não investir.
   "src/pages/Timesheet.tsx": "módulo dormente",
   // Tabela dentro de diálogo/editor/card de chat, não é lista de página:
@@ -90,7 +93,6 @@ describe("varredura: tabelas com <table> própria seguem o visual do DataTable (
 // há motivo registrado (SPEC 124, limpeza). A lista só encolhe.
 const TABSLIST_PERMITIDO: Record<string, string> = {
   "src/components/ui/responsive-detail-panels.tsx": "painel de detalhe responsivo (primitivo de UI)",
-  "src/components/settings/panels/EmpresaPanel.tsx": "dentro do modal de configurações, outro contexto de navegação",
   "src/pages/Timesheet.tsx": "módulo dormente",
 };
 

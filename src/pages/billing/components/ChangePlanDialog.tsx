@@ -1,22 +1,12 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FormDialog } from "@/components/FormDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { usePlans, capacidadeDoPlano } from "@/hooks/usePlans";
-import { CycleToggle, type BillingCycle } from "@/components/CycleToggle";
+import { formatCurrency } from "@/lib/format";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
-
-import { BusyMark } from "@/components/motion/BusyMark";
 
 interface ChangePlanDialogProps {
   open: boolean;
@@ -24,115 +14,87 @@ interface ChangePlanDialogProps {
   current: MySubscription;
 }
 
-function formatBRL(value: number): string {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
+// A landing só vende ciclo mensal (a v3 registra anual como N/A): o seletor de ciclo saiu
+// e o valor mostrado é sempre o mensal, igual ao de /planos. Quem já está num ciclo anual
+// mantém o ciclo ao trocar só de plano.
 export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDialogProps) {
   const { data: plans } = usePlans();
   const manage = useSubscriptionManage();
-
-  const initialCycle: BillingCycle = current.billing_cycle === "yearly" ? "yearly" : "monthly";
-  const [cycle, setCycle] = useState<BillingCycle>(initialCycle);
+  const cycle = current.billing_cycle === "yearly" ? "yearly" : "monthly";
   const [selectedSlug, setSelectedSlug] = useState<string>(current.plan?.slug ?? "");
 
   const handleConfirm = () => {
     if (!selectedSlug) return;
-
-    const noChange = selectedSlug === current.plan?.slug && cycle === current.billing_cycle;
-    if (noChange) {
+    if (selectedSlug === current.plan?.slug) {
       toast.info("Nenhuma alteração selecionada");
       return;
     }
-
     manage.mutate(
       { action: "update_plan", new_plan_slug: selectedSlug, new_cycle: cycle },
       {
         onSuccess: () => {
-          toast.success("Plano atualizado", {
-            description: "Próximas cobranças já usam o novo valor.",
-          });
+          toast.success("Plano atualizado", { description: "Próximas cobranças já usam o novo valor." });
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error("Erro ao trocar plano", {
-            description: (err as Error).message,
-          });
+          toast.error("Erro ao trocar plano", { description: (err as Error).message });
         },
       }
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Mudar plano</DialogTitle>
-          <DialogDescription>
-            A troca é aplicada imediatamente. Cobranças pendentes são atualizadas com o novo valor.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex justify-center py-2">
-          <CycleToggle value={cycle} onChange={setCycle} />
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-3">
-          {(plans ?? []).map((plan) => {
-            const price = cycle === "yearly" ? (plan.preco_anual ?? plan.preco_mensal * 12) / 12 : plan.preco_mensal;
-            const isSelected = plan.slug === selectedSlug;
-            const isCurrent = plan.slug === current.plan?.slug && cycle === current.billing_cycle;
-
-            return (
-              <button
-                key={plan.id}
-                type="button"
-                onClick={() => setSelectedSlug(plan.slug)}
-                className={cn(
-                  "relative text-left p-4 rounded-xl border-2 transition-all",
-                  isSelected ? "border-brand bg-brand/5" : "border-border hover:border-border"
-                )}
-              >
-                {isCurrent && (
-                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider bg-muted text-ink-muted px-2 py-0.5 rounded-full">
-                    Atual
-                  </span>
-                )}
-                {isSelected && !isCurrent && (
-                  <span className="absolute top-2 right-2">
-                    <Check className="w-4 h-4 text-ink" />
-                  </span>
-                )}
-                <p className="text-sm font-medium text-ink">{plan.nome}</p>
-                <p className="text-2xl font-semibold text-ink mt-2">{formatBRL(price)}</p>
-                <p className="text-xs text-ink-muted">/mês</p>
-                <ul className="mt-2 space-y-0.5">
-                  {capacidadeDoPlano(plan).map((linha) => (
-                    <li key={linha} className="text-[11px] leading-snug text-ink-muted">
-                      {linha}
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            );
-          })}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={manage.isPending}>
-            Cancelar
-          </Button>
-          <Button onClick={handleConfirm} disabled={manage.isPending || !selectedSlug} variant="brand">
-            {manage.isPending ? (
-              <>
-                <BusyMark className="w-4 h-4 mr-2" /> Atualizando...
-              </>
-            ) : (
-              "Confirmar mudança"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Mudar plano"
+      description="A troca vale na hora e as cobranças pendentes passam a usar o novo valor. Todo plano tem a plataforma inteira: muda só a capacidade."
+      size="lg"
+      zClassName="z-70"
+      onSubmit={handleConfirm}
+      submitLabel="Confirmar mudança"
+      isPending={manage.isPending}
+      submitDisabled={!selectedSlug || selectedSlug === current.plan?.slug}
+    >
+      <div className="grid gap-3 sm:grid-cols-3">
+        {(plans ?? []).map((plan) => {
+          const price = cycle === "yearly" ? (plan.preco_anual ?? plan.preco_mensal * 12) / 12 : plan.preco_mensal;
+          const isSelected = plan.slug === selectedSlug;
+          const isCurrent = plan.slug === current.plan?.slug;
+          return (
+            <button
+              key={plan.id}
+              type="button"
+              onClick={() => setSelectedSlug(plan.slug)}
+              aria-pressed={isSelected}
+              className={cn(
+                "relative rounded-xl border p-3.5 text-left transition-colors",
+                isSelected ? "border-ink bg-muted/50" : "border-border hover:border-ink/40"
+              )}
+            >
+              {isCurrent ? (
+                <span className="absolute right-2.5 top-2.5 rounded-full bg-muted px-2 py-0.5 text-2xs font-medium text-muted-foreground">
+                  Atual
+                </span>
+              ) : (
+                isSelected && <Check className="absolute right-2.5 top-2.5 h-4 w-4 text-ink" aria-hidden />
+              )}
+              <p className="text-sm font-medium text-ink">{plan.nome}</p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-ink">
+                {formatCurrency(price)}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">/mês</span>
+              </p>
+              <ul className="mt-2.5 space-y-1 border-t border-border pt-2.5">
+                {capacidadeDoPlano(plan).map((linha) => (
+                  <li key={linha} className="text-xs leading-snug text-muted-foreground">
+                    {linha}
+                  </li>
+                ))}
+              </ul>
+            </button>
+          );
+        })}
+      </div>
+    </FormDialog>
   );
 }

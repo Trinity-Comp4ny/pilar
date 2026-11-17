@@ -13,6 +13,7 @@ import {
   History,
   MessageSquare,
   FolderOpen,
+  Send,
 } from "lucide-react";
 import { PageTabs } from "@/components/PageSlots";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
@@ -39,6 +40,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
+import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -66,6 +68,7 @@ const PROJETO_TABS: SectionTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
+  { id: "cliente", label: "Cliente", icon: Send },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
@@ -127,6 +130,7 @@ export function ProjetoDetailTabs({
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
     if (h === "arquivos") return { tab: "arquivos", view: null };
+    if (h === "cliente" || h === "solicitacoes") return { tab: "cliente", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -231,7 +235,14 @@ export function ProjetoDetailTabs({
     patch: Partial<
       Pick<
         ProjetoDisciplinaDB,
-        "labels" | "links" | "comentarios" | "descricao" | "horas_estimadas" | "horas_realizadas"
+        | "labels"
+        | "links"
+        | "comentarios"
+        | "descricao"
+        | "horas_estimadas"
+        | "horas_realizadas"
+        | "tipo_execucao"
+        | "prestador_nome"
       >
     >
   ) => {
@@ -387,6 +398,10 @@ export function ProjetoDetailTabs({
             {activeTab === "arquivos" && <ProjetoArquivosTab projetoId={projeto.id} canEdit={canEdit} />}
           </TabsContent>
 
+          <TabsContent value="cliente">
+            {activeTab === "cliente" && <SolicitacoesDoCliente projetoId={projeto.id} />}
+          </TabsContent>
+
           <TabsContent value="pagamentos">
             <PagamentosTab projetoId={projeto.id} canEdit={canEdit} />
           </TabsContent>
@@ -416,6 +431,12 @@ export function ProjetoDetailTabs({
         pessoas={pessoas}
         onUpdateField={handleDiscUpdateField}
         onUpdateResponsaveis={handleDiscUpdateResponsaveis}
+        onUpdateExecucao={
+          canEdit
+            ? (tipo, prestador) =>
+                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            : undefined
+        }
         onUpdateLabels={handleDiscUpdateLabels}
         onUpdateLinks={handleDiscUpdateLinks}
         onUpdateComentarios={handleDiscUpdateComentarios}

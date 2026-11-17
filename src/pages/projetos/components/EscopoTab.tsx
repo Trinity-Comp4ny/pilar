@@ -88,7 +88,7 @@ function OrcamentoDisciplinaRow({
         {formatCurrency((Number(horas) || 0) * parseCurrencyString(custoHora))}
       </span>
       {canEdit && dirty && (
-        <Button size="sm" variant="ghost" onClick={salvarLinha} disabled={salvar.isPending} className="h-8 gap-1 px-2">
+        <Button size="xs" variant="ghost" onClick={salvarLinha} disabled={salvar.isPending} className="gap-1 px-2">
           <Check className="h-3.5 w-3.5" /> Salvar
         </Button>
       )}

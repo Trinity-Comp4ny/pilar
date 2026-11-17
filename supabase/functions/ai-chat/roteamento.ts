@@ -172,7 +172,11 @@ export async function classificarIntencao(o: {
       tokensSaida += r.tokensSaida;
       const leitura = lerDecisao(r.respostas, decisao.modelo);
       recordMetric("ai.roteamento", 1, {
-        tags: { feature: FEATURE_KEY, via: leitura.ok ? "decisao" : "modelo", motivo: leitura.ok ? "ok" : leitura.motivo },
+        tags: {
+          feature: FEATURE_KEY,
+          via: leitura.ok ? "decisao" : "modelo",
+          motivo: leitura.ok ? "ok" : leitura.motivo,
+        },
       });
       if (leitura.ok) return { data: leitura.intencao, tokensEntrada, tokensSaida, attempts, via: "decisao" };
     } catch (e) {

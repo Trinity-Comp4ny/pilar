@@ -11,6 +11,7 @@ export type { EmailTemplate } from "./templates/types.ts";
 export {
   templateConfirmacaoCadastro,
   templateConviteUsuario,
+  templateBoasVindasCriarConta,
   templateMagicLink,
   templateRecuperacaoSenha,
 } from "./templates/auth.ts";
@@ -19,7 +20,9 @@ export {
   templateCobrancaDireta,
   templateConviteAcessoCampo,
   templateMensagemManual,
+  templateMensagemPortal,
   templatePropostaEnvio,
+  templateSolicitacaoCliente,
 } from "./templates/escritorio.ts";
 export {
   templateLgpdExclusaoConcluida,
@@ -30,6 +33,7 @@ export {
   templateTrialAviso,
   templateTrialExpirado,
   templateAtivarPlanoRecibo,
+  templateBoasVindasAssinatura,
   templateRetencaoAviso,
   templateAvisoPlataforma,
   templateFeedbackRecebido,

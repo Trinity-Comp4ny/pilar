@@ -271,17 +271,13 @@ export default function MetasDashboard({ onCreate }: MetasDashboardProps) {
                       <div className="flex justify-between items-center gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-sm font-medium truncate">{v.meta.nome}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-ink-muted shrink-0">
+                          <span className="text-3xs px-1.5 py-0.5 rounded-full bg-muted text-ink-muted shrink-0">
                             {labelDoEscopo(v.meta.pessoa_id)}
                           </span>
                         </div>
                         <span className="text-sm font-bold">{v.percent}%</span>
                       </div>
-                      <Progress
-                        value={v.percent}
-                        className="h-2 bg-muted"
-                        indicatorClassName={v.percent >= 100 ? "bg-positive" : "bg-brand"}
-                      />
+                      <Progress value={v.percent} className="h-2 bg-muted" indicatorClassName="bg-brand" />
                     </div>
                   ))
                 )}
@@ -308,7 +304,7 @@ export default function MetasDashboard({ onCreate }: MetasDashboardProps) {
                   <Progress
                     value={s.avgProgress}
                     className="h-2 w-32 hidden sm:block bg-muted"
-                    indicatorClassName={s.avgProgress >= 100 ? "bg-positive" : "bg-brand"}
+                    indicatorClassName="bg-brand"
                   />
                 </div>
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">

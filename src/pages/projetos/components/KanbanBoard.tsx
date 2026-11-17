@@ -113,7 +113,7 @@ export function KanbanBoard({
           onCreate={(nome, cor, bucket) => onCriarEtapa(nome, cor, bucket)}
           renderExtra={(bucket, setBucket) => (
             <div className="space-y-1">
-              <span className="text-[11px] text-muted-foreground">Conta como</span>
+              <span className="text-2xs text-muted-foreground">Conta como</span>
               <Select value={bucket} onValueChange={(v) => setBucket(v as ProjectStatus)}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue />

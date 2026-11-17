@@ -3052,6 +3052,50 @@ export type Database = {
           },
         ]
       }
+      fluxos_obra: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          descricao: string | null
+          empresa_id: string
+          estrutura: Json
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          empresa_id: string
+          estrutura?: Json
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          descricao?: string | null
+          empresa_id?: string
+          estrutura?: Json
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluxos_obra_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folha_pagamento: {
         Row: {
           adicional_variavel: number | null
@@ -3704,6 +3748,75 @@ export type Database = {
           },
         ]
       }
+      lead_atividades: {
+        Row: {
+          autor_id: string
+          autor_nome: string
+          created_at: string
+          empresa_id: string
+          id: string
+          lead_id: string
+          ocorrido_em: string
+          texto: string
+        }
+        Insert: {
+          autor_id?: string
+          autor_nome?: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          lead_id: string
+          ocorrido_em?: string
+          texto: string
+        }
+        Update: {
+          autor_id?: string
+          autor_nome?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          lead_id?: string
+          ocorrido_em?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_atividades_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_atividades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_etapas: {
         Row: {
           bucket: string
@@ -4213,7 +4326,9 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
+          quantidade: number | null
           tipo: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number
@@ -4232,7 +4347,9 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id: string
           pago_por?: string | null
+          quantidade?: number | null
           tipo: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor: number
@@ -4251,7 +4368,9 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id?: string
           pago_por?: string | null
+          quantidade?: number | null
           tipo?: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: number
@@ -4607,6 +4726,7 @@ export type Database = {
           data_fim: string | null
           data_inicio: string | null
           empresa_id: string
+          fornecedor_id: string | null
           id: string
           nivel: string
           nome: string
@@ -4620,6 +4740,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           empresa_id: string
+          fornecedor_id?: string | null
           id?: string
           nivel?: string
           nome: string
@@ -4633,6 +4754,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           empresa_id?: string
+          fornecedor_id?: string | null
           id?: string
           nivel?: string
           nome?: string
@@ -4647,6 +4769,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_frente_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
           {
@@ -4870,6 +4999,61 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_orcamento_etapa_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_planejamento_mes: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          mes: string
+          obra_frente_id: string
+          obra_id: string
+          percentual: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          mes: string
+          obra_frente_id: string
+          obra_id: string
+          percentual: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          mes?: string
+          obra_frente_id?: string
+          obra_id?: string
+          percentual?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_planejamento_mes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_planejamento_mes_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_planejamento_mes_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -5510,6 +5694,7 @@ export type Database = {
           data_inicio_real: string | null
           deleted_at: string | null
           empresa_id: string
+          fluxo_obra_id: string | null
           id: string
           latitude: number | null
           localizacao: string | null
@@ -5537,6 +5722,7 @@ export type Database = {
           data_inicio_real?: string | null
           deleted_at?: string | null
           empresa_id: string
+          fluxo_obra_id?: string | null
           id?: string
           latitude?: number | null
           localizacao?: string | null
@@ -5564,6 +5750,7 @@ export type Database = {
           data_inicio_real?: string | null
           deleted_at?: string | null
           empresa_id?: string
+          fluxo_obra_id?: string | null
           id?: string
           latitude?: number | null
           localizacao?: string | null
@@ -5592,6 +5779,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_fluxo_obra_id_fkey"
+            columns: ["fluxo_obra_id"]
+            isOneToOne: false
+            referencedRelation: "fluxos_obra"
             referencedColumns: ["id"]
           },
           {
@@ -5628,6 +5822,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_folha_pagamento"
             referencedColumns: ["pessoa_id"]
+          },
+        ]
+      }
+      onboarding_respostas: {
+        Row: {
+          concluido_em: string | null
+          contexto: Json
+          created_at: string
+          dor_principal: string | null
+          dores: string[]
+          empresa_id: string
+          etapa_atual: number
+          id: string
+          texto_livre: string | null
+          updated_at: string
+          user_id: string
+          versao: number
+        }
+        Insert: {
+          concluido_em?: string | null
+          contexto?: Json
+          created_at?: string
+          dor_principal?: string | null
+          dores?: string[]
+          empresa_id: string
+          etapa_atual?: number
+          id?: string
+          texto_livre?: string | null
+          updated_at?: string
+          user_id: string
+          versao?: number
+        }
+        Update: {
+          concluido_em?: string | null
+          contexto?: Json
+          created_at?: string
+          dor_principal?: string | null
+          dores?: string[]
+          empresa_id?: string
+          etapa_atual?: number
+          id?: string
+          texto_livre?: string | null
+          updated_at?: string
+          user_id?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_respostas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -6129,6 +6376,7 @@ export type Database = {
           activated_at: string | null
           asaas_customer_id: string | null
           asaas_payment_id: string | null
+          asaas_pix_authorization_id: string | null
           asaas_subscription_id: string | null
           billing_cycle: string
           billing_type: string
@@ -6152,6 +6400,7 @@ export type Database = {
           activated_at?: string | null
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
+          asaas_pix_authorization_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string
           billing_type: string
@@ -6175,6 +6424,7 @@ export type Database = {
           activated_at?: string | null
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
+          asaas_pix_authorization_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string
           billing_type?: string
@@ -6603,8 +6853,9 @@ export type Database = {
           drive_url: string | null
           empresa_id: string
           id: string
+          obra_id: string | null
           projeto_disciplina_id: string | null
-          projeto_id: string
+          projeto_id: string | null
           respondido_em: string | null
           resposta_cliente: string | null
           status: string | null
@@ -6621,8 +6872,9 @@ export type Database = {
           drive_url?: string | null
           empresa_id: string
           id?: string
+          obra_id?: string | null
           projeto_disciplina_id?: string | null
-          projeto_id: string
+          projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           status?: string | null
@@ -6639,8 +6891,9 @@ export type Database = {
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          obra_id?: string | null
           projeto_disciplina_id?: string | null
-          projeto_id?: string
+          projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           status?: string | null
@@ -6654,6 +6907,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
           {
@@ -6672,6 +6932,104 @@ export type Database = {
           },
           {
             foreignKeyName: "portal_entregas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_mensagens: {
+        Row: {
+          autor_nome: string
+          autor_profile_id: string | null
+          autor_tipo: string
+          created_at: string
+          empresa_id: string
+          entrega_id: string | null
+          id: string
+          interna: boolean
+          lida_pela_equipe_em: string | null
+          lida_pelo_cliente_em: string | null
+          obra_id: string | null
+          projeto_id: string | null
+          texto: string
+        }
+        Insert: {
+          autor_nome: string
+          autor_profile_id?: string | null
+          autor_tipo: string
+          created_at?: string
+          empresa_id: string
+          entrega_id?: string | null
+          id?: string
+          interna?: boolean
+          lida_pela_equipe_em?: string | null
+          lida_pelo_cliente_em?: string | null
+          obra_id?: string | null
+          projeto_id?: string | null
+          texto: string
+        }
+        Update: {
+          autor_nome?: string
+          autor_profile_id?: string | null
+          autor_tipo?: string
+          created_at?: string
+          empresa_id?: string
+          entrega_id?: string | null
+          id?: string
+          interna?: boolean
+          lida_pela_equipe_em?: string | null
+          lida_pelo_cliente_em?: string | null
+          obra_id?: string | null
+          projeto_id?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_mensagens_autor_profile_id_fkey"
+            columns: ["autor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_autor_profile_id_fkey"
+            columns: ["autor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_entrega_id_fkey"
+            columns: ["entrega_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
@@ -7214,9 +7572,11 @@ export type Database = {
           nome: string
           observacoes: string | null
           ordem_etapa: number | null
+          prestador_nome: string | null
           prioridade: string | null
           projeto_id: string
           status: string | null
+          tipo_execucao: string
           updated_at: string | null
         }
         Insert: {
@@ -7237,9 +7597,11 @@ export type Database = {
           nome: string
           observacoes?: string | null
           ordem_etapa?: number | null
+          prestador_nome?: string | null
           prioridade?: string | null
           projeto_id: string
           status?: string | null
+          tipo_execucao?: string
           updated_at?: string | null
         }
         Update: {
@@ -7260,9 +7622,11 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           ordem_etapa?: number | null
+          prestador_nome?: string | null
           prioridade?: string | null
           projeto_id?: string
           status?: string | null
+          tipo_execucao?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -7579,6 +7943,7 @@ export type Database = {
           empresa_id: string
           etapa_id: string | null
           exemplo: boolean
+          fluxo_id: string | null
           id: string
           latitude: number | null
           links: Json
@@ -7611,6 +7976,7 @@ export type Database = {
           empresa_id: string
           etapa_id?: string | null
           exemplo?: boolean
+          fluxo_id?: string | null
           id?: string
           latitude?: number | null
           links?: Json
@@ -7643,6 +8009,7 @@ export type Database = {
           empresa_id?: string
           etapa_id?: string | null
           exemplo?: boolean
+          fluxo_id?: string | null
           id?: string
           latitude?: number | null
           links?: Json
@@ -7679,6 +8046,13 @@ export type Database = {
             columns: ["etapa_id"]
             isOneToOne: false
             referencedRelation: "projeto_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_fluxo_id_fkey"
+            columns: ["fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "fluxos_disciplinas"
             referencedColumns: ["id"]
           },
         ]
@@ -7777,6 +8151,86 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposta_versoes: {
+        Row: {
+          arquivo_path: string
+          condicoes_pagamento: string
+          created_at: string
+          criado_por: string
+          empresa_id: string
+          enviado_em: string | null
+          id: string
+          motivo_revisao: string
+          nome_arquivo: string
+          numero: number
+          proposta_id: string
+          tamanho: number
+          validade: string | null
+          valor_proposto: number
+        }
+        Insert: {
+          arquivo_path: string
+          condicoes_pagamento?: string
+          created_at?: string
+          criado_por?: string
+          empresa_id: string
+          enviado_em?: string | null
+          id?: string
+          motivo_revisao?: string
+          nome_arquivo: string
+          numero?: number
+          proposta_id: string
+          tamanho: number
+          validade?: string | null
+          valor_proposto: number
+        }
+        Update: {
+          arquivo_path?: string
+          condicoes_pagamento?: string
+          created_at?: string
+          criado_por?: string
+          empresa_id?: string
+          enviado_em?: string | null
+          id?: string
+          motivo_revisao?: string
+          nome_arquivo?: string
+          numero?: number
+          proposta_id?: string
+          tamanho?: number
+          validade?: string | null
+          valor_proposto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposta_versoes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposta_versoes_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
             referencedColumns: ["id"]
           },
         ]
@@ -10077,6 +10531,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      _portal_msg_escopo: {
+        Args: {
+          p_cliente_id: string
+          p_empresa_id: string
+          p_entrega_id: string
+          p_obra_id: string
+          p_projeto_id: string
+        }
+        Returns: {
+          entrega_id: string
+          obra_id: string
+          projeto_id: string
+        }[]
+      }
       _portal_reset_password: {
         Args: { p_account_id: string; p_nova_senha: string }
         Returns: undefined
@@ -10544,6 +11012,10 @@ export type Database = {
         Args: { p_comunicado_id: string }
         Returns: undefined
       }
+      empresa_assinatura_suspensa: {
+        Args: { p_empresa_id: string }
+        Returns: boolean
+      }
       excluir_empresa_retencao: {
         Args: { p_empresa_id: string; p_motivo: string }
         Returns: undefined
@@ -10578,6 +11050,10 @@ export type Database = {
       gerar_notificacoes_ambient: { Args: never; Returns: number }
       gerar_notificacoes_ambient_monitored: { Args: never; Returns: undefined }
       get_cliente_obra_detail: {
+        Args: { p_obra_id: string; p_token: string }
+        Returns: Json
+      }
+      get_cliente_obra_orcamento: {
         Args: { p_obra_id: string; p_token: string }
         Returns: Json
       }
@@ -10888,6 +11364,14 @@ export type Database = {
           origem: string
         }[]
       }
+      marcar_mensagens_portal_lidas_equipe: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+        }
+        Returns: undefined
+      }
       marcar_novidades_vistas: { Args: never; Returns: undefined }
       mfa_backup_codes_remaining: { Args: never; Returns: number }
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
@@ -11065,6 +11549,10 @@ export type Database = {
         Returns: boolean
       }
       pilar_status_bucket: { Args: { p_status: string }; Returns: string }
+      pode_acessar_proposta_pdf: {
+        Args: { p_escrita?: boolean; p_path: string }
+        Returns: boolean
+      }
       portal_aprovar_entrega: {
         Args: { p_entrega_id: string; p_token: string }
         Returns: undefined
@@ -11077,10 +11565,29 @@ export type Database = {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
         Returns: Json
       }
+      portal_contar_mensagens_nao_lidas: {
+        Args: { p_token: string }
+        Returns: {
+          entrega_id: string
+          obra_id: string
+          projeto_id: string
+          total: number
+        }[]
+      }
       portal_convite_consultar: { Args: { p_token: string }; Returns: Json }
       portal_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json
+      }
+      portal_enviar_mensagem: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_texto: string
+          p_token: string
+        }
+        Returns: string
       }
       portal_get_projeto_disciplinas: {
         Args: { p_projeto_id: string; p_token: string }
@@ -11112,9 +11619,56 @@ export type Database = {
           updated_at: string
         }[]
       }
+      portal_listar_mensagens: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_token: string
+        }
+        Returns: {
+          autor_nome: string
+          autor_tipo: string
+          created_at: string
+          id: string
+          lida_pelo_cliente_em: string
+          texto: string
+        }[]
+      }
+      portal_listar_solicitacoes: {
+        Args: { p_obra_id?: string; p_projeto_id?: string; p_token: string }
+        Returns: {
+          aprovado_ip: unknown
+          aprovado_user_agent: string
+          created_at: string
+          descricao: string
+          disciplina_nome: string
+          drive_url: string
+          id: string
+          obra_id: string
+          obra_nome: string
+          projeto_disciplina_id: string
+          projeto_id: string
+          projeto_nome: string
+          respondido_em: string
+          resposta_cliente: string
+          status: string
+          tipo: string
+          titulo: string
+        }[]
+      }
       portal_login: {
         Args: { p_email: string; p_senha: string }
         Returns: Json
+      }
+      portal_marcar_mensagens_lidas: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_token: string
+        }
+        Returns: undefined
       }
       portal_solicitar_revisao_entrega: {
         Args: { p_entrega_id: string; p_resposta: string; p_token: string }
@@ -11404,6 +11958,8 @@ export type Database = {
           p_obra_frente_id?: string
           p_obra_id: string
           p_pago_por?: string
+          p_quantidade?: number
+          p_unidade?: string
           p_valor: number
         }
         Returns: {
@@ -11420,7 +11976,9 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
+          quantidade: number | null
           tipo: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number

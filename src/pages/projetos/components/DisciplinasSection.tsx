@@ -1,3 +1,4 @@
+import { ExecucaoDisciplinaFields } from "./ExecucaoDisciplinaFields";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,10 @@ function buildWizardPreviewStages(groups: ReturnType<typeof groupByEtapa>): Flux
         key: disc.id ?? `${group.etapa}-${i}`,
         titulo: disc.disciplina,
         status: "nao_iniciado" as const,
-        responsavelNome: disc.responsavel_nome || undefined,
+        responsavelNome:
+          disc.tipo_execucao === "terceirizada"
+            ? `Terceirizado · ${disc.prestador_nome || "Prestador a definir"}`
+            : disc.responsavel_nome || undefined,
         metaLabel: disc.data_previsao ? formatDateShort(disc.data_previsao) : undefined,
         checklistLabel: disc.checklist_padrao?.length ? `${disc.checklist_padrao.length} itens` : undefined,
       })),
@@ -149,7 +153,7 @@ export function DisciplinasSection({
               </SelectContent>
             </Select>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1.5">
+          <p className="text-3xs text-muted-foreground mt-1.5">
             O fluxo define a ordem das disciplinas em colunas sequenciais
           </p>
         </div>
@@ -193,13 +197,13 @@ export function DisciplinasSection({
               {hasEtapas && (
                 <div className="flex items-center gap-2 pt-2">
                   {group.etapa != null && (
-                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold shrink-0">
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-3xs font-bold shrink-0">
                       {group.etapa}
                     </span>
                   )}
                   <span className="text-xs font-semibold text-muted-foreground">{group.nome}</span>
                   {group.etapa != null && group.disciplinas.length > 1 && (
-                    <span className="text-[9px] text-info-mid bg-info-soft rounded px-1.5 py-0.5">paralelo</span>
+                    <span className="text-3xs text-info-mid bg-info-soft rounded px-1.5 py-0.5">paralelo</span>
                   )}
                 </div>
               )}
@@ -219,7 +223,7 @@ export function DisciplinasSection({
                         <Badge variant="outline">{pd.disciplina}</Badge>
                         {pd.prioridade && (
                           <span
-                            className={`text-[10px] px-1.5 py-0 rounded-full font-medium ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.bgColor || ""} ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.color || ""}`}
+                            className={`text-3xs px-1.5 py-0 rounded-full font-medium ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.bgColor || ""} ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.color || ""}`}
                           >
                             {PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.label || pd.prioridade}
                           </span>
@@ -227,7 +231,7 @@ export function DisciplinasSection({
                         {deadlineStatus &&
                           (deadlineStatus.status_data === "em_atraso" || deadlineStatus.status_data === "atencao") && (
                             <span
-                              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${
+                              className={`text-3xs px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${
                                 deadlineStatus.status_data === "em_atraso"
                                   ? "bg-danger-soft text-danger-strong"
                                   : "bg-warning-soft text-warning-strong"
@@ -267,9 +271,13 @@ export function DisciplinasSection({
                     {/* Responsável + status row */}
                     <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
                       <User className="h-3 w-3 shrink-0" />
-                      <span>{resps.map((r) => r.responsavel_nome).join(", ")}</span>
+                      <span>
+                        {pd.tipo_execucao === "terceirizada"
+                          ? `Terceirizado · ${pd.prestador_nome || "Prestador a definir"}`
+                          : resps.map((r) => r.responsavel_nome).join(", ")}
+                      </span>
                       <span
-                        className={`ml-auto text-[10px] font-medium ${
+                        className={`ml-auto text-3xs font-medium ${
                           pd.status === "Concluído"
                             ? "text-positive-strong"
                             : pd.status === "Em Andamento"
@@ -309,7 +317,7 @@ export function DisciplinasSection({
                               )}
                               <div className="grid grid-cols-3 gap-2">
                                 <div className="space-y-1">
-                                  <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                                  <Label className="text-3xs text-muted-foreground uppercase tracking-wide">
                                     Início
                                   </Label>
                                   <DatePicker
@@ -324,15 +332,15 @@ export function DisciplinasSection({
                                     }
                                   />
                                   {isOutOfRange(resp.data_inicio) && (
-                                    <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
+                                    <p className="text-3xs text-attention-mid">Fora do prazo do projeto</p>
                                   )}
                                 </div>
                                 <div className="space-y-1">
-                                  <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                                  <Label className="text-3xs text-muted-foreground uppercase tracking-wide">
                                     Previsão
                                   </Label>
                                   {semPrazo ? (
-                                    <div className="h-9 flex items-center gap-1.5 px-2 rounded-md border border-dashed bg-muted text-[11px] text-muted-foreground">
+                                    <div className="h-9 flex items-center gap-1.5 px-2 rounded-md border border-dashed bg-muted text-2xs text-muted-foreground">
                                       <Info className="h-3 w-3 shrink-0" />
                                       sem prazo definido
                                     </div>
@@ -350,16 +358,16 @@ export function DisciplinasSection({
                                     />
                                   )}
                                   {semPrazo && (
-                                    <p className="text-[9px] text-muted-foreground">
+                                    <p className="text-3xs text-muted-foreground">
                                       Etapa sem duração configurada no fluxo
                                     </p>
                                   )}
                                   {!semPrazo && isOutOfRange(resp.data_previsao) && (
-                                    <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
+                                    <p className="text-3xs text-attention-mid">Fora do prazo do projeto</p>
                                   )}
                                 </div>
                                 <div className="space-y-1">
-                                  <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                                  <Label className="text-3xs text-muted-foreground uppercase tracking-wide">
                                     Conclusão
                                   </Label>
                                   <DatePicker
@@ -374,7 +382,7 @@ export function DisciplinasSection({
                                     }
                                   />
                                   {isFinalOutOfRange(resp.data_final) && (
-                                    <p className="text-[9px] text-attention-mid">
+                                    <p className="text-3xs text-attention-mid">
                                       {minDate && resp.data_final! < minDate
                                         ? "Anterior ao início do projeto"
                                         : "Posterior à conclusão do projeto"}
@@ -406,7 +414,7 @@ export function DisciplinasSection({
                           </Select>
                           <div className="grid grid-cols-3 gap-1.5">
                             <div className="space-y-0.5">
-                              <Label className="text-[9px] text-muted-foreground">Início</Label>
+                              <Label className="text-3xs text-muted-foreground">Início</Label>
                               <DatePicker
                                 value={newFormResp.data_inicio}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_inicio: v })}
@@ -415,7 +423,7 @@ export function DisciplinasSection({
                               />
                             </div>
                             <div className="space-y-0.5">
-                              <Label className="text-[9px] text-muted-foreground">Previsão</Label>
+                              <Label className="text-3xs text-muted-foreground">Previsão</Label>
                               <DatePicker
                                 value={newFormResp.data_previsao}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_previsao: v })}
@@ -424,7 +432,7 @@ export function DisciplinasSection({
                               />
                             </div>
                             <div className="space-y-0.5">
-                              <Label className="text-[9px] text-muted-foreground">Final</Label>
+                              <Label className="text-3xs text-muted-foreground">Final</Label>
                               <DatePicker
                                 value={newFormResp.data_final}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_final: v })}
@@ -437,7 +445,7 @@ export function DisciplinasSection({
                               type="button"
                               variant="brand"
                               size="sm"
-                              className="h-6 text-[10px]"
+                              className="h-6 text-3xs"
                               onClick={() => onAddResponsavel(idx)}
                             >
                               Adicionar
@@ -446,7 +454,7 @@ export function DisciplinasSection({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-6 text-[10px]"
+                              className="h-6 text-3xs"
                               onClick={() => {
                                 onSetAddingResp(null);
                                 onNewFormRespChange({
@@ -466,7 +474,7 @@ export function DisciplinasSection({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-6 text-[10px] w-full text-muted-foreground"
+                          className="h-6 text-3xs w-full text-muted-foreground"
                           onClick={() => onSetAddingResp(idx)}
                         >
                           <Plus className="h-3 w-3 mr-1" /> Adicionar responsável
@@ -509,6 +517,13 @@ export function DisciplinasSection({
                 </p>
               )}
             </div>
+            <ExecucaoDisciplinaFields
+              tipo={tempDisciplina.tipo_execucao}
+              prestador={tempDisciplina.prestador_nome}
+              onChange={(tipo, prestador) =>
+                onTempDisciplinaChange({ ...tempDisciplina, tipo_execucao: tipo, prestador_nome: prestador })
+              }
+            />
             <div className="space-y-1">
               <Label className="text-xs">Responsável</Label>
               <Select
@@ -568,7 +583,7 @@ export function DisciplinasSection({
             </div>
 
             {minDate && maxDate && (
-              <p className="text-[10px] text-muted-foreground bg-info-soft border border-info-soft-border rounded px-2 py-1">
+              <p className="text-3xs text-muted-foreground bg-info-soft border border-info-soft-border rounded px-2 py-1">
                 Prazo do projeto: {formatDateShort(minDate)} → {formatDateShort(maxDate)}
               </p>
             )}
@@ -586,7 +601,7 @@ export function DisciplinasSection({
                   }
                 />
                 {isOutOfRange(tempDisciplina.data_inicio) && (
-                  <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
+                  <p className="text-3xs text-attention-mid">Fora do prazo do projeto</p>
                 )}
               </div>
               <div className="space-y-1">
@@ -601,7 +616,7 @@ export function DisciplinasSection({
                   }
                 />
                 {isOutOfRange(tempDisciplina.data_previsao) && (
-                  <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
+                  <p className="text-3xs text-attention-mid">Fora do prazo do projeto</p>
                 )}
               </div>
               <div className="space-y-1">
@@ -617,7 +632,7 @@ export function DisciplinasSection({
                   }
                 />
                 {tempDisciplina.data_final && tempDisciplina.data_final < (minDate ?? "") && (
-                  <p className="text-[9px] text-attention-mid">Anterior ao início do projeto</p>
+                  <p className="text-3xs text-attention-mid">Anterior ao início do projeto</p>
                 )}
               </div>
             </div>

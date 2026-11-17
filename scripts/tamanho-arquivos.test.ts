@@ -26,7 +26,6 @@ const TETO: Record<string, number> = {
   "pages/pessoas/components/PessoaFormDialog.tsx": 751,
   "pages/chat/useChat.ts": 740,
   "pages/projetos/components/CronogramaTab.tsx": 731,
-  "pages/obras/components/cronograma/CronogramaLista.tsx": 702,
 };
 
 const RAIZ = join(process.cwd(), "src");

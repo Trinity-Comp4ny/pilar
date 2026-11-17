@@ -22,3 +22,10 @@ export function sidebarOffset(state: "expanded" | "collapsed", isMobile: boolean
   if (isMobile) return 0;
   return state === "collapsed" ? RAIL_WIDTH : RAIL_WIDTH + PANEL_WIDTH;
 }
+
+/**
+ * `containerClassName` das telas de dados: a altura da tela (e a rolagem por dentro) só vale
+ * a partir de md. No celular a página rola inteira e o fim fica acima da barra de baixo;
+ * prender a altura fazia o conteúdo parar antes da barra (feedback do dono, 14/11).
+ */
+export const CONTAINER_TELA_DADOS = "md:flex md:h-full md:min-h-0 md:flex-col";

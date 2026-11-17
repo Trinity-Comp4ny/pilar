@@ -9,6 +9,13 @@ import {
 
 export interface OnboardingStepView extends OnboardingStep {
   done: boolean;
+  /**
+   * Pré-requisitos obrigatórios que ainda faltam (só os que a pessoa vê). Com algum
+   * pendente o passo está bloqueado e o botão leva ao primeiro deles (SPEC 165).
+   */
+  bloqueadoPor: OnboardingStep[];
+  /** Pré-requisitos só recomendados que ainda faltam: ordenam e viram dica, não bloqueiam. */
+  sugeridoAntes: OnboardingStep[];
 }
 
 export interface OnboardingSectionView {
@@ -66,11 +73,28 @@ export function deriveProgress(
   fatos: OnboardingFatos,
   ordem: OnboardingPilar[] = PILAR_ORDER
 ): OnboardingDerived {
+  const feitos = new Set(visibleSteps.filter((s) => passoFeito(s, fatos)).map((s) => s.key));
+  const visiveis = new Map(visibleSteps.map((s) => [s.key, s]));
+  /** Pendentes entre as chaves dadas, ignorando passos que a pessoa nem vê. */
+  const pendentes = (chaves: string[] | undefined) =>
+    (chaves ?? []).flatMap((k) => {
+      const passo = visiveis.get(k);
+      return passo && !feitos.has(k) ? [passo] : [];
+    });
+
   const sections: OnboardingSectionView[] = ordem
     .map((pilar) => {
       const sectionSteps = visibleSteps
         .filter((s) => s.pilar === pilar)
-        .map((s) => ({ ...s, done: passoFeito(s, fatos) }));
+        .map((s) => {
+          const done = feitos.has(s.key);
+          return {
+            ...s,
+            done,
+            bloqueadoPor: done ? [] : pendentes(s.dependeDe),
+            sugeridoAntes: done ? [] : pendentes(s.sugereAntes),
+          };
+        });
       return {
         pilar,
         label: PILAR_LABEL[pilar],
@@ -86,7 +110,9 @@ export function deriveProgress(
   const doneSteps = steps.filter((s) => s.done).length;
   const required = steps.filter((s) => !s.opcional);
   const requiredDone = required.filter((s) => s.done).length;
-  const nextStep = steps.find((s) => !s.done && !s.opcional) ?? steps.find((s) => !s.done) ?? null;
+  // O próximo passo nunca é um bloqueado: se o escolhido está travado, vale o primeiro pré-requisito.
+  const livres = steps.filter((s) => !s.done && s.bloqueadoPor.length === 0);
+  const nextStep = livres.find((s) => !s.opcional) ?? livres[0] ?? null;
 
   return {
     steps,

@@ -56,7 +56,7 @@ export function FolhaTable({
               {isPreview && (semProjeto || variavelZerado) && (
                 <span
                   title={semProjeto ? "Sem projeto no período" : "Variável zerado"}
-                  className="inline-flex items-center gap-1 text-[10px] text-warning-strong bg-warning-soft rounded px-1.5 py-0.5"
+                  className="inline-flex items-center gap-1 text-3xs text-warning-strong bg-warning-soft rounded px-1.5 py-0.5"
                 >
                   <AlertTriangle className="h-3 w-3" />
                   {semProjeto ? "sem projeto" : "variável 0"}
@@ -131,7 +131,7 @@ export function FolhaTable({
       key: "total",
       header: "Total a receber",
       align: "end",
-      className: "font-bold text-lg",
+      className: "font-semibold",
       cell: (item) => (
         <>
           {formatCurrency(item.v_total)} {isEdited(item, "total") && "*"}
@@ -175,7 +175,7 @@ export function FolhaTable({
                       <Badge
                         variant="secondary"
                         className={`capitalize cursor-pointer hover:bg-opacity-80 transition-colors px-2 py-0.5 text-xs
-                          ${item.status === "pago" ? "bg-positive text-ink" : ""}
+                          ${item.status === "pago" ? "bg-brand text-ink" : ""}
                           ${item.status === "pendente" ? "bg-warning-soft text-warning-strong" : ""}
                           ${item.status === "cancelado" ? "bg-destructive text-destructive-foreground" : ""}
                         `}
@@ -210,8 +210,7 @@ export function FolhaTable({
             cell: (item: FolhaItem) => (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+                size="icon-sm"
                 title={`Baixar comprovante de ${item.p_nome}`}
                 aria-label={`Baixar comprovante de ${item.p_nome}`}
                 loading={pendente(item.p_id)}

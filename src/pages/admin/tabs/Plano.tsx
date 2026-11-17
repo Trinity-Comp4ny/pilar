@@ -4,14 +4,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Users, Briefcase, Database } from "lucide-react";
-import { FalarComercialDialog } from "@/pages/admin/components/FalarComercialDialog";
+import { ChangePlanDialog, useMySubscription } from "@/components/billing/TrocarPlano";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
+import { capacidadeDoPlano } from "@/hooks/usePlans";
 import type { SubscriptionPlanSlug } from "@/lib/features";
 
+// Mesmos nomes da landing (apps/marketing/src/lib/planos.ts).
 const PLAN_LABELS: Record<SubscriptionPlanSlug, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
+  starter: "Essencial",
+  pro: "Profissional",
+  enterprise: "Escala",
 };
+
+const RECURSOS_FIXOS = [
+  "Financeiro completo",
+  "Portal do cliente",
+  "Mapa de projetos",
+  "Gestão de usuários e permissões",
+  "Relatórios",
+];
 
 type Usage = {
   usuarios: number;
@@ -21,7 +32,19 @@ type Usage = {
 
 export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null; currentPlan: SubscriptionPlanSlug }) {
   const [usage, setUsage] = useState<Usage>({ usuarios: 0, projetos: 0, clientes: 0 });
-  const [comercialOpen, setComercialOpen] = useState(false);
+  const [trocaOpen, setTrocaOpen] = useState(false);
+  const { data: assinatura } = useMySubscription();
+  const { openSettings } = useSettingsModal();
+  const nomePlano = assinatura?.plan?.nome ?? PLAN_LABELS[currentPlan];
+  const recursos = [...(assinatura?.plan ? capacidadeDoPlano(assinatura.plan) : []), ...RECURSOS_FIXOS];
+
+  const mudarDePlano = () => {
+    if (assinatura?.status === "active") {
+      setTrocaOpen(true);
+      return;
+    }
+    openSettings("pagamento");
+  };
 
   useEffect(() => {
     if (!empresaId) return;
@@ -58,13 +81,13 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
               <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-3">
                 Plano Atual
                 <Badge className="bg-brand/10 text-success-strong hover:bg-brand/10 border-transparent">
-                  {PLAN_LABELS[currentPlan]}
+                  {nomePlano}
                 </Badge>
               </CardTitle>
-              <CardDescription>Acesso completo à Pilar no plano {PLAN_LABELS[currentPlan]}</CardDescription>
+              <CardDescription>Acesso completo à Pilar no plano {nomePlano}</CardDescription>
             </div>
-            <Button variant="outline" onClick={() => setComercialOpen(true)}>
-              Falar com comercial
+            <Button variant="brand" onClick={mudarDePlano}>
+              Mudar de plano
             </Button>
           </div>
         </CardHeader>
@@ -85,15 +108,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
         </CardHeader>
         <CardContent>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-            {[
-              "Projetos ilimitados",
-              "Leads e propostas ilimitados",
-              "Financeiro completo",
-              "Portal do cliente",
-              "Mapa de projetos",
-              "Gestão de usuários e permissões",
-              "Relatórios",
-            ].map((item) => (
+            {recursos.map((item) => (
               <li key={item} className="flex items-center gap-2 text-black/70">
                 <CheckCircle2 size={14} className="text-success-mid shrink-0" />
                 {item}
@@ -102,7 +117,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
           </ul>
         </CardContent>
       </Card>
-      <FalarComercialDialog open={comercialOpen} onOpenChange={setComercialOpen} currentPlan={currentPlan} />
+      {assinatura && <ChangePlanDialog open={trocaOpen} onOpenChange={setTrocaOpen} current={assinatura} />}
     </div>
   );
 }
@@ -125,7 +140,7 @@ function Stat({
         {label}
       </div>
       <div
-        className={`mt-2 text-2xl font-medium tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
+        className={`mt-2 text-xl font-semibold tabular-nums tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
       >
         {value}
       </div>

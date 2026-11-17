@@ -20,6 +20,7 @@ import {
   barPosition,
   toIso,
 } from "@/lib/cronograma";
+import { GANTT_LABEL_W, GANTT_GUIDE_LINE, GANTT_GUIDE_CHIP } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import {
   type DisciplinaResponsavel,
@@ -329,9 +330,9 @@ export function CronogramaTab({
             <div className="flex min-w-0 items-center gap-2">
               <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
               <h3 className="truncate text-sm font-semibold">Cronograma do Projeto</h3>
-              {isSaving && <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>}
+              {isSaving && <span className="text-3xs text-muted-foreground animate-pulse">Salvando...</span>}
               {isDragging && (
-                <span className="text-[10px] text-muted-foreground/60 border border-dashed border-muted-foreground/30 rounded px-1.5 py-0.5">
+                <span className="text-3xs text-muted-foreground/60 border border-dashed border-muted-foreground/30 rounded px-1.5 py-0.5">
                   Esc para cancelar
                 </span>
               )}
@@ -363,7 +364,7 @@ export function CronogramaTab({
               {discsSemDatas.length} disciplina{discsSemDatas.length > 1 ? "s" : ""} sem datas definidas — não exibidas
               no gráfico
             </span>
-            <span className="text-[10px] text-warning-mid opacity-70">{discsSemDatasExpanded ? "▲" : "▼"}</span>
+            <span className="text-3xs text-warning-mid opacity-70">{discsSemDatasExpanded ? "▲" : "▼"}</span>
           </button>
           {discsSemDatasExpanded && (
             <div className="border-t border-warning-mid-border px-3 py-2 space-y-0.5">
@@ -385,9 +386,9 @@ export function CronogramaTab({
                 fixa de 220px sozinha consumia mais da metade de uma tela de 390px,
                 sobrando só uma faixa estreita pra timeline). Some o responsável,
                 mantém só o nome truncado. */}
-            <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
+            <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
               <div className="h-10 border-b px-3 flex items-center">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Disciplina
                 </span>
               </div>
@@ -403,7 +404,7 @@ export function CronogramaTab({
                   {!isMobile && (
                     <div className="flex items-center gap-1 mt-0.5">
                       <User className="h-2.5 w-2.5 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground truncate">
+                      <span className="text-3xs text-muted-foreground truncate">
                         {row.resps.map((r) => r.responsavel_nome).join(", ") || "—"}
                       </span>
                     </div>
@@ -423,7 +424,7 @@ export function CronogramaTab({
                 <div className="h-10 border-b flex sticky top-0 bg-background z-10 relative">
                   {columns.map((col, i) => (
                     <div key={i} className="flex-1 border-r last:border-r-0 flex items-center justify-center">
-                      <span className="text-[10px] font-medium text-muted-foreground capitalize">{col.label}</span>
+                      <span className="text-3xs font-medium text-muted-foreground capitalize">{col.label}</span>
                     </div>
                   ))}
 
@@ -436,7 +437,7 @@ export function CronogramaTab({
                     >
                       <div
                         className={cn(
-                          "absolute left-1/2 -translate-x-1/2 text-white text-[8px] px-1.5 py-0.5 font-bold whitespace-nowrap z-10",
+                          "absolute left-1/2 -translate-x-1/2 text-white text-3xs px-1.5 py-0.5 font-bold whitespace-nowrap z-10",
                           marker.chipClass,
                           marker.chipRow === 0 ? "bottom-0 rounded-t-sm" : "top-0 rounded-b-sm"
                         )}
@@ -467,14 +468,9 @@ export function CronogramaTab({
 
                   {/* Vertical guide line during drag */}
                   {guideX !== null && (
-                    <div
-                      className="absolute top-0 bottom-0 w-px bg-chart-info/70 z-30 pointer-events-none"
-                      style={{ left: `${guideX}px` }}
-                    >
+                    <div className={GANTT_GUIDE_LINE} style={{ left: `${guideX}px` }}>
                       {/* Date chip at top of guide */}
-                      <div className="absolute top-1 left-2 bg-chart-info text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
-                        {guideDateLabel()}
-                      </div>
+                      <div className={GANTT_GUIDE_CHIP}>{guideDateLabel()}</div>
                     </div>
                   )}
 
@@ -583,7 +579,7 @@ export function CronogramaTab({
                                         }}
                                       />
                                     )}
-                                    <span className="text-[10px] text-white font-medium relative z-10 truncate">
+                                    <span className="text-3xs text-white font-medium relative z-10 truncate">
                                       {row.disc.disciplina}
                                     </span>
                                   </div>
@@ -618,12 +614,12 @@ export function CronogramaTab({
                                   <div className="flex items-center gap-2">
                                     <Badge
                                       variant="secondary"
-                                      className={cn("text-[10px]", row.colors.bg, row.colors.text)}
+                                      className={cn("text-3xs", row.colors.bg, row.colors.text)}
                                     >
                                       {row.status}
                                     </Badge>
                                     {row.deadlineStatus && (
-                                      <Badge className={cn("text-[10px]", row.deadlineStatus.color)}>
+                                      <Badge className={cn("text-3xs", row.deadlineStatus.color)}>
                                         {row.deadlineStatus.label}
                                         {row.deadlineStatus.days > 0 ? ` (${row.deadlineStatus.days}d)` : ""}
                                       </Badge>
@@ -643,7 +639,7 @@ export function CronogramaTab({
                                     </p>
                                   )}
                                   {canDrag && (
-                                    <p className="text-[10px] text-muted-foreground/60 border-t pt-1 mt-1">
+                                    <p className="text-3xs text-muted-foreground/60 border-t pt-1 mt-1">
                                       Arraste as bordas para ajustar as datas
                                     </p>
                                   )}
@@ -660,7 +656,7 @@ export function CronogramaTab({
                             >
                               <div
                                 className={cn(
-                                  "text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium",
+                                  "text-white text-3xs px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium",
                                   isSnapping ? "bg-chart-warning" : isBeyondEnd ? "bg-chart-warning-alt" : "bg-ink/90"
                                 )}
                               >
