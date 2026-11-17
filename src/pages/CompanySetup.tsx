@@ -56,7 +56,7 @@ export default function CompanySetup() {
   const [isLoading, setIsLoading] = useState(false);
   const [concluindo, setConcluindo] = useState(false);
   const navigate = useNavigate();
-  const { profile, user, refreshProfile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
 
   const form = useForm<CompanySetupFormInput, unknown, CompanySetupFormData>({
     resolver: zodResolver(companySetupSchema),
