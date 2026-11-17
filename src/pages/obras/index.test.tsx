@@ -20,6 +20,7 @@ vi.mock("@/pages/obras/hooks/useObras", () => ({
   useObras: () => ({ data: [], isLoading: false, isError: false }),
   useUpdateObra: () => ({ mutate: vi.fn() }),
 }));
+vi.mock("@/pages/obras/hooks/useResumoCustoObras", () => ({ useResumoCustoObras: () => ({ data: new Map() }) }));
 vi.mock("./components/FluxosObraDialog", () => ({ FluxosObraDialog: () => null }));
 vi.mock("./components/FilaCotacoesPendentes", () => ({ FilaCotacoesPendentes: () => null }));
 vi.mock("./components/ObraFormDialog", () => ({

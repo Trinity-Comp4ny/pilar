@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useResumoCustoObras } from "@/pages/obras/hooks/useResumoCustoObras";
 import { useObras, useUpdateObra, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { EscolherInicioObraDialog } from "./components/EscolherInicioObraDialog";
 import { ObraFormDialog } from "./components/ObraFormDialog";
@@ -31,6 +32,7 @@ export default function ObrasPage() {
   const [fluxosOpen, setFluxosOpen] = useState(false);
   const iniciarObra = () => (podeEstimar ? setEscolhaOpen(true) : setDialogOpen(true));
   const { data: obras = [], isLoading, isError } = useObras();
+  const { data: custos } = useResumoCustoObras();
   const atualizar = useUpdateObra();
   const mudarStatus = (obra: ObraResumo, status: string) =>
     atualizar.mutate(
@@ -146,7 +148,12 @@ export default function ObrasPage() {
         <EmptyState icon={HardHat} title="Nada encontrado" description="Nenhuma obra bate com a busca." />
       ) : (
         <div className="min-h-0 flex-1">
-          <ObrasQuadro obras={filtradas} podeEditar={can("obras", "edit")} onMudarStatus={mudarStatus} />
+          <ObrasQuadro
+            obras={filtradas}
+            podeEditar={can("obras", "edit")}
+            onMudarStatus={mudarStatus}
+            custos={custos}
+          />
         </div>
       )}
 
