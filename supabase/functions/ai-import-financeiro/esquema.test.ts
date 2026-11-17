@@ -12,6 +12,13 @@ Deno.test("lançamento malformado sai com aviso, o extrato não se perde", () =>
   assertEquals(r.success && r.data.avisos, ["Página 2 ilegível.", "2 lançamento(s) ignorado(s): formato inválido."]);
 });
 
+Deno.test("lista solta na raiz vale como { lancamentos } (o modelo às vezes omite o envelope)", () => {
+  const r = ResultSchema.safeParse([ok, { descricao: "sem nada" }]);
+  assertEquals(r.success && r.data.lancamentos.length, 1);
+  assertEquals(r.success && r.data.avisos, ["1 lançamento(s) ignorado(s): formato inválido."]);
+  assertEquals(ResultSchema.safeParse([]).success, true);
+});
+
 Deno.test("sem a lista de lançamentos a extração falhou (o client tenta de novo)", () => {
   assertEquals(ResultSchema.safeParse({ avisos: [] }).success, false);
   assertEquals(ResultSchema.safeParse({ lancamentos: "nada" }).success, false);
