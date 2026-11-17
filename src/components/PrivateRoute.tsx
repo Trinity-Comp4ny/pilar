@@ -1,7 +1,6 @@
-import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
@@ -10,8 +9,8 @@ import { monitoring } from "@/lib/monitoring";
 import { autorizacaoPendente, rotaDeAutorizacao } from "@/lib/oauthPendente";
 import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
-import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SubscriptionSuspendedScreen } from "./SubscriptionSuspendedScreen";
+import { EVENTO_ASSINATURA_SUSPENSA } from "@/lib/assinaturaSuspensa";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 
 const AccountRecoveryScreen = lazy(() =>
@@ -23,44 +22,6 @@ type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | nu
 // Cache somente em memória — sessionStorage era manipulável via DevTools.
 const subStatusCache = new Map<string, SubStatus>();
 const REVALIDAR_STATUS_MS = 5 * 60 * 1000;
-
-// SPEC 098: quem não pode regularizar a assinatura (não é admin) não vê o
-// atalho pra tela de pagamento, que ele não tem acesso mesmo. Só orienta a
-// falar com quem administra a empresa.
-function SubscriptionSuspendedScreen({ isAdmin }: { isAdmin: boolean }) {
-  const { openSettings } = useSettingsModal();
-  return (
-    <div className="min-h-dvh flex items-center justify-center bg-muted p-8">
-      <div className="max-w-md text-center space-y-6">
-        <div className="flex justify-center">
-          <div className="p-4 rounded-full bg-warning-soft">
-            <AlertTriangle className="h-10 w-10 text-warning-mid" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-ink">Acesso suspenso</h1>
-          <p className="text-ink-muted text-sm leading-relaxed">
-            {isAdmin
-              ? "Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma."
-              : "A assinatura da sua empresa está suspensa ou cancelada. Fale com o administrador da sua empresa para regularizar o pagamento."}
-          </p>
-        </div>
-        <div className="flex flex-col gap-3">
-          {isAdmin && (
-            <Button variant="brand" onClick={() => openSettings("pagamento")}>
-              Ver assinatura
-            </Button>
-          )}
-          <Button variant="ghost" asChild className="text-ink-muted">
-            <Link to="/" onClick={() => supabase.auth.signOut()}>
-              Sair da conta
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function PrivateRoute() {
   const { isAuthenticated, profile, loading, mfaChallengeRequired } = useAuth();
@@ -138,11 +99,14 @@ export function PrivateRoute() {
     };
     document.addEventListener("visibilitychange", aoVoltar);
     window.addEventListener("focus", aoVoltar);
+    // Escrita recusada pelo banco (assinatura suspensa): relê na hora, sem esperar.
+    window.addEventListener(EVENTO_ASSINATURA_SUSPENSA, revalidar);
     const timer = window.setInterval(() => void revalidar(), REVALIDAR_STATUS_MS);
     return () => {
       active = false;
       document.removeEventListener("visibilitychange", aoVoltar);
       window.removeEventListener("focus", aoVoltar);
+      window.removeEventListener(EVENTO_ASSINATURA_SUSPENSA, revalidar);
       window.clearInterval(timer);
     };
   }, [gateAtivo, empresaId, subStatus]);
