@@ -19,7 +19,7 @@ const { invoke, recordMetric, track, planos } = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
 }));
-vi.mock("@/hooks/usePlans", () => ({ usePlans: () => planos }));
+vi.mock("@/hooks/usePlans", async (orig) => ({ ...(await orig<typeof import("@/hooks/usePlans")>()), usePlans: () => planos }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { recordMetric, captureException: vi.fn() } }));
 vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: () => {} }));
@@ -190,6 +190,12 @@ describe("Checkout", () => {
     expect(recordMetric).toHaveBeenCalledTimes(1);
     expect(recordMetric).toHaveBeenCalledWith("checkout.completed", 1, expect.anything());
     expect(track).toHaveBeenCalledWith("assinatura_ativada", expect.objectContaining({ plano: "pro" }));
+  });
+
+  it("resumo mostra a capacidade do plano e o que todo plano inclui, e oferece trocar de plano antes de pagar", async () => {
+    abrir("/checkout?plano=pro");
+    expect(await screen.findByText("Usuários ilimitados, sem cobrar por cabeça")).toBeInTheDocument();
+    expect(screen.getByText("Trocar plano")).toBeInTheDocument();
   });
 
   it("cartão aprovado na hora vai direto ao sucesso sem polling", async () => {

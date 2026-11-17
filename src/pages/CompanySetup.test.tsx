@@ -87,7 +87,7 @@ describe("CompanySetup · Confirme seu escritório (etapa 3)", () => {
     expect(cnpj()).toHaveValue("11.222.333/0001-81");
     expect(screen.getByDisplayValue("alfa.com.br")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "6 a 15" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("button", { name: "Estrutural" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Disciplinas do escritório")).not.toBeInTheDocument();
     expect(screen.getByText("Etapa 3 de 4")).toBeInTheDocument();
   });
 
@@ -114,19 +114,19 @@ describe("CompanySetup · Confirme seu escritório (etapa 3)", () => {
     expect(updates()).toHaveLength(0);
   });
 
-  it("sugere o site pelo domínio do e-mail e grava o perfil sem concluir o onboarding", async () => {
+  it("não sugere site nem oferece disciplinas, e grava o perfil sem concluir o onboarding", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Usar alfaeng.com.br" }));
+    expect(screen.queryByRole("button", { name: /^Usar / })).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText("meusite.com.br")).toHaveValue("");
     await user.click(screen.getByRole("radio", { name: "1 a 5 pessoas" }));
-    await user.click(screen.getByRole("button", { name: "Arquitetura" }));
     await irParaWizard(user);
     expect(updates()[0]?.payload).toEqual({
       nome: "Escritório Seed",
       cnpj: null,
-      site: "alfaeng.com.br",
+      site: null,
       porte: "1-5",
-      disciplinas: ["arquitetura"],
+      disciplinas: null,
     });
     expect(updates()[0]?.filters).toContainEqual(["eq", "id", "e1"]);
   });
