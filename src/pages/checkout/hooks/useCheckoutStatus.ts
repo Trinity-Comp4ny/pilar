@@ -19,10 +19,13 @@ export function useCheckoutStatus(sessionToken: string | null, enabled = true) {
     queryKey: ["pilar-checkout-status", sessionToken],
     enabled: enabled && !!sessionToken,
     refetchInterval: (query) => {
-      const status = query.state.data?.payment_status;
-      if (status === "paid" || status === "failed" || status === "canceled") {
-        return false;
-      }
+      const data = query.state.data;
+      const status = data?.payment_status;
+      if (status === "failed" || status === "canceled") return false;
+      // Pago mas o convite ainda não saiu: segue consultando. O status também
+      // dispara o convite de fallback, então parar aqui deixava a tela eternamente
+      // em "Enviando email...".
+      if (status === "paid" && data?.invite_dispatched) return false;
       return 4000;
     },
     queryFn: async (): Promise<CheckoutStatus> => {

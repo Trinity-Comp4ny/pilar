@@ -56,6 +56,7 @@ const empresaX = XSS;
 
 const casos: Array<[string, () => { subject: string; html: string }]> = [
   ["convite", () => T.templateConviteUsuario("https://l", XSS)],
+  ["boas-vindas-conta", () => T.templateBoasVindasCriarConta("https://l", XSS)],
   [
     "boas-vindas",
     () =>

@@ -44,7 +44,7 @@ export default function Checkout() {
 
   const { data: status } = useCheckoutStatus(
     checkoutResult?.session_token ?? null,
-    !!checkoutResult && checkoutResult.billing_type !== "CREDIT_CARD"
+    !!checkoutResult
   );
 
   const effectiveStatus = status?.payment_status ?? checkoutResult?.payment_status ?? null;
