@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProfileSetup from "./ProfileSetup";
 import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
 
@@ -78,14 +79,17 @@ function usuario(meta: { provider?: string; invite?: boolean; identities?: strin
 }
 
 function renderPage() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={["/profile-setup"]}>
-      <Routes>
-        <Route path="/profile-setup" element={<ProfileSetup />} />
-        <Route path="/inicio" element={<div data-testid="inicio" />} />
-        <Route path="/company-setup" element={<div data-testid="company-setup" />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={["/profile-setup"]}>
+        <Routes>
+          <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/inicio" element={<div data-testid="inicio" />} />
+          <Route path="/company-setup" element={<div data-testid="company-setup" />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

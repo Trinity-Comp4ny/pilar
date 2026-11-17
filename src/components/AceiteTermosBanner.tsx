@@ -26,7 +26,7 @@ import { PRIVACY_VERSION, TERMS_VERSION, TERMS_VIGENCIA_TEXTO, termosVigentes } 
 
 const CHAVE_ADIADO = "pilar_aceite_termos_adiado";
 // Telas onde a faixa atrapalha: o aceite já é pedido no próprio cadastro.
-const ROTAS_SEM_FAIXA = ["/profile-setup", "/cadastro", "/login"];
+const ROTAS_SEM_FAIXA = ["/profile-setup", "/company-setup", "/cadastro", "/login"];
 
 function lerAdiado(): boolean {
   try {

@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -57,6 +58,7 @@ export default function ProfileSetup() {
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [entrada, setEntrada] = useState<Entrada>({ tipo: "dono" });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { refreshProfile } = useAuth();
 
   const resolver = useMemo<Resolver<ProfileSetupFormData>>(() => {
@@ -190,6 +192,9 @@ export default function ProfileSetup() {
           source: "profile_setup",
         });
         if (termsError) throw termsError;
+        // O banner de reaceite já consultou (e guardou "sem aceite") enquanto esta tela estava aberta;
+        // sem isto, conta recém-criada via checkout via "Atualizamos os Termos" no primeiro acesso.
+        await queryClient.invalidateQueries({ queryKey: ["aceite-termos", user.id] });
         // Primeiro acesso (Google, convite, checkout): a decisão de análise sai junto com o aceite.
         // Falha aqui não pode travar o onboarding: o cartão do app pergunta de novo.
         await setAnalyticsConsent(user.id, analiseAceita).catch(() => undefined);
