@@ -16,6 +16,7 @@ vi.mock("@/components/ui/select", async () => await import("../testing/nativeSel
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/analytics", () => ({ analytics: { track: vi.fn() } }));
 vi.mock("./CentroCustoManager", () => ({ CentroCustoManager: () => null }));
+vi.mock("./CategoriaManager", () => ({ CategoriaManager: () => null }));
 
 const checkDuplicates = vi.fn();
 vi.mock("@/lib/duplicateCheck", () => ({ checkDuplicates: (...a: unknown[]) => checkDuplicates(...a) }));
