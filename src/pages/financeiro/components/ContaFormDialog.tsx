@@ -45,7 +45,13 @@ export function ContaFormDialog({
 }: ContaFormDialogProps) {
   return (
     <>
-      <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar conta">
+      <Button
+        variant="ghost"
+        className="h-6 w-6"
+        onClick={onAddClick}
+        aria-label="Adicionar conta"
+        data-tour="onb-nova-conta"
+      >
         <Plus className="h-3.5 w-3.5" />
       </Button>
       <FormDialog
