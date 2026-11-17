@@ -82,14 +82,15 @@ vi.mock("@/hooks/usePermissions", () => ({
 }));
 let isAdmin = true;
 let planoAtivo = false;
-const openSettings = vi.fn();
 const track = vi.fn();
 vi.mock("@/lib/analytics", () => ({ analytics: { track: (...a: unknown[]) => track(...a) } }));
 vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin }) }));
 vi.mock("@/pages/billing/hooks/useMySubscription", () => ({
   useMySubscription: () => ({ data: planoAtivo ? { status: "active" } : null }),
 }));
-vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings }) }));
+vi.mock("@/pages/billing/components/ChangePlanDialog", () => ({
+  ChangePlanDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Trocar plano" /> : null),
+}));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
 vi.mock("@/hooks/useRecentes", () => ({ useRegistrarPagina: vi.fn() }));
 vi.mock("@/components/ui/sidebar", async (orig) => ({
@@ -282,8 +283,8 @@ describe("Leads: limite de leads ativos (capacidade:leads)", () => {
     const aviso = screen.getByRole("alertdialog");
     expect(within(aviso).getByText("Você atingiu um limite do plano")).toBeInTheDocument();
     expect(within(aviso).getByText(/limite de 50 leads ativos do seu plano/)).toBeInTheDocument();
-    await user.click(within(aviso).getByRole("button", { name: "Ver planos" }));
-    expect(openSettings).toHaveBeenCalledWith("pagamento");
+    await user.click(within(aviso).getByRole("button", { name: "Fazer upgrade" }));
+    expect(await screen.findByRole("dialog", { name: "Trocar plano", hidden: true })).toBeInTheDocument();
   });
 
   it("com plano ativo, quem não é admin avisa o administrador", async () => {

@@ -57,6 +57,7 @@ function limiteFrase(recurso: RecursoCapacidade, limite: number | null): string 
 function LimiteDoPlano({ open, onOpenChange, recurso, limite, isAdmin }: DesbloqueioNivelProps) {
   const { data: assinatura } = useMySubscription();
   const [trocaOpen, setTrocaOpen] = useState(false);
+  const indoParaTroca = useRef(false);
   const nome = NOME_RECURSO[recurso];
   const frase = limite == null ? `o limite de ${nome} do seu plano` : `o limite de ${limite} ${nome} do seu plano`;
 
@@ -76,11 +77,15 @@ function LimiteDoPlano({ open, onOpenChange, recurso, limite, isAdmin }: Desbloq
   return (
     <>
       <ConfirmDialog
-        open={open}
-        onOpenChange={onOpenChange}
+        open={open && !trocaOpen}
+        onOpenChange={(v) => {
+          // Confirmar também fecha o aviso; o pai desmontaria este componente e a troca de plano sumiria.
+          if (!v && indoParaTroca.current) return;
+          onOpenChange(v);
+        }}
         onConfirm={() => {
           analytics.track("plano_limite_ver_planos", { recurso, limite });
-          onOpenChange(false);
+          indoParaTroca.current = true;
           setTrocaOpen(true);
         }}
         title="Você atingiu um limite do plano"
@@ -89,7 +94,19 @@ function LimiteDoPlano({ open, onOpenChange, recurso, limite, isAdmin }: Desbloq
         confirmText="Fazer upgrade"
         cancelText="Fechar"
       />
-      {assinatura && <ChangePlanDialog open={trocaOpen} onOpenChange={setTrocaOpen} current={assinatura} />}
+      {assinatura && (
+        <ChangePlanDialog
+          open={trocaOpen}
+          onOpenChange={(v) => {
+            setTrocaOpen(v);
+            if (!v) {
+              indoParaTroca.current = false;
+              onOpenChange(false);
+            }
+          }}
+          current={assinatura}
+        />
+      )}
     </>
   );
 }

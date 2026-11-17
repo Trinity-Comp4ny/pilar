@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Users, Briefcase, Database } from "lucide-react";
-import { ChangePlanDialog } from "@/pages/billing/components/ChangePlanDialog";
-import { useMySubscription } from "@/pages/billing/hooks/useMySubscription";
+import { ChangePlanDialog, useMySubscription } from "@/components/billing/TrocarPlano";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { capacidadeDoPlano } from "@/hooks/usePlans";
 import type { SubscriptionPlanSlug } from "@/lib/features";

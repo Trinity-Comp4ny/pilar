@@ -28,11 +28,12 @@ vi.mock("@/hooks/usePermissions", () => ({
 let isAdmin = true;
 vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin }) }));
 let assinaturaStatus: string | null = null;
-const openSettings = vi.fn();
 vi.mock("@/pages/billing/hooks/useMySubscription", () => ({
   useMySubscription: () => ({ data: assinaturaStatus ? { status: assinaturaStatus } : null }),
 }));
-vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings }) }));
+vi.mock("@/pages/billing/components/ChangePlanDialog", () => ({
+  ChangePlanDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Trocar plano" /> : null),
+}));
 vi.mock("./DisciplinaDetailDialog", () => ({ DisciplinaDetailDialog: () => null }));
 vi.mock("@/lib/analytics", () => ({ analytics: { track: vi.fn() } }));
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() }));
@@ -166,8 +167,8 @@ describe("ProjetoFormDialog", () => {
     expect(await screen.findByText("Você atingiu um limite do plano")).toBeInTheDocument();
     expect(screen.getByText(/o limite de 20 projetos ativos do seu plano/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Confirmar documento" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Ver planos" }));
-    expect(openSettings).toHaveBeenCalledWith("pagamento");
+    fireEvent.click(screen.getByRole("button", { name: "Fazer upgrade" }));
+    expect(await screen.findByRole("dialog", { name: "Trocar plano", hidden: true })).toBeInTheDocument();
   });
 
   it("com plano ativo, quem não é admin só avisa o administrador", async () => {
@@ -181,7 +182,7 @@ describe("ProjetoFormDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
 
     expect(await screen.findByText(/Só um administrador pode trocar de plano/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Ver planos" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Fazer upgrade" })).not.toBeInTheDocument();
   });
 
   it("cancelar com alteração pede confirmação antes de descartar", () => {
