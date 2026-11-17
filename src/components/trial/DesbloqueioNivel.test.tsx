@@ -8,14 +8,15 @@ const h = vi.hoisted(() => ({
   invoke: vi.fn(),
   rpc: vi.fn(),
   track: vi.fn(),
-  openSettings: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: h.invoke }, rpc: h.rpc } }));
 vi.mock("@/pages/billing/hooks/useMySubscription", () => ({ useMySubscription: () => ({ data: h.assinatura }) }));
-vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings: h.openSettings }) }));
+vi.mock("@/pages/billing/components/ChangePlanDialog", () => ({
+  ChangePlanDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Trocar plano" /> : null),
+}));
 vi.mock("@/lib/analytics", () => ({ analytics: { track: h.track } }));
 vi.mock("sonner", () => ({ toast: { success: h.toastSuccess, error: h.toastError } }));
 
@@ -158,12 +159,12 @@ describe("DesbloqueioNivel › plano ativo", () => {
     h.assinatura = { status: "active" };
   });
 
-  it("admin vai para os planos", async () => {
+  it("admin abre a troca de plano direto", async () => {
     const user = renderDialog({ isAdmin: true });
     expect(screen.getByText(/o limite de 3 projetos ativos do seu plano/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Ver planos" }));
+    await user.click(screen.getByRole("button", { name: "Fazer upgrade" }));
     expect(h.track).toHaveBeenCalledWith("plano_limite_ver_planos", { recurso: "projetos", limite: 3 });
-    expect(h.openSettings).toHaveBeenCalledWith("pagamento");
+    expect(await screen.findByRole("dialog", { name: "Trocar plano", hidden: true })).toBeInTheDocument();
   });
 
   it("não-admin avisa o admin com texto do plano", () => {
