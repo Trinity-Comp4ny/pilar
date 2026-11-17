@@ -39,7 +39,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 183,
+    "authenticated_chamavel": 189,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -103,5 +103,8 @@
   },
   "_mudou_em_2026_11_11_profissionalizacao": {
     "authenticated_chamavel": "171 -> 177. Entram 6 RPCs SECURITY DEFINER do bloco de profissionalização (SPECs 152, 157 e 159): novidades_publicadas e marcar_novidades_vistas (só auth.uid(), devolvem e gravam só o que é do próprio usuário), publicar_release (exige is_ultra_admin), comunicados_para_mim e dispensar_comunicado (filtram pelo perfil de quem chama), registrar_dispositivo (só grava o navegador de auth.uid()). Todas com search_path fixo e REVOKE de PUBLIC/anon. As funções de trigger novas (_product_release_guarda_publicacao, _pesquisa_avisar_detrator) não são chamáveis."
+  },
+  "_mudou_em_2026_11_17": {
+    "authenticated_chamavel": "183 -> 189 em staging. A auditoria do PR #887 mediu 188 no banco real de staging: 5 funções SECURITY DEFINER já mergeadas e deployadas sem bump da baseline (o PR #887 não cria nenhuma delas). +1 deste PR: get_cliente_obra_orcamento (20261234130000), RPC do portal do cliente com o mesmo gate de token do get_cliente_obra_detail, já nas allowlists de anon (pgTAP e audit-security.mjs). Prod fica em 183 até o release; ficar abaixo da baseline não reprova."
   }
 }
