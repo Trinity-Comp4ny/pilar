@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CreditCard, Calendar, Package, ExternalLink, Sparkles, Lock, Handshake } from "lucide-react";
+import { CreditCard, Calendar, Package, Sparkles, Lock, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -9,8 +9,7 @@ import { StatusBadge } from "@/pages/billing/components/StatusBadge";
 import { ChangePlanDialog } from "@/pages/billing/components/ChangePlanDialog";
 import { CancelDialog } from "@/pages/billing/components/CancelDialog";
 import { AtivarPlano } from "@/components/trial/AtivarPlano";
-import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { MARKETING_URL } from "@/lib/marketingSite";
+import { capacidadeDoPlano, INCLUSO_EM_TODOS } from "@/hooks/usePlans";
 import { ehConvidada, podeAtivarPlano } from "@/lib/cobranca";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
@@ -39,7 +38,6 @@ const BILLING_TYPE_LABELS: Record<string, string> = {
 // acesso NÃO passa por step-up de MFA aqui de propósito: é a rota de fuga do cliente
 // inadimplente para regularizar a assinatura. Ações destrutivas seguem só-admin.
 export function PagamentoPanel() {
-  const { closeSettings } = useSettingsModal();
   const { data: role } = useUserRole();
   const isAdmin = role === "admin" || role === "ultra_admin";
 
@@ -55,11 +53,6 @@ export function PagamentoPanel() {
   const isExpired = subscription?.status === "expired";
   // SPEC 104: convidada não paga; sem assinatura também conta (empresas antigas).
   const convidada = !isLoading && !error && ehConvidada(subscription);
-
-  const goToPlanos = () => {
-    closeSettings();
-    window.location.href = `${MARKETING_URL}/planos`;
-  };
 
   const value =
     subscription?.plan && subscription.billing_cycle === "yearly"
@@ -162,18 +155,18 @@ export function PagamentoPanel() {
             <Card>
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                  <CardTitle className="text-lg">Plano atual</CardTitle>
+                  <CardTitle className="text-base">Plano atual</CardTitle>
                   <p className="text-sm text-ink-muted mt-1">{subscription.plan.descricao}</p>
                 </div>
                 <StatusBadge status={subscription.status} />
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-semibold text-ink">Pilar {subscription.plan.nome}</span>
+                  <span className="text-xl font-semibold text-ink">Pilar {subscription.plan.nome}</span>
                 </div>
 
                 <div className="flex items-baseline gap-2 pb-6 border-b border-border">
-                  <span className="text-3xl font-semibold text-ink">{value ? formatBRL(value) : "—"}</span>
+                  <span className="text-2xl font-semibold tabular-nums text-ink">{value ? formatBRL(value) : "—"}</span>
                   <span className="text-sm text-ink-muted">
                     /{subscription.billing_cycle === "yearly" ? "ano" : "mês"}
                   </span>
@@ -212,7 +205,7 @@ export function PagamentoPanel() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Ações</CardTitle>
+                <CardTitle className="text-base">Ações</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {isAdmin ? (
@@ -224,9 +217,6 @@ export function PagamentoPanel() {
                       onClick={() => setChangeOpen(true)}
                     >
                       <Package className="w-4 h-4 mr-2" /> Mudar plano
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline" onClick={goToPlanos}>
-                      <ExternalLink className="w-4 h-4 mr-2" /> Ver todos os planos
                     </Button>
                     <Button
                       className="w-full justify-start text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
@@ -246,17 +236,38 @@ export function PagamentoPanel() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">O que está incluso</CardTitle>
+              <CardTitle className="text-base">O que está incluso</CardTitle>
+              <p className="text-sm text-ink-muted">
+                Todo plano tem a plataforma inteira. O que muda é a capacidade.
+              </p>
             </CardHeader>
-            <CardContent>
-              <ul className="grid sm:grid-cols-2 gap-2 text-sm">
-                {subscription.plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-ink-soft">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
+            <CardContent className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-disabled">
+                  No seu plano
+                </p>
+                <ul className="space-y-1.5 text-sm">
+                  {capacidadeDoPlano(subscription.plan).map((linha) => (
+                    <li key={linha} className="flex items-center gap-2 text-ink-soft">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                      {linha}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-disabled">
+                  Em todos os planos
+                </p>
+                <ul className="space-y-1.5 text-sm">
+                  {INCLUSO_EM_TODOS.map((linha) => (
+                    <li key={linha} className="flex items-center gap-2 text-ink-soft">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                      {linha}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </CardContent>
           </Card>
 

@@ -38,12 +38,12 @@ export function CompanyDataTab({
   onDisciplinasChange,
 }: CompanyDataTabProps) {
   const inputClass = !editing
-    ? "bg-black/5 border-black/10 text-black/80"
-    : "border-brand/20 focus-visible:ring-brand/20";
-  const readonlyClass = "bg-black/5 border-black/10 text-black/80";
+    ? "bg-muted border-border text-ink"
+    : "";
+  const readonlyClass = "bg-muted border-border text-ink";
 
   return (
-    <Card className={"border border-black/5 " + (editing ? "ring-1 ring-brand/25" : "")}>
+    <Card className={"border border-border " + (editing ? "ring-1 ring-brand/25" : "")}>
       <CardHeader className={"flex flex-row items-center justify-between " + (editing ? "bg-brand/5" : "")}>
         <div>
           <CardTitle className="flex items-center gap-2">
@@ -231,10 +231,10 @@ export function CompanyDataTab({
             <div className="mt-6 pt-6 border-t">
               <div className="flex items-center gap-2 mb-3">
                 <QrCode size={16} className="text-foreground" />
-                <span className="text-sm font-semibold">Cobrança direta (sem Asaas)</span>
+                <span className="text-sm font-semibold">Pix nos emails de cobrança</span>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                Dados enviados nos emails de cobrança manual. Mantém seu 100% — zero taxa de gateway.
+                Aparece no email que o Pilar envia ao cliente quando você cobra uma fatura. Deixe em branco se não cobra por Pix.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">

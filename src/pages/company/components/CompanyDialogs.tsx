@@ -34,7 +34,7 @@ export function LogoPreviewDialog({ open, onOpenChange, pendingLogoFile, logoUrl
   const previaLogo = useObjectUrl(pendingLogoFile);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="z-70 sm:max-w-3xl" overlayClassName="z-70">
         <DialogHeader>
           <DialogTitle>Logo da empresa</DialogTitle>
           <DialogDescription>Pré-visualização ampliada.</DialogDescription>
@@ -82,7 +82,7 @@ export function EditUserDialog({
 }: EditUserDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="z-70 sm:max-w-lg" overlayClassName="z-70">
         <DialogHeader>
           <DialogTitle>Editar usuário</DialogTitle>
           <DialogDescription>Altere o nome, contato e função do usuário.</DialogDescription>
