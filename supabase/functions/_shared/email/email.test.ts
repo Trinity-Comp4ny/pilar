@@ -17,7 +17,8 @@ Deno.env.set("RESEND_FROM", "Pilar <no-reply@test.dev>");
 Deno.env.delete("RESEND_REPLY_TO");
 
 const { escapeHtml, html, htmlToText, multiline, raw } = await import("./html.ts");
-const { chaveIdempotencia, fromAddress, resolveFrom, resolveReplyTo, sendEmail } = await import("./client.ts");
+const { chaveIdempotencia, ehConflitoDeIdempotencia, fromAddress, resolveFrom, resolveReplyTo, sendEmail } =
+  await import("./client.ts");
 const T = await import("./index.ts");
 const N = await import("./templates/notificacoes.ts");
 
@@ -551,4 +552,11 @@ Deno.test("chaveIdempotencia separa staging de produção (mesma conta do Resend
   assert(prod !== staging);
   assertEquals(chaveIdempotencia(chave, ""), `local:${chave}`);
   assertEquals(chaveIdempotencia("x".repeat(300), "https://abc.supabase.co").length, 256);
+});
+
+Deno.test("409 de idempotência do Resend é duplicado, não falha de envio", () => {
+  const corpo = '{"name":"invalid_idempotent_request","statusCode":409}';
+  assertEquals(ehConflitoDeIdempotencia(409, corpo), true);
+  assertEquals(ehConflitoDeIdempotencia(409, '{"name":"concurrent_idempotent_requests"}'), false);
+  assertEquals(ehConflitoDeIdempotencia(422, corpo), false);
 });
