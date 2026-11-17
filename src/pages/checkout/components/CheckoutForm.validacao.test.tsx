@@ -68,7 +68,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
   it("PIX com dados válidos envia o payload sem cartão, e-mail normalizado e só dígitos", async () => {
     const onSubmit = renderForm();
     const user = await preencherDados();
-    await user.click(screen.getByRole("button", { name: "PIX" }));
+    await user.click(screen.getByRole("button", { name: "Pix Automático" }));
     await user.click(pagar());
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit.mock.calls[0][0]).toEqual({
@@ -79,7 +79,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
       telefone: "11987654321",
       plan_slug: "pro",
       billing_cycle: "monthly",
-      billing_type: "PIX",
+      billing_type: "PIX_AUTOMATICO",
     });
   });
 
@@ -103,7 +103,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
   ])("CPF/CNPJ inválido (%s) é barrado com aviso e não chama o servidor", async (_caso, doc) => {
     const onSubmit = renderForm();
     const user = await preencherDados(doc);
-    await user.click(screen.getByRole("button", { name: "PIX" }));
+    await user.click(screen.getByRole("button", { name: "Pix Automático" }));
     await user.click(pagar());
     expect(onSubmit).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith("CPF/CNPJ inválido", expect.anything());

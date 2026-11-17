@@ -304,3 +304,54 @@ export async function refundPayment(paymentId: string): Promise<AsaasPayment> {
     method: "POST",
   });
 }
+
+// ---------------------------------------------------------------------------
+// Pix Automático (ADR 0028, SPEC 053). Recurso distinto de Assinatura: o pagador
+// autoriza uma vez no QR Code do primeiro pagamento e o banco debita todo ciclo.
+// Com paymentCreationMode SUBSCRIPTION o Asaas cria as cobranças do ciclo sozinho.
+// ---------------------------------------------------------------------------
+
+export interface PixAutomaticAuthorization {
+  id: string;
+  status: "CREATED" | "ACTIVE" | "CANCELLED" | "REFUSED" | "EXPIRED";
+  /** QR Code composto (primeiro pagamento + autorização), no topo da resposta. */
+  payload?: string;
+  encodedImage?: string;
+  immediateQrCode?: { conciliationIdentifier?: string; expirationDate?: string };
+  contractId?: string;
+  customerId?: string;
+  /** Assinatura que o Asaas liga à autorização no modo SUBSCRIPTION (pode vir depois). */
+  subscriptionId?: string | null;
+}
+
+export interface CreatePixAutomaticAuthorizationParams {
+  customerId: string;
+  frequency: "MONTHLY" | "ANNUALLY";
+  /** Até 35 caracteres: usamos o id do pilar_pending_signups (uuid, 36), sem os hifens. */
+  contractId: string;
+  startDate: string; // YYYY-MM-DD
+  value: number;
+  description?: string;
+  immediateQrCode: { expirationSeconds: number; originalValue: number; description?: string };
+}
+
+export async function createPixAutomaticAuthorization(
+  params: CreatePixAutomaticAuthorizationParams
+): Promise<PixAutomaticAuthorization> {
+  return asaasFetch<PixAutomaticAuthorization>("/pix/automatic/authorizations", {
+    method: "POST",
+    body: JSON.stringify({
+      ...params,
+      paymentCreationMode: "SUBSCRIPTION",
+      retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
+    }),
+  });
+}
+
+export async function getPixAutomaticAuthorization(authorizationId: string): Promise<PixAutomaticAuthorization> {
+  return asaasFetch<PixAutomaticAuthorization>(`/pix/automatic/authorizations/${authorizationId}`);
+}
+
+export async function cancelPixAutomaticAuthorization(authorizationId: string): Promise<{ id: string }> {
+  return asaasFetch<{ id: string }>(`/pix/automatic/authorizations/${authorizationId}`, { method: "DELETE" });
+}

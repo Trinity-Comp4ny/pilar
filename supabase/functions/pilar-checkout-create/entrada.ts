@@ -29,7 +29,7 @@ export const checkoutSchema = z
     telefone: phoneSchema,
     plan_slug: z.string().trim().min(1).max(64),
     billing_cycle: z.enum(["monthly", "yearly"]),
-    billing_type: z.enum(["CREDIT_CARD", "PIX", "BOLETO"]),
+    billing_type: z.enum(["CREDIT_CARD", "PIX", "BOLETO", "PIX_AUTOMATICO"]),
     credit_card: creditCardSchema.optional(),
     credit_card_holder_info: holderInfoSchema.optional(),
   })

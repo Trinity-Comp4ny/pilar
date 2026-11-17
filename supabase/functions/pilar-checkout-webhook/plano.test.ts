@@ -15,7 +15,7 @@ const compraPaga = { ...compraPendente, status: "paid" };
 
 const nada: Encontrados = { signup: null, assinatura: null, compra: null };
 
-Deno.test("pagamento de signup novo: marca pago, convida, define trial e NÃO renova assinatura", () => {
+Deno.test("pagamento de signup novo: marca pago, convida (sem trial: a cobrança é imediata) e NÃO renova assinatura", () => {
   const plano = planejarWebhook(
     "PAYMENT_CONFIRMED",
     { signup: signupPendente, assinatura: assinaturaMensal, compra: null },
@@ -23,7 +23,6 @@ Deno.test("pagamento de signup novo: marca pago, convida, define trial e NÃO re
   );
   assertEquals(plano.marcarSignupPago, true);
   assertEquals(plano.dispararConvite, true);
-  assertEquals(plano.definirTrial, true);
   assertEquals(plano.renovarAssinaturaAte, null);
 });
 
@@ -128,7 +127,6 @@ Deno.test("evento desconhecido não grava nada", () => {
   assertEquals(plano, {
     marcarSignupPago: false,
     dispararConvite: false,
-    definirTrial: false,
     marcarCompraPaga: false,
     creditoTokens: null,
     renovarAssinaturaAte: null,
@@ -231,5 +229,48 @@ Deno.test("fim de assinatura sem estorno mantém o acesso até o fim do período
   for (const evento of ["SUBSCRIPTION_ENDED", "SUBSCRIPTION_DELETED"]) {
     const plano = planejarWebhook(evento, { signup: null, assinatura: assinaturaMensal, compra: null }, AGORA);
     assertEquals(plano.encerrarAcessoAgora, false, evento);
+  }
+});
+
+Deno.test("Pix Automático ativado: libera o signup pendente uma única vez", () => {
+  const plano = planejarWebhook(
+    "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED",
+    { signup: signupPendente, assinatura: null, compra: null },
+    AGORA
+  );
+  assertEquals(plano.marcarSignupPago, true);
+  assertEquals(plano.dispararConvite, true);
+  assertEquals(plano.renovarAssinaturaAte, null);
+
+  const replay = planejarWebhook(
+    "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED",
+    { signup: signupJaPagoEConvidado, assinatura: null, compra: null },
+    AGORA
+  );
+  assertEquals(replay.marcarSignupPago, false);
+  assertEquals(replay.dispararConvite, false);
+});
+
+Deno.test("Pix Automático recusado ou expirado derruba só o signup pendente", () => {
+  for (const evento of [
+    "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_REFUSED",
+    "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_EXPIRED",
+  ]) {
+    assertEquals(planejarWebhook(evento, { signup: signupPendente, assinatura: null, compra: null }, AGORA).statusSignup, "failed");
+    assertEquals(
+      planejarWebhook(evento, { signup: signupJaPagoEConvidado, assinatura: null, compra: null }, AGORA).statusSignup,
+      null
+    );
+  }
+});
+
+Deno.test("débito do Pix Automático recusado ou autorização revogada: overdue, nunca canceled", () => {
+  for (const evento of [
+    "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED",
+    "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_CANCELLED",
+  ]) {
+    const plano = planejarWebhook(evento, { signup: null, assinatura: assinaturaMensal, compra: null }, AGORA);
+    assertEquals(plano.statusAssinatura, "overdue");
+    assertEquals(plano.encerrarAcessoAgora, false);
   }
 });

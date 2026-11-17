@@ -36,7 +36,6 @@ export interface PlanoWebhook {
   // Pagamento recebido
   marcarSignupPago: boolean;
   dispararConvite: boolean;
-  definirTrial: boolean;
   marcarCompraPaga: boolean;
   /** Crédito no ai_token_ledger, sempre tentado: o UNIQUE em reference_id é a idempotência. */
   creditoTokens: { tokens: number; referenceId: string } | null;
@@ -55,6 +54,19 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 export const EVENTOS_PAGAMENTO_RECEBIDO = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"];
 export const EVENTOS_ESTORNO = ["PAYMENT_REFUNDED", "PAYMENT_DELETED"];
 export const EVENTOS_FIM_ASSINATURA = ["SUBSCRIPTION_ENDED", "SUBSCRIPTION_DELETED"];
+
+// Pix Automático (SPEC 053). A autorização ativa significa que o pagador pagou o QR Code
+// inicial e autorizou os débitos: para o signup equivale a um pagamento recebido.
+export const EVENTO_PIX_AUTOMATICO_ATIVADO = "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED";
+export const EVENTOS_PIX_AUTOMATICO_NAO_CONCLUIDO = [
+  "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_REFUSED",
+  "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_EXPIRED",
+];
+/** Débito recusado ou autorização revogada: o cliente fica em atraso, nunca cancelado de imediato. */
+export const EVENTOS_PIX_AUTOMATICO_ATRASO = [
+  "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED",
+  "PIX_AUTOMATIC_RECURRING_AUTHORIZATION_CANCELLED",
+];
 
 /** Data do pagamento informada pelo Asaas; sem ela, o momento do processamento. */
 export function dataPagamento(paymentDate: string | undefined, agora: Date): string {
@@ -79,7 +91,6 @@ export function planejarWebhook(
   const plano: PlanoWebhook = {
     marcarSignupPago: false,
     dispararConvite: false,
-    definirTrial: false,
     marcarCompraPaga: false,
     creditoTokens: null,
     renovarAssinaturaAte: null,
@@ -89,10 +100,22 @@ export function planejarWebhook(
     statusCompra: null,
   };
 
+  if (evento === EVENTO_PIX_AUTOMATICO_ATIVADO && signup) {
+    plano.marcarSignupPago = signup.payment_status !== "paid";
+    plano.dispararConvite = !signup.invite_dispatched_at;
+  }
+
+  if (EVENTOS_PIX_AUTOMATICO_NAO_CONCLUIDO.includes(evento) && signup?.payment_status === "pending") {
+    plano.statusSignup = "failed";
+  }
+
+  if (EVENTOS_PIX_AUTOMATICO_ATRASO.includes(evento) && assinatura) {
+    plano.statusAssinatura = "overdue";
+  }
+
   if (EVENTOS_PAGAMENTO_RECEBIDO.includes(evento)) {
     plano.marcarSignupPago = !!signup && signup.payment_status !== "paid";
     plano.dispararConvite = !!signup && !signup.invite_dispatched_at;
-    plano.definirTrial = !!signup;
     if (compra) {
       plano.marcarCompraPaga = compra.status !== "paid";
       // Credita mesmo com status já 'paid': cartão instantâneo chega aqui pago, e o

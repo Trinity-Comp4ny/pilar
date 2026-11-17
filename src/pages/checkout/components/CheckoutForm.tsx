@@ -67,7 +67,7 @@ function formatCEP(value: string): string {
 
 const PAYMENT_METHODS: { value: BillingType; label: string; icon: React.ReactNode }[] = [
   { value: "CREDIT_CARD", label: "Cartão", icon: <CreditCard className="w-4 h-4" /> },
-  { value: "PIX", label: "PIX", icon: <QrCode className="w-4 h-4" /> },
+  { value: "PIX_AUTOMATICO", label: "Pix Automático", icon: <QrCode className="w-4 h-4" /> },
   { value: "BOLETO", label: "Boleto", icon: <FileText className="w-4 h-4" /> },
 ];
 
@@ -428,10 +428,13 @@ export function CheckoutForm({
           </div>
         )}
 
-        {billingType === "PIX" && (
+        {billingType === "PIX_AUTOMATICO" && (
           <div className="rounded-xl border border-border bg-muted p-4 text-sm text-ink-muted space-y-1">
             <p className="font-medium text-ink">Como funciona</p>
-            <p>Após confirmar, você recebe o QR Code e o código copia-e-cola. Liberação automática em segundos.</p>
+            <p>
+              Você paga o QR Code uma vez e autoriza no app do banco. Nos meses seguintes o banco debita sozinho, sem
+              boleto nem cartão. Liberação automática em segundos.
+            </p>
           </div>
         )}
 
