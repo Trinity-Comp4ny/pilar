@@ -1,7 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useId } from "react";
+import { useId, useState } from "react";
+import { Button } from "@/components/ui/button";
+import type { DisciplinaResponsavel } from "@/types/projetos";
 
 export function ExecucaoDisciplinaFields({
   tipo,
@@ -45,6 +47,44 @@ export function ExecucaoDisciplinaFields({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+export function DisciplinaExecucaoEditor({
+  disciplina,
+  onSave,
+}: {
+  disciplina: DisciplinaResponsavel;
+  onSave: (tipo: "interna" | "terceirizada", prestador: string) => void | Promise<void>;
+}) {
+  const [execucao, setExecucao] = useState({
+    tipo: disciplina.tipo_execucao ?? "interna",
+    prestador: disciplina.prestador_nome ?? "",
+  });
+  const [salvando, setSalvando] = useState(false);
+  return (
+    <div className="space-y-2">
+      <ExecucaoDisciplinaFields
+        tipo={execucao.tipo}
+        prestador={execucao.prestador}
+        onChange={(tipo, prestador) => setExecucao({ tipo, prestador })}
+      />
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={salvando || (execucao.tipo === "terceirizada" && !execucao.prestador.trim())}
+        onClick={async () => {
+          setSalvando(true);
+          try {
+            await onSave(execucao.tipo, execucao.prestador.trim());
+          } finally {
+            setSalvando(false);
+          }
+        }}
+      >
+        Salvar execução
+      </Button>
     </div>
   );
 }

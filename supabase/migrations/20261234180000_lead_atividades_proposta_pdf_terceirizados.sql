@@ -13,6 +13,8 @@ CREATE TABLE public.lead_atividades (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX lead_atividades_lead_data ON public.lead_atividades(lead_id, ocorrido_em, created_at);
+CREATE INDEX lead_atividades_empresa ON public.lead_atividades(empresa_id);
+CREATE INDEX lead_atividades_autor ON public.lead_atividades(autor_id);
 ALTER TABLE public.lead_atividades ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.lead_atividades FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, DELETE ON public.lead_atividades TO authenticated;
@@ -40,11 +42,11 @@ CREATE POLICY lead_atividades_select ON public.lead_atividades FOR SELECT TO aut
   USING (empresa_id = public.get_user_empresa_id() AND public.user_has_feature('leads', 'viewer')
     AND EXISTS (SELECT 1 FROM public.leads l WHERE l.id = lead_id AND l.empresa_id = lead_atividades.empresa_id AND l.deleted_at IS NULL));
 CREATE POLICY lead_atividades_insert ON public.lead_atividades FOR INSERT TO authenticated
-  WITH CHECK (empresa_id = public.get_user_empresa_id() AND autor_id = auth.uid()
+  WITH CHECK (empresa_id = public.get_user_empresa_id() AND autor_id = (SELECT auth.uid())
     AND public.user_has_feature('leads', 'editor'));
 CREATE POLICY lead_atividades_delete ON public.lead_atividades FOR DELETE TO authenticated
   USING (empresa_id = public.get_user_empresa_id() AND public.user_has_feature('leads', 'editor')
-    AND (autor_id = auth.uid() OR public.current_effective_role() IN ('admin', 'coordenador', 'ultra_admin')));
+    AND (autor_id = (SELECT auth.uid()) OR public.current_effective_role() IN ('admin', 'coordenador', 'ultra_admin')));
 
 CREATE TABLE public.proposta_versoes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,7 +65,8 @@ CREATE TABLE public.proposta_versoes (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (proposta_id, numero)
 );
-CREATE INDEX proposta_versoes_proposta ON public.proposta_versoes(proposta_id, numero DESC);
+CREATE INDEX proposta_versoes_empresa ON public.proposta_versoes(empresa_id);
+CREATE INDEX proposta_versoes_autor ON public.proposta_versoes(criado_por);
 ALTER TABLE public.proposta_versoes ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.proposta_versoes FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT ON public.proposta_versoes TO authenticated;
@@ -76,7 +79,7 @@ CREATE POLICY proposta_versoes_select ON public.proposta_versoes FOR SELECT TO a
     AND public.can_view_financeiro()
     AND EXISTS (SELECT 1 FROM public.propostas p WHERE p.id = proposta_id AND p.empresa_id = proposta_versoes.empresa_id AND p.deleted_at IS NULL));
 CREATE POLICY proposta_versoes_insert ON public.proposta_versoes FOR INSERT TO authenticated
-  WITH CHECK (empresa_id = public.get_user_empresa_id() AND criado_por = auth.uid()
+  WITH CHECK (empresa_id = public.get_user_empresa_id() AND criado_por = (SELECT auth.uid())
     AND public.user_has_feature('propostas', 'editor') AND public.can_view_financeiro());
 CREATE POLICY proposta_versoes_update ON public.proposta_versoes FOR UPDATE TO authenticated
   USING (empresa_id = public.get_user_empresa_id() AND public.user_has_feature('propostas', 'editor') AND public.can_view_financeiro())

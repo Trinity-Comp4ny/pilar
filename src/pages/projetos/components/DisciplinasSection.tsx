@@ -1,4 +1,4 @@
-import { ExecucaoDisciplinaFields } from "@/components/ExecucaoDisciplinaFields";
+import { ExecucaoDisciplinaFields } from "./ExecucaoDisciplinaFields";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
