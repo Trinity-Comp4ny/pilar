@@ -6,7 +6,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(11);
+SELECT plan(12);
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -40,15 +40,27 @@ VALUES
   ('fce02222-0000-0000-0000-00000000000d', 'sus_ativa@empresareal.com.br', jsonb_build_object('company_name', 'SUS Ativa'), 'authenticated', 'authenticated', now());
 
 -- A: cancelada com periodo encerrado. B: cancelada com periodo pago ainda correndo.
--- C: em atraso. D: ativa.
-UPDATE public.pilar_subscriptions SET status = 'canceled', current_period_end = now() - interval '1 day'
- WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fce02222-0000-0000-0000-00000000000a');
-UPDATE public.pilar_subscriptions SET status = 'canceled', current_period_end = now() + interval '10 days'
- WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fce02222-0000-0000-0000-00000000000b');
-UPDATE public.pilar_subscriptions SET status = 'overdue'
- WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fce02222-0000-0000-0000-00000000000c');
-UPDATE public.pilar_subscriptions SET status = 'active'
- WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fce02222-0000-0000-0000-00000000000d');
+-- C: em atraso. D: ativa. Upsert (nao UPDATE): o teste nao depende de o cadastro ja
+-- ter criado a linha de assinatura.
+CREATE OR REPLACE FUNCTION test_assinatura(p_owner uuid, p_status text, p_fim timestamptz)
+RETURNS VOID LANGUAGE sql AS $f$
+  INSERT INTO public.pilar_subscriptions (empresa_id, plan_id, status, current_period_end)
+  SELECT e.id, (SELECT id FROM public.pilar_subscription_plans ORDER BY created_at LIMIT 1), p_status, p_fim
+    FROM public.empresas e WHERE e.owner_id = p_owner
+  ON CONFLICT (empresa_id) DO UPDATE SET status = EXCLUDED.status, current_period_end = EXCLUDED.current_period_end;
+$f$;
+
+SELECT test_assinatura('fce02222-0000-0000-0000-00000000000a', 'canceled', now() - interval '1 day');
+SELECT test_assinatura('fce02222-0000-0000-0000-00000000000b', 'canceled', now() + interval '10 days');
+SELECT test_assinatura('fce02222-0000-0000-0000-00000000000c', 'overdue', NULL);
+SELECT test_assinatura('fce02222-0000-0000-0000-00000000000d', 'active', NULL);
+
+-- 0: o setup gravou a assinatura da empresa A como cancelada.
+SELECT is(
+  (SELECT status FROM public.pilar_subscriptions WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fce02222-0000-0000-0000-00000000000a')),
+  'canceled',
+  'setup: assinatura da empresa A esta cancelada'
+);
 
 -- 1-4: a funcao decide por status.
 SELECT ok(public.empresa_assinatura_suspensa((SELECT id FROM public.empresas WHERE owner_id = 'fce02222-0000-0000-0000-00000000000a')),
