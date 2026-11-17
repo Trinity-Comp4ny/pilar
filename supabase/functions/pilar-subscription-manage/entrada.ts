@@ -2,6 +2,7 @@ import { parseOr400, z } from "../_shared/schemas.ts";
 
 export const entradaSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("cancel") }),
+  z.object({ action: z.literal("list_invoices") }),
   z.object({
     action: z.literal("update_plan"),
     new_plan_slug: z

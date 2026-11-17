@@ -15,6 +15,7 @@ import {
   createCustomer,
   createPixAutomaticAuthorization,
   createSubscription,
+  desligarAvisoDeRecebimento,
   findCustomerByCpfCnpj,
   getPixQrCode,
   getSubscriptionPayments,
@@ -188,6 +189,14 @@ serve(
     }
 
     await admin.from("pilar_pending_signups").update({ asaas_customer_id: customerId }).eq("id", signup.id);
+
+    // O aviso "cobrança recebida" do Asaas repete o e-mail de boas-vindas do Pilar. Falha aqui
+    // não pode barrar a compra: no pior caso o cliente recebe a mensagem a mais.
+    try {
+      await desligarAvisoDeRecebimento(customerId);
+    } catch (err) {
+      log.warn("não desligou o aviso de recebimento do Asaas", { customer_id: customerId, err: String(err) });
+    }
 
     // --- Asaas: Pix Automático (autorização no lugar de subscription) ---
     if (body.billing_type === "PIX_AUTOMATICO") {

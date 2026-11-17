@@ -10,7 +10,13 @@ import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 Deno.env.set("ASAAS_PLATFORM_API_KEY", "test-key");
 Deno.env.set("ASAAS_PLATFORM_ENV", "sandbox");
 
-const { tokenizeCreditCard, refundPayment, createSubscription } = await import("./asaas-platform.ts");
+const {
+  tokenizeCreditCard,
+  refundPayment,
+  createSubscription,
+  createPixAutomaticAuthorization,
+  desligarAvisoDeRecebimento,
+} = await import("./asaas-platform.ts");
 
 function stubFetch(impl: (url: string, init?: RequestInit) => Response | Promise<Response>) {
   const original = globalThis.fetch;
@@ -150,3 +156,60 @@ Deno.test(
     }
   }
 );
+
+Deno.test("desligarAvisoDeRecebimento: silencia só o 'recebido' que ainda fala com o cliente", async () => {
+  const chamadas: { url: string; method: string; body: unknown }[] = [];
+  const restore = stubFetch((url, init) => {
+    chamadas.push({ url, method: init?.method ?? "GET", body: init?.body ? JSON.parse(String(init.body)) : null });
+    if (url.endsWith("/customers/cus_1/notifications")) {
+      return jsonResponse({
+        data: [
+          { id: "not_a", event: "PAYMENT_RECEIVED", enabled: true, emailEnabledForCustomer: true },
+          { id: "not_b", event: "PAYMENT_OVERDUE", enabled: true, emailEnabledForCustomer: true },
+          { id: "not_c", event: "PAYMENT_RECEIVED", enabled: true, emailEnabledForCustomer: false },
+        ],
+      });
+    }
+    return jsonResponse({ id: "not_a", event: "PAYMENT_RECEIVED", enabled: true });
+  });
+  try {
+    const n = await desligarAvisoDeRecebimento("cus_1");
+    assertEquals(n, 1);
+    const puts = chamadas.filter((c) => c.method === "PUT");
+    assertEquals(puts.length, 1);
+    assertEquals(puts[0].url, "https://sandbox.asaas.com/api/v3/notifications/not_a");
+    assertEquals(puts[0].body, {
+      emailEnabledForCustomer: false,
+      smsEnabledForCustomer: false,
+      whatsappEnabledForCustomer: false,
+    });
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("createPixAutomaticAuthorization: modo SUBSCRIPTION com retentativa, no endpoint certo", async () => {
+  let url = "";
+  let body: Record<string, unknown> = {};
+  const restore = stubFetch((u, init) => {
+    url = u;
+    body = JSON.parse(String(init?.body));
+    return jsonResponse({ id: "pixauth_1", status: "CREATED", payload: "000201", encodedImage: "iVBOR" });
+  });
+  try {
+    const r = await createPixAutomaticAuthorization({
+      customerId: "cus_1",
+      frequency: "MONTHLY",
+      contractId: "abc",
+      startDate: "2026-11-17",
+      value: 299,
+      immediateQrCode: { expirationSeconds: 3600, originalValue: 299 },
+    });
+    assertEquals(url, "https://sandbox.asaas.com/api/v3/pix/automatic/authorizations");
+    assertEquals(body.paymentCreationMode, "SUBSCRIPTION");
+    assertEquals(body.retryPolicy, "ALLOW_THREE_IN_SEVEN_DAYS");
+    assertEquals(r.id, "pixauth_1");
+  } finally {
+    restore();
+  }
+});
