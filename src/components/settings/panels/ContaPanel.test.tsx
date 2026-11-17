@@ -39,7 +39,8 @@ vi.mock("@/integrations/supabase/client", async () => {
 });
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => h.auth }));
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ isAdmin: h.isAdmin }) }));
-vi.mock("@/hooks/useOnboardingState", () => ({ useOnboardingState: () => ({
+vi.mock("@/hooks/useOnboardingState", () => ({
+  useOnboardingState: () => ({
     reset: h.resetOnboarding,
     state: { dismissed: false, tours_seen: [] },
     markTourSeen: vi.fn(),
