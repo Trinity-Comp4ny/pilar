@@ -67,18 +67,18 @@ async function preencherEPagarComPix() {
   await user.type(screen.getByLabelText("CPF ou CNPJ"), "52998224725");
   await user.type(screen.getByLabelText("Telefone"), "11987654321");
   await user.type(screen.getByLabelText("Nome do escritório"), "Escritório Souza");
-  await user.click(screen.getByRole("button", { name: "PIX" }));
+  await user.click(screen.getByRole("button", { name: "Pix Automático" }));
   await user.click(screen.getByRole("button", { name: /Pagar/ }));
 }
 
 const respostaCheckout = (over: Record<string, unknown> = {}) => ({
   success: true,
   session_token: "tok_sessao_123456789012345",
-  billing_type: "PIX",
+  billing_type: "PIX_AUTOMATICO",
   payment_status: "pending",
   plan: { slug: "pro", nome: "Profissional", cycle: "monthly", value: 499 },
   metadata: {
-    billing_type: "PIX",
+    billing_type: "PIX_AUTOMATICO",
     value: 499,
     cycle: "monthly",
     payment_id: "pay_1",

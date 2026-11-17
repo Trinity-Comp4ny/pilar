@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import type { BillingCycle } from "@/components/CycleToggle";
 
-export type BillingType = "CREDIT_CARD" | "PIX" | "BOLETO";
+export type BillingType = "CREDIT_CARD" | "PIX" | "BOLETO" | "PIX_AUTOMATICO";
 
 export interface CreditCardData {
   holderName: string;
