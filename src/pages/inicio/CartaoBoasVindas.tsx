@@ -112,7 +112,9 @@ export function CartaoBoasVindas() {
                 onClick={() => abrir(sec.pilar, proximo?.rota ?? sec.steps[0]?.rota ?? "/inicio")}
                 className={cn(
                   "flex flex-col gap-2 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand/60",
-                  destaque ? "border-brand bg-brand-soft/40 ring-1 ring-brand" : "border-border/60 hover:border-black/20"
+                  destaque
+                    ? "border-brand bg-brand-soft/40 ring-1 ring-brand"
+                    : "border-border/60 hover:border-black/20"
                 )}
               >
                 <span className="flex items-center justify-between gap-2">
