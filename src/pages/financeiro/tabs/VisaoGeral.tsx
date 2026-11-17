@@ -97,9 +97,9 @@ function DonutChart({ data, totalLabel }: DonutProps) {
     .join(", ")}`;
 
   return (
-    <div className="h-full w-full">
+    <div className="w-full">
       <p className="sr-only">{resumo}</p>
-      <div aria-hidden="true" className="h-full w-full">
+      <div aria-hidden="true" className="h-[230px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart accessibilityLayer={false}>
             <Pie
@@ -151,21 +151,17 @@ function DonutChart({ data, totalLabel }: DonutProps) {
               />
             </Pie>
             <Tooltip content={<CustomTooltip />} />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              formatter={(value, entry) => {
-                const v = (entry?.payload as { value?: number } | undefined)?.value ?? 0;
-                return (
-                  <span className="text-xs text-foreground">
-                    {value}: {formatCurrency(v)}
-                  </span>
-                );
-              }}
-            />
           </PieChart>
         </ResponsiveContainer>
       </div>
+      <ul aria-hidden="true" className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+        {data.map((item) => (
+          <li key={item.name} className="flex items-center gap-1.5 text-xs text-foreground">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: item.color }} />
+            {item.name}: {formatCurrency(item.value)}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -434,7 +430,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
             )}
           </CardHeader>
           <CardContent>
-            <div className="relative h-[320px] w-full">
+            <div className="relative min-h-[320px] w-full">
               {!hasReceitasData ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <p className="text-muted-foreground text-sm">Sem registros no período</p>
@@ -468,7 +464,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
             )}
           </CardHeader>
           <CardContent>
-            <div className="relative h-[320px] w-full">
+            <div className="relative min-h-[320px] w-full">
               {!hasDespesasData ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <p className="text-muted-foreground text-sm">Sem registros no período</p>
