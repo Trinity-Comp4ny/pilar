@@ -4,6 +4,7 @@ import {
   type AssinaturaGerenciada,
   cobrancaParaEstornar,
   dentroDoArrependimento,
+  faturaDaCobranca,
   planejarTrocaDePlano,
   verificarAssinatura,
   verificarCancelamento,
@@ -138,4 +139,27 @@ Deno.test("troca para o mesmo plano e ciclo é aceita e reenvia o mesmo valor (i
   const r = planejarTrocaDePlano(pro, "monthly", "monthly");
   assertEquals(r.ok && r.value, 690);
   assertEquals(r.ok && r.asaas.cycle, "MONTHLY");
+});
+
+Deno.test("fatura: paga leva o comprovante; aberta leva a fatura", () => {
+  const base = { id: "pay_1", value: 299, dueDate: "2026-11-17", billingType: "CREDIT_CARD" };
+  const paga = faturaDaCobranca({
+    ...base,
+    status: "CONFIRMED",
+    paymentDate: "2026-11-17",
+    invoiceUrl: "https://asaas/i/1",
+    transactionReceiptUrl: "https://asaas/comprovantes/1",
+  });
+  assertEquals(paga.paga, true);
+  assertEquals(paga.url, "https://asaas/comprovantes/1");
+
+  const aberta = faturaDaCobranca({
+    ...base,
+    status: "PENDING",
+    invoiceUrl: "https://asaas/i/1",
+    transactionReceiptUrl: "https://asaas/comprovantes/1",
+  });
+  assertEquals(aberta.paga, false);
+  assertEquals(aberta.url, "https://asaas/i/1");
+  assertEquals(aberta.payment_date, null);
 });

@@ -8,6 +8,7 @@ import { useMySubscription } from "@/pages/billing/hooks/useMySubscription";
 import { StatusBadge } from "@/pages/billing/components/StatusBadge";
 import { ChangePlanDialog } from "@/pages/billing/components/ChangePlanDialog";
 import { CancelDialog } from "@/pages/billing/components/CancelDialog";
+import { FaturasCard } from "@/pages/billing/components/FaturasCard";
 import { AtivarPlano } from "@/components/trial/AtivarPlano";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { MARKETING_URL } from "@/lib/marketingSite";
@@ -209,6 +210,8 @@ export function PagamentoPanel() {
                 </dl>
               </CardContent>
             </Card>
+
+            {isAdmin && !!subscription.asaas_subscription_id && <FaturasCard enabled />}
 
             <Card>
               <CardHeader>

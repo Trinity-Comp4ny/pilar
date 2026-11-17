@@ -165,6 +165,8 @@ export interface AsaasPayment {
   paymentDate?: string;
   billingType: string;
   invoiceUrl?: string;
+  /** Comprovante da cobrança paga (página do Asaas). */
+  transactionReceiptUrl?: string | null;
   bankSlipUrl?: string;
   identificationField?: string;
   nossoNumero?: string;
@@ -354,4 +356,58 @@ export async function getPixAutomaticAuthorization(authorizationId: string): Pro
 
 export async function cancelPixAutomaticAuthorization(authorizationId: string): Promise<{ id: string }> {
   return asaasFetch<{ id: string }>(`/pix/automatic/authorizations/${authorizationId}`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------------------
+// Notificações do cliente. O Asaas manda e-mail e SMS por conta própria, com a marca dele.
+// "Cobrança recebida" repete o que o Pilar já diz (boas-vindas, recibo na tela de assinatura),
+// então é desligada. Vencimento e atraso ficam: hoje são a única cobrança que o cliente de
+// Pix e boleto recebe (a régua do Pilar é a SPEC 053).
+// ---------------------------------------------------------------------------
+
+export interface AsaasNotification {
+  id: string;
+  event: string;
+  enabled: boolean;
+  emailEnabledForCustomer?: boolean;
+  smsEnabledForCustomer?: boolean;
+  whatsappEnabledForCustomer?: boolean;
+  phoneCallEnabledForCustomer?: boolean;
+}
+
+export async function getCustomerNotifications(customerId: string): Promise<AsaasNotification[]> {
+  const resp = await asaasFetch<{ data: AsaasNotification[] }>(`/customers/${customerId}/notifications`);
+  return resp.data ?? [];
+}
+
+export async function updateNotification(
+  notificationId: string,
+  params: Partial<Omit<AsaasNotification, "id" | "event">>
+): Promise<AsaasNotification> {
+  return asaasFetch<AsaasNotification>(`/notifications/${notificationId}`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
+}
+
+/** Notificações de "cobrança recebida" que ainda falam com o cliente. */
+export function avisosDeRecebimentoLigados(notificacoes: AsaasNotification[]): AsaasNotification[] {
+  return notificacoes.filter(
+    (n) =>
+      n.event === "PAYMENT_RECEIVED" &&
+      (n.emailEnabledForCustomer || n.smsEnabledForCustomer || n.whatsappEnabledForCustomer)
+  );
+}
+
+/** Idempotente: cliente já silenciado não gera chamada de escrita. */
+export async function desligarAvisoDeRecebimento(customerId: string): Promise<number> {
+  const ligados = avisosDeRecebimentoLigados(await getCustomerNotifications(customerId));
+  for (const n of ligados) {
+    await updateNotification(n.id, {
+      emailEnabledForCustomer: false,
+      smsEnabledForCustomer: false,
+      whatsappEnabledForCustomer: false,
+    });
+  }
+  return ligados.length;
 }
