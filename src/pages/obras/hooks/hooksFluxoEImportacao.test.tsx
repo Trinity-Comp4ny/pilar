@@ -15,12 +15,16 @@ const projetosMock = vi.hoisted(() => ({ aplicarPlanoFluxoNoProjeto: vi.fn() }))
 vi.mock("@/hooks/useProjetoDisciplinas", () => ({
   aplicarPlanoFluxoNoProjeto: (...a: unknown[]) => projetosMock.aplicarPlanoFluxoNoProjeto(...a),
 }));
+const soft = vi.hoisted(() => ({ softDelete: vi.fn() }));
+vi.mock("@/lib/softDelete", () => ({ softDelete: (...a: unknown[]) => soft.softDelete(...a) }));
 const portal = vi.hoisted(() => ({ token: "tok" as string | null, rpc: vi.fn() }));
 vi.mock("@/hooks/useClienteAuth", () => ({ getPortalToken: () => portal.token }));
 vi.mock("@/lib/supabaseRpc", () => ({ callUntypedRpc: (...a: unknown[]) => portal.rpc(...a) }));
 
 import { useExcluirFluxoObra, useFluxosObra, useSalvarFluxoObra } from "./useFluxosObra";
 import { useFornecedoresLite } from "./useFornecedoresLite";
+import { useObraOrcamento, useSalvarOrcamentoEmLote, useSaveOrcamentoEtapa } from "./useObraOrcamento";
+import { useDeleteLancamento, useObraConta, useSaveAporte, useSaveDespesa } from "./useObraConta";
 import { gravarPlanoDoCronograma, useImportarCronograma } from "./useImportarCronograma";
 import {
   useAplicarSincronizacoesObra,
@@ -328,5 +332,131 @@ describe("useClienteObraOrcamento", () => {
   it("sem obra não chama nada", () => {
     renderHook(() => useClienteObraOrcamento(undefined));
     expect(portal.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("orçado da obra", () => {
+  it("lê o orçamento e só consulta com obra", async () => {
+    fake.responder((c) =>
+      c.tabela === "obra_orcamento_etapa"
+        ? { data: [{ obra_frente_id: "e", valor_previsto: 10 }], error: null }
+        : undefined
+    );
+    const { result } = hook(() => useObraOrcamento("o-1"));
+    await waitFor(() => expect(result.current.data).toHaveLength(1));
+    const sem = hook(() => useObraOrcamento(undefined));
+    expect(sem.result.current.fetchStatus).toBe("idle");
+    fake.responder(() => ({ data: null, error: { message: "x" } }));
+    const erro = hook(() => useObraOrcamento("o-2"));
+    await waitFor(() => expect(erro.result.current.isError).toBe(true));
+  });
+
+  it("grava um previsto e vários de uma vez", async () => {
+    const { result, invalidar } = hook(() => ({ u: useSaveOrcamentoEtapa("o-1"), l: useSalvarOrcamentoEmLote("o-1") }));
+    await act(async () => {
+      await result.current.u.mutateAsync({ obraFrenteId: "e", valorPrevisto: 100 });
+      await result.current.l.mutateAsync([]);
+      await result.current.l.mutateAsync([
+        { obraFrenteId: "e", valorPrevisto: 100 },
+        { obraFrenteId: "s", valorPrevisto: 50 },
+      ]);
+    });
+    const escritas = fake.escritas("obra_orcamento_etapa");
+    expect(escritas).toHaveLength(2);
+    expect(escritas[0].payload).toMatchObject({ obra_frente_id: "e", valor_previsto: 100, empresa_id: "emp-1" });
+    expect(escritas[1].payload).toHaveLength(2);
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ["obra_orcamento", "o-1"] });
+  });
+
+  it("recusa sem empresa e propaga erro do banco", async () => {
+    const { result } = hook(() => ({ u: useSaveOrcamentoEtapa("o-1"), l: useSalvarOrcamentoEmLote("o-1") }));
+    fake.rpc.mockResolvedValue({ data: null, error: null });
+    await act(async () => {
+      await expect(result.current.u.mutateAsync({ obraFrenteId: "e", valorPrevisto: 1 })).rejects.toThrow(
+        "Usuário não vinculado"
+      );
+      await expect(result.current.l.mutateAsync([{ obraFrenteId: "e", valorPrevisto: 1 }])).rejects.toThrow(
+        "Usuário não vinculado"
+      );
+    });
+    rpcComEmpresa();
+    fake.responder(() => ({ data: null, error: { message: "RLS" } }));
+    await act(async () => {
+      await expect(result.current.u.mutateAsync({ obraFrenteId: "e", valorPrevisto: 1 })).rejects.toBeTruthy();
+      await expect(result.current.l.mutateAsync([{ obraFrenteId: "e", valorPrevisto: 1 }])).rejects.toBeTruthy();
+    });
+  });
+});
+
+describe("conta da obra", () => {
+  it("lê os lançamentos e propaga erro", async () => {
+    fake.responder((c) =>
+      c.tabela === "obra_conta_lancamento"
+        ? { data: [{ id: "l1", tipo: "aporte", valor: 10 }], error: null }
+        : undefined
+    );
+    const { result } = hook(() => useObraConta("o-1"));
+    await waitFor(() => expect(result.current.data).toHaveLength(1));
+    fake.responder(() => ({ data: null, error: { message: "x" } }));
+    const erro = hook(() => useObraConta("o-2"));
+    await waitFor(() => expect(erro.result.current.isError).toBe(true));
+  });
+
+  it("registra aporte e despesa (com quantidade e unidade) e invalida as finanças", async () => {
+    const { result, invalidar } = hook(() => ({ a: useSaveAporte("o-1"), d: useSaveDespesa("o-1") }));
+    await act(async () => {
+      await result.current.a.mutateAsync({ data: "2026-11-01", descricao: "Aporte", valor: 5000 });
+      await result.current.d.mutateAsync({
+        data: "2026-11-02",
+        descricao: "Cimento",
+        valor: 800,
+        quantidade: 40,
+        unidade: "sc",
+      });
+    });
+    expect(fake.escritas("obra_conta_lancamento")[0].payload).toMatchObject({ tipo: "aporte", valor: 5000 });
+    expect(fake.rpc).toHaveBeenCalledWith(
+      "rpc_obra_despesa_salvar",
+      expect.objectContaining({ p_obra_id: "o-1", p_quantidade: 40, p_unidade: "sc", p_pago_por: "cliente" })
+    );
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ["finance-items"] });
+  });
+
+  it("aporte sem empresa e erros de gravação", async () => {
+    const { result } = hook(() => ({ a: useSaveAporte("o-1"), d: useSaveDespesa("o-1") }));
+    fake.rpc.mockResolvedValueOnce({ data: null, error: null });
+    await act(async () => {
+      await expect(result.current.a.mutateAsync({ data: "2026-11-01", descricao: "x", valor: 1 })).rejects.toThrow(
+        "Usuário não vinculado"
+      );
+    });
+    fake.responder(() => ({ data: null, error: { message: "RLS" } }));
+    await act(async () => {
+      await expect(result.current.a.mutateAsync({ data: "2026-11-01", descricao: "x", valor: 1 })).rejects.toBeTruthy();
+    });
+    fake.rpc.mockImplementation(async (nome: string) =>
+      nome === "rpc_obra_despesa_salvar" ? { data: null, error: { message: "negou" } } : { data: "emp-1", error: null }
+    );
+    await act(async () => {
+      await expect(result.current.d.mutateAsync({ data: "2026-11-01", descricao: "x", valor: 1 })).rejects.toBeTruthy();
+    });
+  });
+
+  it("exclui despesa pelo RPC e aporte por soft delete", async () => {
+    soft.softDelete.mockResolvedValue(null);
+    const { result } = hook(() => useDeleteLancamento("o-1"));
+    await act(async () => {
+      await result.current.mutateAsync({ id: "d1", tipo: "despesa" });
+      await result.current.mutateAsync({ id: "a1", tipo: "aporte" });
+    });
+    expect(fake.rpc).toHaveBeenCalledWith("rpc_obra_despesa_excluir", { p_id: "d1" });
+    expect(soft.softDelete).toHaveBeenCalledWith("obra_conta_lancamento", "a1");
+
+    fake.rpc.mockResolvedValueOnce({ data: null, error: { message: "negou" } });
+    soft.softDelete.mockResolvedValueOnce({ message: "negou" });
+    await act(async () => {
+      await expect(result.current.mutateAsync({ id: "d1", tipo: "despesa" })).rejects.toBeTruthy();
+      await expect(result.current.mutateAsync({ id: "a1", tipo: "aporte" })).rejects.toBeTruthy();
+    });
   });
 });
