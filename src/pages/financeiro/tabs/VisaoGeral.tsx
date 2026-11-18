@@ -8,28 +8,11 @@ import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, ArrowDownRight, ArrowRight, BarChart3, Trophy, CalendarClock, Receipt } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ArrowRight, Trophy, CalendarClock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  AreaChart,
-  Area,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  Bar,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Label,
-} from "recharts";
-import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Label } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { CategoriaDetalheDialog } from "../components/CategoriaDetalheDialog";
