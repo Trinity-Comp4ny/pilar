@@ -31,7 +31,8 @@ Deno.test("admin não remove ultra_admin, mesmo vinculado à empresa dele", () =
   assertEquals(recusaDoAlvo(adminA, { empresa_id: "empresa-a", role: "ultra_admin" })?.status, 403);
 });
 
-Deno.test("ultra_admin remove em qualquer empresa", () => {
-  assertEquals(recusaDoAlvo(ultra, { empresa_id: "empresa-b", role: "admin" }), null);
-  assertEquals(recusaDoAlvo(ultra, { empresa_id: "empresa-b", role: "ultra_admin" }), null);
+Deno.test("ultra_admin não remove usuário de outra empresa por aqui", () => {
+  assertEquals(recusaDoAlvo(ultra, { empresa_id: "empresa-b", role: "admin" })?.status, 403);
+  assertEquals(recusaDoAlvo(ultra, { empresa_id: "empresa-b", role: "ultra_admin" })?.status, 403);
+  assertEquals(recusaDoAlvo(ultra, { empresa_id: "empresa-plataforma", role: "admin" }), null);
 });
