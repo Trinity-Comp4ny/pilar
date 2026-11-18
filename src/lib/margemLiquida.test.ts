@@ -7,7 +7,7 @@ import {
   precoSugerido,
   semaforoMargem,
   taxaDoMeio,
-} from "./margemLiquida";
+} from "@/lib/margemLiquida";
 
 const semTaxa = { impostoPct: 6, taxaPct: 0 };
 const comCartao = { impostoPct: 6, taxaPct: 3.5 };

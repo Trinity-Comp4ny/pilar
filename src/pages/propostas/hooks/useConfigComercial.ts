@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Json } from "@/integrations/supabase/types";
-import type { MeioRecebimento } from "../lib/margemLiquida";
+import type { MeioRecebimento } from "@/lib/margemLiquida";
 
 export interface ConfigComercial {
   aliquotaImpostoPct: number;
@@ -31,9 +31,7 @@ const parseMeios = (raw: Json): MeioRecebimento[] => {
     if (typeof m.id !== "string" || typeof m.nome !== "string") return [];
     const faixas =
       m.faixas && typeof m.faixas === "object" && !Array.isArray(m.faixas)
-        ? Object.fromEntries(
-            Object.entries(m.faixas as Record<string, Json>).map(([k, v]) => [k, Number(v) || 0])
-          )
+        ? Object.fromEntries(Object.entries(m.faixas as Record<string, Json>).map(([k, v]) => [k, Number(v) || 0]))
         : undefined;
     return [{ id: m.id, nome: m.nome, taxa_pct: Number(m.taxa_pct) || 0, ...(faixas ? { faixas } : {}) }];
   });

@@ -32,7 +32,7 @@ import { statusExibido } from "@/pages/leads/lib/comercial";
 
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { usePermissions } from "@/hooks/usePermissions";
-import { MargemPropostaBadge } from "@/pages/propostas/components/MargemPropostaBadge";
+import { MargemPropostaBadge } from "@/components/MargemPropostaBadge";
 import { LeadAtividadesPanel } from "./LeadAtividadesPanel";
 import { LeadPropostasPanel } from "./LeadPropostasPanel";
 import { BusyMark } from "@/components/motion/BusyMark";

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { resumoMargemProposta } from "../lib/simulacaoSnapshot";
+import { resumoMargemProposta } from "@/lib/margemProposta";
 
 const CLASSE = {
   verde: "bg-positive/10 text-positive-strong",

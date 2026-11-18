@@ -3,7 +3,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { CalculadoraMargem, simulacaoInicial } from "./CalculadoraMargem";
 import { CONFIG_COMERCIAL_PADRAO, type ConfigComercial } from "../hooks/useConfigComercial";
 
-const config: ConfigComercial = { ...CONFIG_COMERCIAL_PADRAO, aliquotaImpostoPct: 6, margemAlvoPct: 30, margemMinimaPct: 15 };
+const config: ConfigComercial = {
+  ...CONFIG_COMERCIAL_PADRAO,
+  aliquotaImpostoPct: 6,
+  margemAlvoPct: 30,
+  margemMinimaPct: 15,
+};
 
 const renderCalc = (over: Partial<React.ComponentProps<typeof CalculadoraMargem>> = {}) => {
   const props = {

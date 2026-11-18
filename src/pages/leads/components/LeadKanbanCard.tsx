@@ -11,7 +11,7 @@ import { ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePermissions } from "@/hooks/usePermissions";
-import { MargemPropostaBadge } from "@/pages/propostas/components/MargemPropostaBadge";
+import { MargemPropostaBadge } from "@/components/MargemPropostaBadge";
 import type { Lead } from "@/hooks/useLeads";
 import type { LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
