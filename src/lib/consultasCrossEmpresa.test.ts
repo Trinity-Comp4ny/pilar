@@ -29,7 +29,8 @@ const TABELAS_CROSS_EMPRESA = [
 ];
 
 // Consulta presa: empresa, o próprio usuário ou uma linha por id.
-const PRESA = /empresa_id|empresaId|\.eq\(\s*"(id|user_id|created_by|destinatario_id|pessoa_id|profile_id)"|\.in\(\s*"id"|\.match\(/;
+const PRESA =
+  /empresa_id|empresaId|\.eq\(\s*"(id|user_id|created_by|destinatario_id|pessoa_id|profile_id)"|\.in\(\s*"id"|\.match\(/;
 
 // Exceções justificadas (arquivo → motivo). Cada uma depende de outra trava.
 const EXCECOES: Record<string, string> = {
