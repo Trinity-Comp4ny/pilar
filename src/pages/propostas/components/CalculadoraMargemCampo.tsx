@@ -9,6 +9,7 @@ interface CalculadoraMargemCampoProps {
   precoTabela: number;
   onAplicarPreco: (valor: number) => void;
   disabled?: boolean;
+  textoSemCusto?: string;
 }
 
 /** Calculadora do formulário de proposta, já ligada ao padrão da empresa (SPEC 168). */
@@ -18,6 +19,7 @@ export function CalculadoraMargemCampo({
   precoTabela,
   onAplicarPreco,
   disabled,
+  textoSemCusto,
 }: CalculadoraMargemCampoProps) {
   const salvar = useSalvarConfigComercial();
   return (
@@ -28,6 +30,7 @@ export function CalculadoraMargemCampo({
       value={margem.simulacao}
       onChange={margem.setSimulacao}
       onAplicarPreco={onAplicarPreco}
+      textoSemCusto={textoSemCusto}
       onSalvarPadrao={(sim) =>
         salvar.mutate(
           { ...margem.config, aliquotaImpostoPct: sim.impostoPct, margemAlvoPct: sim.margemAlvoPct },
