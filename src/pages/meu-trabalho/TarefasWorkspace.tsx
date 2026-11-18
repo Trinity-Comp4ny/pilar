@@ -48,14 +48,18 @@ import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
 import type { ServicoObra } from "./servicoObra";
 import { EmptyState } from "@/components/EmptyState";
-import { CORES_ETAPA, corDaEtapa, type Prioridade } from "./status";
+import { CORES_ETAPA, PRIORIDADE_LABEL, PRIORIDADE_ORDER, corDaEtapa, type Prioridade } from "./status";
+import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
+import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
+import type { PeriodoPreset } from "@/lib/periodo";
+import { startOfDay } from "date-fns";
 
 import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const LS_VISAO_OBRA = "pilar.obra-tarefas.visao";
 
 type Visao = "lista" | "quadro";
-type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
+type FiltroData = "todas" | "atrasadas" | "hoje" | "sem_prazo";
 
 const VISAO_OPCOES: ViewOption<Visao>[] = [
   { value: "lista", label: "Lista", icon: List },
@@ -68,11 +72,22 @@ const TIPO_LABEL: Record<FiltroTipo, string> = {
   disciplina: "Disciplinas",
 };
 
+const PRESETS_PRAZO: PeriodoPreset[] = [
+  "proximos-7",
+  "proximos-30",
+  "ultimos-7",
+  "mes-atual",
+  "mes-anterior",
+  "este-trimestre",
+  "este-ano",
+  "tudo",
+  "custom",
+];
+
 const DATA_LABEL: Record<FiltroData, string> = {
   todas: "Tudo",
   atrasadas: "Atrasadas",
   hoje: "Vencem hoje",
-  semana: "Próximos 7 dias",
   sem_prazo: "Sem prazo",
 };
 
@@ -86,9 +101,18 @@ function noPeriodo(prazo: string | null, filtro: FiltroData): boolean {
   hoje.setHours(0, 0, 0, 0);
   if (filtro === "atrasadas") return d < hoje;
   if (filtro === "hoje") return d.getTime() === hoje.getTime();
-  const fim = new Date(hoje);
-  fim.setDate(fim.getDate() + 7);
-  return d >= hoje && d <= fim; // semana
+  return true;
+}
+
+/** Prazo dentro do intervalo escolhido no filtro de período (pontas inclusas, por dia). */
+function dentroDoIntervalo(prazo: string | null, de: Date | undefined, ate: Date | undefined): boolean {
+  if (!de && !ate) return true;
+  if (!prazo) return false;
+  const d = new Date(`${prazo}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  if (de && d < startOfDay(de)) return false;
+  if (ate && d > startOfDay(ate)) return false;
+  return true;
 }
 
 /** Peças que a moldura (página ou aba) encaixa: o espaço é dela, o conteúdo é do workspace. */
@@ -142,6 +166,9 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
   });
   const [tipo, setTipo] = useState<FiltroTipo>(temProjetos && !obra ? "tudo" : "tarefa");
   const [filtroData, setFiltroData] = useState<FiltroData>("todas");
+  const [periodoDe, setPeriodoDe] = useState<Date | undefined>();
+  const [periodoAte, setPeriodoAte] = useState<Date | undefined>();
+  const [filtroPrioridades, setFiltroPrioridades] = useState<string[]>([]);
   const [busca, setBusca] = useState("");
   const [ordem, setOrdem] = useKanbanSort(obra ? "obra-tarefas" : "tarefas", TAREFAS_SORT_PADRAO, TAREFAS_SORT_KEYS);
 
@@ -196,6 +223,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
       if (obra && i.tarefa?.obra?.id !== obra.id) return false;
       if (!bate(i.projetoId, filtroProjeto) || !bate(obraIdDoItem(i), filtroObra)) return false;
       if (!noPeriodo(i.prazo, filtroData)) return false;
+      if (!dentroDoIntervalo(i.prazo, periodoDe, periodoAte)) return false;
+      if (filtroPrioridades.length > 0 && !filtroPrioridades.includes(i.prioridade)) return false;
       if (!termo) return true;
       const numeroTermo = termo.replace(/^#/, "");
       return (
@@ -207,7 +236,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
     });
-  }, [itens, busca, filtroData, obra, filtroProjeto, filtroObra]);
+  }, [itens, busca, filtroData, periodoDe, periodoAte, filtroPrioridades, obra, filtroProjeto, filtroObra]);
 
   // A lista usa a mesma ordenação do quadro (o controle "Ordenar" vale para as duas visões).
   const itensOrdenados = useMemo(
@@ -506,6 +535,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     (filtroPessoas.length > 0 ? 1 : 0) +
     (filtraTipo && tipo !== "tudo" ? 1 : 0) +
     (filtroData !== "todas" ? 1 : 0) +
+    (periodoDe || periodoAte ? 1 : 0) +
+    (filtroPrioridades.length > 0 ? 1 : 0) +
     (filtroProjeto !== TODOS ? 1 : 0) +
     (filtroObra !== TODOS ? 1 : 0);
   const limparFiltros = () => {
@@ -519,6 +550,9 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     );
     setTipo(tipoPadrao);
     setFiltroData("todas");
+    setPeriodoDe(undefined);
+    setPeriodoAte(undefined);
+    setFiltroPrioridades([]);
   };
 
   // Toolbar (SPEC 124): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
@@ -575,8 +609,26 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
             />
           </>
         )}
+        <MultiSelectFilter
+          label="Prioridade"
+          options={PRIORIDADE_ORDER.map((p) => ({ value: p, label: PRIORIDADE_LABEL[p] }))}
+          selected={filtroPrioridades}
+          onChange={setFiltroPrioridades}
+          placeholder="Buscar prioridade…"
+        />
+        <FiltroPeriodo
+          from={periodoDe}
+          to={periodoAte}
+          onChange={(de, ate) => {
+            setPeriodoDe(de);
+            setPeriodoAte(ate);
+          }}
+          align="start"
+          active={!!periodoDe || !!periodoAte}
+          presets={PRESETS_PRAZO}
+        />
         <FilterSelect
-          label="Prazo"
+          label="Situação"
           icon={CalendarClock}
           value={filtroData}
           emptyValue="todas"
@@ -643,6 +695,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
           onPrioridade={mudarPrioridade}
           onExcluir={(item) => !bloqueado(item) && setAExcluir(item)}
           onMover={moverItem}
+          onCriarNoGrupo={abrirNova}
           etapaControls={etapaControls}
         />
       )}

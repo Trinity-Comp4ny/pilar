@@ -238,9 +238,9 @@ describe("TarefasWorkspace: lista", () => {
   it("filtro de prazo e de tipo, com limpar", async () => {
     const user = renderWorkspace();
     await screen.findByRole("group", { name: "Revisar prancha" });
-    await user.click(toolbar().getByRole("button", { name: "Prazo" }));
+    await user.click(toolbar().getByRole("button", { name: "Situação" }));
     await user.click(
-      within(await screen.findByRole("listbox", { name: "Prazo" })).getByRole("option", { name: "Atrasadas" })
+      within(await screen.findByRole("listbox", { name: "Situação" })).getByRole("option", { name: "Atrasadas" })
     );
     expect(linha("Medir terreno")).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Revisar prancha" })).not.toBeInTheDocument();
@@ -253,6 +253,16 @@ describe("TarefasWorkspace: lista", () => {
       within(await screen.findByRole("listbox", { name: "Tipo" })).getByRole("option", { name: "Tarefas" })
     );
     await waitFor(() => expect(screen.queryByRole("group", { name: "Estrutural" })).not.toBeInTheDocument());
+  });
+
+  it("filtra por prioridade (múltipla escolha) e limpa junto com os demais", async () => {
+    const user = renderWorkspace();
+    await screen.findByRole("group", { name: "Revisar prancha" });
+    await user.click(toolbar().getByRole("button", { name: /Prioridade/ }));
+    await user.click(await screen.findByRole("option", { name: /Alta/ }));
+    expect(toolbar().getByRole("button", { name: /Prioridade: Alta/ })).toBeInTheDocument();
+    await user.click(toolbar().getByRole("button", { name: /^Limpar\s*\(1\)$/ }));
+    expect(await screen.findByRole("group", { name: "Revisar prancha" })).toBeInTheDocument();
   });
 
   it("sem módulo Projetos não busca disciplinas nem mostra o filtro de tipo", async () => {
