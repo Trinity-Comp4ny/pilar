@@ -75,23 +75,23 @@ export function ProjetoHistoricoTab({ projetoId, disciplinas }: Props) {
           Linha do tempo do projeto: início e conclusão de disciplinas, revisões, aditivos e aprovações do cliente, do
           mais recente para o mais antigo.
         </p>
-      {disciplinas.length > 0 && (
-        <div className="flex justify-end">
-          <Select value={filtroDisciplina} onValueChange={setFiltroDisciplina}>
-            <SelectTrigger className="w-[220px] h-9 text-sm">
-              <SelectValue placeholder="Todas as disciplinas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as disciplinas</SelectItem>
-              {disciplinas.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+        {disciplinas.length > 0 && (
+          <div className="flex justify-end">
+            <Select value={filtroDisciplina} onValueChange={setFiltroDisciplina}>
+              <SelectTrigger className="w-[220px] h-9 text-sm">
+                <SelectValue placeholder="Todas as disciplinas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as disciplinas</SelectItem>
+                {disciplinas.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {eventosFiltrados.length === 0 ? (
@@ -105,7 +105,10 @@ export function ProjetoHistoricoTab({ projetoId, disciplinas }: Props) {
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
               {eventosFiltrados.map((evento, idx) => (
-                <li key={`${evento.tipo}-${evento.ocorridoEm}-${idx}`} className="flex flex-col gap-1 border-l-2 border-brand p-4">
+                <li
+                  key={`${evento.tipo}-${evento.ocorridoEm}-${idx}`}
+                  className="flex flex-col gap-1 border-l-2 border-brand p-4"
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className={TIPO_TONE[evento.tipo]}>
                       {TIPO_LABEL[evento.tipo]}

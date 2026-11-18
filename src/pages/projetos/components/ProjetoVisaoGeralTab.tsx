@@ -162,7 +162,9 @@ export function ProjetoVisaoGeralTab({ projetoId, disciplinas, progresso, indica
                   </ResponsiveContainer>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <Legenda itens={porStatus.map((s) => ({ nome: s.nome, cor: STATUS_COR[s.nome], valor: String(s.valor) }))} />
+                  <Legenda
+                    itens={porStatus.map((s) => ({ nome: s.nome, cor: STATUS_COR[s.nome], valor: String(s.valor) }))}
+                  />
                 </div>
               </div>
             )}
@@ -227,7 +229,8 @@ export function ProjetoVisaoGeralTab({ projetoId, disciplinas, progresso, indica
                   />
                   {resumo.proximoVencimento && (
                     <p className="text-xs text-muted-foreground">
-                      Próximo vencimento: <strong className="text-foreground">{formatDateShort(resumo.proximoVencimento)}</strong>
+                      Próximo vencimento:{" "}
+                      <strong className="text-foreground">{formatDateShort(resumo.proximoVencimento)}</strong>
                     </p>
                   )}
                 </div>
@@ -255,7 +258,9 @@ export function ProjetoVisaoGeralTab({ projetoId, disciplinas, progresso, indica
                   <span className="h-2 w-2 shrink-0 rounded-full bg-brand" aria-hidden="true" />
                   <span className="font-medium">{TIPO_LABEL[e.tipo] ?? e.tipo}</span>
                   {e.disciplinaNome && <span className="text-xs text-muted-foreground">{e.disciplinaNome}</span>}
-                  <span className="ml-auto text-xs text-muted-foreground">{formatDateShort(e.ocorridoEm.slice(0, 10))}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {formatDateShort(e.ocorridoEm.slice(0, 10))}
+                  </span>
                 </li>
               ))}
             </ul>
