@@ -61,10 +61,10 @@ import {
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
-import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
-import { MoneyInput } from "@/components/forms/MoneyInput";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DisciplinasEditor } from "./components/DisciplinasEditor";
 import { SomaDisciplinasAviso } from "./components/SomaDisciplinasAviso";
+import { TipoPropostaField } from "./components/TipoPropostaField";
 import { CalculadoraMargemCampo } from "./components/CalculadoraMargemCampo";
 import { useSimulacaoMargem } from "./hooks/useSimulacaoMargem";
 import { calcDisciplinasTotais, valorDivergeDaSoma, type DisciplinaLinha } from "./lib/disciplinasCalc";
@@ -907,27 +907,10 @@ export default function Propostas() {
                 placeholder="Ex.: Projeto estrutural, Reforma da cozinha"
               />
             </div>
-            <fieldset className="flex flex-wrap items-center gap-4">
-              <legend className="sr-only">Tipo da proposta</legend>
-              <span className="text-sm font-medium">Tipo:</span>
-              {(
-                [
-                  { value: "projeto", label: "Projeto" },
-                  { value: "obra", label: "Obra / serviço" },
-                ] as const
-              ).map((op) => (
-                <label key={op.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="proposta-tipo"
-                    className="accent-primary"
-                    checked={form.tipo === op.value}
-                    onChange={() => setForm({ ...form, tipo: op.value })}
-                  />
-                  {op.label}
-                </label>
-              ))}
-            </fieldset>
+            <TipoPropostaField
+              value={form.tipo === "obra" ? "obra" : "projeto"}
+              onChange={(tipo) => setForm({ ...form, tipo })}
+            />
             <div className="space-y-3">
               <fieldset className="flex flex-wrap items-center gap-4">
                 <legend className="sr-only">Vincular a cliente ou lead</legend>
@@ -1064,31 +1047,10 @@ export default function Propostas() {
               />
             </div>
 
-            {margem.ativo && form.tipo === "obra" && (
-              <div className="space-y-2">
-                <Label htmlFor="proposta-custo-obra">Custo previsto da obra (só você vê)</Label>
-                <MoneyInput
-                  id="proposta-custo-obra"
-                  value={margem.custoManual ? formatValorToInput(margem.custoManual) : ""}
-                  onChange={(v) => margem.setCustoManual(parseCurrencyString(v))}
-                  disabled={!canEdit}
-                  placeholder="R$ 0,00"
-                />
-                <p className="text-2xs text-muted-foreground">
-                  Material, mão de obra e o que mais sair do seu bolso. Com ele a calculadora mostra a margem e o
-                  desconto máximo.
-                </p>
-              </div>
-            )}
-
             {margem.ativo && (
               <CalculadoraMargemCampo
                 margem={margem}
-                textoSemCusto={
-                  form.tipo === "obra"
-                    ? "Informe o custo previsto da obra para ver a margem e o desconto máximo."
-                    : undefined
-                }
+                obra={form.tipo === "obra"}
                 custo={custoSimulacao}
                 precoTabela={valorPropostoNum || disciplinasTotais.totalValor}
                 onAplicarPreco={(v) => setValorDisplay(formatDecimal(v))}
