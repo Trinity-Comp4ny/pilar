@@ -164,7 +164,7 @@ describe("Propostas: criar", () => {
 
     await user.click(novaProposta());
     const f = form();
-    expect(within(f).getByLabelText("Código")).toHaveValue("PROP-009");
+    expect(within(f).queryByLabelText("Código")).not.toBeInTheDocument();
     await user.type(within(f).getByLabelText("Título *"), "Clínica Sul");
     await user.type(within(f).getByLabelText("Valor Proposto"), "8500000");
     await user.type(within(f).getByLabelText("Prazo (dias)"), "60");
@@ -209,20 +209,18 @@ describe("Propostas: criar", () => {
     expect(mocks.create.mutate).not.toHaveBeenCalled();
   });
 
-  it("código já usado (qualquer caixa) avisa no campo e bloqueia", async () => {
+  it("tipo Obra esconde a área e manda o tipo no payload", async () => {
     const user = userEvent.setup();
     abrir();
     await user.click(novaProposta());
     const f = form();
-    const codigo = within(f).getByLabelText("Código");
-    await user.clear(codigo);
-    await user.type(codigo, "prop-007");
-    await user.type(within(f).getByLabelText("Título *"), "Outra");
-
-    expect(within(f).getByText("Já existe uma proposta com este código.")).toBeInTheDocument();
+    expect(within(f).getByLabelText("Área (m²)")).toBeInTheDocument();
+    await user.click(within(f).getByRole("radio", { name: "Obra / serviço" }));
+    expect(within(f).queryByLabelText("Área (m²)")).not.toBeInTheDocument();
+    await user.type(within(f).getByLabelText("Título *"), "Cozinha planejada");
     await user.click(within(f).getByRole("button", { name: "Criar proposta" }));
-    expect(toastError).toHaveBeenCalledWith("Já existe uma proposta com esse código");
-    expect(mocks.create.mutate).not.toHaveBeenCalled();
+    const payload = mocks.create.mutate.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload.tipo).toBe("obra");
   });
 
   it("valor e prazo não aceitam negativo", async () => {

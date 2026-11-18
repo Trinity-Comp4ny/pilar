@@ -8299,6 +8299,7 @@ export type Database = {
           projeto_id: string | null
           status: string | null
           template_id: string | null
+          tipo: string
           titulo: string
           updated_at: string | null
           updated_by: string | null
@@ -8330,6 +8331,7 @@ export type Database = {
           projeto_id?: string | null
           status?: string | null
           template_id?: string | null
+          tipo?: string
           titulo: string
           updated_at?: string | null
           updated_by?: string | null
@@ -8361,6 +8363,7 @@ export type Database = {
           projeto_id?: string | null
           status?: string | null
           template_id?: string | null
+          tipo?: string
           titulo?: string
           updated_at?: string | null
           updated_by?: string | null
