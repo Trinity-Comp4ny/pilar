@@ -37,6 +37,8 @@ interface CalculadoraMargemProps {
   /** Troca o valor da proposta pelo preço informado. Ação explícita do usuário. */
   onAplicarPreco: (valor: number) => void;
   onSalvarPadrao: (sim: SimulacaoMargem) => void;
+  /** Abre o cadastro das taxas dos meios de recebimento. */
+  onEditarTaxas?: () => void;
   salvandoPadrao?: boolean;
   disabled?: boolean;
   /** Texto quando ainda não há custo (muda para obra, que não tem horas). */
@@ -69,6 +71,7 @@ export function CalculadoraMargem({
   onChange,
   onAplicarPreco,
   onSalvarPadrao,
+  onEditarTaxas,
   salvandoPadrao,
   disabled,
   textoSemCusto,
@@ -250,6 +253,12 @@ export function CalculadoraMargem({
             {pct(taxaPct)} = {formatCurrency(lucro)}. A taxa de cada meio é cadastrada por você, o Pilar não consulta a
             maquininha.
           </p>
+
+          {!disabled && onEditarTaxas && (
+            <Button type="button" variant="outline" size="xs" onClick={onEditarTaxas}>
+              Cadastrar taxas dos meios de recebimento
+            </Button>
+          )}
 
           {!disabled && (
             <Button

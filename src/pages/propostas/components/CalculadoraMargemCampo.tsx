@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { MoneyInput } from "@/components/forms/MoneyInput";
@@ -5,6 +6,7 @@ import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import type { SimulacaoMargemEstado } from "../hooks/useSimulacaoMargem";
 import { useSalvarConfigComercial } from "../hooks/useConfigComercial";
 import { CalculadoraMargem } from "./CalculadoraMargem";
+import { MeiosRecebimentoDialog } from "./MeiosRecebimentoDialog";
 
 interface CalculadoraMargemCampoProps {
   margem: SimulacaoMargemEstado;
@@ -26,6 +28,7 @@ export function CalculadoraMargemCampo({
   obra,
 }: CalculadoraMargemCampoProps) {
   const salvar = useSalvarConfigComercial();
+  const [taxasAbertas, setTaxasAbertas] = useState(false);
   return (
     <>
       {obra && (
@@ -61,9 +64,11 @@ export function CalculadoraMargemCampo({
             }
           )
         }
+        onEditarTaxas={() => setTaxasAbertas(true)}
         salvandoPadrao={salvar.isPending}
         disabled={disabled}
       />
+      <MeiosRecebimentoDialog open={taxasAbertas} onOpenChange={setTaxasAbertas} config={margem.config} />
     </>
   );
 }
