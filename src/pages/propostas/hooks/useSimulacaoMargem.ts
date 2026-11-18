@@ -12,6 +12,8 @@ import { CONFIG_COMERCIAL_PADRAO, useConfigComercial } from "./useConfigComercia
 export function useSimulacaoMargem(podeVer: boolean) {
   const { data: config = CONFIG_COMERCIAL_PADRAO } = useConfigComercial(podeVer);
   const [simulacao, setSimulacao] = useState<SimulacaoMargem | null>(null);
+  // Custo informado direto, para proposta de obra (sem horas por disciplina).
+  const [custoManual, setCustoManual] = useState(0);
 
   /**
    * Restaura a simulação gravada e devolve o valor que o campo deve mostrar. O valor gravado
@@ -21,6 +23,7 @@ export function useSimulacaoMargem(podeVer: boolean) {
   const hidratar = (dadosSimulacao: unknown, valorGravado: number | null | undefined) => {
     const snap = podeVer ? lerSimulacao(dadosSimulacao as Json | null) : null;
     setSimulacao(snap?.simulacao ?? null);
+    setCustoManual(snap?.custo ?? 0);
     return snap?.precoTabela ?? valorGravado;
   };
 
@@ -33,7 +36,7 @@ export function useSimulacaoMargem(podeVer: boolean) {
     };
   };
 
-  return { ativo: podeVer, config, simulacao, setSimulacao, hidratar, aplicar };
+  return { ativo: podeVer, config, simulacao, setSimulacao, custoManual, setCustoManual, hidratar, aplicar };
 }
 
 export type SimulacaoMargemEstado = ReturnType<typeof useSimulacaoMargem>;

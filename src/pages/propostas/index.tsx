@@ -64,6 +64,7 @@ import {
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DisciplinasEditor } from "./components/DisciplinasEditor";
 import { SomaDisciplinasAviso } from "./components/SomaDisciplinasAviso";
+import { TipoPropostaField } from "./components/TipoPropostaField";
 import { CalculadoraMargemCampo } from "./components/CalculadoraMargemCampo";
 import { useSimulacaoMargem } from "./hooks/useSimulacaoMargem";
 import { calcDisciplinasTotais, valorDivergeDaSoma, type DisciplinaLinha } from "./lib/disciplinasCalc";
@@ -193,6 +194,8 @@ export default function Propostas() {
   }, [editingId, editDisciplinasFetched, editDisciplinasData]);
 
   const disciplinasTotais = calcDisciplinasTotais(disciplinasRows);
+  // Obra não tem horas por disciplina: o custo vem do campo "Custo previsto".
+  const custoSimulacao = form.tipo === "obra" ? margem.custoManual : disciplinasTotais.totalCusto;
   const valorPropostoNum = parseCurrencyString(valorDisplay);
   const valorDiverge = valorDivergeDaSoma(valorPropostoNum, disciplinasTotais.totalValor);
 
@@ -216,6 +219,7 @@ export default function Propostas() {
     setEditingId(null);
     setDisciplinasRows([]);
     margem.setSimulacao(null);
+    margem.setCustoManual(0);
     hydratedFor.current = null;
   };
 
@@ -264,7 +268,7 @@ export default function Propostas() {
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
     const valorBase = valorManual || (disciplinasTotais.totalValor > 0 ? disciplinasTotais.totalValor : undefined);
-    const { valorProposto, extra } = margem.aplicar(valorBase, disciplinasTotais.totalCusto);
+    const { valorProposto, extra } = margem.aplicar(valorBase, custoSimulacao);
     const payload = { ...form, codigo: codigoEfetivo, valor_proposto: valorProposto, ...extra };
 
     const disciplinasPayload = disciplinasValidas.map((d) => ({
@@ -882,27 +886,10 @@ export default function Propostas() {
                 placeholder="Ex.: Projeto estrutural, Reforma da cozinha"
               />
             </div>
-            <fieldset className="flex flex-wrap items-center gap-4">
-              <legend className="sr-only">Tipo da proposta</legend>
-              <span className="text-sm font-medium">Tipo:</span>
-              {(
-                [
-                  { value: "projeto", label: "Projeto" },
-                  { value: "obra", label: "Obra / serviço" },
-                ] as const
-              ).map((op) => (
-                <label key={op.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="proposta-tipo"
-                    className="accent-primary"
-                    checked={form.tipo === op.value}
-                    onChange={() => setForm({ ...form, tipo: op.value })}
-                  />
-                  {op.label}
-                </label>
-              ))}
-            </fieldset>
+            <TipoPropostaField
+              value={form.tipo === "obra" ? "obra" : "projeto"}
+              onChange={(tipo) => setForm({ ...form, tipo })}
+            />
             <div className="space-y-3">
               <fieldset className="flex flex-wrap items-center gap-4">
                 <legend className="sr-only">Vincular a cliente ou lead</legend>
@@ -1042,7 +1029,8 @@ export default function Propostas() {
             {margem.ativo && (
               <CalculadoraMargemCampo
                 margem={margem}
-                custo={disciplinasTotais.totalCusto}
+                obra={form.tipo === "obra"}
+                custo={custoSimulacao}
                 precoTabela={valorPropostoNum || disciplinasTotais.totalValor}
                 onAplicarPreco={(v) => setValorDisplay(formatDecimal(v))}
                 disabled={!canEdit}
