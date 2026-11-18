@@ -169,6 +169,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
   const [periodoDe, setPeriodoDe] = useState<Date | undefined>();
   const [periodoAte, setPeriodoAte] = useState<Date | undefined>();
   const [filtroPrioridades, setFiltroPrioridades] = useState<string[]>([]);
+  const [filtroEtiquetas, setFiltroEtiquetas] = useState<string[]>([]);
   const [busca, setBusca] = useState("");
   const [ordem, setOrdem] = useKanbanSort(obra ? "obra-tarefas" : "tarefas", TAREFAS_SORT_PADRAO, TAREFAS_SORT_KEYS);
 
@@ -217,6 +218,13 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     itens,
     projetos
   );
+  const opcoesEtiqueta = useMemo(
+    () =>
+      [...new Set(itens.flatMap((i) => i.labels))]
+        .sort((a, b) => a.localeCompare(b, "pt-BR"))
+        .map((l) => ({ value: l, label: l })),
+    [itens]
+  );
   const itensFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return itens.filter((i) => {
@@ -225,6 +233,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
       if (!noPeriodo(i.prazo, filtroData)) return false;
       if (!dentroDoIntervalo(i.prazo, periodoDe, periodoAte)) return false;
       if (filtroPrioridades.length > 0 && !filtroPrioridades.includes(i.prioridade)) return false;
+      if (filtroEtiquetas.length > 0 && !i.labels.some((l) => filtroEtiquetas.includes(l))) return false;
       if (!termo) return true;
       const numeroTermo = termo.replace(/^#/, "");
       return (
@@ -236,7 +245,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
     });
-  }, [itens, busca, filtroData, periodoDe, periodoAte, filtroPrioridades, obra, filtroProjeto, filtroObra]);
+  }, [itens, busca, filtroData, periodoDe, periodoAte, filtroPrioridades, filtroEtiquetas, obra, filtroProjeto, filtroObra]);
 
   // A lista usa a mesma ordenação do quadro (o controle "Ordenar" vale para as duas visões).
   const itensOrdenados = useMemo(
@@ -537,6 +546,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     (filtroData !== "todas" ? 1 : 0) +
     (periodoDe || periodoAte ? 1 : 0) +
     (filtroPrioridades.length > 0 ? 1 : 0) +
+    (filtroEtiquetas.length > 0 ? 1 : 0) +
     (filtroProjeto !== TODOS ? 1 : 0) +
     (filtroObra !== TODOS ? 1 : 0);
   const limparFiltros = () => {
@@ -553,6 +563,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     setPeriodoDe(undefined);
     setPeriodoAte(undefined);
     setFiltroPrioridades([]);
+    setFiltroEtiquetas([]);
   };
 
   // Toolbar (SPEC 124): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
@@ -616,6 +627,15 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
           onChange={setFiltroPrioridades}
           placeholder="Buscar prioridade…"
         />
+        {opcoesEtiqueta.length > 0 && (
+          <MultiSelectFilter
+            label="Etiqueta"
+            options={opcoesEtiqueta}
+            selected={filtroEtiquetas}
+            onChange={setFiltroEtiquetas}
+            placeholder="Buscar etiqueta…"
+          />
+        )}
         <FiltroPeriodo
           from={periodoDe}
           to={periodoAte}
