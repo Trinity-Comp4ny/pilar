@@ -63,6 +63,11 @@ import {
 } from "@/hooks/usePropostas";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DisciplinasEditor } from "./components/DisciplinasEditor";
+import { CalculadoraMargem, type SimulacaoMargem } from "./components/CalculadoraMargem";
+import { CONFIG_COMERCIAL_PADRAO, useConfigComercial, useSalvarConfigComercial } from "./hooks/useConfigComercial";
+import type { Json } from "@/integrations/supabase/types";
+import { aplicaDesconto } from "./lib/margemLiquida";
+import { lerSimulacao, montarSnapshot } from "./lib/simulacaoSnapshot";
 import { calcDisciplinasTotais, valorDivergeDaSoma, type DisciplinaLinha } from "./lib/disciplinasCalc";
 import { DatePicker } from "@/components/ui/date-picker";
 import { addDays, format } from "date-fns";
@@ -184,6 +189,11 @@ export default function Propostas() {
   const [codigoAutomatico, setCodigoAutomatico] = useState(false);
   const [valorDisplay, setValorDisplay] = useState("");
   const [disciplinasRows, setDisciplinasRows] = useState<DisciplinaLinha[]>([]);
+  // SPEC 168: simulação de margem líquida. Só quem enxerga o financeiro usa.
+  const podeVerMargem = can("financeiro");
+  const { data: configComercial = CONFIG_COMERCIAL_PADRAO } = useConfigComercial(podeVerMargem);
+  const salvarConfigComercial = useSalvarConfigComercial();
+  const [simulacao, setSimulacao] = useState<SimulacaoMargem | null>(null);
 
   // Carrega as disciplinas da proposta em edição uma única vez por proposta,
   // sem sobrescrever o que o usuário já editou no formulário aberto.
@@ -234,6 +244,7 @@ export default function Propostas() {
     setVinculoTipo("cliente");
     setEditingId(null);
     setDisciplinasRows([]);
+    setSimulacao(null);
     hydratedFor.current = null;
   };
 
@@ -256,7 +267,12 @@ export default function Propostas() {
       lead_id: p.lead_id || undefined,
     });
     setVinculoTipo(p.lead_id ? "lead" : "cliente");
-    setValorDisplay(p.valor_proposto ? formatDecimal(p.valor_proposto) : "");
+    // O valor gravado já é o preço com desconto; o campo mostra o de tabela para o
+    // desconto não ser aplicado duas vezes ao salvar de novo.
+    const snap = podeVerMargem ? lerSimulacao(p.dados_simulacao as Json | null) : null;
+    setSimulacao(snap?.simulacao ?? null);
+    const valorCampo = snap?.precoTabela ?? p.valor_proposto;
+    setValorDisplay(valorCampo ? formatDecimal(valorCampo) : "");
     setIsFormOpen(true);
   };
 
@@ -283,8 +299,17 @@ export default function Propostas() {
     const disciplinasValidas = disciplinasRows.filter((d) => d.disciplina.trim() !== "");
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
-    const valorProposto = valorManual || (disciplinasTotais.totalValor > 0 ? disciplinasTotais.totalValor : undefined);
-    const payload = { ...form, codigo: codigoEfetivo, valor_proposto: valorProposto };
+    const valorBase = valorManual || (disciplinasTotais.totalValor > 0 ? disciplinasTotais.totalValor : undefined);
+    const comSimulacao = podeVerMargem && !!simulacao && disciplinasTotais.totalCusto > 0 && !!valorBase;
+    const valorProposto = comSimulacao && valorBase ? aplicaDesconto(valorBase, simulacao.descontoPct) : valorBase;
+    const payload = {
+      ...form,
+      codigo: codigoEfetivo,
+      valor_proposto: valorProposto,
+      ...(comSimulacao && simulacao && valorBase
+        ? { dados_simulacao: montarSnapshot(simulacao, valorBase, disciplinasTotais.totalCusto, configComercial) }
+        : {}),
+    };
 
     const disciplinasPayload = disciplinasValidas.map((d) => ({
       disciplina: d.disciplina.trim(),
@@ -1056,6 +1081,32 @@ export default function Propostas() {
               </div>
               <DisciplinasEditor rows={disciplinasRows} onChange={setDisciplinasRows} disabled={!canEdit} />
             </div>
+
+            {podeVerMargem && (
+              <CalculadoraMargem
+                custo={disciplinasTotais.totalCusto}
+                precoTabela={valorPropostoNum || disciplinasTotais.totalValor}
+                config={configComercial}
+                value={simulacao}
+                onChange={setSimulacao}
+                onAplicarPreco={(v) => setValorDisplay(formatDecimal(v))}
+                onSalvarPadrao={(sim) =>
+                  salvarConfigComercial.mutate(
+                    {
+                      ...configComercial,
+                      aliquotaImpostoPct: sim.impostoPct,
+                      margemAlvoPct: sim.margemAlvoPct,
+                    },
+                    {
+                      onSuccess: () => toast.success("Padrão da empresa atualizado"),
+                      onError: () => toast.error("Não foi possível salvar o padrão"),
+                    }
+                  )
+                }
+                salvandoPadrao={salvarConfigComercial.isPending}
+                disabled={!canEdit}
+              />
+            )}
 
             <div className="space-y-2">
               <Label>Validade da proposta</Label>

@@ -2240,6 +2240,41 @@ export type Database = {
         }
         Relationships: []
       }
+      empresa_config_comercial: {
+        Row: {
+          aliquota_imposto_pct: number
+          empresa_id: string
+          margem_alvo_pct: number
+          margem_minima_pct: number
+          meios_recebimento: Json
+          updated_at: string
+        }
+        Insert: {
+          aliquota_imposto_pct?: number
+          empresa_id: string
+          margem_alvo_pct?: number
+          margem_minima_pct?: number
+          meios_recebimento?: Json
+          updated_at?: string
+        }
+        Update: {
+          aliquota_imposto_pct?: number
+          empresa_id?: string
+          margem_alvo_pct?: number
+          margem_minima_pct?: number
+          meios_recebimento?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_config_comercial_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresa_owners_pending: {
         Row: {
           company_name: string
