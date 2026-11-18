@@ -31,6 +31,8 @@ import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/pages/leads/lib/comercial";
 
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
+import { usePermissions } from "@/hooks/usePermissions";
+import { MargemPropostaBadge } from "@/pages/propostas/components/MargemPropostaBadge";
 import { LeadAtividadesPanel } from "./LeadAtividadesPanel";
 import { LeadPropostasPanel } from "./LeadPropostasPanel";
 import { BusyMark } from "@/components/motion/BusyMark";
@@ -92,6 +94,8 @@ export function LeadDetailDialog({
   onEstimar,
 }: LeadDetailDialogProps) {
   const formatCurrency = useMoneyMask();
+  const { can } = usePermissions();
+  const podeVerMargem = can("financeiro");
   if (!lead) return null;
 
   const statusConfig = STATUS_CONFIG[lead.status];
@@ -198,6 +202,7 @@ export function LeadDetailDialog({
                         {formatCurrency(proposta.valor_proposto)}
                       </span>
                     )}
+                    {podeVerMargem && <MargemPropostaBadge dadosSimulacao={proposta.dados_simulacao} />}
                     {proposta.margem_estimada_pct != null && (
                       <span className="text-muted-foreground">margem {Math.round(proposta.margem_estimada_pct)}%</span>
                     )}

@@ -7,6 +7,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import { useProjetoRentabilidade } from "./useRentabilidade";
+import { useMargemPrometida } from "./useMargemPrometida";
 import { useTemplates } from "@/hooks/useTemplates";
 import { errorMessage } from "@/lib/errors";
 import {
@@ -78,6 +79,8 @@ export function useProjetoDetail(id: string | undefined) {
     id,
     ready && can("financeiro")
   );
+
+  const { data: margemPrometidaPct = null } = useMargemPrometida(id, ready && can("financeiro"));
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);
@@ -410,6 +413,7 @@ export function useProjetoDetail(id: string | undefined) {
     deadline,
     progress,
     margemBrutaPct,
+    margemPrometidaPct,
     rentabilidade,
     rentabilidadeLoading,
 
