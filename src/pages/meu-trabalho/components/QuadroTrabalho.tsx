@@ -47,7 +47,16 @@ function lerRecolhidas(): Set<string> {
   }
 }
 
-export function QuadroTrabalho({ itens, sort, onAbrir, onPrioridade, onExcluir, onMover, onCriarNoGrupo, etapaControls }: Props) {
+export function QuadroTrabalho({
+  itens,
+  sort,
+  onAbrir,
+  onPrioridade,
+  onExcluir,
+  onMover,
+  onCriarNoGrupo,
+  etapaControls,
+}: Props) {
   const { etapas } = etapaControls;
   const isMobile = useIsMobile();
   const [recolhidas, setRecolhidas] = useState<Set<string>>(() => lerRecolhidas());
