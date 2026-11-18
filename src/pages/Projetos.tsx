@@ -506,9 +506,10 @@ export default function ProjetosKanban() {
             <ListaProjetos
               projetos={filteredProjetos}
               etapas={etapas}
-              rentabilidadeMap={rentabilidadeMap}
               canEdit={canEdit}
               onCardClick={handleCardClick}
+              onEditClick={handleEditClick}
+              onDelete={handleDelete}
               onMoverEtapa={moverParaEtapa}
             />
           </div>
