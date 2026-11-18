@@ -1,3 +1,4 @@
+import { atribuicaoDisciplina } from "../lib/atribuicaoDisciplina";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -243,6 +244,7 @@ export function ProjetoDetailTabs({
         | "horas_realizadas"
         | "tipo_execucao"
         | "prestador_nome"
+        | "responsaveis"
       >
     >
   ) => {
@@ -254,7 +256,17 @@ export function ProjetoDetailTabs({
     await handleSaveDiscChanges({ ...dbDisc, ...patch });
     // patch usa chaves de ProjetoDisciplinaDB (descricao pode ser null); no shape
     // legacy é string|undefined e nunca gravamos null aqui — cast seguro.
-    setSelectedDisc((prev) => (prev ? ({ ...prev, ...patch } as DisciplinaResponsavel) : prev));
+    setSelectedDisc((prev) =>
+      prev
+        ? ({
+            ...prev,
+            ...patch,
+            ...(patch.responsaveis
+              ? { responsaveis: patch.responsaveis.map((r) => ({ responsavel_id: r.id, responsavel_nome: r.nome })) }
+              : {}),
+          } as DisciplinaResponsavel)
+        : prev
+    );
   };
 
   const handleDiscUpdateLabels = (next: string[]) => saveDiscPatch({ labels: next });
@@ -433,8 +445,7 @@ export function ProjetoDetailTabs({
         onUpdateResponsaveis={handleDiscUpdateResponsaveis}
         onUpdateExecucao={
           canEdit
-            ? (tipo, prestador) =>
-                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            ? (tipo, prestador, ids) => saveDiscPatch(atribuicaoDisciplina(tipo, prestador, ids, pessoas))
             : undefined
         }
         onUpdateLabels={handleDiscUpdateLabels}

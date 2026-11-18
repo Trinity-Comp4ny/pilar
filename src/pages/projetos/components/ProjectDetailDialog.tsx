@@ -1,3 +1,4 @@
+import { atribuicaoDisciplina } from "../lib/atribuicaoDisciplina";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -542,8 +543,7 @@ export function ProjectDetailDialog({
         onUpdateResponsaveis={discOnUpdateResponsaveis}
         onUpdateExecucao={
           canEdit
-            ? (tipo, prestador) =>
-                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            ? (tipo, prestador, ids) => saveDiscPatch(atribuicaoDisciplina(tipo, prestador, ids, pessoas))
             : undefined
         }
         onUpdateLabels={(n) => saveDiscPatch({ labels: n })}

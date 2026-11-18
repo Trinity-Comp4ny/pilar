@@ -56,6 +56,7 @@ interface LeadDetailDialogProps {
   lead: Lead | null;
   /** Nome da coluna do lead no funil (editável); sem ele mostra o status. */
   etapaNome?: string;
+  comentarioDestacado?: string | null;
   canEdit: boolean;
   members: LeadMember[];
   onEdit: (lead: Lead) => void;
@@ -76,6 +77,7 @@ export function LeadDetailDialog({
   onOpenChange,
   lead,
   etapaNome,
+  comentarioDestacado,
   canEdit,
   members,
   onEdit,
@@ -127,7 +129,14 @@ export function LeadDetailDialog({
           secondaryLabel="Atividades"
           primaryDefaultSize={58}
           secondaryDefaultSize={42}
-          secondary={<LeadAtividadesPanel key={lead.id} leadId={lead.id} canEdit={canEdit} />}
+          secondary={
+            <LeadAtividadesPanel
+              key={lead.id}
+              leadId={lead.id}
+              canEdit={canEdit}
+              comentarioDestacado={comentarioDestacado}
+            />
+          }
           primary={
             <div className="h-full overflow-y-auto p-5 space-y-4">
               {/* Metadados em linha */}

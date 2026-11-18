@@ -27,6 +27,8 @@ import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useForm
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { gerarParcelasDoProjeto, parcelasDoForm } from "../lib/parcelasDoForm";
 
+import { atribuicaoLegacy } from "../lib/atribuicaoDisciplina";
+
 const PROJETO_DRAFT_KEY = "projeto-novo";
 
 const EMPTY_FORM = {
@@ -297,13 +299,11 @@ export function useProjetoForm({
     setProjetosDisciplinas(updatedDisciplinas);
   };
 
-  const updateDisciplinaExecucao = (tipo: "interna" | "terceirizada", prestador: string) => {
+  const updateDisciplinaExecucao = (tipo: "interna" | "terceirizada", prestador: string, ids?: string[]) => {
     if (selectedDisciplinaIndex === null) return;
     setProjetosDisciplinas((prev) =>
       prev.map((d, i) =>
-        i === selectedDisciplinaIndex
-          ? { ...d, tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null }
-          : d
+        i === selectedDisciplinaIndex ? { ...d, ...atribuicaoLegacy(tipo, prestador, ids, pessoas) } : d
       )
     );
   };

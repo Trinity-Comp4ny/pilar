@@ -3756,6 +3756,7 @@ export type Database = {
           empresa_id: string
           id: string
           lead_id: string
+          mencionados: string[]
           ocorrido_em: string
           texto: string
         }
@@ -3766,6 +3767,7 @@ export type Database = {
           empresa_id: string
           id?: string
           lead_id: string
+          mencionados?: string[]
           ocorrido_em?: string
           texto: string
         }
@@ -3776,6 +3778,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           lead_id?: string
+          mencionados?: string[]
           ocorrido_em?: string
           texto?: string
         }

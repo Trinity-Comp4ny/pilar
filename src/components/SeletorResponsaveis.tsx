@@ -20,6 +20,8 @@ interface SeletorResponsaveisProps {
   compact?: boolean;
   emptyLabel?: string;
   className?: string;
+  opcaoExtra?: { label: string; selecionada: boolean; onSelect: () => void };
+  pessoasDesabilitadas?: boolean;
 }
 
 /**
@@ -36,20 +38,28 @@ export function SeletorResponsaveis({
   compact = false,
   emptyLabel = "Sem responsável",
   className,
+  opcaoExtra,
+  pessoasDesabilitadas = false,
 }: SeletorResponsaveisProps) {
   const [open, setOpen] = useState(false);
   const selecionadas = pessoas.filter((p) => value.includes(p.id));
+  const extraAtiva = opcaoExtra?.selecionada;
+  const rotulo = extraAtiva
+    ? opcaoExtra.label
+    : selecionadas.length
+      ? selecionadas.map((p) => p.nome).join(", ")
+      : emptyLabel;
 
   const toggle = (id: string) => {
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+    onChange(extraAtiva ? [id] : value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         disabled={disabled}
-        aria-label={selecionadas.length ? `Responsáveis: ${selecionadas.map((p) => p.nome).join(", ")}` : emptyLabel}
-        title={selecionadas.length ? selecionadas.map((p) => p.nome).join(", ") : emptyLabel}
+        aria-label={rotulo}
+        title={rotulo}
         className={cn(
           "flex shrink-0 items-center rounded-full",
           compact ? "h-7 gap-1" : "h-9 w-full gap-2 rounded-md border bg-background px-3 text-sm",
@@ -57,7 +67,9 @@ export function SeletorResponsaveis({
           className
         )}
       >
-        {selecionadas.length > 0 ? (
+        {extraAtiva ? (
+          <span className="truncate text-sm">{opcaoExtra.label}</span>
+        ) : selecionadas.length > 0 ? (
           <>
             <AvatarStack pessoas={selecionadas} size="xs" />
             {!compact && (
@@ -82,12 +94,25 @@ export function SeletorResponsaveis({
           <CommandList>
             <CommandEmpty>Ninguém encontrado.</CommandEmpty>
             <CommandGroup>
+              {opcaoExtra && (
+                <CommandItem
+                  value={opcaoExtra.label}
+                  onSelect={() => {
+                    opcaoExtra.onSelect();
+                    setOpen(false);
+                  }}
+                >
+                  <span className="flex-1">{opcaoExtra.label}</span>
+                  {extraAtiva && <Check className="h-4 w-4 text-brand" />}
+                </CommandItem>
+              )}
               {pessoas.map((p) => {
-                const marcado = value.includes(p.id);
+                const marcado = !extraAtiva && value.includes(p.id);
                 return (
                   <CommandItem
                     key={p.id}
                     value={p.nome}
+                    disabled={pessoasDesabilitadas}
                     onSelect={() => toggle(p.id)}
                     className={cn("gap-2", marcado && "font-medium")}
                   >
