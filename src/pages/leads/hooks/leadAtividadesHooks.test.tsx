@@ -37,7 +37,7 @@ describe("pessoas e links de atividades", () => {
       open = vi.fn();
     const { result, rerender } = renderHook(
       ({ leads }: { leads: Lead[] }) => ({ ...useLeadAtividadeLink(leads, select, open), location: useLocation() }),
-      { wrapper, initialProps: { leads: [] } }
+      { wrapper, initialProps: { leads: [] as Lead[] } }
     );
     expect(select).not.toHaveBeenCalled();
     rerender({ leads: [{ id: "l1" } as Lead] });
