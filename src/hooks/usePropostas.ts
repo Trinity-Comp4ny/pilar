@@ -8,6 +8,7 @@ export interface Proposta {
   lead_id: string | null;
   cliente_id: string | null;
   codigo: string | null;
+  tipo?: "projeto" | "obra" | string | null;
   titulo: string;
   area_m2: number | null;
   localizacao: string | null;
@@ -33,6 +34,7 @@ export interface Proposta {
 
 export interface PropostaInsert {
   codigo?: string;
+  tipo?: "projeto" | "obra";
   titulo: string;
   lead_id?: string;
   cliente_id?: string;
