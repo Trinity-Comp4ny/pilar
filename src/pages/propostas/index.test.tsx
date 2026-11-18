@@ -80,6 +80,11 @@ vi.mock("@/pages/propostas/components/SmartInvoiceDialog", () => ({
   SmartInvoiceDialog: ({ projetoId }: { projetoId: string }) => <div>Faturamento do projeto {projetoId}</div>,
 }));
 vi.mock("./components/CapacidadeSimulacao", () => ({ CapacidadeSimulacao: () => null }));
+vi.mock("./hooks/useConfigComercial", async (orig) => ({
+  ...(await orig<typeof import("./hooks/useConfigComercial")>()),
+  useConfigComercial: () => ({ data: undefined }),
+  useSalvarConfigComercial: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
 vi.mock("@/hooks/useRecentes", () => ({ useRegistrarPagina: vi.fn() }));
 vi.mock("@/components/ui/sidebar", async (orig) => ({
