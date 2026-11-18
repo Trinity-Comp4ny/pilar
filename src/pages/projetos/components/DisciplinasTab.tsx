@@ -9,16 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  Search,
-  Layers,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  ChevronDown,
-  LayoutGrid,
-  List,
-} from "lucide-react";
+import { Search, Layers, CheckCircle2, Clock, AlertTriangle, ChevronDown, LayoutGrid, List } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";

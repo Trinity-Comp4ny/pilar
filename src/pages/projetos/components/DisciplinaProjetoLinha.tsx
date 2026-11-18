@@ -12,7 +12,13 @@ import {
 import { DisciplinaStatusBadge } from "./DisciplinaStatusBadge";
 
 /** Uma disciplina dentro de um projeto: o status em destaque é o da DISCIPLINA; o do projeto vem rotulado à parte. */
-export function DisciplinaProjetoLinha({ projeto, disciplina }: { projeto: Projeto; disciplina: DisciplinaResponsavel }) {
+export function DisciplinaProjetoLinha({
+  projeto,
+  disciplina,
+}: {
+  projeto: Projeto;
+  disciplina: DisciplinaResponsavel;
+}) {
   const dlStatus = getDiscDeadlineStatus(disciplina);
   const atrasada = dlStatus?.status_data === "em_atraso";
   const atencao = dlStatus?.status_data === "atencao";
@@ -93,4 +99,3 @@ export function DisciplinaProjetoLinha({ projeto, disciplina }: { projeto: Proje
     </div>
   );
 }
-
