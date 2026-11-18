@@ -15,7 +15,7 @@ import {
   semaforoMargem,
   taxaDoMeio,
   type SemaforoMargem,
-} from "../lib/margemLiquida";
+} from "@/lib/margemLiquida";
 
 /** Snapshot da simulação, gravado em propostas.dados_simulacao (SPEC 168). */
 export interface SimulacaoMargem {

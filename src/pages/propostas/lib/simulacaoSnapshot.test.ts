@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_COMERCIAL_PADRAO } from "../hooks/useConfigComercial";
-import { lerSimulacao, montarSnapshot, resumoMargemProposta } from "./simulacaoSnapshot";
+import { resumoMargemProposta } from "@/lib/margemProposta";
+import { lerSimulacao, montarSnapshot } from "./simulacaoSnapshot";
 
 const config = { ...CONFIG_COMERCIAL_PADRAO, margemAlvoPct: 30, margemMinimaPct: 15 };
 const sim = { impostoPct: 6, meioId: "pix", parcelas: 1, margemAlvoPct: 30, descontoPct: 0 };

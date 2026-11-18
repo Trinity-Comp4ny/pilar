@@ -142,9 +142,7 @@ export function ProjetoDetailInfo({
             value={margemBrutaPct !== null ? `${margemBrutaPct.toFixed(1)}%` : "—"}
             valueTone={atrasadoDoPrometido && margemTone !== "danger" ? "danger" : margemTone}
             subtitle={
-              margemPrometidaPct !== null
-                ? `Prometida na proposta: ${margemPrometidaPct.toFixed(1)}%`
-                : undefined
+              margemPrometidaPct !== null ? `Prometida na proposta: ${margemPrometidaPct.toFixed(1)}%` : undefined
             }
             subtitleTone={atrasadoDoPrometido ? "danger" : "muted"}
           />
