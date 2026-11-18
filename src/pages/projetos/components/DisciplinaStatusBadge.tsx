@@ -42,4 +42,3 @@ export function DisciplinaStatusBadge({ status }: { status: string | undefined }
     </Badge>
   );
 }
-
