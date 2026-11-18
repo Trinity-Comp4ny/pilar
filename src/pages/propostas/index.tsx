@@ -69,6 +69,7 @@ import { addDays, format } from "date-fns";
 import { CapacidadeSimulacao } from "./components/CapacidadeSimulacao";
 import { TemplatesManager } from "./components/TemplatesManager";
 import { GerarPropostaDialog } from "./components/GerarPropostaDialog";
+import { EnviarPropostaDialog } from "./components/EnviarPropostaDialog";
 import { PropostaDetailDialog } from "./components/PropostaDetailDialog";
 import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -91,7 +92,7 @@ interface PropostaDisciplina {
 }
 
 const VISAO_OPCOES: ViewOption<ViewMode>[] = [
-  { value: "table", label: "Tabela", icon: LayoutList },
+  { value: "table", label: "Lista", icon: LayoutList },
   { value: "cards", label: "Cards", icon: LayoutGrid },
 ];
 
@@ -100,6 +101,7 @@ type ViewMode = "table" | "cards";
 const emptyForm: PropostaInsert = {
   titulo: "",
   codigo: "",
+  tipo: "projeto",
   area_m2: undefined,
   localizacao: "",
   valor_proposto: undefined,
@@ -212,10 +214,6 @@ export default function Propostas() {
   const valorDiverge = valorDivergeDaSoma(valorPropostoNum, disciplinasTotais.totalValor);
 
   const codigoEfetivo = codigoAutomatico ? suggestNextCodigo(propostas) : form.codigo || "";
-  const codigoTrim = codigoEfetivo.trim();
-  const codigoDuplicado =
-    codigoTrim.length > 0 &&
-    propostas.some((p) => p.id !== editingId && (p.codigo || "").trim().toLowerCase() === codigoTrim.toLowerCase());
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-select"],
@@ -246,6 +244,7 @@ export default function Propostas() {
     setForm({
       titulo: p.titulo,
       codigo: p.codigo || "",
+      tipo: p.tipo === "obra" ? "obra" : "projeto",
       area_m2: p.area_m2 ?? undefined,
       localizacao: p.localizacao || "",
       valor_proposto: p.valor_proposto ?? undefined,
@@ -274,10 +273,6 @@ export default function Propostas() {
   const handleSubmit = () => {
     if (!form.titulo.trim()) {
       toast.error("Título é obrigatório");
-      return;
-    }
-    if (codigoDuplicado) {
-      toast.error("Já existe uma proposta com esse código");
       return;
     }
     const disciplinasValidas = disciplinasRows.filter((d) => d.disciplina.trim() !== "");
@@ -588,7 +583,6 @@ export default function Propostas() {
       cell: (p) => (
         <>
           <p className="text-sm font-medium">{p.titulo}</p>
-          {p.codigo && <p className="text-2xs text-muted-foreground font-mono">{p.codigo}</p>}
         </>
       ),
     },
@@ -672,10 +666,10 @@ export default function Propostas() {
         variant="outline"
         className={cn("rounded-full text-sm h-9", isMobile && "w-9 px-0 justify-center")}
         onClick={() => setIsTemplatesOpen(true)}
-        aria-label={isMobile ? "Templates" : undefined}
+        aria-label={isMobile ? "Modelos de contrato" : undefined}
       >
         <LayoutTemplate className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
-        <span className={cn(isMobile && "sr-only")}>Templates</span>
+        <span className={cn(isMobile && "sr-only")}>Modelos de contrato</span>
       </Button>
     </PageHeader>
   );
@@ -752,7 +746,6 @@ export default function Propostas() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{p.titulo}</p>
-                          {p.codigo && <p className="text-2xs text-muted-foreground font-mono">{p.codigo}</p>}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Badge className={`text-3xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
@@ -818,7 +811,7 @@ export default function Propostas() {
       <Sheet open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader className="mb-4">
-            <SheetTitle>Gerenciar templates</SheetTitle>
+            <SheetTitle>Modelos de contrato</SheetTitle>
           </SheetHeader>
           <TemplatesManager />
         </SheetContent>
@@ -894,32 +887,36 @@ export default function Propostas() {
             <DialogTitle>{editingId ? "Editar proposta" : "Nova proposta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="proposta-codigo">Código</Label>
-                <Input
-                  id="proposta-codigo"
-                  value={codigoEfetivo}
-                  onChange={(e) => {
-                    setCodigoAutomatico(false);
-                    setForm({ ...form, codigo: e.target.value });
-                  }}
-                  placeholder="PROP-001"
-                />
-                {codigoDuplicado && (
-                  <p className="text-2xs text-warning-mid">Já existe uma proposta com este código.</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="proposta-titulo">Título *</Label>
-                <Input
-                  id="proposta-titulo"
-                  value={form.titulo}
-                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                  placeholder="Título da proposta"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="proposta-titulo">Título *</Label>
+              <Input
+                id="proposta-titulo"
+                value={form.titulo}
+                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                placeholder="Ex.: Projeto estrutural, Reforma da cozinha"
+              />
             </div>
+            <fieldset className="flex flex-wrap items-center gap-4">
+              <legend className="sr-only">Tipo da proposta</legend>
+              <span className="text-sm font-medium">Tipo:</span>
+              {(
+                [
+                  { value: "projeto", label: "Projeto" },
+                  { value: "obra", label: "Obra / serviço" },
+                ] as const
+              ).map((op) => (
+                <label key={op.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="proposta-tipo"
+                    className="accent-primary"
+                    checked={form.tipo === op.value}
+                    onChange={() => setForm({ ...form, tipo: op.value })}
+                  />
+                  {op.label}
+                </label>
+              ))}
+            </fieldset>
             <div className="space-y-3">
               <fieldset className="flex flex-wrap items-center gap-4">
                 <legend className="sr-only">Vincular a cliente ou lead</legend>
@@ -997,7 +994,7 @@ export default function Propostas() {
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className={cn("grid gap-4", form.tipo === "obra" ? "grid-cols-2" : "grid-cols-3")}>
               <div className="space-y-2">
                 <Label htmlFor="proposta-valor">Valor Proposto</Label>
                 <Input
@@ -1007,15 +1004,17 @@ export default function Propostas() {
                   placeholder="R$ 0,00"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="proposta-area">Área (m²)</Label>
-                <Input
-                  id="proposta-area"
-                  type="number"
-                  value={form.area_m2 || ""}
-                  onChange={(e) => setForm({ ...form, area_m2: parseFloat(e.target.value) || undefined })}
-                />
-              </div>
+              {form.tipo !== "obra" && (
+                <div className="space-y-2">
+                  <Label htmlFor="proposta-area">Área (m²)</Label>
+                  <Input
+                    id="proposta-area"
+                    type="number"
+                    value={form.area_m2 || ""}
+                    onChange={(e) => setForm({ ...form, area_m2: parseFloat(e.target.value) || undefined })}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="proposta-prazo">Prazo (dias)</Label>
                 <Input
@@ -1233,7 +1232,7 @@ export default function Propostas() {
       </Dialog>
 
       {gerarDocxProposta && (
-        <GerarPropostaDialog
+        <EnviarPropostaDialog
           open={!!gerarDocxPropostaId}
           onOpenChange={(open) => {
             if (!open) setGerarDocxPropostaId(null);
