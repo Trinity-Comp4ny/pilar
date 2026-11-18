@@ -30,7 +30,7 @@ export const montarSnapshot = (
 /** Lê o snapshot gravado; null quando ausente ou malformado. */
 export const lerSimulacao = (
   raw: Json | null | undefined
-): { simulacao: SimulacaoMargem; precoTabela: number | null } | null => {
+): { simulacao: SimulacaoMargem; precoTabela: number | null; custo: number | null } | null => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const r = raw as Record<string, Json>;
   if (typeof r.impostoPct !== "number" || typeof r.margemAlvoPct !== "number") return null;
@@ -43,5 +43,6 @@ export const lerSimulacao = (
       descontoPct: typeof r.descontoPct === "number" ? r.descontoPct : 0,
     },
     precoTabela: typeof r.precoTabela === "number" ? r.precoTabela : null,
+    custo: typeof r.custo === "number" ? r.custo : null,
   };
 };

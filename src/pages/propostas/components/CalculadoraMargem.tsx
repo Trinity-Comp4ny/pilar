@@ -39,6 +39,8 @@ interface CalculadoraMargemProps {
   onSalvarPadrao: (sim: SimulacaoMargem) => void;
   salvandoPadrao?: boolean;
   disabled?: boolean;
+  /** Texto quando ainda não há custo (muda para obra, que não tem horas). */
+  textoSemCusto?: string;
 }
 
 const ESTILO: Record<SemaforoMargem, { rotulo: string; classe: string }> = {
@@ -69,6 +71,7 @@ export function CalculadoraMargem({
   onSalvarPadrao,
   salvandoPadrao,
   disabled,
+  textoSemCusto,
 }: CalculadoraMargemProps) {
   const [aberto, setAberto] = useState(false);
   const sim = useMemo(() => value ?? simulacaoInicial(config), [value, config]);
@@ -95,7 +98,8 @@ export function CalculadoraMargem({
   if (custo <= 0) {
     return (
       <div className="rounded-lg border border-black/5 p-3 text-xs text-muted-foreground">
-        Informe horas e custo/hora nas disciplinas para ver a margem e o desconto máximo desta proposta.
+        {textoSemCusto ??
+          "Informe horas e custo/hora nas disciplinas para ver a margem e o desconto máximo desta proposta."}
       </div>
     );
   }

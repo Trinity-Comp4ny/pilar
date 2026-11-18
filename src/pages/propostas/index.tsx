@@ -61,7 +61,8 @@ import {
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { DisciplinasEditor } from "./components/DisciplinasEditor";
 import { SomaDisciplinasAviso } from "./components/SomaDisciplinasAviso";
 import { CalculadoraMargemCampo } from "./components/CalculadoraMargemCampo";
@@ -214,6 +215,8 @@ export default function Propostas() {
   }, [editingId, editDisciplinasFetched, editDisciplinasData]);
 
   const disciplinasTotais = calcDisciplinasTotais(disciplinasRows);
+  // Obra não tem horas por disciplina: o custo vem do campo "Custo previsto".
+  const custoSimulacao = form.tipo === "obra" ? margem.custoManual : disciplinasTotais.totalCusto;
   const valorPropostoNum = parseCurrencyString(valorDisplay);
   const valorDiverge = valorDivergeDaSoma(valorPropostoNum, disciplinasTotais.totalValor);
 
@@ -237,6 +240,7 @@ export default function Propostas() {
     setEditingId(null);
     setDisciplinasRows([]);
     margem.setSimulacao(null);
+    margem.setCustoManual(0);
     hydratedFor.current = null;
   };
 
@@ -285,7 +289,7 @@ export default function Propostas() {
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
     const valorBase = valorManual || (disciplinasTotais.totalValor > 0 ? disciplinasTotais.totalValor : undefined);
-    const { valorProposto, extra } = margem.aplicar(valorBase, disciplinasTotais.totalCusto);
+    const { valorProposto, extra } = margem.aplicar(valorBase, custoSimulacao);
     const payload = { ...form, codigo: codigoEfetivo, valor_proposto: valorProposto, ...extra };
 
     const disciplinasPayload = disciplinasValidas.map((d) => ({
@@ -1060,10 +1064,32 @@ export default function Propostas() {
               />
             </div>
 
+            {margem.ativo && form.tipo === "obra" && (
+              <div className="space-y-2">
+                <Label htmlFor="proposta-custo-obra">Custo previsto da obra (só você vê)</Label>
+                <MoneyInput
+                  id="proposta-custo-obra"
+                  value={margem.custoManual ? formatValorToInput(margem.custoManual) : ""}
+                  onChange={(v) => margem.setCustoManual(parseCurrencyString(v))}
+                  disabled={!canEdit}
+                  placeholder="R$ 0,00"
+                />
+                <p className="text-2xs text-muted-foreground">
+                  Material, mão de obra e o que mais sair do seu bolso. Com ele a calculadora mostra a margem e o
+                  desconto máximo.
+                </p>
+              </div>
+            )}
+
             {margem.ativo && (
               <CalculadoraMargemCampo
                 margem={margem}
-                custo={disciplinasTotais.totalCusto}
+                textoSemCusto={
+                  form.tipo === "obra"
+                    ? "Informe o custo previsto da obra para ver a margem e o desconto máximo."
+                    : undefined
+                }
+                custo={custoSimulacao}
                 precoTabela={valorPropostoNum || disciplinasTotais.totalValor}
                 onAplicarPreco={(v) => setValorDisplay(formatDecimal(v))}
                 disabled={!canEdit}
