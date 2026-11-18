@@ -23,7 +23,6 @@ interface ComprovanteContexto {
 
 // Paleta da marca (src/styles/tokens.css): tinta, verde da marca e verde suave.
 const INK: [number, number, number] = [26, 26, 26];
-const BRAND: [number, number, number] = [164, 236, 134];
 const BRAND_SOFT: [number, number, number] = [236, 249, 229];
 const PAGE_W = 210;
 const PAGE_H = 297;
