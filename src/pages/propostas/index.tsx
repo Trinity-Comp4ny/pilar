@@ -83,6 +83,7 @@ import { SmartInvoiceDialog } from "@/pages/propostas/components/SmartInvoiceDia
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 import { disciplinasDoDocumento } from "./lib/disciplinasDocumento";
+import { emptyForm, suggestNextCodigo } from "./lib/propostaForm";
 import { perguntarEsforco } from "@/components/pesquisas/perguntarEsforco";
 import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
@@ -100,28 +101,6 @@ const VISAO_OPCOES: ViewOption<ViewMode>[] = [
 ];
 
 type ViewMode = "table" | "cards";
-
-const emptyForm: PropostaInsert = {
-  titulo: "",
-  codigo: "",
-  tipo: "projeto",
-  area_m2: undefined,
-  localizacao: "",
-  valor_proposto: undefined,
-  prazo_estimado_dias: undefined,
-  observacao: "",
-};
-
-// Sugere o próximo código sequencial no padrão PROP-001 a partir dos existentes.
-// O usuário pode editar livremente.
-const suggestNextCodigo = (list: { codigo: string | null }[]) => {
-  let max = 0;
-  for (const p of list) {
-    const m = /^PROP-(\d+)$/i.exec((p.codigo || "").trim());
-    if (m) max = Math.max(max, parseInt(m[1], 10));
-  }
-  return `PROP-${String(max + 1).padStart(3, "0")}`;
-};
 
 export default function Propostas() {
   const formatCurrency = useMoneyMask();
