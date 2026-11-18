@@ -1,16 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  FolderKanban,
-  HardHat,
-  LayoutGrid,
-  List,
-  ListChecks,
-  ListFilter,
-  Plus,
-  type LucideIcon,
-} from "lucide-react";
+import { FolderKanban, HardHat, LayoutGrid, List, ListChecks, ListFilter, Plus, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditColumnDialog, type ColunaEditavel } from "@/components/kanban/EditColumnDialog";
