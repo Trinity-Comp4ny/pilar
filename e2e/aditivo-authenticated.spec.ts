@@ -69,6 +69,7 @@ test("aprovar aditivo soma o valor dele no contrato do projeto", async ({ page }
   await confirmar.getByRole("button", { name: "Aprovar", exact: true }).click();
 
   await expect(page.getByText(/Aditivo aprovado/i).first()).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("tab", { name: "Visão geral", exact: true }).click();
   await expect(async () => {
     expect(await valorDoContrato(page)).toBeCloseTo(contratoAntes + valorAditivo, 2);
   }).toPass({ timeout: 10_000 });
