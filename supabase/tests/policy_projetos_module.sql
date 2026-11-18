@@ -6,7 +6,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(8);
+SELECT plan(9);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES (
@@ -183,11 +183,22 @@ SELECT lives_ok(
 -- =============================================
 -- Teste 8: ultra_admin pode escrever em disciplinas
 -- =============================================
+RESET ROLE;
+INSERT INTO public.disciplinas (nome, empresa_id)
+VALUES ('Disciplina-pgtap-outra-empresa', '00000000-0000-0000-0000-000000000bbb');
+
 SELECT test_set_auth('66666666-0000-0000-0000-000000000004');
 
 SELECT lives_ok(
   $$ INSERT INTO public.disciplinas (nome) VALUES ('Disciplina-pgtap-ultra') $$,
   'ultra_admin INSERT disciplinas funciona'
+);
+
+-- Teste 9: ultra_admin não enxerga o catálogo de outra empresa
+SELECT is(
+  (SELECT count(*)::int FROM public.disciplinas WHERE empresa_id = '00000000-0000-0000-0000-000000000bbb'),
+  0,
+  'ultra_admin não lê disciplinas de outra empresa'
 );
 
 SELECT * FROM finish();
