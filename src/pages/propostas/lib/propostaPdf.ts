@@ -140,7 +140,12 @@ export async function gerarPropostaPdf(dados: PropostaPdfDados): Promise<Blob> {
         if (data.section !== "body") return;
         doc.setDrawColor(230, 230, 226);
         doc.setLineWidth(0.2);
-        doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+        doc.line(
+          data.cell.x,
+          data.cell.y + data.cell.height,
+          data.cell.x + data.cell.width,
+          data.cell.y + data.cell.height
+        );
       },
     });
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;

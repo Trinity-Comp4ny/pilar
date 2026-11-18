@@ -889,7 +889,7 @@ export default function Propostas() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar proposta" : "Nova proposta"}</DialogTitle>
           </DialogHeader>
@@ -1045,10 +1045,19 @@ export default function Propostas() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Disciplinas</Label>
-                <span className="text-2xs text-muted-foreground">Opcional. Detalha horas, custo e valor.</span>
+                <Label>{form.tipo === "obra" ? "Itens do escopo" : "Disciplinas"}</Label>
+                <span className="text-2xs text-muted-foreground">
+                  {form.tipo === "obra"
+                    ? "Opcional. Descreva o que está incluso e o valor."
+                    : "Opcional. Detalha horas, custo e valor."}
+                </span>
               </div>
-              <DisciplinasEditor rows={disciplinasRows} onChange={setDisciplinasRows} disabled={!canEdit} />
+              <DisciplinasEditor
+                rows={disciplinasRows}
+                onChange={setDisciplinasRows}
+                disabled={!canEdit}
+                modo={form.tipo === "obra" ? "itens" : "disciplinas"}
+              />
             </div>
 
             {margem.ativo && (
