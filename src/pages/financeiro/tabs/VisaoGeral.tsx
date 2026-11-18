@@ -37,6 +37,7 @@ import { useFinanceData } from "@/pages/financeiro/hooks/useFinanceData";
 import { useDashboardData } from "@/pages/financeiro/hooks/useDashboardData";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
 import { useLancamentosRecentes } from "../hooks/useLancamentosRecentes";
+import { usePendenciasMensais } from "../hooks/usePendenciasMensais";
 import { VencimentoRow } from "../components/VencimentoRow";
 
 function VisaoGeralSkeleton() {
@@ -173,9 +174,13 @@ interface VisaoGeralProps {
   onNovoLancamento?: () => void;
 }
 
-const GRAFICO_OPCOES: ViewOption<"comparativo" | "performance">[] = [
+type GraficoView = "comparativo" | "performance" | "pendencias" | "margem";
+
+const GRAFICO_OPCOES: ViewOption<GraficoView>[] = [
   { value: "comparativo", label: "Comparativo" },
   { value: "performance", label: "Performance" },
+  { value: "pendencias", label: "A receber x a pagar" },
+  { value: "margem", label: "Margem" },
 ];
 
 export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGeralProps) {
@@ -192,10 +197,11 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
   // cache que a Início já mantém; a lista independe do filtro de período (é a partir de hoje).
   const { data: radar } = useDashboardData();
   const { data: recentes = [], isLoading: recentesLoading } = useLancamentosRecentes();
+  const { data: pendencias = [] } = usePendenciasMensais();
   const formatCurrency = useMoneyMask();
 
   const [detalheCategoria, setDetalheCategoria] = useState<"receitas" | "despesas" | null>(null);
-  const [chartView, setChartView] = useState<"comparativo" | "performance">("comparativo");
+  const [chartView, setChartView] = useState<GraficoView>("comparativo");
 
   if (isLoading) return <VisaoGeralSkeleton />;
 
@@ -224,10 +230,17 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
   const hasDespesasData = despesasCategoriaData.length > 0;
 
   // Formato brasileiro ("40,0%"); era toFixed, que saía "40.0%".
+  const margemMensal = (dashboardData?.chartData ?? []).map((d) => ({
+    mes: d.mes,
+    margem: d.receitas > 0 ? Math.round(((d.receitas - d.despesas) / d.receitas) * 1000) / 10 : 0,
+  }));
+  const hasMargemData = margemMensal.some((d) => d.margem !== 0);
+  const hasPendencias = pendencias.some((p) => p.aReceber > 0 || p.aPagar > 0);
+
   const margem = stats.receitasTotal > 0 ? formatPercent((stats.saldo / stats.receitasTotal) * 100) : "0%";
 
   return (
-    <div className="space-y-6 w-full max-w-none">
+    <div className="space-y-8 w-full max-w-none">
       {/* KPIs uniformes: Lucro líquido é o primeiro do grid (métrica da tagline), margem no subtítulo.
           Os 5 numa linha pela largura real (container): em 1440 px o grid de 3 colunas quebrava
           em 2 linhas (~220 px). O "Atualizado" divide a linha do gatilho, e a faixa recolhe com
@@ -250,7 +263,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
           />
         }
       >
-        <div className="@container">
+        <div className="@container pb-2">
           <div className="grid w-full grid-cols-2 gap-2 @3xl:grid-cols-3 @5xl:grid-cols-5">
             <KPICard
               density="compact"
@@ -302,7 +315,11 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
             <CardDescription>
               {chartView === "comparativo"
                 ? `Comparativo de Receitas x Despesas (${visualizacao === "dia" ? "Diário" : "Mensal"})`
-                : "Receitas e despesas acumuladas ao longo do período"}
+                : chartView === "performance"
+                  ? "Receitas e despesas acumuladas ao longo do período"
+                  : chartView === "pendencias"
+                    ? "A receber e a pagar por mês de vencimento (pendentes e atrasados)"
+                    : "Margem líquida por mês: (receitas − despesas) ÷ receitas"}
             </CardDescription>
           </div>
           <ViewSwitcher
@@ -358,6 +375,79 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
                       dot={{ r: 4 }}
                     />
                   </ComposedChart>
+                </ResponsiveContainer>
+              </>
+            ) : chartView === "pendencias" ? (
+              <>
+                {!hasPendencias && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                    <p className="text-muted-foreground text-sm">Nada a receber ou a pagar nos próximos meses</p>
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={pendencias}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
+                    <XAxis
+                      dataKey="mes"
+                      stroke="hsl(var(--chart-neutral))"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis stroke="hsl(var(--chart-neutral))" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar
+                      dataKey="aReceber"
+                      name="A receber"
+                      fill="hsl(var(--chart-success))"
+                      radius={[4, 4, 0, 0]}
+                      barSize={20}
+                    />
+                    <Bar
+                      dataKey="aPagar"
+                      name="A pagar"
+                      fill="hsl(var(--chart-danger))"
+                      radius={[4, 4, 0, 0]}
+                      barSize={20}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </>
+            ) : chartView === "margem" ? (
+              <>
+                {!hasMargemData && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                    <p className="text-muted-foreground text-sm">Sem registros no período</p>
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={margemMensal}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--chart-grid))" />
+                    <XAxis
+                      dataKey="mes"
+                      stroke="hsl(var(--chart-neutral))"
+                      fontSize={12}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--chart-neutral))"
+                      fontSize={12}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(v: number) => `${v}%`}
+                    />
+                    <Tooltip formatter={(v: number) => formatPercent(v)} />
+                    <Area
+                      type="monotone"
+                      dataKey="margem"
+                      name="Margem"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.25}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </>
             ) : (
