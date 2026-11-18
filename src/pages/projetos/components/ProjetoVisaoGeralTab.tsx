@@ -146,7 +146,7 @@ export function ProjetoVisaoGeralTab({ projetoId, disciplinas, progresso, indica
                         stroke="none"
                       >
                         {porStatus.map((s) => (
-                          <Cell key={s.nome} fill={STATUS_COR[s.nome]} />
+                          <Cell key={s.nome} fill={STATUS_COR[s.nome]} aria-label={`${s.nome}: ${s.valor}`} />
                         ))}
                       </Pie>
                       <Tooltip

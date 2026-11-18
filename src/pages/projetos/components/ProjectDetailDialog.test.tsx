@@ -16,7 +16,7 @@ vi.mock("@/hooks/useProjetoDisciplinas", () => ({
   useProjetoDisciplinas: () => ({ data: disc.lista }),
   useUpdateDisciplinaStatus: () => ({ mutateAsync: disc.status }),
 }));
-const det = vi.hoisted(() => ({ salvar: vi.fn(), adicionar: vi.fn(), remover: vi.fn() }));
+const det = vi.hoisted(() => ({ salvar: vi.fn(), adicionar: vi.fn(), remover: vi.fn(), atualizarProjeto: vi.fn() }));
 vi.mock("../hooks/useProjetoDetail", () => ({
   useProjetoDetail: () => ({
     disciplinasCatalog: [{ id: "cat-1", nome: "Hidráulica" }],
@@ -28,6 +28,7 @@ vi.mock("../hooks/useProjetoDetail", () => ({
     handleSaveDiscChanges: det.salvar,
     handleAddDisc: det.adicionar,
     handleRemoveDisc: det.remover,
+    handleQuickUpdateProjeto: det.atualizarProjeto,
   }),
 }));
 const ativ = vi.hoisted(() => ({ salvar: vi.fn() }));
@@ -184,6 +185,62 @@ describe("ProjectDetailDialog", () => {
     expect(screen.getAllByText("Sem responsável").length).toBe(2);
     expect(screen.getByText(/Concluída/)).toBeInTheDocument();
     expect(screen.getByText("Cliente prefere reuniões às sextas")).toBeInTheDocument();
+  });
+
+  it("ordena o cartão por previsão ou prioridade e preserva as etapas do fluxo", () => {
+    window.matchMedia ??= vi.fn((query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+    disc.lista = [
+      { ...disciplinas[0], ordem_etapa: 1, prioridade: "Baixa", data_fim: "2099-01-01" },
+      { ...disciplinas[1], ordem_etapa: 2, prioridade: "Alta", data_fim: "2099-02-01" },
+      { ...disciplinas[2], ordem_etapa: 3, data_fim: null },
+    ];
+    montar();
+    const linhas = () => screen.getAllByRole("button", { name: /^(Estrutural|Elétrica|Hidráulica)Etapa/ });
+    const selecionarOrdem = (name: string) => {
+      fireEvent.keyDown(screen.getByRole("combobox", { name: "Ordenar disciplinas" }), { key: "Enter" });
+      fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name }));
+    };
+    expect(linhas()[1]).toHaveTextContent("Depende de: Estrutural");
+    expect(linhas()[2]).toHaveTextContent("Depende de: Elétrica");
+    selecionarOrdem("Prioridade (maior primeiro)");
+    expect(linhas()[0]).toHaveAccessibleName(/^Elétrica/);
+    selecionarOrdem("Previsão (mais próxima)");
+    expect(linhas()[0]).toHaveAccessibleName(/^Estrutural/);
+    expect(linhas()[2]).toHaveAccessibleName(/^Hidráulica/);
+    fireEvent.click(screen.getByRole("button", { name: "Fluxo" }));
+    expect(screen.getByRole("button", { name: "Fluxo" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("combobox", { name: "Ordenar disciplinas" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Lista" }));
+    expect(linhas()[0]).toHaveAccessibleName(/^Estrutural/);
+    fireEvent.click(screen.getByRole("button", { name: "Fluxo" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Elétrica/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Abrir disciplina" }));
+    expect(screen.getByText("rica:Elétrica")).toBeInTheDocument();
+  });
+
+  it("salva a observação do projeto ao sair do campo somente se ela mudou", async () => {
+    det.atualizarProjeto.mockResolvedValue(undefined);
+    const h = montar();
+    const campo = screen.getByRole("textbox", { name: "Observações" });
+    fireEvent.blur(campo);
+    expect(det.atualizarProjeto).not.toHaveBeenCalled();
+    fireEvent.change(campo, { target: { value: "Alinhamento com a equipe na quinta" } });
+    fireEvent.blur(campo);
+    expect(det.atualizarProjeto).toHaveBeenCalledWith({ observacao: "Alinhamento com a equipe na quinta" });
+    await waitFor(() => expect(h.onProjectUpdated).toHaveBeenCalledOnce());
+  });
+
+  it("salva um link válido nas atividades do projeto", () => {
+    montar();
+    const input = screen.getByPlaceholderText(/Cole o link aqui/);
+    fireEvent.change(input, { target: { value: "example.com/projeto" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(ativ.salvar).toHaveBeenCalledWith({ links: [{ url: "https://example.com/projeto" }] });
   });
 
   it("projeto sem disciplinas convida a adicionar", () => {
