@@ -14,7 +14,10 @@ export type ProjetoTimelineTipo =
   | "escopo_alterado"
   | "portal_proposta_aprovada"
   | "portal_entrega_aprovada"
-  | "portal_entrega_revisao_solicitada";
+  | "portal_entrega_revisao_solicitada"
+  | "projeto_pausado"
+  | "projeto_retomado"
+  | "portal_acesso_concedido";
 
 export interface ProjetoTimelineEvento {
   disciplinaId: string | null;

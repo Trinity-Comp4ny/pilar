@@ -112,39 +112,8 @@ export default function ProjetoDetail() {
     handleQuickUpdateStatus(status);
   };
 
-  return (
-    <PageLayout
-      density="compact"
-      header={
-        <PageHeader
-          title={projeto.nome}
-          breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}
-          acoes={[
-            ...(canEdit && pausado
-              ? [{ label: "Retomar projeto", icon: Play, onClick: () => setRetomarOpen(true), destaque: true }]
-              : []),
-            ...(canEdit && podePausar
-              ? [{ label: "Pausar projeto", icon: Pause, onClick: () => setPausarOpen(true) }]
-              : []),
-            ...(podeDarAcessoPortal && projeto.cliente_id
-              ? [{ label: "Portal do cliente", icon: Globe, onClick: () => setPortalOpen(true) }]
-              : []),
-            ...(canEdit ? [{ label: "Editar", icon: Pencil, onClick: () => setIsEditDialogOpen(true) }] : []),
-          ]}
-        />
-      }
-    >
-      {pausado && pausaAberta && (
-        <div role="status" className="rounded-lg border border-status-paused bg-muted px-4 py-3 text-sm">
-          <p className="font-semibold text-foreground">
-            Projeto pausado desde {new Date(pausaAberta.pausado_em).toLocaleDateString("pt-BR")} (
-            {diasDePausa(pausaAberta.pausado_em)} dias)
-          </p>
-          <p className="text-muted-foreground">Motivo: {pausaAberta.motivo}</p>
-          <p className="text-muted-foreground">Os prazos ficam congelados até você retomar.</p>
-        </div>
-      )}
-
+  const indicadores = (
+    <>
       {/* Indicadores recolhíveis, com status/prioridade/prazo na mesma linha e um resumo
           quando recolhidos: a 1ª disciplina subia de y=540 (auditoria de espaço, 2026-11). */}
       <CollapsibleKpiSection
@@ -189,9 +158,46 @@ export default function ProjetoDetail() {
           onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
         />
       </CollapsibleKpiSection>
+    </>
+  );
+
+  return (
+    <PageLayout
+      density="compact"
+      header={
+        <PageHeader
+          title={projeto.nome}
+          breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}
+          acoes={[
+            ...(canEdit && pausado
+              ? [{ label: "Retomar projeto", icon: Play, onClick: () => setRetomarOpen(true), destaque: true }]
+              : []),
+            ...(canEdit && podePausar
+              ? [{ label: "Pausar projeto", icon: Pause, onClick: () => setPausarOpen(true) }]
+              : []),
+            ...(podeDarAcessoPortal && projeto.cliente_id
+              ? [{ label: "Portal do cliente", icon: Globe, onClick: () => setPortalOpen(true) }]
+              : []),
+            ...(canEdit ? [{ label: "Editar", icon: Pencil, onClick: () => setIsEditDialogOpen(true) }] : []),
+          ]}
+        />
+      }
+    >
+      {pausado && pausaAberta && (
+        <div role="status" className="rounded-lg border border-status-paused bg-muted px-4 py-3 text-sm">
+          <p className="font-semibold text-foreground">
+            Projeto pausado desde {new Date(pausaAberta.pausado_em).toLocaleDateString("pt-BR")} (
+            {diasDePausa(pausaAberta.pausado_em)} dias)
+          </p>
+          <p className="text-muted-foreground">Motivo: {pausaAberta.motivo}</p>
+          <p className="text-muted-foreground">Os prazos ficam congelados até você retomar.</p>
+        </div>
+      )}
 
       <ProjetoDetailTabs
         projeto={projeto}
+        progresso={progress}
+        indicadores={indicadores}
         canEdit={canEdit}
         disciplinasLegacy={disciplinasLegacy}
         dbDisciplinas={dbDisciplinas}

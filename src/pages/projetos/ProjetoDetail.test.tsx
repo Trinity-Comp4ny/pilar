@@ -32,7 +32,14 @@ const pausas = vi.hoisted(() => ({ aberta: null as null | { pausado_em: string; 
 vi.mock("./hooks/useProjetoPausas", () => ({ useProjetoPausas: () => ({ aberta: pausas.aberta }) }));
 const detalhe = vi.hoisted(() => ({ valor: {} as Record<string, unknown> }));
 vi.mock("./hooks/useProjetoDetail", () => ({ useProjetoDetail: () => detalhe.valor }));
-vi.mock("./components/ProjetoDetailTabs", () => ({ ProjetoDetailTabs: () => <div>abas-do-projeto</div> }));
+vi.mock("./components/ProjetoDetailTabs", () => ({
+  ProjetoDetailTabs: ({ indicadores }: { indicadores?: ReactNode }) => (
+    <div>
+      abas-do-projeto
+      {indicadores}
+    </div>
+  ),
+}));
 vi.mock("./components/ProjetoFormDialog", () => ({
   ProjetoFormDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog">form-projeto</div> : null),
 }));

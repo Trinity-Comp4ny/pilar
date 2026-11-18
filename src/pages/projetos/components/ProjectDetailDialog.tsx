@@ -41,6 +41,9 @@ import {
   Link2,
   MessageSquare,
   Plus,
+  List,
+  GitBranch,
+  ArrowDownToLine,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -67,6 +70,8 @@ import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { LinksEditor } from "@/components/LinksEditor";
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FluxoPipeline } from "./FluxoPipeline";
 
 // Campo da UI → coluna do banco (espelha o mapa de ProjetoDetailTabs).
 const DISC_DB_FIELD: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDisciplinaDB>> = {
@@ -78,6 +83,20 @@ const DISC_DB_FIELD: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDi
   justificativa_atraso: "justificativa_atraso",
   descricao: "descricao",
 };
+
+type OrdemDisc = "padrao" | "previsao" | "prioridade";
+type VisaoDisc = "lista" | "fluxo";
+
+const ORDEM_LABEL: Record<OrdemDisc, string> = {
+  padrao: "Ordem do fluxo",
+  previsao: "Previsão (mais próxima)",
+  prioridade: "Prioridade (maior primeiro)",
+};
+
+const VISOES_DISC: ViewOption<VisaoDisc>[] = [
+  { value: "lista", label: "Lista", icon: List },
+  { value: "fluxo", label: "Fluxo", icon: GitBranch },
+];
 
 interface ProjectDetailDialogProps {
   open: boolean;
@@ -112,14 +131,23 @@ export function ProjectDetailDialog({
 
   // Reusa a infra de edição da disciplina (catálogo, pessoas, save). A query de
   // disciplinas é a mesma (deduplicada pelo React Query), então os índices batem.
-  const { disciplinasCatalog, pessoas, getDbDisc, handleSaveDiscChanges, handleAddDisc, handleRemoveDisc } =
-    useProjetoDetail(projeto?.id);
+  const {
+    disciplinasCatalog,
+    pessoas,
+    getDbDisc,
+    handleSaveDiscChanges,
+    handleAddDisc,
+    handleRemoveDisc,
+    handleQuickUpdateProjeto,
+  } = useProjetoDetail(projeto?.id);
   const { profile } = useAuth();
   const { links: projetoLinks, salvar: salvarAtividades } = useProjetoAtividades(projeto?.id ?? "");
   const [selectedDiscIdx, setSelectedDiscIdx] = useState<number | null>(null);
   const [isAddingDisc, setIsAddingDisc] = useState(false);
   const [newDisc, setNewDisc] = useState({ disciplina: "", responsavel_id: "" });
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+  const [ordem, setOrdem] = useState<OrdemDisc>("padrao");
+  const [visao, setVisao] = useState<VisaoDisc>("lista");
 
   const confirmarExcluirDisc = async () => {
     if (confirmDeleteIdx === null) return;
@@ -143,6 +171,31 @@ export function ProjectDetailDialog({
   if (!projeto) return null;
 
   const selectedDisc = selectedDiscIdx != null ? (disciplinasLegacy[selectedDiscIdx] ?? null) : null;
+
+  // Dependência = disciplinas da etapa anterior do fluxo (a etapa N só começa depois da N-1).
+  const dependenciasDe = (disc: DisciplinaResponsavel): string[] => {
+    if (disc.etapa == null) return [];
+    const anteriores = disciplinasLegacy.filter((d) => d.etapa != null && d.etapa < disc.etapa!);
+    if (anteriores.length === 0) return [];
+    const etapaAnterior = Math.max(...anteriores.map((d) => d.etapa!));
+    return anteriores.filter((d) => d.etapa === etapaAnterior).map((d) => d.disciplina);
+  };
+
+  const listaOrdenada = disciplinasLegacy
+    .map((disc, idx) => ({ disc, idx }))
+    .sort((a, b) => {
+      if (ordem === "previsao") {
+        const da = a.disc.data_previsao || "9999-12-31";
+        const db = b.disc.data_previsao || "9999-12-31";
+        return da.localeCompare(db);
+      }
+      if (ordem === "prioridade") {
+        const wa = PROJECT_PRIORITY_CONFIG[a.disc.prioridade as ProjectPriority]?.sortWeight ?? 99;
+        const wb = PROJECT_PRIORITY_CONFIG[b.disc.prioridade as ProjectPriority]?.sortWeight ?? 99;
+        return wa - wb;
+      }
+      return a.idx - b.idx;
+    });
 
   const saveDiscPatch = async (patch: Partial<ProjetoDisciplinaDB>) => {
     if (selectedDiscIdx == null) return;
@@ -259,10 +312,22 @@ export function ProjectDetailDialog({
                     <User className="h-3.5 w-3.5" /> {projeto.cliente_nome || "Sem cliente"}
                   </DialogDescription>
                 </div>
+                <div className="flex shrink-0 items-center gap-1 pr-8">
+                <Button
+                  size="sm"
+                  variant="brand"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/projetos/${projeto.id}`);
+                  }}
+                >
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  Abrir projeto completo
+                </Button>
                 {canEdit && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm" className="-mr-2 -mt-1" aria-label="Mais opções">
+                      <Button variant="ghost" size="icon-sm" aria-label="Mais opções">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -280,6 +345,7 @@ export function ProjectDetailDialog({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
+                </div>
               </div>
             </DialogHeader>
 
@@ -330,11 +396,35 @@ export function ProjectDetailDialog({
                     <Layers className="h-3.5 w-3.5" />
                     Disciplinas ({disciplinasLegacy.length})
                   </Label>
-                  {canEdit && !isAddingDisc && (
-                    <Button size="xs" variant="brand" onClick={() => setIsAddingDisc(true)}>
-                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {disciplinasLegacy.some((d) => d.etapa != null) && (
+                      <ViewSwitcher
+                        options={VISOES_DISC}
+                        value={visao}
+                        onChange={setVisao}
+                        ariaLabel="Visualização das disciplinas"
+                      />
+                    )}
+                    {visao === "lista" && disciplinasLegacy.length > 1 && (
+                      <Select value={ordem} onValueChange={(v) => setOrdem(v as OrdemDisc)}>
+                        <SelectTrigger className="h-8 w-[190px] text-xs" aria-label="Ordenar disciplinas">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(Object.keys(ORDEM_LABEL) as OrdemDisc[]).map((o) => (
+                            <SelectItem key={o} value={o} className="text-xs">
+                              {ORDEM_LABEL[o]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {canEdit && !isAddingDisc && (
+                      <Button size="xs" variant="brand" onClick={() => setIsAddingDisc(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {isAddingDisc && canEdit && (
@@ -404,11 +494,24 @@ export function ProjectDetailDialog({
                       )}
                     </div>
                   )
+                ) : visao === "fluxo" ? (
+                  <FluxoPipeline
+                    disciplinas={disciplinasLegacy}
+                    onOpenDisciplina={(d) => {
+                      const i = disciplinasLegacy.findIndex((x) => x.id === d.id && x.disciplina === d.disciplina);
+                      if (i < 0) return;
+                      setSelectedDiscIdx(i);
+                      onOpenChange(false);
+                    }}
+                    projetoDataPrevisao={projeto.data_previsao}
+                  />
                 ) : (
                   <div className="space-y-1.5">
-                    {disciplinasLegacy.map((disc, idx) => {
+                    {listaOrdenada.map(({ disc, idx }) => {
                       const resps = getResponsaveisList(disc);
                       const atrasada = isDiscAtrasada(disc);
+                      const prioDisc = PROJECT_PRIORITY_CONFIG[disc.prioridade as ProjectPriority];
+                      const deps = dependenciasDe(disc);
 
                       return (
                         <div
@@ -430,6 +533,18 @@ export function ProjectDetailDialog({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-medium">{disc.disciplina}</span>
+                                  {disc.etapa != null && (
+                                    <span className="text-3xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                      Etapa {disc.etapa}
+                                    </span>
+                                  )}
+                                  {prioDisc && (
+                                    <span
+                                      className={`text-3xs px-1.5 py-0.5 rounded-full font-medium ${prioDisc.bgColor} ${prioDisc.color}`}
+                                    >
+                                      {prioDisc.label}
+                                    </span>
+                                  )}
                                   {atrasada && (
                                     <span className="text-3xs px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                                       <AlertTriangle size={10} /> Atrasada
@@ -452,6 +567,12 @@ export function ProjectDetailDialog({
                                     </span>
                                   )}
                                 </div>
+                                {deps.length > 0 && (
+                                  <p className="mt-1 flex items-center gap-1 text-2xs text-muted-foreground">
+                                    <ArrowDownToLine className="h-3 w-3 rotate-90" aria-hidden="true" />
+                                    Depende de: {deps.join(", ")}
+                                  </p>
+                                )}
                                 {atrasada && disc.justificativa_atraso && (
                                   <p className="text-3xs text-danger-mid mt-1 italic line-clamp-1">
                                     {disc.justificativa_atraso}
@@ -483,12 +604,25 @@ export function ProjectDetailDialog({
                   </div>
                 )}
 
-                {projeto.observacao && (
-                  <div className="mt-4 pt-3 border-t">
-                    <Label className="text-3xs uppercase text-muted-foreground">Observações</Label>
-                    <p className="text-xs text-ink-soft mt-1">{projeto.observacao}</p>
-                  </div>
-                )}
+                <div className="mt-4 pt-3 border-t">
+                  <Label htmlFor="obs-projeto" className="text-3xs uppercase text-muted-foreground">
+                    Observações
+                  </Label>
+                  <Textarea
+                    key={projeto.id + (projeto.observacao ?? "")}
+                    id="obs-projeto"
+                    defaultValue={projeto.observacao ?? ""}
+                    readOnly={!canEdit}
+                    placeholder="Escreva observações do projeto…"
+                    className="mt-1 min-h-[96px] text-xs"
+                    onBlur={async (e) => {
+                      const v = e.target.value;
+                      if (v === (projeto.observacao ?? "")) return;
+                      await handleQuickUpdateProjeto({ observacao: v });
+                      onProjectUpdated?.();
+                    }}
+                  />
+                </div>
 
                 <div className="mt-6 pt-5 border-t">
                   <Label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
@@ -510,20 +644,6 @@ export function ProjectDetailDialog({
             }
           />
 
-          {/* Footer */}
-          <div className="shrink-0 flex items-center justify-end gap-2 px-4 md:px-6 py-3 border-t bg-muted/30">
-            <Button
-              size="sm"
-              onClick={() => {
-                onOpenChange(false);
-                navigate(`/projetos/${projeto.id}`);
-              }}
-              variant="brand"
-            >
-              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-              Abrir projeto completo
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 

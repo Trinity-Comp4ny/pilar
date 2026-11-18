@@ -287,24 +287,18 @@ describe("DisciplinasTableView: observações e responsáveis", () => {
     );
   });
 
-  it("responsáveis: mostra resumo, remove (com mais de um) e adiciona quem falta", async () => {
+  it("responsáveis: mostra resumo, remove qualquer um e adiciona quem falta pela lista", async () => {
     render(<DisciplinasTableView {...p} />);
     expect(within(linha("Elétrica")).getByText("Ana")).toBeInTheDocument();
     expect(within(linha("Hidráulica")).getByText("Sem responsável")).toBeInTheDocument();
     fireEvent.click(within(linha("Estrutural")).getByRole("button", { name: /Ana \+1/ }));
     expect(screen.getByText("Responsáveis de Estrutural")).toBeInTheDocument();
-    const remover = screen.getAllByRole("button", { name: "Remover responsável" });
+    const remover = screen.getAllByRole("button", { name: /^Remover / });
     expect(remover).toHaveLength(2);
     await act(async () => fireEvent.click(remover[1]));
     expect(p.handleRemoveResponsavel).toHaveBeenCalledWith(0, 1);
 
-    const adicionar = screen.getByRole("button", { name: "Adicionar responsável" });
-    expect(adicionar).toBeDisabled();
-    fireEvent.keyDown(screen.getByRole("combobox", { name: "" }), { key: "Enter" });
-    const lista = screen.getByRole("listbox");
-    expect(within(lista).queryByRole("option", { name: "Ana" })).not.toBeInTheDocument();
-    fireEvent.click(within(lista).getByRole("option", { name: "Carla" }));
-    await act(async () => fireEvent.click(adicionar));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Carla" })));
     expect(p.handleAddResponsavel).toHaveBeenCalledWith(0, "pe3");
   });
 
