@@ -11,6 +11,7 @@ import { ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePermissions } from "@/hooks/usePermissions";
+import { MargemPropostaBadge } from "@/pages/propostas/components/MargemPropostaBadge";
 import type { Lead } from "@/hooks/useLeads";
 import type { LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
@@ -123,7 +124,10 @@ export function LeadKanbanCard({
         valor != null || responsavelNome ? (
           <>
             {valor != null ? (
-              <span className="font-medium tabular-nums text-foreground/80">{formatCurrency(valor)}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-medium tabular-nums text-foreground/80">{formatCurrency(valor)}</span>
+                {podeVerValor && proposta && <MargemPropostaBadge dadosSimulacao={proposta.dados_simulacao} />}
+              </span>
             ) : (
               <span />
             )}

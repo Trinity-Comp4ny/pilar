@@ -9,6 +9,7 @@ import { LeadDetailDialog } from "./LeadDetailDialog";
 vi.mock("./LeadAtividadesPanel", () => ({ LeadAtividadesPanel: () => <div>Histórico do lead</div> }));
 vi.mock("./LeadPropostasPanel", () => ({ LeadPropostasPanel: () => <div>PDFs do lead</div> }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
+vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => true }) }));
 
 const lead = (status: Lead["status"]): Lead => ({ id: "l1", nome: "Família", sobrenome: "Almeida", status });
 
