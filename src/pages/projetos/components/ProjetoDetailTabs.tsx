@@ -1,11 +1,12 @@
 import { atribuicaoDisciplina } from "../lib/atribuicaoDisciplina";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   Layers,
+  LayoutDashboard,
   DollarSign,
   ScrollText,
   Table as TableIcon,
@@ -41,10 +42,14 @@ import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
+import { ProjetoVisaoGeralTab } from "./ProjetoVisaoGeralTab";
 import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
+  /** Progresso (0-100) e indicadores do projeto: só a aba Visão geral os mostra. */
+  progresso: number;
+  indicadores?: ReactNode;
   canEdit: boolean;
   disciplinasLegacy: DisciplinaResponsavel[];
   dbDisciplinas: ProjetoDisciplinaDB[];
@@ -66,6 +71,7 @@ interface ProjetoDetailTabsProps {
 
 // Hash "cronograma" mantido como alias retrocompat → abre Disciplinas com view Gantt
 const PROJETO_TABS: SectionTab[] = [
+  { id: "visao-geral", label: "Visão geral", icon: LayoutDashboard },
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
@@ -85,6 +91,8 @@ const DISCIPLINA_VISOES: ViewOption<DisciplinaView>[] = [
 
 export function ProjetoDetailTabs({
   projeto,
+  progresso,
+  indicadores,
   canEdit,
   disciplinasLegacy,
   dbDisciplinas,
@@ -126,13 +134,14 @@ export function ProjetoDetailTabs({
   const resolveFromHash = (hash: string): { tab: string; view: DisciplinaView | null } => {
     const h = hash.replace("#", "");
     if (h === "cronograma") return { tab: "disciplinas", view: "gantt" };
+    if (h === "disciplinas") return { tab: "disciplinas", view: null };
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
     if (h === "escopo") return { tab: "escopo", view: null };
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
     if (h === "arquivos") return { tab: "arquivos", view: null };
     if (h === "cliente" || h === "solicitacoes") return { tab: "cliente", view: null };
-    return { tab: "disciplinas", view: null };
+    return { tab: "visao-geral", view: null };
   };
 
   const initial = resolveFromHash(location.hash);
@@ -320,6 +329,17 @@ export function ProjetoDetailTabs({
           </div>
         </PageTabs>
         <div className="flex-1 min-w-0">
+          <TabsContent value="visao-geral">
+            {activeTab === "visao-geral" && (
+              <ProjetoVisaoGeralTab
+                projetoId={projeto.id}
+                disciplinas={disciplinasLegacy}
+                progresso={progresso}
+                indicadores={indicadores}
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="disciplinas">
             <div className="space-y-3">
               {/* Toggle de visualização: no celular fica aqui (no desktop, na linha das abas). */}
@@ -396,7 +416,7 @@ export function ProjetoDetailTabs({
           </TabsContent>
 
           <TabsContent value="atividades">
-            <Card className="flex h-[70dvh] min-h-[420px] flex-col p-4">
+            <Card className="flex h-[calc(100dvh-13rem)] min-h-[420px] flex-col p-4">
               <ProjetoAtividadesPanel
                 projetoId={projeto.id}
                 pessoas={pessoas}

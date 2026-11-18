@@ -28,6 +28,7 @@ const stub = vi.hoisted(
       return <div data-testid={nome}>{nome}</div>;
     }
 );
+vi.mock("./ProjetoVisaoGeralTab", () => ({ ProjetoVisaoGeralTab: stub("aba-visao-geral") }));
 vi.mock("./PagamentosTab", () => ({ PagamentosTab: stub("aba-pagamentos") }));
 vi.mock("./EscopoTab", () => ({ EscopoTab: stub("aba-escopo") }));
 vi.mock("./ProjetoHistoricoTab", () => ({ ProjetoHistoricoTab: stub("aba-historico") }));
@@ -169,13 +170,14 @@ function Local() {
   return null;
 }
 
-function montar(url = "/projetos/proj-1", props: Partial<Parameters<typeof ProjetoDetailTabs>[0]> = {}) {
+function montar(url = "/projetos/proj-1#disciplinas", props: Partial<Parameters<typeof ProjetoDetailTabs>[0]> = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const tabsEl = document.createElement("div");
   document.body.appendChild(tabsEl);
   render(
     <ProjetoDetailTabs
       projeto={projeto}
+      progresso={0}
       canEdit
       disciplinasLegacy={legacy}
       dbDisciplinas={dbDisciplinas}

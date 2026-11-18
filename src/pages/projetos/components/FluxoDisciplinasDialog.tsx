@@ -62,7 +62,7 @@ function renumerarOrdens(disciplinas: FluxoDisciplinaForm[]): FluxoDisciplinaFor
 function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineStage[] {
   return colunas(disciplinas).map((ordem) => ({
     key: String(ordem),
-    titulo: String(ordem),
+    titulo: `Etapa ${ordem}`,
     nodes: disciplinas
       .filter((d) => d.ordem === ordem)
       .map((d) => {

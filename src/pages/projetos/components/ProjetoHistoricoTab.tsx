@@ -9,7 +9,7 @@ import { useProjetoTimeline, type ProjetoTimelineTipo } from "@/pages/projetos/h
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
-const TIPO_LABEL: Record<ProjetoTimelineTipo, string> = {
+export const TIPO_LABEL: Record<ProjetoTimelineTipo, string> = {
   projeto_iniciado: "Projeto iniciado",
   projeto_concluido: "Projeto concluído",
   status_alterado: "Status alterado",
@@ -23,6 +23,9 @@ const TIPO_LABEL: Record<ProjetoTimelineTipo, string> = {
   portal_proposta_aprovada: "Proposta aprovada pelo cliente",
   portal_entrega_aprovada: "Entrega aprovada pelo cliente",
   portal_entrega_revisao_solicitada: "Cliente pediu revisão",
+  projeto_pausado: "Projeto pausado",
+  projeto_retomado: "Projeto retomado",
+  portal_acesso_concedido: "Acesso ao portal liberado",
 };
 
 const TIPO_TONE: Partial<Record<ProjetoTimelineTipo, string>> = {
@@ -30,6 +33,7 @@ const TIPO_TONE: Partial<Record<ProjetoTimelineTipo, string>> = {
   portal_entrega_aprovada: "bg-positive/15 text-positive-strong",
   portal_entrega_revisao_solicitada: "bg-warning-soft text-warning-strong",
   pausa_iniciada: "bg-warning-soft text-warning-strong",
+  projeto_pausado: "bg-warning-soft text-warning-strong",
 };
 
 interface Props {
@@ -66,6 +70,11 @@ export function ProjetoHistoricoTab({ projetoId, disciplinas }: Props) {
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Linha do tempo do projeto: início e conclusão de disciplinas, revisões, aditivos e aprovações do cliente, do
+          mais recente para o mais antigo.
+        </p>
       {disciplinas.length > 0 && (
         <div className="flex justify-end">
           <Select value={filtroDisciplina} onValueChange={setFiltroDisciplina}>
@@ -83,6 +92,7 @@ export function ProjetoHistoricoTab({ projetoId, disciplinas }: Props) {
           </Select>
         </div>
       )}
+      </div>
 
       {eventosFiltrados.length === 0 ? (
         <EmptyState
@@ -95,7 +105,7 @@ export function ProjetoHistoricoTab({ projetoId, disciplinas }: Props) {
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
               {eventosFiltrados.map((evento, idx) => (
-                <li key={`${evento.tipo}-${evento.ocorridoEm}-${idx}`} className="flex flex-col gap-1 p-4">
+                <li key={`${evento.tipo}-${evento.ocorridoEm}-${idx}`} className="flex flex-col gap-1 border-l-2 border-brand p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className={TIPO_TONE[evento.tipo]}>
                       {TIPO_LABEL[evento.tipo]}

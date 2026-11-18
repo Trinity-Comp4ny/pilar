@@ -65,7 +65,7 @@ function OrcamentoDisciplinaRow({
   };
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 py-2">
+    <div className="grid grid-cols-[1fr_6rem_8rem_8rem_4.5rem] items-center gap-2 py-2">
       <span className="truncate text-sm text-foreground">{nome}</span>
       <Input
         type="number"
@@ -73,7 +73,7 @@ function OrcamentoDisciplinaRow({
         value={horas}
         onChange={(e) => setHoras(e.target.value)}
         disabled={!canEdit}
-        placeholder="Horas"
+        placeholder="0 h"
         aria-label={`Horas estimadas — ${nome}`}
         className="h-9 w-24"
       />
@@ -84,13 +84,15 @@ function OrcamentoDisciplinaRow({
         aria-label={`Custo por hora — ${nome}`}
         className="h-9 w-32"
       />
-      <span className="whitespace-nowrap text-xs text-muted-foreground">
+      <span className="whitespace-nowrap text-right text-sm font-medium tabular-nums text-foreground">
         {formatCurrency((Number(horas) || 0) * parseCurrencyString(custoHora))}
       </span>
-      {canEdit && dirty && (
-        <Button size="xs" variant="ghost" onClick={salvarLinha} disabled={salvar.isPending} className="gap-1 px-2">
+      {canEdit && dirty ? (
+        <Button size="xs" variant="brand" onClick={salvarLinha} disabled={salvar.isPending} className="gap-1 px-2">
           <Check className="h-3.5 w-3.5" /> Salvar
         </Button>
+      ) : (
+        <span />
       )}
     </div>
   );
@@ -147,8 +149,22 @@ export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Orçamento por disciplina</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Quanto o escritório planeja gastar para entregar cada disciplina: horas previstas × custo da hora da equipe.
+            O custo da hora é definido aqui, por projeto (não vem de outra tela). A soma forma o orçamento vivo, que o
+            sistema compara com as despesas para sugerir aditivos.
+          </p>
         </CardHeader>
         <CardContent className="divide-y divide-border pt-0">
+          {disciplinas.length > 0 && (
+            <div className="grid grid-cols-[1fr_6rem_8rem_8rem_4.5rem] gap-2 pb-2 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+              <span>Disciplina</span>
+              <span>Horas previstas</span>
+              <span>Custo da hora</span>
+              <span className="text-right">Custo estimado</span>
+              <span />
+            </div>
+          )}
           {disciplinas.length === 0 ? (
             <p className="py-4 text-sm text-muted-foreground">
               Este projeto ainda não tem disciplinas cadastradas — adicione uma na aba Disciplinas antes de definir

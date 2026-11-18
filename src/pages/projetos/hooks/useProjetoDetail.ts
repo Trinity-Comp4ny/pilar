@@ -270,11 +270,6 @@ export function useProjetoDetail(id: string | undefined) {
       if (!dbDisc) return;
       const currentIds = (dbDisc.responsaveis || []).map((r) => r.id);
 
-      if (currentIds.length <= 1 && dbDisc.tipo_execucao !== "terceirizada") {
-        toast.error("A disciplina precisa ter ao menos um responsável");
-        return;
-      }
-
       const newIds = currentIds.filter((_, i) => i !== respIdx);
       try {
         await upsertDisciplina.mutateAsync({
@@ -318,6 +313,7 @@ export function useProjetoDetail(id: string | undefined) {
       valor_contrato?: number;
       area_m2?: number;
       prioridade?: ProjectPriority;
+      observacao?: string;
     }) => {
       if (!projeto) return;
 

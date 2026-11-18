@@ -229,7 +229,7 @@ describe("ProjectDetailDialog", () => {
     expect(add()).toBeDisabled();
     const [selDisc, selResp] = screen
       .getAllByRole("combobox")
-      .filter((c) => !c.getAttribute("aria-label")?.startsWith("Status"));
+      .filter((c) => !/^(Status|Ordenar)/.test(c.getAttribute("aria-label") ?? ""));
     fireEvent.keyDown(selDisc, { key: "Enter" });
     fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: "Hidráulica" }));
     fireEvent.keyDown(selResp, { key: "Enter" });
