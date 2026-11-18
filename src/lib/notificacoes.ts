@@ -8,9 +8,10 @@ import { Bell, HardHat, Layers, ListTodo, FolderKanban, Video, Wallet, type Luci
 // categoria, e mantê-la em Preferências fazia parecer que havia algo pra controlar ali. Se um
 // evento de categoria "sistema" existir de novo no futuro, iconeCategoria/rotuloCategoria abaixo
 // seguem cobrindo com fallback (Bell / "Notificação") mesmo sem entrada explícita no mapa.
-export type CategoriaNotificacao = "tarefa" | "projeto" | "disciplina" | "financeiro" | "obra" | "agenda";
+export type CategoriaNotificacao = "lead" | "tarefa" | "projeto" | "disciplina" | "financeiro" | "obra" | "agenda";
 
 export const CATEGORIAS: readonly CategoriaNotificacao[] = [
+  "lead",
   "tarefa",
   "projeto",
   "disciplina",
@@ -30,6 +31,7 @@ export function emailPadraoCategoria(categoria: string): boolean {
 }
 
 const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
+  lead: "Leads",
   tarefa: "Tarefas",
   projeto: "Projetos",
   disciplina: "Disciplinas",
@@ -39,6 +41,7 @@ const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
 };
 
 const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
+  lead: FolderKanban,
   tarefa: ListTodo,
   projeto: FolderKanban,
   disciplina: Layers,
