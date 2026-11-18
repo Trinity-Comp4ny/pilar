@@ -217,7 +217,7 @@ function Linha({
           className={cn(
             "shrink-0 text-[15px] tabular-nums",
             paga ? "font-semibold" : "font-medium",
-            atrasada ? "text-danger-mid" : isTransf ? "text-ink" : isReceita ? "text-positive-strong" : "text-ink"
+            isTransf ? "text-ink" : isReceita ? "text-positive-strong" : "text-negative-strong"
           )}
         >
           {isTransf ? "⇄" : isReceita ? "+" : "−"}

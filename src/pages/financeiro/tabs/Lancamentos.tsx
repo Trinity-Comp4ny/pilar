@@ -217,7 +217,7 @@ export default function Lancamentos() {
                 label="A receber"
                 value={resumo.aReceber}
                 icon={Clock}
-                tone="info"
+                tone="positive"
                 loading={loadingResumo}
                 onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
               />
@@ -226,7 +226,7 @@ export default function Lancamentos() {
                 label="A pagar"
                 value={resumo.aPagar}
                 icon={Clock}
-                tone="warning"
+                tone="danger"
                 loading={loadingResumo}
                 subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
                 subtitleTone="danger"

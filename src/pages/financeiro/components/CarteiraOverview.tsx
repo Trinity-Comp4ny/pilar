@@ -75,7 +75,7 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
                   >
                     {venc.label}
                   </span>
-                  <span className="text-sm font-semibold shrink-0 tabular-nums w-28 text-right">
+                  <span className="text-sm font-semibold shrink-0 tabular-nums w-28 text-right text-negative-strong">
                     {formatCurrency(restante)}
                   </span>
                   {isPagavel ? (

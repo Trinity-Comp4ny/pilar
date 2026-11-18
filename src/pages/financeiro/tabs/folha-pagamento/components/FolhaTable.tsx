@@ -96,7 +96,7 @@ export function FolhaTable({
         const temPercentual = (item.p_percentual ?? 0) > 0;
         const temM2 = item.p_valor_m2 > 0 || !temPercentual;
         return (
-          <div className="flex flex-col items-center gap-0.5">
+          <div className="flex flex-col items-center gap-1.5">
             {temM2 && (
               <>
                 <span className="font-medium">
@@ -106,12 +106,14 @@ export function FolhaTable({
               </>
             )}
             {temPercentual && (
-              <>
+              <div className={temM2 ? "flex flex-col items-center gap-0.5 border-t border-border pt-1.5" : "contents"}>
                 <span className="font-medium">
                   {formatCurrency(item.soma_valor_base ?? 0)} {isEdited(item, "base") && "*"}
                 </span>
-                <span className="text-xs text-muted-foreground">x {formatPercent(item.p_percentual ?? 0)}</span>
-              </>
+                <span className="text-xs text-muted-foreground">
+                  x {formatPercent(item.p_percentual ?? 0)} dos projetos
+                </span>
+              </div>
             )}
           </div>
         );

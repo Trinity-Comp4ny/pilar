@@ -65,7 +65,12 @@ export function PosicaoChips({ tipo, posicao, loading, ativo, onSelect }: Props)
                 {loading ? "…" : (v?.qtd ?? 0)}
               </span>
             </span>
-            <span className="text-[15px] font-semibold tabular-nums">
+            <span
+              className={cn(
+                "text-[15px] font-semibold tabular-nums",
+                !selecionado && (tipo === "receita" ? "text-positive-strong" : "text-negative-strong")
+              )}
+            >
               {loading ? "—" : formatCurrency(v?.valor ?? 0)}
             </span>
           </button>

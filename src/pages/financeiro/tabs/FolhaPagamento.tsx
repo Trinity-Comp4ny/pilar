@@ -40,6 +40,7 @@ export default function FolhaPagamento() {
   const [statusFolha, setStatusFolha] = useState<"preview" | "closed">("preview");
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [empresaNome, setEmpresaNome] = useState<string | undefined>(undefined);
+  const [empresaLogo, setEmpresaLogo] = useState<string | undefined>(undefined);
   // Total pago por pessoa no mês anterior; o delta (atual − anterior) é derivado.
   const [prevTotals, setPrevTotals] = useState<Map<string, number>>(new Map());
 
@@ -76,8 +77,24 @@ export default function FolhaPagamento() {
     (async () => {
       const empresaId = (await supabase.rpc("get_user_empresa_id")).data;
       if (!empresaId) return;
-      const { data: emp } = await supabase.from("empresas").select("nome").eq("id", empresaId).maybeSingle();
+      const { data: emp } = await supabase.from("empresas").select("nome, logo_url").eq("id", empresaId).maybeSingle();
       if (emp?.nome) setEmpresaNome(emp.nome);
+      const logoUrl = (emp as { logo_url?: string | null } | null)?.logo_url;
+      if (!logoUrl) return;
+      // Logo vira data URL para o jsPDF embutir; falhou (CORS, SVG), o PDF sai só com o nome.
+      try {
+        const blob = await (await fetch(logoUrl)).blob();
+        if (!/^image\/(png|jpe?g)$/.test(blob.type)) return;
+        const url = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = () => reject(r.error);
+          r.readAsDataURL(blob);
+        });
+        setEmpresaLogo(url);
+      } catch {
+        // sem logo
+      }
     })();
   }, []);
 
@@ -442,7 +459,7 @@ export default function FolhaPagamento() {
   const downloadComprovante = async (item: FolhaItem) => {
     try {
       const [enriched] = await withPii([item]);
-      await gerarComprovantePDF(enriched, { empresaNome, mes: selectedMonth, ano: selectedYear });
+      await gerarComprovantePDF(enriched, { empresaNome, empresaLogo, mes: selectedMonth, ano: selectedYear });
     } catch (err) {
       monitoring.captureException(err, { source: "folha.downloadComprovante", pessoa_id: item.p_id });
       toast.error("Erro ao gerar comprovante");
@@ -453,7 +470,12 @@ export default function FolhaPagamento() {
     if (!selectedHistory) return;
     try {
       const [enriched] = await withPii([item]);
-      await gerarComprovantePDF(enriched, { empresaNome, mes: selectedHistory.mes, ano: selectedHistory.ano });
+      await gerarComprovantePDF(enriched, {
+        empresaNome,
+        empresaLogo,
+        mes: selectedHistory.mes,
+        ano: selectedHistory.ano,
+      });
     } catch (err) {
       monitoring.captureException(err, { source: "folha.downloadComprovanteHistory", pessoa_id: item.p_id });
       toast.error("Erro ao gerar comprovante");
@@ -466,6 +488,7 @@ export default function FolhaPagamento() {
       const enriched = await withPii(historyDetailItems);
       await gerarLoteComprovantesPDF(enriched, {
         empresaNome,
+        empresaLogo,
         mes: selectedHistory.mes,
         ano: selectedHistory.ano,
       });
