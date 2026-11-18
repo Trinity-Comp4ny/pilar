@@ -12,6 +12,8 @@ describe("simulacaoSnapshot", () => {
     const lida = lerSimulacao(snap);
     expect(lida?.precoTabela).toBe(10000);
     expect(lida?.simulacao.descontoPct).toBe(10);
+    // O custo volta junto: proposta de obra não tem horas, o custo digitado vem daqui ao reabrir.
+    expect(lida?.custo).toBe(7000);
   });
 
   it("resume margem e semáforo; vermelho abaixo do mínimo", () => {
