@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -16,16 +15,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 import {
   Trash2,
   Edit,
@@ -71,7 +60,10 @@ import { LinksEditor } from "@/components/LinksEditor";
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { ORDEM_LABEL, type OrdemDisc } from "../lib/ordemDisciplinas";
 import { FluxoPipeline } from "./FluxoPipeline";
+import { DisciplinaExcluirDialog } from "./DisciplinaConfirmDialogs";
+import { DisciplinaConfirmDialogs } from "./DisciplinaConfirmDialogs";
 
 // Campo da UI → coluna do banco (espelha o mapa de ProjetoDetailTabs).
 const DISC_DB_FIELD: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDisciplinaDB>> = {
@@ -84,14 +76,7 @@ const DISC_DB_FIELD: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDi
   descricao: "descricao",
 };
 
-type OrdemDisc = "padrao" | "previsao" | "prioridade";
 type VisaoDisc = "lista" | "fluxo";
-
-const ORDEM_LABEL: Record<OrdemDisc, string> = {
-  padrao: "Ordem do fluxo",
-  previsao: "Previsão (mais próxima)",
-  prioridade: "Prioridade (maior primeiro)",
-};
 
 const VISOES_DISC: ViewOption<VisaoDisc>[] = [
   { value: "lista", label: "Lista", icon: List },
@@ -313,38 +298,38 @@ export function ProjectDetailDialog({
                   </DialogDescription>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 pr-8">
-                <Button
-                  size="sm"
-                  variant="brand"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(`/projetos/${projeto.id}`);
-                  }}
-                >
-                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                  Abrir projeto completo
-                </Button>
-                {canEdit && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm" aria-label="Mais opções">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(projeto)}>
-                        <Edit className="h-3.5 w-3.5 mr-2" /> Editar dados
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => onDelete(projeto.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir projeto
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                  <Button
+                    size="sm"
+                    variant="brand"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/projetos/${projeto.id}`);
+                    }}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Abrir projeto completo
+                  </Button>
+                  {canEdit && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm" aria-label="Mais opções">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(projeto)}>
+                          <Edit className="h-3.5 w-3.5 mr-2" /> Editar dados
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => onDelete(projeto.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir projeto
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </div>
             </DialogHeader>
@@ -643,7 +628,6 @@ export function ProjectDetailDialog({
               </div>
             }
           />
-
         </DialogContent>
       </Dialog>
 
@@ -688,117 +672,26 @@ export function ProjectDetailDialog({
         }
       />
 
-      {/* Confirmação de exclusão de disciplina */}
-      <AlertDialog open={confirmDeleteIdx !== null} onOpenChange={(o) => !o && setConfirmDeleteIdx(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir disciplina</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmDeleteIdx !== null && disciplinasLegacy[confirmDeleteIdx]
-                ? `A disciplina "${disciplinasLegacy[confirmDeleteIdx].disciplina}" e seus dados serão removidos. Esta ação não pode ser desfeita.`
-                : "Esta ação não pode ser desfeita."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmarExcluirDisc}>
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DisciplinaExcluirDialog
+        nome={confirmDeleteIdx !== null ? disciplinasLegacy[confirmDeleteIdx]?.disciplina : undefined}
+        open={confirmDeleteIdx !== null}
+        onClose={() => setConfirmDeleteIdx(null)}
+        onConfirm={confirmarExcluirDisc}
+      />
 
-      {/* Confirmação de conclusão */}
-      <AlertDialog
-        open={concludingDiscIdx !== null}
-        onOpenChange={(o) => {
-          if (!o) setConcludingDiscIdx(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar conclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              A disciplina{" "}
-              <strong>{concludingDiscIdx !== null && disciplinasLegacy[concludingDiscIdx]?.disciplina}</strong> será
-              marcada como <strong>Concluída</strong>. Informe a data real da entrega abaixo.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-1.5 py-2">
-            <Label className="text-xs">Data final</Label>
-            <DatePicker
-              value={concludingDate || undefined}
-              onChange={(v) => setConcludingDate(v || "")}
-              maxDate={new Date().toISOString().split("T")[0]}
-            />
-            <p className="text-2xs text-muted-foreground">
-              Use a data em que o trabalho foi de fato entregue, não a data administrativa de hoje.
-            </p>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={!concludingDate}
-              onClick={async () => {
-                if (concludingDiscIdx === null || !concludingDate) return;
-                const idx = concludingDiscIdx;
-                const date = concludingDate;
-                setConcludingDiscIdx(null);
-                await applyDisciplineStatusChange(idx, "Concluído", undefined, date);
-              }}
-            >
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Justificativa de atraso */}
-      <AlertDialog
-        open={!!justificativaDialog}
-        onOpenChange={(o) => {
-          if (!o) {
-            setJustificativaDialog(null);
-            setJustificativaText("");
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-danger-mid" />
-              Justificativa de atraso obrigatória
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              A disciplina{" "}
-              <strong>
-                {justificativaDialog !== null && disciplinasLegacy[justificativaDialog.discIdx]?.disciplina}
-              </strong>{" "}
-              está atrasada. Informe a justificativa para continuar.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-2">
-            <Label className="text-sm mb-2 block">Justificativa</Label>
-            <Textarea
-              value={justificativaText}
-              onChange={(e) => setJustificativaText(e.target.value)}
-              placeholder="Explique o motivo do atraso..."
-              className="min-h-[80px]"
-              autoFocus
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleJustificativaConfirm}
-              disabled={!justificativaText.trim()}
-              className="bg-brand hover:bg-brand/90"
-            >
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DisciplinaConfirmDialogs
+        disciplinas={disciplinasLegacy}
+        concludingDiscIdx={concludingDiscIdx}
+        setConcludingDiscIdx={setConcludingDiscIdx}
+        concludingDate={concludingDate}
+        setConcludingDate={setConcludingDate}
+        onConcluir={(idx, date) => applyDisciplineStatusChange(idx, "Concluído", undefined, date)}
+        justificativaDialog={justificativaDialog}
+        setJustificativaDialog={setJustificativaDialog}
+        justificativaText={justificativaText}
+        setJustificativaText={setJustificativaText}
+        onJustificativaConfirm={handleJustificativaConfirm}
+      />
     </>
   );
 }
