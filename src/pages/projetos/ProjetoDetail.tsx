@@ -45,6 +45,7 @@ export default function ProjetoDetail() {
     deadline,
     progress,
     margemBrutaPct,
+    margemPrometidaPct,
     applyDiscStatusChange,
     handleRemoveDisc,
     handleAddDisc,
@@ -177,6 +178,7 @@ export default function ProjetoDetail() {
           projeto={projeto}
           progress={progress}
           margemBrutaPct={margemBrutaPct}
+          margemPrometidaPct={margemPrometidaPct}
           canEdit={canEdit}
           onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
           // Sem financeiro o valor vem mascarado (null): deixar o campo editável

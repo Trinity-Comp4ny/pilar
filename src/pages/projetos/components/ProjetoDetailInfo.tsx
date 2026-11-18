@@ -14,6 +14,8 @@ interface ProjetoDetailInfoProps {
   projeto: Projeto;
   progress: number;
   margemBrutaPct: number | null;
+  /** Margem-alvo prometida na proposta (SPEC 168), líquida de imposto e taxa. */
+  margemPrometidaPct?: number | null;
   canEdit?: boolean;
   onUpdatePrazo?: (data_previsao: string) => void;
   onUpdateContrato?: (valor_contrato: number) => void;
@@ -24,6 +26,7 @@ export function ProjetoDetailInfo({
   projeto,
   progress,
   margemBrutaPct,
+  margemPrometidaPct = null,
   canEdit = false,
   onUpdatePrazo,
   onUpdateContrato,
@@ -64,6 +67,11 @@ export function ProjetoDetailInfo({
         : margemBrutaPct >= 0
           ? "neutral"
           : "danger";
+
+  // A margem bruta real ainda não desconta imposto nem taxa: se já está abaixo do alvo líquido
+  // prometido, o projeto está atrás do que foi vendido com certeza.
+  const atrasadoDoPrometido =
+    margemBrutaPct !== null && margemPrometidaPct !== null && margemBrutaPct < margemPrometidaPct;
 
   return (
     <>
@@ -132,7 +140,11 @@ export function ProjetoDetailInfo({
           <KPICard
             label="Margem Bruta"
             value={margemBrutaPct !== null ? `${margemBrutaPct.toFixed(1)}%` : "—"}
-            valueTone={margemTone}
+            valueTone={atrasadoDoPrometido && margemTone !== "danger" ? "danger" : margemTone}
+            subtitle={
+              margemPrometidaPct !== null ? `Prometida na proposta: ${margemPrometidaPct.toFixed(1)}%` : undefined
+            }
+            subtitleTone={atrasadoDoPrometido ? "danger" : "muted"}
           />
         </div>
       </div>

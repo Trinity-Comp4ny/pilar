@@ -26,13 +26,13 @@ export function recusaDoAutor(autor: PerfilAutor | null): Recusa | null {
 }
 
 /**
- * ultra_admin remove qualquer um, de qualquer empresa. admin só remove gente da
- * própria empresa, e nunca um ultra_admin (conta de plataforma, mesmo que vinculada
- * à empresa dele).
+ * Ninguém remove usuário de outra empresa por aqui, nem ultra_admin: a remoção
+ * entre empresas é do portal (ultra-admin-usuarios, com MFA e auditoria). Dentro
+ * da própria empresa, admin nunca remove um ultra_admin (conta de plataforma,
+ * mesmo que vinculada à empresa dele).
  */
 export function recusaDoAlvo(autor: PerfilAutor, alvo: PerfilAlvo): Recusa | null {
-  if (autor.role === "ultra_admin") return null;
   if (alvo.empresa_id !== autor.empresa_id) return { status: 403, error: "Usuário não pertence à sua empresa" };
-  if (alvo.role === "ultra_admin") return { status: 403, error: "Apenas ultra admin pode remover este usuário" };
+  if (autor.role !== "ultra_admin" && alvo.role === "ultra_admin") return { status: 403, error: "Apenas ultra admin pode remover este usuário" };
   return null;
 }

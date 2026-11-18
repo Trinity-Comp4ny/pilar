@@ -89,7 +89,7 @@ serve(
         targetType: "user",
         targetId: user_id,
         targetName: target.email ?? target.nome ?? user_id,
-        empresaId: empresa_id ?? target.empresa_id ?? null,
+        empresaId: target.empresa_id ?? null,
         metadata: { old: { role: target.role }, new: { role: safeRole } },
         req,
       });
@@ -122,7 +122,7 @@ serve(
           targetType: "convite",
           targetId: convite_id,
           targetName: conv?.email ?? convite_id,
-          empresaId: empresa_id ?? conv?.empresa_id ?? null,
+          empresaId: conv?.empresa_id ?? null,
           req,
         });
 
@@ -146,7 +146,7 @@ serve(
         targetType: "user",
         targetId: user_id,
         targetName: target?.email ?? user_id,
-        empresaId: empresa_id ?? target?.empresa_id ?? null,
+        empresaId: target?.empresa_id ?? null,
         req,
       });
 
