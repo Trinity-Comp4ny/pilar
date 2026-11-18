@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { BusyMark } from "@/components/motion/BusyMark";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +69,13 @@ async function carregarLogo(url?: string | null): Promise<string | undefined> {
  * Proposta em um passo: o PDF padrão já sai preenchido com os dados do sistema.
  * O usuário confere, baixa ou envia por e-mail. Sem template e sem variável.
  */
-export function EnviarPropostaDialog({ open, onOpenChange, proposta, disciplinas = [], onSent }: EnviarPropostaDialogProps) {
+export function EnviarPropostaDialog({
+  open,
+  onOpenChange,
+  proposta,
+  disciplinas = [],
+  onSent,
+}: EnviarPropostaDialogProps) {
   const [blob, setBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [gerando, setGerando] = useState(false);

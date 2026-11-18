@@ -36,6 +36,8 @@ interface DisciplinasEditorProps {
   rows: DisciplinaLinha[];
   onChange: (rows: DisciplinaLinha[]) => void;
   disabled?: boolean;
+  /** "itens": obra/serviço, só descrição e valor (sem horas nem custo). */
+  modo?: "disciplinas" | "itens";
 }
 
 const novaLinha = (): DisciplinaLinha => ({
@@ -46,7 +48,8 @@ const novaLinha = (): DisciplinaLinha => ({
   valor_venda: 0,
 });
 
-export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEditorProps) {
+export function DisciplinasEditor({ rows, onChange, disabled, modo = "disciplinas" }: DisciplinasEditorProps) {
+  const itens = modo === "itens";
   const formatCurrency = useMoneyMask();
   const totais = calcDisciplinasTotais(rows);
 
@@ -63,19 +66,28 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs min-w-[160px]">Disciplina</TableHead>
-              <TableHead className="text-xs text-right w-[90px]">Horas</TableHead>
-              <TableHead className="text-xs text-right w-[110px]">Custo/h</TableHead>
-              <TableHead className="text-xs text-right w-[110px]">Custo</TableHead>
-              <TableHead className="text-xs text-right w-[130px]">Valor venda</TableHead>
+              <TableHead className="text-xs min-w-[150px]">{itens ? "Item do escopo" : "Disciplina"}</TableHead>
+              {!itens && (
+                <>
+                  <TableHead className="text-xs text-right w-[90px]">Horas</TableHead>
+                  <TableHead className="text-xs text-right w-[140px]">Custo/h</TableHead>
+                  <TableHead className="text-xs text-right w-[110px]">Custo</TableHead>
+                </>
+              )}
+              <TableHead className="text-xs text-right w-[160px]">Valor</TableHead>
               {!disabled && <TableHead className="w-[40px]" />}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={disabled ? 5 : 6} className="text-center text-xs text-muted-foreground py-6">
-                  Nenhuma disciplina. Adicione linhas para detalhar horas, custo e valor por disciplina.
+                <TableCell
+                  colSpan={(itens ? 2 : 5) + (disabled ? 0 : 1)}
+                  className="text-center text-xs text-muted-foreground py-6"
+                >
+                  {itens
+                    ? "Nenhum item. Adicione o que está incluso e o valor de cada parte."
+                    : "Nenhuma disciplina. Adicione linhas para detalhar horas, custo e valor por disciplina."}
                 </TableCell>
               </TableRow>
             )}
@@ -85,56 +97,70 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
               return (
                 <TableRow key={r.id}>
                   <TableCell className="align-top">
-                    <div className="space-y-1">
-                      <Select
-                        value={selectValue}
+                    {itens ? (
+                      <Input
+                        className="h-8 text-xs"
+                        placeholder="Ex.: Marcenaria, Instalação"
+                        value={r.disciplina}
                         disabled={disabled}
-                        onValueChange={(v) => updateRow(r.id, { disciplina: v === OUTRA ? "" : v })}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DISCIPLINAS_PADRAO.map((d) => (
-                            <SelectItem key={d} value={d}>
-                              {d}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value={OUTRA}>Outra...</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {selectValue === OUTRA && (
-                        <Input
-                          className="h-8 text-xs"
-                          placeholder="Nome da disciplina"
-                          value={r.disciplina}
+                        onChange={(e) => updateRow(r.id, { disciplina: e.target.value })}
+                      />
+                    ) : (
+                      <div className="space-y-1">
+                        <Select
+                          value={selectValue}
                           disabled={disabled}
-                          onChange={(e) => updateRow(r.id, { disciplina: e.target.value })}
+                          onValueChange={(v) => updateRow(r.id, { disciplina: v === OUTRA ? "" : v })}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DISCIPLINAS_PADRAO.map((d) => (
+                              <SelectItem key={d} value={d}>
+                                {d}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value={OUTRA}>Outra...</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {selectValue === OUTRA && (
+                          <Input
+                            className="h-8 text-xs"
+                            placeholder="Nome da disciplina"
+                            value={r.disciplina}
+                            disabled={disabled}
+                            onChange={(e) => updateRow(r.id, { disciplina: e.target.value })}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </TableCell>
+                  {!itens && (
+                    <>
+                      <TableCell>
+                        <NumberInput
+                          allowDecimal
+                          min={0}
+                          className="h-8 text-xs text-right"
+                          value={r.horas_estimadas ? String(r.horas_estimadas).replace(".", ",") : ""}
+                          disabled={disabled}
+                          onChange={(v) => updateRow(r.id, { horas_estimadas: parseFloat(v.replace(",", ".")) || 0 })}
                         />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <NumberInput
-                      allowDecimal
-                      min={0}
-                      className="h-8 text-xs text-right"
-                      value={r.horas_estimadas ? String(r.horas_estimadas).replace(".", ",") : ""}
-                      disabled={disabled}
-                      onChange={(v) => updateRow(r.id, { horas_estimadas: parseFloat(v.replace(",", ".")) || 0 })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <MoneyInput
-                      className="h-8 text-xs text-right"
-                      value={r.custo_hora ? formatValorToInput(r.custo_hora) : ""}
-                      disabled={disabled}
-                      onChange={(v) => updateRow(r.id, { custo_hora: parseCurrencyString(v) })}
-                    />
-                  </TableCell>
-                  <TableCell className="text-xs text-right text-muted-foreground align-middle">
-                    {formatCurrency(custoLinha(r))}
-                  </TableCell>
+                      </TableCell>
+                      <TableCell>
+                        <MoneyInput
+                          className="h-8 text-xs text-right"
+                          value={r.custo_hora ? formatValorToInput(r.custo_hora) : ""}
+                          disabled={disabled}
+                          onChange={(v) => updateRow(r.id, { custo_hora: parseCurrencyString(v) })}
+                        />
+                      </TableCell>
+                      <TableCell className="text-xs text-right text-muted-foreground align-middle">
+                        {formatCurrency(custoLinha(r))}
+                      </TableCell>
+                    </>
+                  )}
                   <TableCell>
                     <MoneyInput
                       className="h-8 text-xs text-right"
@@ -166,22 +192,26 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
 
       {!disabled && (
         <Button type="button" variant="outline" size="xs" onClick={addRow}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar disciplina
+          <Plus className="h-3.5 w-3.5 mr-1" /> {itens ? "Adicionar item" : "Adicionar disciplina"}
         </Button>
       )}
 
       {rows.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Badge variant="secondary" className="text-xs">
-            {totais.totalHoras}h
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            Custo: {formatCurrency(totais.totalCusto)}
-          </Badge>
+          {!itens && (
+            <>
+              <Badge variant="secondary" className="text-xs">
+                {totais.totalHoras}h
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                Custo: {formatCurrency(totais.totalCusto)}
+              </Badge>
+            </>
+          )}
           <Badge variant="secondary" className="text-xs">
             Soma venda: {formatCurrency(totais.totalValor)}
           </Badge>
-          {totais.margemPct !== null && (
+          {!itens && totais.margemPct !== null && (
             <Badge
               className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive-strong" : "bg-danger-soft text-danger-strong"}`}
             >
