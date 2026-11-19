@@ -44,6 +44,7 @@ import { ObraTarefasTab } from "../components/ObraTarefasTab";
 import { ObraContaTab } from "../components/ObraContaTab";
 import { ObraCotacoesTab } from "../components/ObraCotacoesTab";
 import { ObraEstoqueTab } from "../components/ObraEstoqueTab";
+import { ObraResumoExecutivo } from "../components/ObraResumoExecutivo";
 
 import { PageLoader } from "@/components/motion/PageLoader";
 const BREADCRUMB = [{ label: "Obras", to: "/obras" }];
@@ -196,6 +197,15 @@ export default function ObraDetalhePage() {
             </span>
           )}
         </div>
+      )}
+
+      {tab === "timeline" && (
+        <ObraResumoExecutivo
+          obraId={obra.id}
+          fimPrevisto={obra.data_fim_prevista}
+          tarefas={tarefasObra}
+          comCusto={showConta}
+        />
       )}
 
       {alertasClima.length > 0 && (
