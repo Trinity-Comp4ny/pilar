@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GitBranch, LayoutGrid, List, MoreHorizontal, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
@@ -80,6 +80,10 @@ export default function ProjetosKanban() {
   const queryClient = useQueryClient();
   const canEdit = can("projetos", "create");
   const canViewMapa = can("mapa", "view");
+  // Baixa o código do mapa (Leaflet) em segundo plano: ao abrir a aba ele já está pronto.
+  useEffect(() => {
+    if (canViewMapa) void import("@/pages/mapa/MapCanvas");
+  }, [canViewMapa]);
   // Sem acesso a financeiro o valor do contrato vem mascarado: não oferece ordenar por ele.
   const sortKeys: KanbanSortKey[] = can("financeiro")
     ? ["priority", "dueDate", "value", "name", "created"]
@@ -108,7 +112,7 @@ export default function ProjetosKanban() {
     useProjetosUrlState(canViewMapa);
   const isColecao = activeTab === "quadro" || activeTab === "lista";
 
-  const { data: etapas = [] } = useProjetoEtapas();
+  const { data: etapas = [], isLoading: loadingEtapas } = useProjetoEtapas();
   const etapaMut = useProjetoEtapaMutations();
   const isMobile = useIsMobile();
 
@@ -520,6 +524,7 @@ export default function ProjetosKanban() {
                 etapas={etapas}
                 collapsedColumns={collapsedColumns}
                 loadingProjetos={loadingProjetos}
+                loadingEtapas={loadingEtapas}
                 canEdit={canEdit}
                 clientes={clientes}
                 rentabilidadeMap={rentabilidadeMap}
