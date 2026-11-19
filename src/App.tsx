@@ -12,7 +12,7 @@ import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
 import { avisarAssinaturaSuspensa, ehErroDeAssinaturaSuspensa } from "@/lib/assinaturaSuspensa";
 import { jaReportadoPelaRede } from "@/lib/supabaseFetch";
 import { usePageTracking } from "@/hooks/usePageTracking";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { isEntryVeilMounted } from "@/components/motion/veilState";
@@ -38,25 +38,19 @@ import { useNovaVersao } from "./hooks/useNovaVersao";
 const PullToRefresh = lazy(() =>
   import("@/components/mobile/PullToRefresh").then((m) => ({ default: m.PullToRefresh }))
 );
-const importarSettingsDialog = () => import("./components/settings/SettingsDialog");
-const SettingsDialog = lazy(() => importarSettingsDialog().then((m) => ({ default: m.SettingsDialog })));
+const SettingsDialog = lazy(() =>
+  import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
+);
 
 // O modal só entra na árvore quando alguém abre as configurações: o login e as telas
 // públicas não baixam esse código. Logado, ele é baixado em ocioso para abrir sem espera.
 function SettingsDialogSobDemanda() {
   const { isOpen } = useSettingsModal();
-  const { isAuthenticated } = useAuth();
   const [montado, setMontado] = useState(false);
 
   useEffect(() => {
     if (isOpen) setMontado(true);
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const id = window.setTimeout(() => void importarSettingsDialog(), 3000);
-    return () => window.clearTimeout(id);
-  }, [isAuthenticated]);
 
   if (!montado) return null;
   return (
