@@ -26,6 +26,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { gerarParcelasDoProjeto, parcelasDoForm } from "../lib/parcelasDoForm";
+import { dataDaPlaca, placaStatusDe, type PlacaStatus } from "@/lib/placa";
 
 import { atribuicaoLegacy } from "../lib/atribuicaoDisciplina";
 
@@ -53,6 +54,7 @@ const EMPTY_FORM = {
   prioridade: PROJECT_PRIORITY.MEDIA as ProjectPriority,
   prazo_dias_uteis: "",
   dia_pagamento: "",
+  placa_status: "nao_instalada" as PlacaStatus,
 };
 
 function composeLocalizacao(form: typeof EMPTY_FORM): string {
@@ -209,6 +211,7 @@ export function useProjetoForm({
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
         prazo_dias_uteis: "",
         dia_pagamento: "",
+        placa_status: placaStatusDe((editProjeto as { placa_status?: string | null }).placa_status),
       };
       setFormData(nextForm);
       // editProjeto.disciplinas é legado (sempre []). Hidrata da tabela relacional
@@ -726,6 +729,20 @@ export function useProjetoForm({
 
         toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });
         clearFormPersist(PROJETO_DRAFT_KEY);
+      }
+
+      // Os RPCs de criar/atualizar não recebem a placa: grava a situação à parte.
+      const projetoSalvoId = isEditMode && editProjeto ? editProjeto.id : novoProjetoId;
+      const placaAnterior = placaStatusDe((editProjeto as { placa_status?: string | null } | null)?.placa_status);
+      const placaNova = placaStatusDe(formData.placa_status);
+      if (projetoSalvoId && (!isEditMode || placaNova !== placaAnterior)) {
+        if (placaNova !== "nao_instalada" || isEditMode) {
+          const { error: placaErro } = await supabase
+            .from("projetos")
+            .update({ placa_status: placaNova, placa_data: dataDaPlaca(placaNova) })
+            .eq("id", projetoSalvoId);
+          if (placaErro) toast.warning("Projeto salvo, mas a placa não foi gravada", { description: "Tente de novo." });
+        }
       }
 
       onOpenChange(false);

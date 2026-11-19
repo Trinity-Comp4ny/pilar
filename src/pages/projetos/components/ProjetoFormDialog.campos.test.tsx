@@ -147,13 +147,15 @@ beforeEach(() => {
 describe("ProjetoFormDialog: passo 1", () => {
   it("template, cliente, prioridade, área e endereço chamam o campo certo", () => {
     montar();
-    const [template, cliente, prioridade, uf] = screen.getAllByRole("combobox");
+    const [template, cliente, prioridade, placa, uf] = screen.getAllByRole("combobox");
     escolher(template, "Casa (Residencial)");
     expect(applyTemplate).toHaveBeenCalledWith("tp1");
     escolher(cliente, "Construtora Seed");
     expect(handleInputChange).toHaveBeenCalledWith("cliente_id", "c1");
     escolher(prioridade, /Alta/);
     expect(handleInputChange).toHaveBeenCalledWith("prioridade", "Alta");
+    escolher(placa, "Instalada");
+    expect(handleInputChange).toHaveBeenCalledWith("placa_status", "instalada");
     escolher(uf, "SP");
     expect(handleInputChange).toHaveBeenCalledWith("loc_estado", "SP");
 

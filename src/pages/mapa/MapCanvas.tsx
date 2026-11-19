@@ -8,7 +8,16 @@ import "leaflet/dist/leaflet.css";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { STATUS_MARKER_COLORS, STATUS_SYMBOLS, TILE_LAYERS, type ProjetoMapa, type TileLayerKey } from "./constants";
+import {
+  PLACA_SELO,
+  STATUS_MARKER_COLORS,
+  STATUS_SYMBOLS,
+  TILE_LAYERS,
+  type ProjetoMapa,
+  type TileLayerKey,
+  type TipoMapa,
+} from "./constants";
+import { PLACA_LABEL, type PlacaStatus } from "@/lib/placa";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -17,32 +26,33 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const markerHtml = (color: string) =>
-  `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`;
+// Projeto = círculo; obra = quadrado arredondado. O selo no canto mostra a situação da placa.
+const markerHtml = (color: string, tipo: TipoMapa, placa: PlacaStatus) => {
+  const selo = PLACA_SELO[placa];
+  const raio = tipo === "obra" ? "6px" : "50%";
+  return (
+    `<div style="position:relative;width:24px;height:24px;">` +
+    `<div style="background:${color};width:24px;height:24px;border-radius:${raio};border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);box-sizing:border-box;"></div>` +
+    `<span style="position:absolute;top:-7px;right:-9px;width:14px;height:14px;border-radius:50%;background:${selo.cor};color:white;font-size:9px;font-weight:700;line-height:14px;text-align:center;border:1.5px solid white;">${selo.simbolo}</span>` +
+    `</div>`
+  );
+};
 
-const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
-  Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => [
-    status,
-    L.divIcon({
-      className: "custom-marker",
-      html: markerHtml(color),
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-      popupAnchor: [0, -12],
-    }),
-  ])
-);
+const iconCache = new Map<string, L.DivIcon>();
 
-const FALLBACK_ICON = L.divIcon({
-  className: "custom-marker",
-  html: markerHtml("hsl(var(--status-unknown))"),
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  popupAnchor: [0, -12],
-});
-
-function getStatusIcon(status: string): L.DivIcon {
-  return STATUS_ICONS[status] ?? FALLBACK_ICON;
+function getMarkerIcon(status: string, tipo: TipoMapa, placa: PlacaStatus): L.DivIcon {
+  const key = `${status}|${tipo}|${placa}`;
+  const cached = iconCache.get(key);
+  if (cached) return cached;
+  const icon = L.divIcon({
+    className: "custom-marker",
+    html: markerHtml(STATUS_MARKER_COLORS[status] ?? "hsl(var(--status-unknown))", tipo, placa),
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+  iconCache.set(key, icon);
+  return icon;
 }
 
 function createClusterIcon(cluster: { getChildCount: () => number }) {
@@ -120,16 +130,20 @@ export default function MapCanvas({ filtrados, tileKey, selectedProjeto, mapRef,
       >
         {filtrados.map((projeto) => (
           <Marker
-            key={projeto.id}
+            key={`${projeto.tipo}-${projeto.id}`}
             position={[projeto.latitude, projeto.longitude]}
-            icon={getStatusIcon(projeto.status)}
+            icon={getMarkerIcon(projeto.status, projeto.tipo, projeto.placa_status)}
             eventHandlers={{ click: () => onMarkerClick(projeto) }}
           >
             <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
               <span className="flex flex-col">
                 <span className="text-xs font-medium">{projeto.nome}</span>
                 <span className="text-2xs text-muted-foreground">
+                  {projeto.tipo === "obra" ? "Obra · " : ""}
                   {STATUS_SYMBOLS[projeto.status] ?? ""} {projeto.status}
+                </span>
+                <span className="text-2xs text-muted-foreground">
+                  Placa: {PLACA_LABEL[projeto.placa_status]}
                 </span>
               </span>
             </Tooltip>

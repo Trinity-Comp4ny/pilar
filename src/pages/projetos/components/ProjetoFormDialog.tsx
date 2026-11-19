@@ -26,6 +26,7 @@ import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm } from "./useProjetoForm";
 import { EstadoSelectItems } from "./EstadoSelectItems";
+import { PlacaSelect } from "@/components/placa/PlacaSelect";
 import { getPriorityDotColor } from "../lib/priorityColors";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
@@ -366,6 +367,14 @@ export function ProjetoFormDialog({
                       value={form.formData.area_m2}
                       onChange={(e) => form.handleInputChange("area_m2", e.target.value)}
                       placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="placa_status">Placa</Label>
+                    <PlacaSelect
+                      id="placa_status"
+                      value={form.formData.placa_status}
+                      onChange={(v) => form.handleInputChange("placa_status", v)}
                     />
                   </div>
                 </div>
