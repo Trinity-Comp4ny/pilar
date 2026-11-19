@@ -7990,69 +7990,6 @@ export type Database = {
           },
         ]
       }
-      projeto_status_historico: {
-        Row: {
-          de: Database["public"]["Enums"]["status_projeto"] | null
-          id: string
-          mudado_em: string
-          mudado_por: string | null
-          para: Database["public"]["Enums"]["status_projeto"]
-          projeto_id: string
-        }
-        Insert: {
-          de?: Database["public"]["Enums"]["status_projeto"] | null
-          id?: string
-          mudado_em?: string
-          mudado_por?: string | null
-          para: Database["public"]["Enums"]["status_projeto"]
-          projeto_id: string
-        }
-        Update: {
-          de?: Database["public"]["Enums"]["status_projeto"] | null
-          id?: string
-          mudado_em?: string
-          mudado_por?: string | null
-          para?: Database["public"]["Enums"]["status_projeto"]
-          projeto_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
-            columns: ["mudado_por"]
-            isOneToOne: false
-            referencedRelation: "pessoas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
-            columns: ["mudado_por"]
-            isOneToOne: false
-            referencedRelation: "pessoas_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
-            columns: ["mudado_por"]
-            isOneToOne: false
-            referencedRelation: "view_folha_pagamento"
-            referencedColumns: ["pessoa_id"]
-          },
-          {
-            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
-            columns: ["projeto_id"]
-            isOneToOne: false
-            referencedRelation: "projetos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
-            columns: ["projeto_id"]
-            isOneToOne: false
-            referencedRelation: "projetos_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       projeto_registros: {
         Row: {
           autor_nome: string | null
@@ -8117,6 +8054,69 @@ export type Database = {
           },
           {
             foreignKeyName: "projeto_registros_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projeto_status_historico: {
+        Row: {
+          de: Database["public"]["Enums"]["status_projeto"] | null
+          id: string
+          mudado_em: string
+          mudado_por: string | null
+          para: Database["public"]["Enums"]["status_projeto"]
+          projeto_id: string
+        }
+        Insert: {
+          de?: Database["public"]["Enums"]["status_projeto"] | null
+          id?: string
+          mudado_em?: string
+          mudado_por?: string | null
+          para: Database["public"]["Enums"]["status_projeto"]
+          projeto_id: string
+        }
+        Update: {
+          de?: Database["public"]["Enums"]["status_projeto"] | null
+          id?: string
+          mudado_em?: string
+          mudado_por?: string | null
+          para?: Database["public"]["Enums"]["status_projeto"]
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
@@ -12065,18 +12065,9 @@ export type Database = {
         Args: { p_dias: number; p_justificativa?: string; p_projeto: string }
         Returns: string
       }
-      projeto_nome_ator: {
-        Args: {
-          p_id: string
-        }
-        Returns: string
-      }
+      projeto_nome_ator: { Args: { p_id: string }; Returns: string }
       projeto_parcelas_elegiveis: {
-        Args: {
-          p_cliente: string
-          p_empresa: string
-          p_projeto: string
-        }
+        Args: { p_cliente: string; p_empresa: string; p_projeto: string }
         Returns: {
           descricao: string
           grupo: string
@@ -12482,9 +12473,7 @@ export type Database = {
       }
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_resumo_aditivos_projeto: {
-        Args: {
-          p_projeto: string
-        }
+        Args: { p_projeto: string }
         Returns: Json
       }
       rpc_retomar_disciplina: {
