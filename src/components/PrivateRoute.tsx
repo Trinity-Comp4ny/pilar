@@ -11,6 +11,7 @@ import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { EVENTO_ASSINATURA_SUSPENSA } from "@/lib/assinaturaSuspensa";
 import { EntryVeil } from "@/components/motion/EntryVeil";
+import { useEntradaPronta } from "@/hooks/useEntradaPronta";
 
 const AccountRecoveryScreen = lazy(() =>
   import("./AccountRecoveryScreen").then(({ AccountRecoveryScreen }) => ({ default: AccountRecoveryScreen }))
@@ -116,6 +117,9 @@ export function PrivateRoute() {
     };
   }, [gateAtivo, empresaId, subStatus]);
 
+  // Dados da primeira tela chegam por trás do véu, em paralelo com a checagem de assinatura.
+  const entradaPronta = useEntradaPronta(empresaId ?? undefined, location.pathname);
+
   // Véu de entrada (SPEC 106): o nome da empresa entra assim que o perfil chega.
   const veilLabel = profile?.empresas?.nome ? `Abrindo ${profile.empresas.nome}` : undefined;
 
@@ -186,7 +190,7 @@ export function PrivateRoute() {
     return <Navigate to={rotaDeAutorizacao(pedidoDeConexao)} replace />;
   }
 
-  if (empresaId && subStatus === undefined) {
+  if (empresaId && (subStatus === undefined || !entradaPronta)) {
     return <EntryVeil label={veilLabel} />;
   }
 
