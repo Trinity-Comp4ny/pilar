@@ -50,10 +50,7 @@ export default function ReuniaoDetalhe() {
   const ruidoAlto = segmentos.some((s) => (s.proporcao_ruido ?? 0) >= 0.5);
 
   return (
-    <PilarPage
-      title={reuniao.titulo}
-      breadcrumbs={[{ label: "Reuniões", to: "/ultra-admin/reunioes" }]}
-    >
+    <PilarPage title={reuniao.titulo} breadcrumbs={[{ label: "Reuniões", to: "/ultra-admin/reunioes" }]}>
       <div className="flex flex-wrap items-center gap-3 text-sm text-ink-muted">
         <span>{formatDate(reuniao.ocorreu_em.slice(0, 10))}</span>
         {reuniao.origem_nome ? <span>{reuniao.origem_nome}</span> : null}
@@ -139,7 +136,7 @@ export default function ReuniaoDetalhe() {
       <section className="space-y-2">
         <h2 className="text-base font-semibold">Compromissos em aberto ({abertos.length})</h2>
         {abertos.length === 0 ? (
-          <p className="text-sm text-ink-muted">Nenhum.</p>
+          <EmptyState compact title="Nenhum compromisso em aberto" />
         ) : (
           <ul className="space-y-1 text-sm">
             {abertos.map((c) => (
