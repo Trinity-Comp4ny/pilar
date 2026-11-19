@@ -2,7 +2,7 @@
 // Funde tarefas avulsas e disciplinas de projeto num único ItemTrabalho, sem
 // achatar o modelo no banco: cada item guarda seu `tipo` e a origem para ações.
 import { useMemo } from "react";
-import type { Prioridade, StatusBucket } from "./status";
+import type { Prioridade, StatusBucket } from "@/lib/tarefas/status";
 import {
   useDisciplinas,
   usePessoasEmpresa,
@@ -10,8 +10,8 @@ import {
   type DisciplinaItem,
   type PessoaOpcao,
   type TarefaItem,
-} from "./hooks";
-import type { Etapa } from "./useEtapas";
+} from "@/hooks/tarefas/useTarefas";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
 
 export type TipoItem = "tarefa" | "disciplina";
 

@@ -68,11 +68,6 @@ export function ProjetoDetailInfo({
           ? "neutral"
           : "danger";
 
-  // A margem bruta real ainda não desconta imposto nem taxa: se já está abaixo do alvo líquido
-  // prometido, o projeto está atrás do que foi vendido com certeza.
-  const atrasadoDoPrometido =
-    margemBrutaPct !== null && margemPrometidaPct !== null && margemBrutaPct < margemPrometidaPct;
-
   return (
     <>
       {/* KPI Cards */}
@@ -140,11 +135,10 @@ export function ProjetoDetailInfo({
           <KPICard
             label="Margem Bruta"
             value={margemBrutaPct !== null ? `${margemBrutaPct.toFixed(1)}%` : "—"}
-            valueTone={atrasadoDoPrometido && margemTone !== "danger" ? "danger" : margemTone}
+            valueTone={margemTone}
             subtitle={
-              margemPrometidaPct !== null ? `Prometida na proposta: ${margemPrometidaPct.toFixed(1)}%` : undefined
+              margemPrometidaPct !== null ? `Meta líquida da proposta: ${margemPrometidaPct.toFixed(1)}%` : undefined
             }
-            subtitleTone={atrasadoDoPrometido ? "danger" : "muted"}
           />
         </div>
       </div>

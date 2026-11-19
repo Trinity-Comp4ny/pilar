@@ -1,3 +1,4 @@
+import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
@@ -10,7 +11,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { mencionaTodos } from "@/lib/mencoes";
-import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposerComMencoes";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import { HorasMinutosField } from "@/components/HorasMinutosField";
 import {
@@ -33,10 +34,10 @@ import {
   corDaEtapa,
   type Prioridade,
   type StatusBucket,
-} from "../status";
-import type { Etapa } from "../useEtapas";
-import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
-import type { ServicoObra } from "../servicoObra";
+} from "@/lib/tarefas/status";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
+import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "@/hooks/tarefas/useTarefas";
+import type { ServicoObra } from "@/lib/tarefas/servicoObra";
 import { apagarNotificacoesComentario, notificarMencao } from "@/lib/notificarMencao";
 import { ComentariosLista } from "@/components/atividades/ComentariosLista";
 import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
@@ -66,6 +67,44 @@ function Prop({
   );
 }
 
+function DisciplinaField({
+  projetoId,
+  disciplinaId,
+  setDisciplinaId,
+  readOnly,
+}: {
+  projetoId: string;
+  disciplinaId: string | null;
+  setDisciplinaId: (id: string | null) => void;
+  readOnly: boolean;
+}) {
+  const { data: disciplinas, isPending, isError } = useProjetoDisciplinas(projetoId);
+  return (
+    <Prop icon={FolderOpen} label="Disciplina">
+      <Select
+        value={disciplinaId ?? SEM}
+        onValueChange={(v) => setDisciplinaId(v === SEM ? null : v)}
+        disabled={readOnly || isPending || isError}
+      >
+        <SelectTrigger aria-label="Disciplina">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SEM}>Sem disciplina</SelectItem>
+          {disciplinas?.map(
+            (disciplina) =>
+              disciplina.id && (
+                <SelectItem key={disciplina.id} value={disciplina.id}>
+                  {disciplina.nome}
+                </SelectItem>
+              )
+          )}
+        </SelectContent>
+      </Select>
+    </Prop>
+  );
+}
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -81,6 +120,9 @@ type Props = {
   defaultPrazo?: string | null;
   /** Nome inicial numa nova tarefa, ex.: o que já foi digitado no quadro curto da Agenda. */
   defaultTitulo?: string;
+  projetoFixoId?: string;
+  defaultDisciplinaId?: string;
+  defaultDescricao?: string;
   /** Responsável default numa nova tarefa (a pessoa do usuário). */
   defaultResponsavelId: string | null;
   /** Só admin escolhe o responsável; os demais criam já atribuído a si. */
@@ -112,6 +154,9 @@ function TarefaFormBody({
   defaultEtapaId,
   defaultPrazo,
   defaultTitulo,
+  projetoFixoId,
+  defaultDisciplinaId,
+  defaultDescricao,
   defaultResponsavelId,
   podeEscolherResponsavel = true,
   autorNome,
@@ -123,7 +168,7 @@ function TarefaFormBody({
   servicosObra,
 }: Omit<Props, "open">) {
   const [titulo, setTitulo] = useState(tarefa?.titulo ?? defaultTitulo ?? "");
-  const [descricao, setDescricao] = useState(tarefa?.descricao ?? "");
+  const [descricao, setDescricao] = useState(tarefa?.descricao ?? defaultDescricao ?? "");
   // Status = coluna (etapa) do quadro. Editável aqui e por drag no board; ambos
   // gravam etapa_id + o bucket derivado da coluna. Cai na etapa passada, na do
   // item em edição, ou na primeira "A fazer".
@@ -136,7 +181,9 @@ function TarefaFormBody({
   const [responsaveis, setResponsaveis] = useState<string[]>(
     tarefa ? tarefa.responsaveis.map((r) => r.id) : defaultResponsavelId ? [defaultResponsavelId] : []
   );
-  const [projetoId, setProjetoId] = useState<string | null>(tarefa?.projeto_id ?? null);
+  const [projetoId, setProjetoId] = useState<string | null>(tarefa?.projeto_id ?? projetoFixoId ?? null);
+  const [disciplinaId, setDisciplinaId] = useState(tarefa?.projeto_disciplina_id ?? defaultDisciplinaId ?? null);
+  const [retrabalho, setRetrabalho] = useState(tarefa?.retrabalho ?? false);
   const [servicoId, setServicoId] = useState<string | null>(tarefa?.obra_frente_id ?? null);
   const [prazo, setPrazo] = useState(tarefa?.prazo ?? defaultPrazo ?? "");
   const [horas, setHoras] = useState<number | null>(tarefa?.horas_estimadas ?? null);
@@ -195,6 +242,8 @@ function TarefaFormBody({
       prioridade,
       responsaveis,
       projeto_id: projetoId,
+      ...(projetoId || tarefa?.projeto_disciplina_id ? { projeto_disciplina_id: disciplinaId } : {}),
+      ...(projetoId || tarefa?.retrabalho ? { retrabalho } : {}),
       // Só manda o serviço quando o formulário o oferece: fora da obra o campo nem existe.
       ...(servicosObra ? { obra_frente_id: servicoId } : {}),
       prazo: prazo || null,
@@ -324,8 +373,12 @@ function TarefaFormBody({
               <Prop icon={FolderOpen} label="Projeto" className="md:col-span-2">
                 <Select
                   value={projetoId ?? SEM}
-                  onValueChange={(v) => setProjetoId(v === SEM ? null : v)}
-                  disabled={readOnly}
+                  onValueChange={(v) => {
+                    setProjetoId(v === SEM ? null : v);
+                    setDisciplinaId(null);
+                    if (v === SEM) setRetrabalho(false);
+                  }}
+                  disabled={readOnly || !!projetoFixoId}
                 >
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Sem projeto" />
@@ -341,6 +394,25 @@ function TarefaFormBody({
                 </Select>
               </Prop>
 
+              {projetoId && (
+                <>
+                  <DisciplinaField
+                    projetoId={projetoId}
+                    disciplinaId={disciplinaId}
+                    setDisciplinaId={setDisciplinaId}
+                    readOnly={readOnly}
+                  />
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={retrabalho}
+                      onChange={(e) => setRetrabalho(e.target.checked)}
+                      disabled={readOnly}
+                    />
+                    Correção interna (retrabalho)
+                  </label>
+                </>
+              )}
               {servicosObra && (
                 <Prop icon={HardHat} label="Serviço da obra" className="md:col-span-2">
                   <Select

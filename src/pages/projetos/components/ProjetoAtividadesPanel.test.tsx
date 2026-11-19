@@ -20,7 +20,7 @@ vi.mock("@/hooks/useComentarioAutoria", () => ({
   useComentarioAutoria: () => ({ autorId: "u-eu", podeExcluir: (c: Comentario) => c.autor === "Eu" }),
 }));
 vi.mock("@/lib/notificarMencao", () => ({ notificarMencao, apagarNotificacoesComentario }));
-vi.mock("./AtividadeComposer", () => ({
+vi.mock("@/components/atividades/AtividadeComposerComMencoes", () => ({
   AtividadeComposer: ({ onSubmit }: { onSubmit: (t: string, m: string[]) => void }) => (
     <>
       <button onClick={() => onSubmit("Olá @Ana", ["p1"])}>enviar-com-mencao</button>

@@ -15,7 +15,7 @@ import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
 import { useKanbanSort } from "@/hooks/useKanbanSort";
 import { ordenarKanban } from "@/lib/kanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
-import { TarefaDialog } from "./components/TarefaDialog";
+import { TarefaDialog } from "@/components/tarefas/TarefaDialog";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { FiltroPessoa } from "./components/FiltrosTrabalho";
@@ -30,15 +30,15 @@ import {
   useTarefaPorId,
   type TarefaInput,
   type TarefaItem,
-} from "./hooks";
+} from "@/hooks/tarefas/useTarefas";
 import { resolverPessoaIds } from "./filtroPessoas";
 import { bate, obraIdDoItem, TODOS, useFiltroProjetoObra } from "./useFiltroProjetoObra";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
-import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
+import { useEtapas, useEtapaMutations, type Etapa } from "@/hooks/tarefas/useEtapas";
 import { useColunasLista } from "./colunas";
-import type { ServicoObra } from "./servicoObra";
+import type { ServicoObra } from "@/lib/tarefas/servicoObra";
 import { EmptyState } from "@/components/EmptyState";
-import { CORES_ETAPA, corDaEtapa, type Prioridade } from "./status";
+import { CORES_ETAPA, corDaEtapa, type Prioridade } from "@/lib/tarefas/status";
 import { useFiltrosItens } from "./useFiltrosItens";
 
 import { PageLoader } from "@/components/motion/PageLoader";

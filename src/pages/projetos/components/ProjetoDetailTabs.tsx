@@ -1,3 +1,13 @@
+import { Button } from "@/components/ui/button";
+import { useTarefas } from "@/hooks/tarefas/useTarefas";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useMinhaPessoa } from "@/hooks/useMinhaPessoa";
+import { formatDateLocal } from "@/lib/businessDays";
+import { formatDate, formatHoras, formatPercent } from "@/lib/format";
+import { ProjetoTarefasTab, type NovaTarefaProjeto } from "./ProjetoTarefasTab";
+import { tarefaAtrasada } from "../lib/tarefaAtrasada";
+import { ProjetoRevisoesTab } from "./ProjetoRevisoesTab";
+import { useRevisoesPendentes } from "../hooks/useRevisoesPendentes";
 import { atribuicaoDisciplina } from "../lib/atribuicaoDisciplina";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useEffect, type ReactNode } from "react";
@@ -6,6 +16,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   Layers,
+  ListTodo,
+  FileCheck,
   LayoutDashboard,
   DollarSign,
   ScrollText,
@@ -73,6 +85,8 @@ interface ProjetoDetailTabsProps {
 const PROJETO_TABS: SectionTab[] = [
   { id: "visao-geral", label: "Visão geral", icon: LayoutDashboard },
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
+  { id: "tarefas", label: "Tarefas", icon: ListTodo },
+  { id: "revisoes", label: "Revisões", icon: FileCheck },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
   { id: "cliente", label: "Cliente", icon: Send },
@@ -107,6 +121,12 @@ export function ProjetoDetailTabs({
   handleRemoveResponsavel,
 }: ProjetoDetailTabsProps) {
   const { profile } = useAuth();
+  const { isAdmin } = usePermissions();
+  const { data: minhaPessoa } = useMinhaPessoa();
+  const tarefasProjeto = useTarefas(null, projeto.id);
+  const { data: revisoesPendentes } = useRevisoesPendentes(projeto.id);
+  const [novaTarefa, setNovaTarefa] = useState<NovaTarefaProjeto | null>(null);
+  const [apenasAtrasadas, setApenasAtrasadas] = useState(false);
   const { data: checklistCounts } = useProjetoDisciplinaChecklistCounts(projeto.id);
   const { data: revisoesCounts } = useProjetoDisciplinaRevisoesCounts(projeto.id);
   const { data: fluxos = [] } = useFluxosDisciplinas();
@@ -135,6 +155,7 @@ export function ProjetoDetailTabs({
     const h = hash.replace("#", "");
     if (h === "cronograma") return { tab: "disciplinas", view: "gantt" };
     if (h === "disciplinas") return { tab: "disciplinas", view: null };
+    if (h === "tarefas" || h === "revisoes") return { tab: h, view: null };
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
     if (h === "escopo") return { tab: "escopo", view: null };
     if (h === "historico") return { tab: "historico", view: null };
@@ -302,6 +323,17 @@ export function ProjetoDetailTabs({
     navigate(`#${v}`, { replace: true });
   };
 
+  const hoje = formatDateLocal(new Date());
+  const tarefas = tarefasProjeto.data;
+  const atrasadas = tarefas?.filter((tarefa) => tarefaAtrasada(tarefa, hoje)).length;
+  const concluidas = tarefas?.filter((tarefa) => tarefa.status === "concluida").length;
+  const internasAbertas = Object.values(revisoesCounts ?? {}).reduce((total, item) => total + item.abertas, 0);
+  const horasPrevistas = dbDisciplinas.reduce((total, disciplina) => total + disciplina.horas_estimadas, 0);
+  const horasRealizadas = dbDisciplinas.reduce((total, disciplina) => total + (disciplina.horas_realizadas ?? 0), 0);
+  const horasTarefas = tarefas?.reduce((total, tarefa) => total + (tarefa.horas_reais ?? 0), 0) ?? 0;
+  const horasRetrabalho =
+    tarefas?.reduce((total, tarefa) => total + (tarefa.retrabalho ? (tarefa.horas_reais ?? 0) : 0), 0) ?? 0;
+
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <div className="flex flex-col md:flex-row gap-4 md:items-start">
@@ -335,7 +367,64 @@ export function ProjetoDetailTabs({
                 projetoId={projeto.id}
                 disciplinas={disciplinasLegacy}
                 progresso={progresso}
-                indicadores={indicadores}
+                indicadores={
+                  <>
+                    {indicadores}
+                    <div className="flex flex-wrap gap-2" aria-label="Indicadores operacionais">
+                      <Button variant="outline" size="sm" onClick={() => navigate("#cronograma", { replace: true })}>
+                        {projeto.data_previsao ? `Prazo · ${formatDate(projeto.data_previsao)}` : "Cronograma"}
+                      </Button>
+                      {tarefas && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setApenasAtrasadas(false);
+                              handleTabChange("tarefas");
+                            }}
+                          >
+                            Tarefas concluídas · {concluidas}/{tarefas.length}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setApenasAtrasadas(true);
+                              handleTabChange("tarefas");
+                            }}
+                          >
+                            Tarefas em atraso · {atrasadas}
+                          </Button>
+                        </>
+                      )}
+                      <Button variant="outline" size="sm" onClick={() => handleTabChange("revisoes")}>
+                        Revisões internas · {internasAbertas} abertas
+                      </Button>
+                      {revisoesPendentes !== undefined && (
+                        <Button variant="outline" size="sm" onClick={() => handleTabChange("revisoes")}>
+                          Aguardando cliente · {revisoesPendentes}
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm" onClick={() => handleTabChange("disciplinas")}>
+                        Horas das disciplinas · {formatHoras(horasRealizadas) ?? "0h"} /{" "}
+                        {formatHoras(horasPrevistas) ?? "0h"}
+                      </Button>
+                      {horasTarefas > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setApenasAtrasadas(false);
+                            handleTabChange("tarefas");
+                          }}
+                        >
+                          Retrabalho nas tarefas · {formatPercent((100 * horasRetrabalho) / horasTarefas)}
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                }
               />
             )}
           </TabsContent>
@@ -413,6 +502,51 @@ export function ProjetoDetailTabs({
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="tarefas">
+            {activeTab === "tarefas" && (
+              <ProjetoTarefasTab
+                projeto={projeto}
+                disciplinas={dbDisciplinas}
+                tarefas={tarefas}
+                novaExterna={novaTarefa}
+                fecharNovaExterna={() => setNovaTarefa(null)}
+                apenasAtrasadas={apenasAtrasadas}
+                setApenasAtrasadas={setApenasAtrasadas}
+                onRetry={
+                  tarefasProjeto.isError
+                    ? () => {
+                        void tarefasProjeto.refetch();
+                      }
+                    : undefined
+                }
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="revisoes">
+            {activeTab === "revisoes" && (
+              <ProjetoRevisoesTab
+                projetoId={projeto.id}
+                revisoesInternas={internasAbertas}
+                abrirDisciplinas={() => handleTabChange("disciplinas")}
+                criarTarefa={
+                  isAdmin || minhaPessoa
+                    ? (entrega) => {
+                        setApenasAtrasadas(false);
+                        setNovaTarefa({
+                          disciplinaId: entrega.projeto_disciplina_id ?? undefined,
+                          entregaId: entrega.id,
+                          titulo: `Ajustar ${entrega.titulo}`,
+                          descricao: entrega.resposta_cliente ?? undefined,
+                        });
+                        handleTabChange("tarefas");
+                      }
+                    : undefined
+                }
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="atividades">

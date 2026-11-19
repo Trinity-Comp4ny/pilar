@@ -6891,11 +6891,13 @@ export type Database = {
           drive_url: string | null
           empresa_id: string
           id: string
+          numero_revisao: number | null
           obra_id: string | null
           projeto_disciplina_id: string | null
           projeto_id: string | null
           respondido_em: string | null
           resposta_cliente: string | null
+          revisao_anterior_id: string | null
           status: string | null
           tipo: string | null
           titulo: string
@@ -6910,11 +6912,13 @@ export type Database = {
           drive_url?: string | null
           empresa_id: string
           id?: string
+          numero_revisao?: number | null
           obra_id?: string | null
           projeto_disciplina_id?: string | null
           projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
+          revisao_anterior_id?: string | null
           status?: string | null
           tipo?: string | null
           titulo: string
@@ -6929,11 +6933,13 @@ export type Database = {
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          numero_revisao?: number | null
           obra_id?: string | null
           projeto_disciplina_id?: string | null
           projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
+          revisao_anterior_id?: string | null
           status?: string | null
           tipo?: string | null
           titulo?: string
@@ -6973,6 +6979,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_revisao_anterior_id_fkey"
+            columns: ["revisao_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
             referencedColumns: ["id"]
           },
         ]
@@ -9062,10 +9075,13 @@ export type Database = {
           numero: number
           obra_frente_id: string | null
           obra_id: string | null
+          portal_entrega_id: string | null
           prazo: string | null
           prioridade: string
+          projeto_disciplina_id: string | null
           projeto_id: string | null
           responsavel_id: string | null
+          retrabalho: boolean
           sensivel_clima: string | null
           sinalizada: boolean
           status: string
@@ -9088,10 +9104,13 @@ export type Database = {
           numero?: number
           obra_frente_id?: string | null
           obra_id?: string | null
+          portal_entrega_id?: string | null
           prazo?: string | null
           prioridade?: string
+          projeto_disciplina_id?: string | null
           projeto_id?: string | null
           responsavel_id?: string | null
+          retrabalho?: boolean
           sensivel_clima?: string | null
           sinalizada?: boolean
           status?: string
@@ -9114,10 +9133,13 @@ export type Database = {
           numero?: number
           obra_frente_id?: string | null
           obra_id?: string | null
+          portal_entrega_id?: string | null
           prazo?: string | null
           prioridade?: string
+          projeto_disciplina_id?: string | null
           projeto_id?: string | null
           responsavel_id?: string | null
+          retrabalho?: boolean
           sensivel_clima?: string | null
           sinalizada?: boolean
           status?: string
@@ -9151,6 +9173,20 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_portal_entrega_id_fkey"
+            columns: ["portal_entrega_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
             referencedColumns: ["id"]
           },
           {
@@ -11686,6 +11722,7 @@ export type Database = {
           disciplina_nome: string
           drive_url: string
           id: string
+          numero_revisao: number
           obra_id: string
           obra_nome: string
           projeto_disciplina_id: string
@@ -11693,6 +11730,7 @@ export type Database = {
           projeto_nome: string
           respondido_em: string
           resposta_cliente: string
+          revisao_anterior_id: string
           status: string
           tipo: string
           titulo: string

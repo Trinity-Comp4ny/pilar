@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
 import type { PrazoEvento } from "@/components/calendario/eventos";
-import type { TarefaInput, TarefaItem } from "../hooks";
+import type { TarefaInput, TarefaItem } from "@/hooks/tarefas/useTarefas";
 import type { NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
 import { AbaAgenda } from "./AbaAgenda";
 
@@ -137,7 +137,7 @@ vi.mock("./ReuniaoDialog", () => ({
       </div>
     ) : null,
 }));
-vi.mock("./TarefaDialog", () => ({
+vi.mock("@/components/tarefas/TarefaDialog", () => ({
   TarefaDialog: (p: {
     open: boolean;
     tarefa: TarefaItem | null;

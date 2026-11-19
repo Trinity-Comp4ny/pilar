@@ -37,9 +37,9 @@ import {
   useTarefaMutations,
   type TarefaInput,
   type TarefaItem,
-} from "../hooks";
-import { useEtapas } from "../useEtapas";
-import { TarefaDialog } from "./TarefaDialog";
+} from "@/hooks/tarefas/useTarefas";
+import { useEtapas } from "@/hooks/tarefas/useEtapas";
+import { TarefaDialog } from "@/components/tarefas/TarefaDialog";
 import { NovoNoDia } from "./NovoNoDia";
 import { NovaTarefaNoDia, type NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
 import {

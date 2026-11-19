@@ -30,7 +30,7 @@ import { PreviasRecursos } from "@/components/settings/PreviasRecursos";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { useOnboardingProgress } from "@/hooks/useOnboardingProgress";
 import { startStepTour } from "@/lib/onboarding/tour";
-import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
+import { PESSOAS_EMPRESA_QUERY_KEY } from "@/hooks/tarefas/useTarefas";
 
 const AVATAR_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB, mesmo limite do logo de empresa

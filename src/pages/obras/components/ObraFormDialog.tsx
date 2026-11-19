@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useProjetosLite, usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
+import { useProjetosLite, usePessoasEmpresa } from "@/hooks/tarefas/useTarefas";
 import { useCreateObra, useObras, useUpdateObra, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";

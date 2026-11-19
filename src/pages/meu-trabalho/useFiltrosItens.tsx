@@ -6,7 +6,7 @@ import { FilterSelect } from "@/components/filters/FilterBar";
 import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
 import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
 import type { PeriodoPreset } from "@/lib/periodo";
-import { PRIORIDADE_LABEL, PRIORIDADE_ORDER } from "./status";
+import { PRIORIDADE_LABEL, PRIORIDADE_ORDER } from "@/lib/tarefas/status";
 import type { ItemTrabalho } from "./useItensTrabalho";
 
 type SituacaoPrazo = "todas" | "atrasadas" | "hoje" | "sem_prazo";

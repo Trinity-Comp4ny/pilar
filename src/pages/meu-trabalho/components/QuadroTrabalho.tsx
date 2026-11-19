@@ -9,8 +9,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ordenarKanban, type KanbanSort } from "@/lib/kanbanSort";
 import { TAREFAS_SORT_ACESSORES } from "../ordenacao";
 import { agruparPorEtapa, type ItemTrabalho } from "../useItensTrabalho";
-import type { Etapa } from "../useEtapas";
-import { corDaEtapa, CORES_ETAPA, type Prioridade } from "../status";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
+import { corDaEtapa, CORES_ETAPA, type Prioridade } from "@/lib/tarefas/status";
 import { CardTrabalho } from "./CardTrabalho";
 
 export type EtapaControls = {

@@ -135,7 +135,7 @@ export default function ProjetoDetail() {
                 ? [{ texto: formatCurrency(projeto.valor_contrato, { compact: true }) }]
                 : []),
               ...(projeto.data_previsao ? [{ texto: `prazo ${formatDate(projeto.data_previsao)}` }] : []),
-              ...(margemBrutaPct !== null
+              ...(podeEditarValor && margemBrutaPct !== null
                 ? [{ texto: `margem ${formatPercent(margemBrutaPct)}`, alerta: margemBrutaPct < 0 }]
                 : []),
               { texto: `${progress}% concluído` },
@@ -146,8 +146,8 @@ export default function ProjetoDetail() {
         <ProjetoDetailInfo
           projeto={projeto}
           progress={progress}
-          margemBrutaPct={margemBrutaPct}
-          margemPrometidaPct={margemPrometidaPct}
+          margemBrutaPct={podeEditarValor ? margemBrutaPct : null}
+          margemPrometidaPct={podeEditarValor ? margemPrometidaPct : null}
           canEdit={canEdit}
           onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
           // Sem financeiro o valor vem mascarado (null): deixar o campo editável
