@@ -302,10 +302,11 @@ describe("ProjetoDetailTabs", () => {
     projeto_disciplinas: { nome: "Estrutural" },
   };
 
-  function dadosDoProjeto({ falha = false, versaoSeguinte = false } = {}) {
+  function dadosDoProjeto({ falha = false, falhaGrava = false, versaoSeguinte = false, semRevisoes = false } = {}) {
     fake.responder(({ tabela, op, filtros }) => {
       if (tabela === "tarefas" && op === "insert") return { data: { id: "t-nova" }, error: null };
-      if (tabela === "tarefas" && op === "update") return { data: null, error: falha ? { message: "falhou" } : null };
+      if (tabela === "tarefas" && op === "update")
+        return { data: null, error: falhaGrava ? { message: "falhou" } : null };
       if (tabela === "tarefas" && op === "select")
         return { data: falha ? null : [pendente, concluida], error: falha ? { message: "falhou" } : null };
       if (tabela === "pessoas") return { data: [{ id: "pes-1", nome: "Ana" }], error: null };
@@ -313,6 +314,7 @@ describe("ProjetoDetailTabs", () => {
         return { data: [{ id: "et-1", nome: "A fazer", ordem: 0, bucket: "a_fazer" }], error: null };
       if (tabela === "portal_entregas" && op === "select") {
         if (filtros.some(([tipo]) => tipo === "not")) return { data: null, count: 1, error: null };
+        if (semRevisoes) return { data: [], error: null };
         return {
           data: [
             revisao,
@@ -375,6 +377,53 @@ describe("ProjetoDetailTabs", () => {
     escolher("Filtrar por status", "Todos os status");
     fireEvent.click(screen.getAllByRole("button", { name: "Adicionar tarefa" })[0]);
     expect(screen.getByRole("dialog")).toHaveTextContent("d-1");
+  });
+
+  it("mantém a edição aberta quando a alteração falha", async () => {
+    dadosDoProjeto({ falhaGrava: true });
+    montar("/projetos/proj-1#tarefas");
+    fireEvent.click(await screen.findByRole("button", { name: /Conferir fundações/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Salvar tarefa" }));
+    await waitFor(() => expect(fake.escritas("tarefas")).toHaveLength(1));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Conferir fundações");
+  });
+
+  it("abre tarefas de outro responsável sem permitir edição e oculta a publicação de revisões", async () => {
+    acesso.isAdmin = false;
+    acesso.role = "viewer";
+    dadosDoProjeto();
+    montar("/projetos/proj-1#tarefas");
+    fireEvent.click(await screen.findByRole("button", { name: /Conferir fundações/ }));
+    expect(screen.getByRole("button", { name: "Salvar tarefa" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar tarefa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Em atraso" }));
+    expect(screen.queryByText("Emitir memorial")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Em atraso" }));
+    expect(screen.getByText("Emitir memorial")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Revisões" }));
+    expect(await screen.findByText("R00")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Publicar/ })).not.toBeInTheDocument();
+  });
+
+  it("publica a primeira revisão com arquivo e mantém a lista vazia antes do envio", async () => {
+    dadosDoProjeto({ semRevisoes: true });
+    montar("/projetos/proj-1#revisoes");
+    expect(await screen.findByText("Nenhuma revisão publicada")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Publicar revisão" }));
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Prancha de fundações" } });
+    const enviar = screen.getByRole("button", { name: "Enviar ao cliente" });
+    expect(enviar).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Link do Google Drive"), {
+      target: { value: "https://drive.google.com/file/d/r0" },
+    });
+    fireEvent.click(enviar);
+    await waitFor(() =>
+      expect(fake.escritas("portal_entregas")[0]?.payload).toMatchObject({
+        numero_revisao: 0,
+        revisao_anterior_id: null,
+        tipo: "aprovacao",
+      })
+    );
   });
 
   it("permite recarregar tarefas depois de uma falha na consulta", async () => {
