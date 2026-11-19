@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Truck, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Truck, Link2, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RowActions } from "@/components/data/RowActions";
@@ -10,6 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { FormDialog } from "@/components/FormDialog";
+import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
+import { FilterBar } from "@/components/filters/FilterBar";
+import { Badge } from "@/components/ui/badge";
+import { exportarFornecedores, type LinhaFornecedor } from "./exportarFornecedores";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -25,14 +30,13 @@ import { softDelete, restaurar } from "@/lib/softDelete";
 import { BusyMark } from "@/components/motion/BusyMark";
 import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
-interface Fornecedor {
+interface Fornecedor extends LinhaFornecedor {
   id: string;
-  nome: string;
-  cnpj?: string;
-  contato?: string;
-  email?: string;
-  telefone?: string;
 }
+
+const CATEGORIAS_SUGERIDAS = ["Pisos e revestimentos", "Concreto", "Iluminação", "Móveis planejados"];
+const SEM_CATEGORIA = "__sem_categoria__";
+const chaveCategoria = (valor: string) => valor.trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
 
 type FormState = {
   nome: string;
@@ -40,9 +44,10 @@ type FormState = {
   contato: string;
   email: string;
   telefone: string;
+  categorias: string[];
 };
 
-const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", telefone: "" };
+const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", telefone: "", categorias: [] };
 
 export default function Fornecedores() {
   usePageTitle("Fornecedores");
@@ -56,6 +61,12 @@ export default function Fornecedores() {
   const canEdit = can("obras", "edit");
   const [reconciliarOpen, setReconciliarOpen] = useState(false);
 
+  const [catalogo, setCatalogo] = useState<string[]>([]);
+  const [categoriasFiltro, setCategoriasFiltro] = useState<string[]>([]);
+  const [novaCategoria, setNovaCategoria] = useState("");
+  const [exportarOpen, setExportarOpen] = useState(false);
+  const [exportando, setExportando] = useState(false);
+  const [incluirCnpj, setIncluirCnpj] = useState(false);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -70,33 +81,57 @@ export default function Fornecedores() {
   const [toDelete, setToDelete] = useState<{ id: string; nome: string } | null>(null);
 
   const fetchFornecedores = useCallback(async () => {
-    const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
-    if (error) {
-      setLoadError(true);
-      toast.error("Não foi possível carregar os fornecedores", {
-        description: getSafeErrorMessage(error, "Atualize a página em instantes."),
-      });
-      return;
+    const pagina = 500;
+    const fornecedoresCarregados: Fornecedor[] = [];
+    let offset = 0;
+    for (;;) {
+      const { data, error } = await supabase
+        .from("fornecedores")
+        .select("*")
+        .order("nome")
+        .order("id")
+        .range(offset, offset + pagina - 1);
+      if (error) {
+        setLoadError(true);
+        toast.error("Não foi possível carregar os fornecedores", {
+          description: getSafeErrorMessage(error, "Atualize a página em instantes."),
+        });
+        return;
+      }
+      fornecedoresCarregados.push(
+        ...(data ?? []).map((f) => ({
+          id: f.id,
+          nome: f.nome,
+          cnpj: f.cnpj ?? undefined,
+          contato: f.contato ?? undefined,
+          email: f.email ?? undefined,
+          telefone: f.telefone ?? undefined,
+          categorias: f.categorias ?? [],
+        }))
+      );
+      if (!data || data.length < pagina) break;
+      offset += pagina;
     }
     setLoadError(false);
-    setFornecedores(
-      (data ?? []).map((f) => ({
-        id: f.id,
-        nome: f.nome,
-        cnpj: f.cnpj ?? undefined,
-        contato: f.contato ?? undefined,
-        email: f.email ?? undefined,
-        telefone: f.telefone ?? undefined,
-      }))
-    );
+    setFornecedores(fornecedoresCarregados);
   }, []);
 
   useEffect(() => {
-    fetchFornecedores();
+    void fetchFornecedores();
   }, [fetchFornecedores]);
+
+  const buscarCatalogo = useCallback(async () => {
+    const { data } = await supabase.from("fornecedor_categorias").select("nome").order("nome");
+    if (data) setCatalogo(data.map(({ nome }) => nome));
+  }, []);
+
+  useEffect(() => {
+    void buscarCatalogo();
+  }, [buscarCatalogo]);
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
+    setNovaCategoria("");
     setCurrentId(null);
     setIsEditMode(false);
     setCnpjError("");
@@ -110,12 +145,14 @@ export default function Fornecedores() {
 
   const handleEditClick = (f: Fornecedor, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    setNovaCategoria("");
     setForm({
       nome: f.nome,
       cnpj: f.cnpj ? formatCNPJ(f.cnpj) : "",
       contato: f.contato ?? "",
       email: f.email ?? "",
       telefone: f.telefone ? formatPhone(f.telefone) : "",
+      categorias: f.categorias,
     });
     setCnpjError("");
     setEmailError("");
@@ -174,6 +211,7 @@ export default function Fornecedores() {
             contato: form.contato.trim() || null,
             email: form.email.trim() || null,
             telefone: telefoneRaw,
+            categorias: form.categorias,
           })
           .eq("id", currentId);
         if (error) throw error;
@@ -185,6 +223,7 @@ export default function Fornecedores() {
           contato: form.contato.trim() || null,
           email: form.email.trim() || null,
           telefone: telefoneRaw,
+          categorias: form.categorias,
           empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
         } as never);
         if (error) throw error;
@@ -192,7 +231,8 @@ export default function Fornecedores() {
       }
       resetForm();
       setIsDialogOpen(false);
-      fetchFornecedores();
+      void fetchFornecedores();
+      void buscarCatalogo();
     } catch (err) {
       // PostgrestError é objeto plano (não `instanceof Error`): ler a mensagem por getRawErrorMessage,
       // senão o CNPJ duplicado (fornecedores_unique_empresa_cnpj) caía no aviso genérico.
@@ -252,9 +292,16 @@ export default function Fornecedores() {
   // BUG-A7-2: filter by nome, CNPJ (digits or formatted) and email
   const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return fornecedores;
     const termDigits = onlyDigits(term);
     return fornecedores.filter((f) => {
+      if (
+        categoriasFiltro.length &&
+        !categoriasFiltro.some((categoria) =>
+          categoria === SEM_CATEGORIA ? !f.categorias.length : f.categorias.includes(categoria)
+        )
+      )
+        return false;
+      if (!term) return true;
       if (f.nome.toLowerCase().includes(term)) return true;
       const cnpjDigits = onlyDigits(f.cnpj ?? "");
       if (cnpjDigits && termDigits && cnpjDigits.includes(termDigits)) return true;
@@ -262,7 +309,48 @@ export default function Fornecedores() {
       if ((f.email ?? "").toLowerCase().includes(term)) return true;
       return false;
     });
-  }, [fornecedores, searchTerm]);
+  }, [fornecedores, searchTerm, categoriasFiltro]);
+
+  const categorias = useMemo(() => {
+    const opcoes = new Map<string, string>();
+    for (const nome of [
+      ...CATEGORIAS_SUGERIDAS,
+      ...catalogo,
+      ...fornecedores.flatMap((f) => f.categorias),
+      ...form.categorias,
+    ]) {
+      opcoes.set(chaveCategoria(nome), nome);
+    }
+    return [...opcoes.values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [catalogo, fornecedores, form.categorias]);
+  const opcoesCategoria = categorias.map((categoria) => ({ value: categoria, label: categoria }));
+
+  function adicionarCategoria() {
+    const nome = novaCategoria.trim().replace(/\s+/g, " ");
+    if (!nome) return;
+    const categoria = categorias.find((item) => chaveCategoria(item) === chaveCategoria(nome)) ?? nome;
+    setForm((prev) =>
+      prev.categorias.includes(categoria) ? prev : { ...prev, categorias: [...prev.categorias, categoria] }
+    );
+    setNovaCategoria("");
+  }
+
+  async function baixarPdf() {
+    if (!filtered.length || loadError) return;
+    setExportando(true);
+    try {
+      await exportarFornecedores(
+        filtered,
+        categoriasFiltro.map((c) => (c === SEM_CATEGORIA ? "Sem categoria" : c)),
+        incluirCnpj
+      );
+      setExportarOpen(false);
+    } catch {
+      toast.error("Não foi possível exportar a lista.");
+    } finally {
+      setExportando(false);
+    }
+  }
 
   const columns: ColumnDef<Fornecedor>[] = [
     {
@@ -274,8 +362,13 @@ export default function Fornecedores() {
       cell: (f) => f.nome,
     },
     {
-      key: "cnpj",
+      key: "categorias",
+      header: "Categorias",
       mobile: "subtitle",
+      cell: (f) => f.categorias.join(", ") || "Sem categoria",
+    },
+    {
+      key: "cnpj",
       header: "CNPJ",
       getSortValue: (f) => f.cnpj ?? "",
       cell: (f) => (f.cnpj ? formatCNPJ(f.cnpj) : "-"),
@@ -345,8 +438,15 @@ export default function Fornecedores() {
     <EmptyState
       icon={Truck}
       title="Nenhum resultado encontrado"
-      description="Tente ajustar o termo de busca."
-      action={{ label: "Limpar busca", variant: "outline", onClick: () => setSearchTerm("") }}
+      description="Ajuste a busca ou as categorias."
+      action={{
+        label: "Limpar filtros",
+        variant: "outline",
+        onClick: () => {
+          setSearchTerm("");
+          setCategoriasFiltro([]);
+        },
+      }}
     />
   );
 
@@ -354,6 +454,27 @@ export default function Fornecedores() {
     <PageLayout
       className="md:overflow-y-hidden"
       containerClassName={CONTAINER_TELA_DADOS}
+      toolbar={
+        <FilterBar>
+          <MultiSelectFilter
+            label="Categorias"
+            options={[{ value: SEM_CATEGORIA, label: "Sem categoria" }, ...opcoesCategoria]}
+            selected={categoriasFiltro}
+            onChange={setCategoriasFiltro}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!filtered.length || loadError}
+            onClick={() => {
+              setIncluirCnpj(false);
+              setExportarOpen(true);
+            }}
+          >
+            <Download className="h-4 w-4" /> Exportar lista
+          </Button>
+        </FilterBar>
+      }
       header={
         <PageHeader
           title="Fornecedores"
@@ -479,6 +600,46 @@ export default function Fornecedores() {
                         </p>
                       )}
                     </div>
+                    <div className="space-y-2">
+                      <MultiSelectFilter
+                        label="Categorias"
+                        options={opcoesCategoria}
+                        selected={form.categorias}
+                        onChange={(categorias) => setForm((prev) => ({ ...prev, categorias }))}
+                      />
+                      {!!form.categorias.length && (
+                        <div className="flex flex-wrap gap-1">
+                          {form.categorias.map((categoria) => (
+                            <Badge key={categoria} variant="secondary">
+                              {categoria}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <Label htmlFor="fornecedor-nova-categoria">Nova categoria</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="fornecedor-nova-categoria"
+                          maxLength={80}
+                          value={novaCategoria}
+                          onChange={(e) => setNovaCategoria(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              adicionarCategoria();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={!novaCategoria.trim()}
+                          onClick={adicionarCategoria}
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2 pt-2">
                       <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
                         Cancelar
@@ -532,6 +693,22 @@ export default function Fornecedores() {
         cancelText="Cancelar"
       />
 
+      <FormDialog
+        open={exportarOpen}
+        onOpenChange={setExportarOpen}
+        title="Exportar fornecedores"
+        description={`O PDF inclui ${filtered.length} fornecedor(es) do resultado atual.`}
+        size="sm"
+        onSubmit={baixarPdf}
+        submitLabel="Baixar PDF"
+        isPending={exportando}
+        submitDisabled={!filtered.length || loadError}
+      >
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={incluirCnpj} onChange={(e) => setIncluirCnpj(e.target.checked)} /> Incluir
+          CNPJ
+        </label>
+      </FormDialog>
       <ReconciliarDialog open={reconciliarOpen} onOpenChange={setReconciliarOpen} />
     </PageLayout>
   );

@@ -29,6 +29,7 @@ export interface Entrega {
   projeto_nome?: string | null;
   obra_nome?: string | null;
   resposta_cliente: string | null;
+  respondido_por?: string | null;
   respondido_em: string | null;
   aprovado_ip: string | null;
   aprovado_user_agent: string | null;
@@ -66,6 +67,7 @@ export function EntregasContent({
   apenasRevisoes,
   onPublicarRevisao,
   onCriarTarefa,
+  acoesEntrega,
 }: {
   projetoId?: string;
   obraId?: string;
@@ -78,6 +80,7 @@ export function EntregasContent({
   apenasRevisoes?: boolean;
   onPublicarRevisao?: (entrega: Entrega) => void;
   onCriarTarefa?: (entrega: Entrega) => void;
+  acoesEntrega?: (entrega: Entrega) => React.ReactNode;
 }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
@@ -247,6 +250,7 @@ export function EntregasContent({
                 }}
                 onAprovar={() => handleAprovar(e.id)}
                 onSolicitar={() => handleSolicitarRevisao(e.id)}
+                acoes={acoesEntrega?.(e)}
                 saving={saving}
                 readOnly={readOnly}
                 mostrarOrigem={mostrarOrigem}
@@ -272,20 +276,23 @@ export function EntregasContent({
                 onAprovar={() => undefined}
                 onSolicitar={() => undefined}
                 acoes={
-                  readOnly && e.status === "revisao_solicitada" && !substituidas.has(e.id) ? (
-                    <div className="flex flex-wrap gap-2">
-                      {onCriarTarefa && (
-                        <Button variant="outline" size="sm" onClick={() => onCriarTarefa(e)}>
-                          Criar tarefa de ajuste
-                        </Button>
-                      )}
-                      {onPublicarRevisao && e.numero_revisao != null && (
-                        <Button variant="outline" size="sm" onClick={() => onPublicarRevisao(e)}>
-                          Publicar nova versão
-                        </Button>
-                      )}
-                    </div>
-                  ) : undefined
+                  <>
+                    {readOnly && !substituidas.has(e.id) && (
+                      <div className="flex flex-wrap gap-2">
+                        {e.status === "revisao_solicitada" && onCriarTarefa && (
+                          <Button variant="outline" size="sm" onClick={() => onCriarTarefa(e)}>
+                            Criar tarefa de ajuste
+                          </Button>
+                        )}
+                        {onPublicarRevisao && e.numero_revisao != null && (
+                          <Button variant="outline" size="sm" onClick={() => onPublicarRevisao(e)}>
+                            Publicar nova versão
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {acoesEntrega?.(e)}
+                  </>
                 }
                 saving={false}
                 readOnly={readOnly}
@@ -381,11 +388,19 @@ function EntregaCard({
           </div>
         )}
 
-        {readOnly && entrega.status === "aprovado" && entrega.respondido_em && (
+        {entrega.status !== "pendente" && entrega.respondido_em && (
           <p className="text-3xs text-muted-foreground">
-            Aprovado em {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
-            {entrega.aprovado_ip ? ` · IP ${entrega.aprovado_ip}` : ""}
+            {entrega.status === "aprovado" ? "Aprovado" : "Revisão solicitada"} em{" "}
+            {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
+            {entrega.respondido_por && ` · ${entrega.respondido_por}`}
           </p>
+        )}
+
+        {readOnly && entrega.aprovado_ip && (
+          <details className="text-3xs text-muted-foreground">
+            <summary className="cursor-pointer">Dados técnicos da aprovação</summary>
+            <p>IP {entrega.aprovado_ip}</p>
+          </details>
         )}
 
         {!readOnly && entrega.status === "pendente" && (
