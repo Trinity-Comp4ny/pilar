@@ -18,11 +18,7 @@ export function ehTextoDeInterface(rotulo: string): boolean {
 }
 
 /** Rótulos "Me" / "Them" / nome genérico não provam quem falou: ficam incertos. */
-export function classificarFalante(
-  rotulo: string,
-  nomesFundador: string[] = [],
-  nomesCliente: string[] = [],
-): Falante {
+export function classificarFalante(rotulo: string, nomesFundador: string[] = [], nomesCliente: string[] = []): Falante {
   if (ehTextoDeInterface(rotulo)) return "incerto";
   const r = rotulo.trim().toLowerCase();
   if (["me", "them", "eu", "speaker", "desconhecido"].includes(r)) return "incerto";

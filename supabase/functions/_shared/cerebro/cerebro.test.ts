@@ -8,7 +8,7 @@ import { aterrar, citacaoExiste } from "./aterrar.ts";
 
 Deno.test("redigir: e-mail, telefone, CPF, CNPJ e valor viram marca e só a contagem fica", () => {
   const r = redigir(
-    "Manda para fulano@exemplo.com.br ou ligue (11) 91234-5678. CPF 123.456.789-09, CNPJ 12.345.678/0001-95. Fechamos por R$ 12.500,00.",
+    "Manda para fulano@exemplo.com.br ou ligue (11) 91234-5678. CPF 123.456.789-09, CNPJ 12.345.678/0001-95. Fechamos por R$ 12.500,00."
   );
   assert(!r.texto.includes("fulano@"));
   assert(!r.texto.includes("91234"));

@@ -39,6 +39,7 @@ const SEM_RATE_LIMIT: Record<string, string> = {
   "log-impersonation": "só ultra admin",
   "notificacoes-email-cron": "cron (cronAutorizado)",
   "ops-agente-run": "cron (cronAutorizado) ou só ultra admin com MFA",
+  "reuniao-analisar": "só ultra admin com MFA; teto mensal de custo do agente",
   "ops-export-funil": "integração por token próprio (plataforma de marketing), só leitura agregada",
   "pilar-checkout-webhook": "webhook da Asaas, autenticado por token",
   "reconciliar-assinaturas": "cron (cronAutorizado)",
