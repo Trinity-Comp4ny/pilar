@@ -32,6 +32,7 @@ COMMENT ON TABLE public.reuniao IS
   'SPEC 169: reuniões coladas no Ultra. Só transcript_redigido; redacoes guarda contagem por tipo, nunca o valor.';
 
 CREATE INDEX reuniao_ocorreu_em_idx ON public.reuniao (ocorreu_em DESC);
+CREATE INDEX reuniao_criado_por_idx ON public.reuniao (criado_por);
 
 CREATE TABLE public.reuniao_insight (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
