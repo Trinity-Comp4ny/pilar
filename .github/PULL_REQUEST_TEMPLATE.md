@@ -24,7 +24,8 @@ SPEC 152. Isto muda o que o usuário vê ou faz? Se sim, ponha no commit (não a
   Impacto: fluxo | melhoria | correcao
   Modulo: <chave da feature, opcional>
 fluxo = muda o caminho de algo que ele já fazia (abre o modal "O que mudou").
-Infra, refatoração, teste e CI não levam a linha. Escreva "Interno" se for o caso.
+Infra, refatoração, teste e CI não levam a linha. feat/fix sem ela reprova o job "Commits do PR":
+use `Interno: <motivo>` no commit quando o cliente não vê a mudança.
 -->
 
 ---
