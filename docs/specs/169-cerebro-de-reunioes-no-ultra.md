@@ -125,19 +125,19 @@ Seguem a ADR 0050:
 - Transcript contém dado pessoal de terceiros. Base legal e aviso de gravação aos escritórios
   precisam estar resolvidos antes de guardar reunião com cliente (Pergunta aberta 1).
 - Transcript nunca vai para log, Sentry ou PostHog. O erro registra só `reuniao_id`.
-- Retenção definida (Pergunta aberta 2). `reuniao` entra no fluxo de exclusão de titular
+- Retenção: transcrição redigida apagada após 12 meses; pontos ficam (cron `limpar-transcricoes-reuniao-daily`). `reuniao` entra no fluxo de exclusão de titular
   (`excluir-dados-titular`) quando houver vínculo com pessoa identificável.
 - Acesso só pelo ultra admin; teste de RLS com usuário comum deve falhar na leitura.
 
 ## Fases
 
-| Fase | Entrega                                                                       | Critério de saída                                         |
-| ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------- |
-| 0    | Rodar 5 transcripts reais e ler o resultado (3 de 5 feitas, ver Achados)       | Extração e citações boas o bastante para seguir            |
-| 1    | Tabelas, colagem manual, analista por reunião, tela da reunião e do Cérebro   | O fundador usa por 10 reuniões e a taxa de correção é baixa |
-| 2    | Edge `granola-ingest` por `pg_cron`, `created_after` + `folder_id`, idempotente | Exige plano Business; reunião nova entra sem ação manual   |
-| 3    | CRM do Pilar (contas, contatos, oportunidades) alimentado pelas reuniões      | Reunião atualiza conta e próximo passo sozinha            |
-| 4    | Estrategista semanal: padrões, recomendação de feature, cruzamento com Dores  | Recomendação aceita com frequência                         |
+| Fase | Entrega                                                                         | Critério de saída                                           |
+| ---- | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 0    | Rodar 5 transcripts reais e ler o resultado (3 de 5 feitas, ver Achados)        | Extração e citações boas o bastante para seguir             |
+| 1    | Tabelas, colagem manual, analista por reunião, tela da reunião e do Cérebro     | O fundador usa por 10 reuniões e a taxa de correção é baixa |
+| 2    | Edge `granola-ingest` por `pg_cron`, `created_after` + `folder_id`, idempotente | Exige plano Business; reunião nova entra sem ação manual    |
+| 3    | CRM do Pilar (contas, contatos, oportunidades) alimentado pelas reuniões        | Reunião atualiza conta e próximo passo sozinha              |
+| 4    | Estrategista semanal: padrões, recomendação de feature, cruzamento com Dores    | Recomendação aceita com frequência                          |
 
 ## Plano de implementação da fase 1
 
@@ -233,8 +233,8 @@ oportunidades, lembrete de compromisso no painel do Time e cruzamento automátic
 
 ## Perguntas abertas
 
-1. Os escritórios sabem que as reuniões são gravadas e transcritas? Qual a base legal?
-2. Por quanto tempo guardar o transcript bruto (só os insights ficam depois?).
+1. ~~Os escritórios sabem que as reuniões são gravadas?~~ Resolvida (19/11): o fundador sempre pergunta antes de gravar. Ver DECISOES.md.
+2. ~~Por quanto tempo guardar o transcript?~~ Resolvida (19/11): pontos sem prazo; transcrição redigida por 12 meses (`limpar_transcricoes_reuniao`, cron diário).
 3. CRM: o SPEC 126 prevê prospecção outbound no módulo Leads do Pilar numa empresa interna.
    Reaproveitar isso ou tabelas próprias? Decidir antes da fase 3.
 4. O agente entra como "Inteligência de Clientes" no Time ou como modo do agente Produto?
