@@ -13,7 +13,7 @@ import {
   useCriarAditivoProjeto,
   usePreviaAditivo,
   type OrigemAditivo,
-} from "../hooks/useAditivosProjeto";
+} from "@/hooks/useAditivosProjeto";
 
 export type DisciplinaAditivo = { id: string; nome: string };
 

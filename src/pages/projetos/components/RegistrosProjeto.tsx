@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { useFornecedoresLite } from "@/hooks/useFornecedorDetalhe";
-import { NovoAditivoProjeto, type DisciplinaAditivo } from "./AditivoProjetoDialogs";
-import { useOrigensAditivos } from "../hooks/useAditivosProjeto";
+import { NovoAditivoProjeto, type DisciplinaAditivo } from "@/components/AditivoProjetoDialogs";
+import { useOrigensAditivos } from "@/hooks/useAditivosProjeto";
 
 type TipoAtividade = "visita" | "suporte";
 type Opcao = { id: string; nome: string };

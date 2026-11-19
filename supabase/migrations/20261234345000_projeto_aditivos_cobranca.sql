@@ -1,5 +1,6 @@
 -- No projeto, criação manual e decisão financeira usam os mesmos escopos dos agentes.
 ALTER TABLE public.escopos ADD COLUMN IF NOT EXISTS origem_manual boolean NOT NULL DEFAULT false;
+GRANT SELECT (origem_manual) ON public.escopos TO authenticated;
 
 CREATE TABLE public.projeto_registros (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -16,6 +17,8 @@ CREATE TABLE public.projeto_registros (
 );
 
 CREATE INDEX projeto_registros_timeline_idx ON public.projeto_registros(projeto_id, ocorrido_em DESC, id);
+CREATE INDEX projeto_registros_empresa_idx ON public.projeto_registros(empresa_id);
+CREATE INDEX projeto_registros_disciplina_idx ON public.projeto_registros(disciplina_id);
 CREATE UNIQUE INDEX projeto_registros_cobranca_idx ON public.projeto_registros(origem_id)
   WHERE tipo = 'aditivo_cobranca';
 ALTER TABLE public.projeto_registros ENABLE ROW LEVEL SECURITY;
@@ -283,7 +286,8 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public.tg_projeto_aditivo_decisao() FROM PUBLIC, anon, authenticated;
-CREATE TRIGGER projeto_aditivo_decisao BEFORE UPDATE OF status ON public.escopos
+-- A ordem alfabética faz a guarda financeira existente rodar primeiro.
+CREATE TRIGGER tg_projeto_aditivo_decisao BEFORE UPDATE OF status ON public.escopos
   FOR EACH ROW EXECUTE FUNCTION public.tg_projeto_aditivo_decisao();
 
 REVOKE ALL ON FUNCTION public.rpc_criar_aditivo_projeto(uuid,text,text,numeric,uuid,uuid,uuid),

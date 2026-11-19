@@ -5,7 +5,7 @@ import { ComentariosLista } from "@/components/atividades/ComentariosLista";
 import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
 
 import { RegistrosProjeto } from "./RegistrosProjeto";
-import type { DisciplinaAditivo } from "./AditivoProjetoDialogs";
+import type { DisciplinaAditivo } from "@/components/AditivoProjetoDialogs";
 
 interface ProjetoAtividadesPanelProps {
   projetoId: string;

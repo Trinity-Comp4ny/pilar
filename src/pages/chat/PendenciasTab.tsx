@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { AprovarAditivoProjeto } from "@/pages/projetos/components/AditivoProjetoDialogs";
+import { AprovarAditivoProjeto } from "@/components/AditivoProjetoDialogs";
 import { AditivoReviewCard } from "@/components/AditivoReviewCard";
 import { usePendenciasAgentes, useRejeitarEscopo, useAdiarEscopo, type PendenciaAditivo } from "@/hooks/useEscopos";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
