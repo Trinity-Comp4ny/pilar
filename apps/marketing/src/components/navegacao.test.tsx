@@ -271,11 +271,21 @@ describe("CTAs para a demonstração em toda página", () => {
     "/%s oferece demonstração, preserva o acesso aos preços e distingue o pedido de implantação",
     async (slug) => {
       renderNaRota(<PublicoPage slug={slug} />, `/${slug}`);
-      const demonstracao = screen.getByRole("link", { name: "Agendar demonstração" });
-      expect(demonstracao).toHaveAttribute("href", DEMO_URL);
-      demonstracao.addEventListener("click", (e) => e.preventDefault());
-      await userEvent.click(demonstracao);
+      // Dois pedidos de demonstração: o da hero e o ao lado da comparação com planilha e ERP.
+      const demonstracoes = screen.getAllByRole("link", { name: "Agendar demonstração" });
+      expect(demonstracoes).toHaveLength(2);
+      for (const demonstracao of demonstracoes) {
+        expect(demonstracao).toHaveAttribute("href", DEMO_URL);
+        demonstracao.addEventListener("click", (e) => e.preventDefault());
+        await userEvent.click(demonstracao);
+      }
       expect(trackCta).toHaveBeenCalledWith("agende_demo", `publico_${slug}`);
+      expect(trackCta).toHaveBeenCalledWith("agende_demo", `publico_${slug}_comparacao`);
+
+      for (const comparativo of ["planilha", "erp-construtora", "whatsapp"]) {
+        const link = document.querySelector(`a[href="/vs/${comparativo}"]`);
+        expect(link, `/vs/${comparativo}`).not.toBeNull();
+      }
 
       for (const planos of screen.getAllByRole("link", { name: "Ver planos" })) {
         expect(planos).toHaveAttribute("href", "/planos");

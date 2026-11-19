@@ -7,10 +7,14 @@ import { InicioAssistidoSection } from "../components/InicioAssistidoSection";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { ARTIGOS_POR_SLUG } from "../lib/blog";
+import { COMPARATIVOS_POR_SLUG, type ComparativoSlug } from "../lib/comparativos";
 import { DEMO_URL } from "../lib/contato";
 import { MODULOS_POR_SLUG } from "../lib/modules";
 import { PUBLICOS_POR_SLUG, type PublicoSlug } from "../lib/publicos";
 import { useJsonLd, usePageMeta } from "../lib/seo";
+
+/** Quem está escolhendo sistema compara com isto antes de pedir demonstração. */
+const COMPARACOES: ComparativoSlug[] = ["planilha", "erp-construtora", "whatsapp"];
 
 /**
  * Página por público (engenharia, arquitetura). Mesmo esqueleto das páginas de
@@ -141,6 +145,48 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
               </ul>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      <section className="bg-paper px-5 pb-16 md:px-10 md:pb-20">
+        <div className="mx-auto max-w-6xl">
+          <Reveal variant="up" className="mb-8 max-w-2xl">
+            <h2 className="text-[32px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[850px]:text-[25px]">
+              Planilha, ERP ou <span className="italic text-ink/45">sistema por disciplina?</span>
+            </h2>
+            <p className="mt-3 text-[14.5px] leading-relaxed text-ink-soft">
+              Compare o que cada caminho resolve e o que ele deixa para a sua equipe conferir à mão.
+            </p>
+          </Reveal>
+          <div className="grid gap-4 md:grid-cols-3">
+            {COMPARACOES.map((c, i) => {
+              const comp = COMPARATIVOS_POR_SLUG[c];
+              return (
+                <Reveal key={c} variant="up" delay={i * 0.05}>
+                  <Link
+                    to={`/vs/${c}`}
+                    onClick={() => trackCta("ver_comparativo", `publico_${slug}_${c}`)}
+                    className="group flex h-full flex-col rounded-[20px] border border-paper-border/80 p-6 transition-colors hover:border-ink/25"
+                  >
+                    <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-ink/50">
+                      Pilar vs {comp.adversario}
+                    </p>
+                    <p className="mb-4 flex-1 text-[15px] leading-snug text-ink">{comp.headline}</p>
+                    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink">
+                      Ver o comparativo{" "}
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </Link>
+                </Reveal>
+              );
+            })}
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `publico_${slug}_comparacao`)}>
+              Agendar demonstração
+            </SplitButton>
+            <span className="text-[12.5px] text-ink-muted">Veja o fluxo com os dados do seu escritório.</span>
+          </div>
         </div>
       </section>
 
