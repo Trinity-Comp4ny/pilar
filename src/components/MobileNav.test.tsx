@@ -68,6 +68,7 @@ beforeEach(() => {
     currentPath: "/projetos/cronograma",
     currentView: null,
     selectModule,
+    moduloVisivel: () => true,
     moduleGroups: [
       { label: null, entries: [item("Projetos", "/projetos"), item("Cronograma", "/projetos/cronograma")] },
       { label: "Outros", entries: [item("Mapa", "/projetos/mapa", true, "Sem acesso"), item("Clima", "/x", true)] },
