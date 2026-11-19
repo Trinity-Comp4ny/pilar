@@ -9,7 +9,11 @@ export interface ResultadoRedacao {
 }
 
 const REGRAS: Array<{ tipo: TipoRedacao; re: RegExp; marca: string }> = [
-  { tipo: "url_token", re: /https?:\/\/[^\s]*[?&](?:token|key|apikey|api_key|access_token|secret)=[^\s]+/gi, marca: "[URL REDIGIDA]" },
+  {
+    tipo: "url_token",
+    re: /https?:\/\/[^\s]*[?&](?:token|key|apikey|api_key|access_token|secret)=[^\s]+/gi,
+    marca: "[URL REDIGIDA]",
+  },
   { tipo: "email", re: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, marca: "[EMAIL]" },
   { tipo: "cnpj", re: /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, marca: "[CNPJ]" },
   { tipo: "cpf", re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, marca: "[CPF]" },
