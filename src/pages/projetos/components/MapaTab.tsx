@@ -1,18 +1,15 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
-import { PlacaSelect } from "@/components/placa/PlacaSelect";
 import { toast } from "sonner";
 import { dataDaPlaca, PLACA_LABEL, PLACA_STATUS, placaStatusDe, type PlacaStatus } from "@/lib/placa";
 import { FilterSelect } from "@/components/filters/FilterBar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { MapaDetalheSheet } from "./MapaDetalheSheet";
 import {
   MapPin,
   ExternalLink,
@@ -23,8 +20,6 @@ import {
   Minimize,
   AlertCircle,
   Building2,
-  Calendar,
-  DollarSign,
 } from "lucide-react";
 
 import type { Map as LeafletMap } from "leaflet";
@@ -38,7 +33,7 @@ import {
 } from "@/pages/mapa/constants";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
-import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
+import { PROJECT_STATUS, type ProjectStatus } from "@/constants";
 import { cn } from "@/lib/utils";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
@@ -53,15 +48,7 @@ type ProjetoMapaLinha = Omit<ProjetoMapa, "latitude" | "longitude"> & {
   longitude: number | null;
 };
 
-function formatDate(d: string | null) {
-  if (!d) return null;
-  // Parse local (T00:00:00): sem isso, uma data-only em UTC-3 exibia o dia anterior.
-  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
-}
-
 export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = {}) {
-  const moneyMask = useMoneyMask();
-  const formatCurrency = (v: number | null) => (v ? moneyMask(v) : null);
   const navigate = useNavigate();
   const { can } = usePermissions();
   const [searchParams] = useSearchParams();
@@ -596,119 +583,15 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
         </>
       )}
 
-      {/* Painel lateral de detalhes do projeto */}
-      <Sheet open={!!sheetProjeto} onOpenChange={(open) => !open && setSheetProjeto(null)}>
-        <SheetContent side="right" className="w-[340px] sm:w-[400px] overflow-y-auto">
-          {sheetProjeto && (
-            <>
-              <SheetHeader className="pb-4">
-                <div className="flex items-start gap-3">
-                  <div
-                    className="w-3.5 h-3.5 rounded-full mt-1 shrink-0"
-                    style={{
-                      background: STATUS_MARKER_COLORS[sheetProjeto.status] || "hsl(var(--status-unknown))",
-                    }}
-                  />
-                  <div>
-                    <SheetTitle className="text-base leading-snug">{sheetProjeto.nome}</SheetTitle>
-                  </div>
-                </div>
-              </SheetHeader>
-
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {sheetProjeto.tipo === "obra" ? "Obra" : "Projeto"}
-                  </Badge>
-                  <Badge className={PROJECT_STATUS_CONFIG[sheetProjeto.status]?.color || ""}>
-                    {sheetProjeto.status}
-                  </Badge>
-                  {sheetProjeto.prioridade && (
-                    <Badge variant="outline" className="text-xs">
-                      {sheetProjeto.prioridade}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="space-y-1.5">
-                    <p className="text-2xs text-muted-foreground uppercase tracking-wide">Placa</p>
-                    <PlacaSelect
-                      value={sheetProjeto.placa_status}
-                      onChange={(status) => trocarPlaca(sheetProjeto, status)}
-                    />
-                  </div>
-
-                  {sheetProjeto.cliente_nome && (
-                    <div className="flex items-start gap-2.5">
-                      <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Cliente</p>
-                        <p className="text-sm">{sheetProjeto.cliente_nome}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {sheetProjeto.valor_contrato && (
-                    <div className="flex items-start gap-2.5">
-                      <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Valor do contrato</p>
-                        <p className="text-sm font-medium">{formatCurrency(sheetProjeto.valor_contrato)}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {(sheetProjeto.data_inicio || sheetProjeto.data_previsao) && (
-                    <div className="flex items-start gap-2.5">
-                      <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Período</p>
-                        <p className="text-sm">
-                          {formatDate(sheetProjeto.data_inicio) ?? "—"}
-                          {" → "}
-                          {formatDate(sheetProjeto.data_previsao) ?? "—"}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {sheetProjeto.area_m2 && (
-                    <div className="flex items-start gap-2.5">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Área</p>
-                        <p className="text-sm">{sheetProjeto.area_m2.toLocaleString("pt-BR")} m²</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {sheetProjeto.localizacao && (
-                    <div className="flex items-start gap-2.5">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Endereço</p>
-                        <p className="text-sm text-muted-foreground">{sheetProjeto.localizacao}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  className="w-full gap-2"
-                  onClick={() => {
-                    navigate(rotaDe(sheetProjeto));
-                    setSheetProjeto(null);
-                  }}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  {sheetProjeto.tipo === "obra" ? "Abrir Obra" : "Abrir Projeto"}
-                </Button>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      <MapaDetalheSheet
+        item={sheetProjeto}
+        onClose={() => setSheetProjeto(null)}
+        onTrocarPlaca={trocarPlaca}
+        onAbrir={(item) => {
+          navigate(rotaDe(item));
+          setSheetProjeto(null);
+        }}
+      />
     </div>
   );
 }
