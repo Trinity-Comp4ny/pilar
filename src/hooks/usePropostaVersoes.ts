@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { validarPropostaPdf } from "../lib/propostaPdf";
+import { validarPropostaPdf } from "@/lib/propostaPdfArquivo";
 import { toast } from "sonner";
 
 const BUCKET = "proposta-pdfs";

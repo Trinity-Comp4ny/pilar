@@ -1,10 +1,11 @@
+import { PropostaLinkVersao } from "@/components/propostas/PropostaLinkVersao";
 import { useRef, useState } from "react";
 import { Download, FilePlus2 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { type Lead } from "@/hooks/useLeads";
 import { useCreateProposta, usePropostas } from "@/hooks/usePropostas";
-import { usePropostaVersoes } from "../hooks/usePropostaVersoes";
-import { propostaPdfSchema, validarPropostaPdf } from "../lib/propostaPdf";
+import { usePropostaVersoes } from "@/hooks/usePropostaVersoes";
+import { propostaPdfSchema, validarPropostaPdf } from "@/lib/propostaPdfArquivo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -187,6 +188,10 @@ export function LeadPropostasPanel({ lead, canEdit }: { lead: Lead; canEdit: boo
                     )
                   )}
                 </div>
+                <PropostaLinkVersao
+                  versao={v}
+                  podePublicar={podeEditar && i === 0 && ["rascunho", "enviada"].includes(p.status)}
+                />
               </article>
             ))}
           </div>

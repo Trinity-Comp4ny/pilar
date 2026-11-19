@@ -11,7 +11,7 @@ vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 vi.mock("file-saver", () => ({ saveAs: vi.fn() }));
 import { saveAs } from "file-saver";
 import { toast } from "sonner";
-import { usePropostaVersoes } from "./usePropostaVersoes";
+import { usePropostaVersoes } from "@/hooks/usePropostaVersoes";
 let client: QueryClient;
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={client}>{children}</QueryClientProvider>

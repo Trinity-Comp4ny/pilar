@@ -33,10 +33,11 @@ vi.mock("./hooks/useProjetoPausas", () => ({ useProjetoPausas: () => ({ aberta: 
 const detalhe = vi.hoisted(() => ({ valor: {} as Record<string, unknown> }));
 vi.mock("./hooks/useProjetoDetail", () => ({ useProjetoDetail: () => detalhe.valor }));
 vi.mock("./components/ProjetoDetailTabs", () => ({
-  ProjetoDetailTabs: ({ indicadores }: { indicadores?: ReactNode }) => (
+  ProjetoDetailTabs: ({ indicadores, detalhes }: { indicadores?: ReactNode; detalhes?: ReactNode }) => (
     <div>
       abas-do-projeto
       {indicadores}
+      {detalhes}
     </div>
   ),
 }));
@@ -151,8 +152,7 @@ describe("ProjetoDetail", () => {
   it("mostra KPIs, registra nos recentes e o título", () => {
     montar();
     expect(screen.getByText("abas-do-projeto")).toBeInTheDocument();
-    expect(screen.getByText("25.4%")).toBeInTheDocument();
-    expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Detalhes do projeto" })).toBeInTheDocument();
     expect(screen.getByText(/No prazo/)).toBeInTheDocument();
     expect(recentes.registrar).toHaveBeenCalledWith({
       tipo: "projeto",

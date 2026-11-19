@@ -161,3 +161,16 @@ describe("ProjetoVisaoGeralTab", () => {
     expect(screen.queryByText("Projeto iniciado")).not.toBeInTheDocument();
   });
 });
+
+it("usa as entregas aprovadas em vez de misturar a porcentagem com disciplinas", () => {
+  render(
+    <ProjetoVisaoGeralTab
+      projetoId="p1"
+      disciplinas={[disciplina("Estrutural")]}
+      progresso={30}
+      entregas={{ total: 4, aprovadas: 3 }}
+    />
+  );
+  expect(screen.getByText("3 de 4 entregas aprovadas")).toBeInTheDocument();
+  expect(screen.getByText("75%")).toBeInTheDocument();
+});

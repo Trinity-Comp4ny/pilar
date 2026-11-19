@@ -816,6 +816,7 @@ export default function Propostas() {
         proposta={detailProposta}
         canEdit={canEdit}
         canDelete={canDelete}
+        podeVerLinks={can("financeiro")}
         hoje={hoje}
         onEdit={() => detailPropostaId && openEdit(detailPropostaId)}
         onDelete={() => {
