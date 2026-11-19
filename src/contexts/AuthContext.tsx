@@ -118,15 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return;
     }
-    const { empresas: empresaBruta, ...resto } = data as unknown as Profile & {
-      empresas: (Empresa & { pilar_subscriptions?: AssinaturaInicial | AssinaturaInicial[] | null }) | null;
+    const bruto = data as unknown as ProfileWithEmpresa & {
+      empresas: { pilar_subscriptions?: AssinaturaInicial | AssinaturaInicial[] | null } | null;
     };
-    const { pilar_subscriptions: assinaturas, ...empresaSemAssinatura } = empresaBruta ?? {};
-    const assinatura = empresaBruta ? ((Array.isArray(assinaturas) ? assinaturas[0] : assinaturas) ?? null) : undefined;
+    const assinaturas = bruto.empresas?.pilar_subscriptions;
     const p: ProfileWithEmpresa = {
-      ...resto,
-      empresas: empresaBruta ? (empresaSemAssinatura as Empresa) : null,
-      assinatura,
+      ...bruto,
+      assinatura: bruto.empresas ? ([assinaturas ?? null].flat()[0] ?? null) : undefined,
     };
     setProfile(p);
     setProfileError(false);
