@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fake, rpcComEmpresa } from "@/pages/obras/testing/supabaseFake";
@@ -13,9 +13,11 @@ import type { DisciplinaResponsavel, Projeto, ProjetoDisciplinaDB } from "@/type
 vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/pages/obras/testing/supabaseFake")).fake.supabase,
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() } }));
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ profile: { first_name: "Ana", last_name: "Lima", email: "ana@x" } }),
+  useAuth: () => ({
+    profile: { id: "u-1", empresa_id: "emp-1", first_name: "Ana", last_name: "Lima", email: "ana@x" },
+  }),
 }));
 const fluxos = vi.hoisted(() => ({ lista: [] as unknown[] }));
 vi.mock("@/hooks/useFluxosDisciplinas", () => ({ useFluxosDisciplinas: () => ({ data: fluxos.lista }) }));
@@ -28,7 +30,47 @@ const stub = vi.hoisted(
       return <div data-testid={nome}>{nome}</div>;
     }
 );
-vi.mock("./ProjetoVisaoGeralTab", () => ({ ProjetoVisaoGeralTab: stub("aba-visao-geral") }));
+vi.mock("./ProjetoVisaoGeralTab", () => ({
+  ProjetoVisaoGeralTab: ({ indicadores }: { indicadores: ReactNode }) => (
+    <div data-testid="aba-visao-geral">aba-visao-geral{indicadores}</div>
+  ),
+}));
+const acesso = vi.hoisted(() => ({ isAdmin: true, role: "admin" }));
+vi.mock("@/hooks/usePermissions", () => ({
+  usePermissions: () => ({ ...acesso, can: () => acesso.isAdmin }),
+}));
+vi.mock("@/components/tarefas/TarefaDialog", () => ({
+  TarefaDialog: (p: {
+    tarefa?: { titulo: string };
+    defaultTitulo?: string;
+    defaultDisciplinaId?: string;
+    defaultDescricao?: string;
+    readOnly: boolean;
+    projetoFixoId: string;
+    onSave: (input: unknown) => void;
+    onOpenChange: (open: boolean) => void;
+  }) => (
+    <div role="dialog">
+      <span>{p.tarefa?.titulo ?? p.defaultTitulo ?? "Nova tarefa do projeto"}</span>
+      <span>{p.defaultDisciplinaId}</span>
+      <span>{p.defaultDescricao}</span>
+      <button
+        disabled={p.readOnly}
+        onClick={() =>
+          p.onSave({
+            titulo: "Ajustar prancha",
+            status: "a_fazer",
+            projeto_id: p.projetoFixoId,
+            projeto_disciplina_id: p.defaultDisciplinaId,
+          })
+        }
+      >
+        Salvar tarefa
+      </button>
+      <button onClick={() => p.onOpenChange(false)}>Cancelar tarefa</button>
+    </div>
+  ),
+}));
 vi.mock("./PagamentosTab", () => ({ PagamentosTab: stub("aba-pagamentos") }));
 vi.mock("./EscopoTab", () => ({ EscopoTab: stub("aba-escopo") }));
 vi.mock("./ProjetoHistoricoTab", () => ({ ProjetoHistoricoTab: stub("aba-historico") }));
@@ -88,6 +130,8 @@ vi.mock("./DisciplinaDetailDialog", () => ({
   },
 }));
 
+Element.prototype.hasPointerCapture ??= () => false;
+Element.prototype.releasePointerCapture ??= () => {};
 Element.prototype.scrollIntoView ??= () => {};
 Element.prototype.scrollTo ??= () => {};
 globalThis.ResizeObserver ??= class {
@@ -227,8 +271,158 @@ describe("ProjetoDetailTabs", () => {
     localStorage.clear();
     fluxos.lista = [];
     mobile.value = false;
+    acesso.isAdmin = true;
+    acesso.role = "admin";
     salvar.mockResolvedValue(undefined);
     remover.mockResolvedValue(undefined);
+  });
+
+  const pendente = {
+    id: "t-1",
+    titulo: "Conferir fundações",
+    status: "a_fazer",
+    prazo: "2020-01-01",
+    projeto_disciplina_id: "d-1",
+    horas_reais: 2,
+    retrabalho: true,
+    etapa_id: "et-1",
+    responsaveis: [{ pessoa: { id: "pes-1", nome: "Ana" } }],
+  };
+  const concluida = { id: "t-2", titulo: "Emitir memorial", status: "concluida", horas_reais: 6, responsaveis: [] };
+  const revisao = {
+    id: "r-0",
+    titulo: "Prancha",
+    tipo: "aprovacao",
+    status: "revisao_solicitada",
+    numero_revisao: 0,
+    projeto_disciplina_id: "d-1",
+    resposta_cliente: "Conferir a cota",
+    drive_url: "https://drive.google.com/file/d/r0",
+    created_at: "2026-01-01",
+    projeto_disciplinas: { nome: "Estrutural" },
+  };
+
+  function dadosDoProjeto({ falha = false, versaoSeguinte = false } = {}) {
+    fake.responder(({ tabela, op, filtros }) => {
+      if (tabela === "tarefas" && op === "insert") return { data: { id: "t-nova" }, error: null };
+      if (tabela === "tarefas" && op === "update") return { data: null, error: falha ? { message: "falhou" } : null };
+      if (tabela === "tarefas" && op === "select")
+        return { data: falha ? null : [pendente, concluida], error: falha ? { message: "falhou" } : null };
+      if (tabela === "pessoas") return { data: [{ id: "pes-1", nome: "Ana" }], error: null };
+      if (tabela === "tarefa_etapas")
+        return { data: [{ id: "et-1", nome: "A fazer", ordem: 0, bucket: "a_fazer" }], error: null };
+      if (tabela === "portal_entregas" && op === "select") {
+        if (filtros.some(([tipo]) => tipo === "not")) return { data: null, count: 1, error: null };
+        return {
+          data: [
+            revisao,
+            { ...revisao, id: "antiga", numero_revisao: null, titulo: "Solicitação antiga" },
+            ...(versaoSeguinte
+              ? [{ ...revisao, id: "r-1", numero_revisao: 1, revisao_anterior_id: "r-0", status: "pendente" }]
+              : []),
+          ],
+          error: null,
+        };
+      }
+      return undefined;
+    });
+  }
+
+  it.each([
+    [/Tarefas concluídas · 1\/2/, "#tarefas"],
+    [/Tarefas em atraso · 1/, "#tarefas"],
+    [/Retrabalho nas tarefas · 25,0%/, "#tarefas"],
+    [/Revisões internas/, "#revisoes"],
+    [/Aguardando cliente · 1/, "#revisoes"],
+    [/Horas das disciplinas · 2h \/ 8h/, "#disciplinas"],
+    [/Prazo ·/, "#cronograma"],
+  ])("leva do indicador %s à seção correspondente", async (indicador, hash) => {
+    dadosDoProjeto();
+    montar("/projetos/proj-1", {
+      dbDisciplinas: dbDisciplinas.map((d) => ({ ...d, horas_realizadas: 1, horas_estimadas: 4 })),
+    });
+    fireEvent.click(await screen.findByRole("button", { name: indicador }));
+    await waitFor(() => expect(rota.atual).toContain(hash));
+    if (indicador.source.includes("atraso")) {
+      expect(await screen.findByText("Conferir fundações")).toBeInTheDocument();
+      expect(screen.queryByText("Emitir memorial")).not.toBeInTheDocument();
+    }
+  });
+
+  it("agrupa tarefas por disciplina, permite filtros e reabre a mesma tarefa para editar", async () => {
+    dadosDoProjeto();
+    montar("/projetos/proj-1#tarefas");
+    expect(await screen.findByText("Conferir fundações")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Estrutural/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Sem disciplina/ })).toBeInTheDocument();
+    const escolher = (rotulo: string, opcao: string) => {
+      fireEvent.keyDown(screen.getByRole("combobox", { name: rotulo }), { key: "Enter" });
+      fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: opcao }));
+    };
+    escolher("Filtrar por responsável", "Ana");
+    expect(screen.queryByText("Emitir memorial")).not.toBeInTheDocument();
+    escolher("Filtrar por status", "Concluído · sem coluna");
+    expect(screen.getByText(/Nenhuma tarefa corresponde/)).toBeInTheDocument();
+    escolher("Filtrar por status", "A fazer");
+    fireEvent.click(screen.getByRole("button", { name: /Conferir fundações/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Salvar tarefa" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(fake.escritas("tarefas")[0]).toMatchObject({ op: "update", filtros: [["eq", "id", "t-1"]] });
+    fireEvent.click(screen.getByRole("button", { name: "Nova tarefa" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Nova tarefa do projeto");
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar tarefa" }));
+    escolher("Filtrar por responsável", "Todos os responsáveis");
+    escolher("Filtrar por status", "Todos os status");
+    fireEvent.click(screen.getAllByRole("button", { name: "Adicionar tarefa" })[0]);
+    expect(screen.getByRole("dialog")).toHaveTextContent("d-1");
+  });
+
+  it("permite recarregar tarefas depois de uma falha na consulta", async () => {
+    dadosDoProjeto({ falha: true });
+    montar("/projetos/proj-1#tarefas");
+    expect(screen.getByRole("status")).toHaveTextContent("Carregando tarefas");
+    const retry = await screen.findByRole("button", { name: /Tentar novamente/ });
+    dadosDoProjeto();
+    fireEvent.click(retry);
+    expect(await screen.findByText("Conferir fundações")).toBeInTheDocument();
+  });
+
+  it("transforma o pedido de revisão numa tarefa vinculada", async () => {
+    dadosDoProjeto();
+    montar("/projetos/proj-1#revisoes");
+    expect(await screen.findByText("R00")).toBeInTheDocument();
+    expect(screen.queryByText("Solicitação antiga")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Criar tarefa de ajuste" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("Conferir a cota");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Salvar tarefa" }));
+    await waitFor(() =>
+      expect(fake.escritas("tarefas")[0]?.payload).toMatchObject({
+        projeto_id: "proj-1",
+        projeto_disciplina_id: "d-1",
+        portal_entrega_id: "r-0",
+      })
+    );
+  });
+
+  it("publica nova versão a partir da solicitada pelo cliente", async () => {
+    dadosDoProjeto();
+    montar("/projetos/proj-1#revisoes");
+    fireEvent.click(await screen.findByRole("button", { name: "Publicar nova versão" }));
+    expect(screen.getByLabelText("Título")).toHaveValue("Prancha");
+    fireEvent.change(screen.getByLabelText("Link do Google Drive"), {
+      target: { value: "https://drive.google.com/file/d/r1" },
+    });
+    dadosDoProjeto({ versaoSeguinte: true });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar ao cliente" }));
+    expect(await screen.findByText("R01")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Publicar nova versão" })).not.toBeInTheDocument();
+    expect(fake.escritas("portal_entregas")[0]?.payload).toMatchObject({
+      revisao_anterior_id: "r-0",
+      tipo: "aprovacao",
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Revisões internas abertas/ }));
+    await waitFor(() => expect(rota.atual).toContain("#disciplinas"));
   });
 
   it("abre em Disciplinas/tabela e troca de aba atualiza o hash", async () => {
