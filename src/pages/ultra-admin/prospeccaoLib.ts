@@ -77,12 +77,7 @@ export const SEGMENTOS: Record<string, Segmento> = {
   },
 };
 
-const semAcento = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
+const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 /** Reconhece o segmento pelo rótulo da planilha. Devolve null quando não encaixa em nenhum. */
 export function segmentoPorRotulo(rotulo: string | null | undefined): Segmento | null {
@@ -231,9 +226,7 @@ function campo(linha: Record<string, unknown>, chaves: readonly string[]): strin
 }
 
 /** Converte uma linha (cabeçalho → valor) em lead, ou diz por que foi descartada. */
-export function linhaParaLead(
-  linha: Record<string, unknown>
-): { lead: LeadImportado } | { descarte: MotivoDescarte } {
+export function linhaParaLead(linha: Record<string, unknown>): { lead: LeadImportado } | { descarte: MotivoDescarte } {
   const nome = campo(linha, ALIASES.nome);
   if (!nome) return { descarte: "sem_nome" };
   const segmento = segmentoPorRotulo(campo(linha, ALIASES.segmento));
@@ -274,9 +267,18 @@ export function linhaParaLead(
 
 // ─── Mensagem ────────────────────────────────────────────────────────────────
 
-const CIDADES_DA_REGIAO = new Set(
-  ["marilia", "garca", "tupa", "oriente", "pompeia", "vera cruz", "lucelia", "assis", "bauru", "echapora"]
-);
+const CIDADES_DA_REGIAO = new Set([
+  "marilia",
+  "garca",
+  "tupa",
+  "oriente",
+  "pompeia",
+  "vera cruz",
+  "lucelia",
+  "assis",
+  "bauru",
+  "echapora",
+]);
 
 export function ehDaRegiao(cidade: string | null | undefined): boolean {
   return CIDADES_DA_REGIAO.has(semAcento(cidade ?? ""));

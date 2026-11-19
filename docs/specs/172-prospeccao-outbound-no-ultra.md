@@ -30,12 +30,12 @@ um com um toque, que abre o WhatsApp com o texto pronto. Quem envia é sempre o 
 
 ## Segmentos
 
-| Segmento | Tratamento | Mensagem enfatiza |
-| --- | --- | --- |
-| Arquitetura, engenharia (civil, estrutural, MEP), projeto técnico | **ICP vigente** | orçamentos, projetos, equipe e financeiro (texto atual) |
-| Engenharia com obra | ICP vigente | gestão de obras |
+| Segmento                                                                                  | Tratamento                                            | Mensagem enfatiza                                              |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| Arquitetura, engenharia (civil, estrutural, MEP), projeto técnico                         | **ICP vigente**                                       | orçamentos, projetos, equipe e financeiro (texto atual)        |
+| Engenharia com obra                                                                       | ICP vigente                                           | gestão de obras                                                |
 | Marcenaria, móveis planejados, marmoraria, vidraçaria, esquadrias e alumínio, serralheria | **Teste de mercado**, marcado `segmento_teste = true` | orçamento, medição, produção, instalação e cobrança por pedido |
-| Construtoras | **Teste de mercado** (fora do ICP) | etapas, equipes, atividades e financeiro da obra |
+| Construtoras                                                                              | **Teste de mercado** (fora do ICP)                    | etapas, equipes, atividades e financeiro da obra               |
 
 O ICP em `DECISOES.md` é escritório de projeto técnico, não construtora. Os segmentos de teste
 são **adjacentes**: entram na prospecção como experimento, medidos por taxa de resposta e
@@ -63,11 +63,11 @@ Como quase nenhum lead tem nome de pessoa confirmado, a **variante `empresa` é 
 Telefone de diretório não é opt-in (a própria aba "Política e processo" do kit diz isso, e a Meta
 restringe número que recebe denúncia). O risco do envio frio não some; a spec o reduz por regra:
 
-| Lead | Canal sugerido no card |
-| --- | --- |
-| Celular válido | WhatsApp (botão `wa.me`) |
-| Só fixo, com e-mail | E-mail (modelo do kit) |
-| Só fixo, sem e-mail | Ligação (roteiro do kit) |
+| Lead                            | Canal sugerido no card       |
+| ------------------------------- | ---------------------------- |
+| Celular válido                  | WhatsApp (botão `wa.me`)     |
+| Só fixo, com e-mail             | E-mail (modelo do kit)       |
+| Só fixo, sem e-mail             | Ligação (roteiro do kit)     |
 | Pediu para parar, ou sinalizado | Nenhum (`prospec_bloqueios`) |
 
 Mitigações obrigatórias: **chip e WhatsApp Business dedicados** (não o número pessoal), 10 por dia em
@@ -177,12 +177,12 @@ numa empresa interna, para o pipeline comercial seguir lá.
 
 ## Custo (estimativa; confirmar na tabela de preços do Google antes de ligar)
 
-| Item | Custo |
-| --- | --- |
+| Item                                                                                                                                     | Custo                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Google Places, busca com telefone (faixa Enterprise: 1.000 buscas grátis por mês, depois ~US$ 35 por 1.000; confirmar na tabela oficial) | **R$ 0** no ritmo de 200 leads/mês; 5.000 buscas/mês ≈ US$ 140; **teto semanal e cota diária no GCP obrigatórios** |
-| Base de CNPJ (BrasilAPI ou dump da Receita) | R$ 0 |
-| Modelo de linguagem (qualificar e conferir 200 leads/mês) | ~US$ 2 a 5 |
-| WhatsApp | R$ 0 (o fundador envia do próprio aparelho) |
+| Base de CNPJ (BrasilAPI ou dump da Receita)                                                                                              | R$ 0                                                                                                               |
+| Modelo de linguagem (qualificar e conferir 200 leads/mês)                                                                                | ~US$ 2 a 5                                                                                                         |
+| WhatsApp                                                                                                                                 | R$ 0 (o fundador envia do próprio aparelho)                                                                        |
 
 **Termos do Google (a confirmar antes da fase 1):** pelo que se conhece, guardar conteúdo do Places além
 do `place_id` é restrito. Se for o caso, `prospec_leads` guarda só `place_id` para leads vindos do
@@ -195,8 +195,8 @@ estoura a conta. Cobertura nacional completa é o que mais custa, por isso a cas
 ## Fases
 
 0. **Importar a base existente** (362 leads, 254 com celular) + canal por lead + tela Hoje + modelos
-   + botão `wa.me` + resultados. Já dá para disparar 10 por dia sem nenhuma API nova (≈ 25 dias úteis
-   só de celular). Sem Places, sem cron. O arquivo de origem não entra no repositório.
+   - botão `wa.me` + resultados. Já dá para disparar 10 por dia sem nenhuma API nova (≈ 25 dias úteis
+     só de celular). Sem Places, sem cron. O arquivo de origem não entra no repositório.
 1. **Mapeador Places + cascata** + cron semanal + teto de gasto + cobertura por região.
 2. **Enriquecimento por CNPJ** (decisor pelo quadro societário, segmento por CNAE).
 3. **Medição**: taxa de resposta e de reunião por segmento, por modelo e por região; teste A/B de

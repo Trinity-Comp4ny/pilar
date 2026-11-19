@@ -130,13 +130,7 @@ export function useMontarFila() {
 }
 
 export type ResultadoEnvio =
-  | "enviei"
-  | "pulei"
-  | "numero_errado"
-  | "parar"
-  | "respondeu"
-  | "reuniao_marcada"
-  | "sem_interesse";
+  "enviei" | "pulei" | "numero_errado" | "parar" | "respondeu" | "reuniao_marcada" | "sem_interesse";
 
 export interface RegistroEnvio {
   leadId: string;
@@ -171,7 +165,9 @@ export interface ResultadoImportacao {
   bloqueados: number;
 }
 
-async function lerTodos<T>(buscar: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: Error | null }>) {
+async function lerTodos<T>(
+  buscar: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: Error | null }>
+) {
   const todos: T[] = [];
   for (let de = 0; ; de += 1000) {
     const { data, error } = await buscar(de, de + 999);
