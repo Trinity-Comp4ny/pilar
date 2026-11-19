@@ -11,6 +11,20 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-19 · Módulos ocultáveis por empresa e por usuário (lista de exclusão)
+
+**Decisão:** o admin do escritório pode ocultar módulos (Gestão, Projetos, Obras) para a empresa toda e por usuário.
+O modelo guarda o que está oculto (vazio = vê tudo), admin nunca é restringido, e a fase 1 é só experiência
+(menu e rota), não segurança de dado.
+
+Contexto: escritório de arquitetura que não usa Obras acha o menu sujo; dentro do escritório cada pessoa usa uma parte.
+A lista de exclusão evita o bug que levou ao ADR 0029. Detalhe na [SPEC 171](../specs/171-ocultar-modulos-por-empresa-e-usuario.md)
+e no [ADR 0066](../architecture/adr/0066-modulos-ocultos-por-usuario-lista-de-exclusao.md).
+
+**Supera:** parcialmente o ADR 0029 (volta um eixo por usuário, só de exclusão).
+
+---
+
 ## 2026-11-19 · Cérebro de reuniões no Ultra começa com colagem manual
 
 **Decisão:** a ingestão das reuniões do Granola começa por colagem manual da transcrição no Ultra Admin. A API do
