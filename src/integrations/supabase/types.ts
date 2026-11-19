@@ -1453,6 +1453,47 @@ export type Database = {
           },
         ]
       }
+      compromisso: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          para: string | null
+          prazo: string | null
+          prometido_por: string
+          reuniao_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          para?: string | null
+          prazo?: string | null
+          prometido_por: string
+          reuniao_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          para?: string | null
+          prazo?: string | null
+          prometido_por?: string
+          reuniao_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compromisso_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consentimentos_cobranca: {
         Row: {
           created_at: string
@@ -8745,6 +8786,145 @@ export type Database = {
           },
         ]
       }
+      reuniao: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          granola_note_id: string | null
+          id: string
+          ocorreu_em: string
+          origem_contato: string | null
+          origem_nome: string | null
+          proximo_passo: string | null
+          proximo_passo_em: string | null
+          redacoes: Json
+          status: string
+          tipo: string
+          tipo_confianca: number | null
+          tipo_corrigido: string | null
+          titulo: string
+          transcript_redigido: string | null
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          granola_note_id?: string | null
+          id?: string
+          ocorreu_em: string
+          origem_contato?: string | null
+          origem_nome?: string | null
+          proximo_passo?: string | null
+          proximo_passo_em?: string | null
+          redacoes?: Json
+          status?: string
+          tipo?: string
+          tipo_confianca?: number | null
+          tipo_corrigido?: string | null
+          titulo: string
+          transcript_redigido?: string | null
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          granola_note_id?: string | null
+          id?: string
+          ocorreu_em?: string
+          origem_contato?: string | null
+          origem_nome?: string | null
+          proximo_passo?: string | null
+          proximo_passo_em?: string | null
+          redacoes?: Json
+          status?: string
+          tipo?: string
+          tipo_confianca?: number | null
+          tipo_corrigido?: string | null
+          titulo?: string
+          transcript_redigido?: string | null
+        }
+        Relationships: []
+      }
+      reuniao_insight: {
+        Row: {
+          categoria: string
+          citacao: string
+          created_at: string
+          falante: string
+          id: string
+          modulo_pilar: string | null
+          removido: boolean
+          reuniao_id: string
+          texto: string
+          texto_duvidoso: boolean
+        }
+        Insert: {
+          categoria: string
+          citacao: string
+          created_at?: string
+          falante?: string
+          id?: string
+          modulo_pilar?: string | null
+          removido?: boolean
+          reuniao_id: string
+          texto: string
+          texto_duvidoso?: boolean
+        }
+        Update: {
+          categoria?: string
+          citacao?: string
+          created_at?: string
+          falante?: string
+          id?: string
+          modulo_pilar?: string | null
+          removido?: boolean
+          reuniao_id?: string
+          texto?: string
+          texto_duvidoso?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reuniao_insight_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reuniao_segmento: {
+        Row: {
+          fim: number
+          id: string
+          inicio: number
+          proporcao_ruido: number | null
+          reuniao_id: string
+          tipo: string
+        }
+        Insert: {
+          fim: number
+          id?: string
+          inicio: number
+          proporcao_ruido?: number | null
+          reuniao_id: string
+          tipo: string
+        }
+        Update: {
+          fim?: number
+          id?: string
+          inicio?: number
+          proporcao_ruido?: number | null
+          reuniao_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reuniao_segmento_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sinapi_precos_insumo: {
         Row: {
           codigo: number
@@ -10866,6 +11046,7 @@ export type Database = {
       can_manage_equipe: { Args: never; Returns: boolean }
       can_view_financeiro: { Args: never; Returns: boolean }
       can_view_folha: { Args: never; Returns: boolean }
+      cerebro_resumo: { Args: never; Returns: Json }
       check_convite_rate_limit: {
         Args: { p_empresa_id: string }
         Returns: undefined

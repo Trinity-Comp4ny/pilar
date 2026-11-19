@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-19 · Cérebro de reuniões no Ultra começa com colagem manual
+
+**Decisão:** a ingestão das reuniões do Granola começa por colagem manual da transcrição no Ultra Admin. A API do
+Granola exige plano Business ou Enterprise e o plano atual é gratuito; a ingestão automática noturna fica para quando
+houver plano pago. Cada reunião é classificada e rende dores, ideias e objeções com citação literal; recomendação de
+feature exige 2 ou mais escritórios distintos, senão é hipótese. Só o texto redigido é gravado.
+
+Contexto: Fase 0 rodada em 3 transcrições reais. Plano e achados na [SPEC 169](../specs/169-cerebro-de-reunioes-no-ultra.md).
+
+**Supera:** nada. Perguntas abertas de base legal (gravação) e retenção bloqueiam colar transcrição de cliente em produção.
+
+---
+
 ## 2026-11-13 · Proposta em revisão: aquisição assistida e escopo de implantação
 
 **Direção da mudança:** as páginas `/engenharia` e `/arquitetura` destacam a demonstração, com preços a um clique.
