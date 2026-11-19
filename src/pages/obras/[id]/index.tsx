@@ -8,6 +8,7 @@ import {
   CloudRain,
   HardHat,
   LayoutList,
+  FileText,
   MapPin,
   Pencil,
   Scale,
@@ -44,6 +45,7 @@ import { ObraTarefasTab } from "../components/ObraTarefasTab";
 import { ObraContaTab } from "../components/ObraContaTab";
 import { ObraCotacoesTab } from "../components/ObraCotacoesTab";
 import { ObraEstoqueTab } from "../components/ObraEstoqueTab";
+import { ObraRelatoriosTab } from "../components/ObraRelatoriosTab";
 import { ObraResumoExecutivo } from "../components/ObraResumoExecutivo";
 
 import { PageLoader } from "@/components/motion/PageLoader";
@@ -128,6 +130,7 @@ export default function ObraDetalhePage() {
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Financeiro", icon: Wallet }] : []),
+    ...(showConta || showDiario ? [{ id: "relatorios", label: "Relatórios", icon: FileText }] : []),
     ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
     ...(mostrarAcessos ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
@@ -269,6 +272,16 @@ export default function ObraDetalhePage() {
               obra={obra}
               canEdit={canEdit}
               onIrParaCronograma={showCronograma ? () => setTab("cronograma") : undefined}
+            />
+          </TabsContent>
+        )}
+        {(showConta || showDiario) && (
+          <TabsContent value="relatorios">
+            <ObraRelatoriosTab
+              obraId={obra.id}
+              obraNome={obra.nome}
+              mostrarFinanceiro={showConta}
+              mostrarDiario={showDiario}
             />
           </TabsContent>
         )}
