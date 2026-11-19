@@ -278,6 +278,7 @@ export function ObraCronogramaTab({
         />
       ) : (
         <CronogramaGantt
+          nomeArquivo={`cronograma-${nomeDaObra ?? "obra"}`}
           fases={fases}
           recolhidos={recolhidos}
           onToggle={toggle}
