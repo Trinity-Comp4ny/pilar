@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { useJsonLd, usePageMeta } from "./seo";
+import { tituloParaBusca, useJsonLd, usePageMeta } from "./seo";
 
 /** O head do index.html, com as tags que o hook sobrescreve. */
 function montarHead() {
@@ -107,5 +107,22 @@ describe("useJsonLd", () => {
     rerender(<ComJsonLd dados={{ a: 2 }} />);
     expect(blocos()).toHaveLength(1);
     expect(JSON.parse(blocos()[0].textContent ?? "")).toEqual({ a: 2 });
+  });
+});
+
+describe("tituloParaBusca", () => {
+  it("mantém o sufixo da marca quando o título cabe em 60 caracteres", () => {
+    expect(tituloParaBusca("Planos | Pilar")).toBe("Planos | Pilar");
+  });
+
+  it("tira o sufixo quando ele estoura 60 caracteres", () => {
+    const longo = "Como controlar o prazo de projetos com várias disciplinas | Pilar";
+    expect(longo.length).toBeGreaterThan(60);
+    expect(tituloParaBusca(longo)).toBe("Como controlar o prazo de projetos com várias disciplinas");
+  });
+
+  it("não mexe em título longo que não termina com a marca", () => {
+    const longo = "x".repeat(70);
+    expect(tituloParaBusca(longo)).toBe(longo);
   });
 });

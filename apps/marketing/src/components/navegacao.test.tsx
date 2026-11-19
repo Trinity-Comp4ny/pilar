@@ -12,6 +12,7 @@ import { DEMO_URL, WHATSAPP_COMERCIAL_URL } from "../lib/contato";
 import { MODULOS } from "../lib/modules";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { CONSENT_REVIEW_REQUESTED_EVENT } from "../cookieConsent";
+import { tituloParaBusca } from "../lib/seo";
 import { LandingHeader } from "./LandingHeader";
 import { LandingFooter } from "./LandingFooter";
 import { CTASection } from "./CTASection";
@@ -302,7 +303,7 @@ describe("páginas de módulo e comparação", () => {
         `/${outro.slug}`
       );
     }
-    expect(document.title).toBe(`${m.seo.titulo} | Pilar`);
+    expect(document.title).toBe(tituloParaBusca(`${m.seo.titulo} | Pilar`));
     const jsonLd = document.head.querySelector('script[type="application/ld+json"]');
     expect(JSON.parse(jsonLd?.textContent ?? "{}").mainEntity).toHaveLength(m.faq.length);
   });
@@ -327,7 +328,7 @@ describe("páginas de módulo e comparação", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(c.seo.h1);
     for (const l of c.linhas) expect(within(container).getAllByText(l.criterio).length).toBeGreaterThan(0);
     for (const f of c.faq) expect(screen.getByText(f.pergunta)).toBeInTheDocument();
-    expect(document.title).toBe(`${c.seo.titulo} | Pilar`);
+    expect(document.title).toBe(tituloParaBusca(`${c.seo.titulo} | Pilar`));
   });
 });
 

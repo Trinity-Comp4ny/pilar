@@ -79,13 +79,15 @@ export function RotatingWord({ palavras, intervalMs = 2600, atraso = 0 }: Rotati
       </AnimatePresence>
 
       {/* Espelho fora de fluxo: mede a palavra na tipografia real. */}
+      {/* O texto vem de um pseudo-elemento (`data-palavra`), não de um nó de
+          texto: como nó, o rastreador do Google e os auditores liam a palavra
+          duas vezes ("organizam organizam"). */}
       <span
         ref={espelho}
         aria-hidden="true"
-        className="absolute left-[-9999px] italic whitespace-nowrap pointer-events-none"
-      >
-        {atual}
-      </span>
+        data-palavra={atual}
+        className="absolute left-[-9999px] italic whitespace-nowrap pointer-events-none after:content-[attr(data-palavra)]"
+      />
     </m.span>
   );
 }
