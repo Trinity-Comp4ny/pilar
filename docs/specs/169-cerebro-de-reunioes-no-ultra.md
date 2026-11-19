@@ -170,7 +170,7 @@ pelo deploy do CI depois do merge do PR 1, então os PRs 2 e 3 esperam esse depl
   `origem_contato`, calculada em SQL, nunca pelo modelo). RLS: `is_ultra_admin()` lê;
   atualização só de `tipo_corrigido` e `removido` pelo ultra admin; insert só pelo service role.
 - `npm run gen:types:local` e commit de `types.ts` (o job `types-sync` reprova sem isso).
-- Biblioteca pura em `supabase/functions/reuniao-analisar/`, com teste para cada arquivo:
+- Biblioteca pura em `supabase/functions/_shared/cerebro/`, com teste para cada arquivo:
   `redacao.ts` (e-mail, telefone BR, CPF/CNPJ, URL com token, sequência ditada perto de "senha",
   valor de contrato em R$, dado pessoal de terceiros fora do negócio), `falantes.ts` (descarta
   rótulo que é texto de interface, marca `incerto`), `glossario.ts` (Cloud→Claude, Kube→CUB,
