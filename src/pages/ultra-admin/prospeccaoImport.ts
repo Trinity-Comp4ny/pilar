@@ -38,7 +38,10 @@ export async function lerPlanilha(arquivo: File): Promise<PlanilhaLida> {
     : XLSX.read(await arquivo.arrayBuffer(), { type: "array" });
 
   const nomes = wb.SheetNames;
-  const abas = nomes.map((n) => ({ nome: n, linhas: XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[n], { defval: "", raw: false }) }));
+  const abas = nomes.map((n) => ({
+    nome: n,
+    linhas: XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[n], { defval: "", raw: false }),
+  }));
   const escolhida =
     abas.find((a) => a.nome === "Todos os leads") ??
     abas.find((a) => a.linhas[0] && CABECALHOS_DE_LEAD.some((c) => c in a.linhas[0])) ??

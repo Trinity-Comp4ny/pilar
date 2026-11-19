@@ -116,10 +116,18 @@ export function CardEnvio({ lead }: { lead: ProspecLead }) {
             >
               Enviei
             </Button>
-            <Button variant="outline" disabled={registrar.isPending} onClick={() => registrarResultado("numero_errado", "Número marcado como errado.")}>
+            <Button
+              variant="outline"
+              disabled={registrar.isPending}
+              onClick={() => registrarResultado("numero_errado", "Número marcado como errado.")}
+            >
               Número errado
             </Button>
-            <Button variant="outline" disabled={registrar.isPending} onClick={() => registrarResultado("parar", "Contato bloqueado para sempre.")}>
+            <Button
+              variant="outline"
+              disabled={registrar.isPending}
+              onClick={() => registrarResultado("parar", "Contato bloqueado para sempre.")}
+            >
               Pediu para parar
             </Button>
             <Button variant="ghost" disabled={registrar.isPending} onClick={() => setAbriu(false)}>
@@ -151,7 +159,11 @@ export function ProspeccaoHoje() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KPICard label="Enviadas hoje" value={`${r?.enviadosHoje ?? 0} de ${LIMITE_DIARIO}`} loading={resumo.isPending} />
+        <KPICard
+          label="Enviadas hoje"
+          value={`${r?.enviadosHoje ?? 0} de ${LIMITE_DIARIO}`}
+          loading={resumo.isPending}
+        />
         <KPICard label="Na fila" value={String(r?.naFila ?? 0)} loading={resumo.isPending} />
         <KPICard label="Prontos para WhatsApp" value={String(r?.novosProntos ?? 0)} loading={resumo.isPending} />
         <KPICard
@@ -166,8 +178,8 @@ export function ProspeccaoHoje() {
         <div role="alert" className="flex items-start gap-2 rounded-md bg-warning-soft p-3 text-sm text-warning-strong">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            {r?.bloqueiosSemana} pedidos para parar ou números errados nos últimos 7 dias. Revise a mensagem e
-            considere pausar antes de continuar: número que recebe denúncia pode ser restringido.
+            {r?.bloqueiosSemana} pedidos para parar ou números errados nos últimos 7 dias. Revise a mensagem e considere
+            pausar antes de continuar: número que recebe denúncia pode ser restringido.
           </p>
         </div>
       )}
@@ -184,10 +196,7 @@ export function ProspeccaoHoje() {
       {fila.isPending ? (
         <PageLoader />
       ) : (fila.data ?? []).length === 0 ? (
-        <EmptyState
-          title="Fila vazia"
-          description="Importe a base e monte a fila de hoje para ver os cards prontos."
-        />
+        <EmptyState title="Fila vazia" description="Importe a base e monte a fila de hoje para ver os cards prontos." />
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {(fila.data ?? []).map((lead) => (
