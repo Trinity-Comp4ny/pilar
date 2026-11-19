@@ -142,9 +142,7 @@ export default function MapCanvas({ filtrados, tileKey, selectedProjeto, mapRef,
                   {projeto.tipo === "obra" ? "Obra · " : ""}
                   {STATUS_SYMBOLS[projeto.status] ?? ""} {projeto.status}
                 </span>
-                <span className="text-2xs text-muted-foreground">
-                  Placa: {PLACA_LABEL[projeto.placa_status]}
-                </span>
+                <span className="text-2xs text-muted-foreground">Placa: {PLACA_LABEL[projeto.placa_status]}</span>
               </span>
             </Tooltip>
           </Marker>

@@ -26,6 +26,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { gerarParcelasDoProjeto, parcelasDoForm } from "../lib/parcelasDoForm";
+import { geocodificarProjeto } from "../lib/geocodificarProjeto";
 import { dataDaPlaca, placaStatusDe, type PlacaStatus } from "@/lib/placa";
 
 import { atribuicaoLegacy } from "../lib/atribuicaoDisciplina";
@@ -749,71 +750,14 @@ export function useProjetoForm({
       onSaved();
 
       if (localizacaoComposta.trim()) {
-        // Marca esta geocodificação como a mais recente. Se o usuário salvar de
-        // novo antes desta terminar, a anterior não sobrescreve as coordenadas.
-        geocodeAbortRef.current?.abort();
-        const abortController = new AbortController();
-        geocodeAbortRef.current = abortController;
-        const { signal } = abortController;
-
-        const street = [formData.loc_logradouro, formData.loc_numero].filter(Boolean).join(" ");
-        const cepDigits = formData.loc_cep.replace(/\D/g, "");
-        const postalcode = cepDigits.length === 8 ? `${cepDigits.slice(0, 5)}-${cepDigits.slice(5)}` : "";
-
-        const saveCoords = (lat: number, lng: number) => {
-          if (signal.aborted) return;
-          const alvoId = isEditMode && editProjeto ? editProjeto.id : novoProjetoId;
-          if (!alvoId) return;
-          const query = supabase.from("projetos").update({ latitude: lat, longitude: lng }).eq("id", alvoId);
-          query.then(() => {
-            onSaved();
-            queryClient.invalidateQueries({ queryKey: ["projetos-mapa"] });
-          });
-        };
-
-        // Geocodifica via edge function (User-Agent + fair-use do Nominatim no
-        // servidor). A edge já faz o fallback cidade+estado internamente.
-        supabase.functions
-          .invoke("geocode-address", {
-            body: {
-              street: street || undefined,
-              city: formData.loc_cidade || undefined,
-              state: formData.loc_estado || undefined,
-              postalcode: postalcode || undefined,
-              address: localizacaoComposta,
-            },
-          })
-          .then(({ data, error }) => {
-            if (signal.aborted) return;
-            if (error) {
-              toast.warning("Geocodificação falhou", {
-                description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
-              });
-              return;
-            }
-            const lat = typeof data?.lat === "number" ? data.lat : NaN;
-            const lng = typeof data?.lng === "number" ? data.lng : NaN;
-            if (data?.found && !isNaN(lat) && !isNaN(lng)) {
-              saveCoords(lat, lng);
-              return;
-            }
-            if (data?.indisponivel) {
-              toast.warning("Mapa indisponível agora", {
-                description:
-                  "O serviço de mapas não respondeu. Salve o projeto de novo mais tarde para ele aparecer no mapa.",
-              });
-              return;
-            }
-            toast.warning("Endereço não localizado", {
-              description: "Não foi possível encontrar as coordenadas do endereço. O projeto não aparecerá no mapa.",
-            });
-          })
-          .catch(() => {
-            if (signal.aborted) return;
-            toast.warning("Geocodificação falhou", {
-              description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
-            });
-          });
+        geocodificarProjeto({
+          form: formData,
+          localizacaoComposta,
+          alvoId: isEditMode && editProjeto ? editProjeto.id : novoProjetoId,
+          abortRef: geocodeAbortRef,
+          onSaved,
+          queryClient,
+        });
       } else if (isEditMode && editProjeto) {
         supabase
           .from("projetos")
