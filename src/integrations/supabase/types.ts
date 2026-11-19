@@ -11034,7 +11034,10 @@ export type Database = {
       _ultra_admin_mfa_ok: { Args: never; Returns: boolean }
       _universal_features: { Args: never; Returns: string[] }
       aceitar_convite_pendente: { Args: never; Returns: string }
-      acessar_link_proposta: { Args: { p_acao: string; p_token: string }; Returns: Json }
+      acessar_link_proposta: {
+        Args: { p_acao: string; p_token: string }
+        Returns: Json
+      }
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json
