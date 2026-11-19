@@ -274,6 +274,38 @@ describe("curvaSObra (spec 063)", () => {
     const depois = pontos.find((p) => p.semana === "2026-06-08");
     expect(depois?.planejadoPct).toBe(100); // 1 de 1 com prazo, não 1 de 2
   });
+
+  it("com pesos, tarefa cara move a curva mais que tarefa barata", () => {
+    const tarefas = [
+      tarefa({ id: "a", status: "concluida", prazo: "2026-06-05", updated_at: "2026-06-05T00:00:00.000Z" }),
+      tarefa({ id: "b", prazo: "2026-06-12" }),
+    ];
+    const pesos = new Map([
+      ["a", 100],
+      ["b", 300],
+    ]);
+    const ultimo = curvaSObra(tarefas, new Map(), { pesos }).at(-1);
+    expect(ultimo?.realizadoPct).toBe(25);
+    expect(curvaSObra(tarefas, new Map()).at(-1)?.realizadoPct).toBe(50);
+  });
+
+  it("pago acumula as despesas sobre o orçado total, estendendo o intervalo", () => {
+    const tarefas = [tarefa({ id: "a", prazo: "2026-06-05" })];
+    const pontos = curvaSObra(tarefas, new Map(), {
+      despesas: [
+        { data: "2026-06-03", valor: 200 },
+        { data: "2026-06-10", valor: 300 },
+      ],
+      totalPrevisto: 1000,
+    });
+    expect(pontos.find((p) => p.semana === "2026-06-01")?.pagoPct).toBe(20);
+    expect(pontos.find((p) => p.semana === "2026-06-08")?.pagoPct).toBe(50);
+  });
+
+  it("sem orçado ou sem despesas não há linha de pago", () => {
+    const tarefas = [tarefa({ id: "a", prazo: "2026-06-05" })];
+    expect(curvaSObra(tarefas, new Map(), { despesas: [{ data: "2026-06-03", valor: 5 }] })[0].pagoPct).toBeUndefined();
+  });
 });
 
 describe("status de obra no registry", () => {
