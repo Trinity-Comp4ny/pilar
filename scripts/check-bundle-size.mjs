@@ -92,7 +92,9 @@ const BUDGETS = {
   // o shell passou 0,1 kB (339,1 kB medidos no CI).
   // Mesma data, painel "Falar com o escritório" (BEZ-576): o chunk lazy entra na tabela de preload
   // da entrada (+~0,1 kB) sem mexer no teto.
-  initialLoad: 340 * 1024,
+  // 2026-11-19: 341 kB (era 340). Os ícones Mic e Brain das telas Reuniões e Cérebro do Ultra
+  // entram no menu (boot): +0,2 kB gzip sobre o teto. As telas em si são lazy.
+  initialLoad: 341 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
