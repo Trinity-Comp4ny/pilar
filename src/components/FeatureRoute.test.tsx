@@ -35,10 +35,10 @@ describe("FeatureRoute", () => {
     expect(screen.getByText("tela de obras")).toBeInTheDocument();
   });
 
-  it("módulo oculto redireciona para o primeiro módulo visível", () => {
-    perms.ocultos = new Set(["obras", "gestao"]);
+  it("módulo oculto redireciona para o Início", () => {
+    perms.ocultos = new Set(["obras"]);
     montar("/obras");
-    expect(screen.getByText("tela de projetos")).toBeInTheDocument();
+    expect(screen.getByText("inicio")).toBeInTheDocument();
   });
 
   it("sem acesso à feature manda para /sem-acesso", () => {

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { parseModulosOcultos, type ModuleId } from "@/lib/modules";
+import { parseModulosOcultos, type FeatureModuleId as ModuleId } from "@/lib/features";
 
 export type PessoaModulos = {
   id: string;
