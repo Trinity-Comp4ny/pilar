@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EntregaFormDialog } from "@/components/portal/EntregaFormDialog";
 import { EntregasContent, type Entrega } from "@/components/portal/PortalEntregas";
-import { NovoAditivoProjeto } from "./AditivoProjetoDialogs";
-import { useOrigensAditivos, type OrigemAditivo } from "../hooks/useAditivosProjeto";
+import { NovoAditivoProjeto } from "@/components/AditivoProjetoDialogs";
+import { useOrigensAditivos, type OrigemAditivo } from "@/hooks/useAditivosProjeto";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export function ProjetoRevisoesTab({

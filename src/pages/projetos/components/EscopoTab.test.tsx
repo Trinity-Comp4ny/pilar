@@ -18,7 +18,7 @@ vi.mock("@/hooks/useEscopos", () => ({
   useSalvarOrcamentoFase: () => ({ mutateAsync: salvarFase, isPending: false }),
   useRejeitarEscopo: () => ({ mutateAsync: rejeitar, isPending: false }),
 }));
-vi.mock("../hooks/useAditivosProjeto", () => ({
+vi.mock("@/hooks/useAditivosProjeto", () => ({
   useConfirmarAditivo: () => ({ mutateAsync: aprovar, isPending: false }),
   usePreviaAditivo: (_opcoes: unknown, enabled = true) => ({
     data: enabled

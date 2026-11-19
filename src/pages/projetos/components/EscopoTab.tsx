@@ -20,8 +20,8 @@ import {
   type OrcamentoFaseRow,
 } from "@/hooks/useEscopos";
 
-import { AprovarAditivoProjeto, NovoAditivoProjeto, type DisciplinaAditivo } from "./AditivoProjetoDialogs";
-import { useResumoAditivos } from "../hooks/useAditivosProjeto";
+import { AprovarAditivoProjeto, NovoAditivoProjeto, type DisciplinaAditivo } from "@/components/AditivoProjetoDialogs";
+import { useResumoAditivos } from "@/hooks/useAditivosProjeto";
 
 interface EscopoTabProps {
   projetoId: string;

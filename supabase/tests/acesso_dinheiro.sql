@@ -15,7 +15,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(45);
+SELECT plan(46);
 
 -- =====================================================================
 -- A. Travas estruturais
@@ -192,8 +192,11 @@ DO $$ BEGIN
   PERFORM set_config('request.jwt.claims',
     '{"sub": "66666666-0000-0000-0000-000000000001", "role": "authenticated"}', true);
 END $$;
-INSERT INTO public.projetos (id, empresa_id, nome, valor_contrato)
-VALUES ('77777777-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'Projeto pgtap', 100000);
+INSERT INTO public.clientes (id, empresa_id, nome)
+VALUES ('77777777-0000-0000-0000-000000000007', '00000000-0000-0000-0000-0000000000a1', 'Cliente pgtap');
+INSERT INTO public.projetos (id, empresa_id, nome, valor_contrato, cliente_id)
+VALUES ('77777777-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'Projeto pgtap', 100000,
+        '77777777-0000-0000-0000-000000000007');
 
 INSERT INTO public.escopos (id, empresa_id, projeto_id, descricao, tipo, status, valor_aditivo, custo_estimado)
 VALUES ('77777777-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000a1',
@@ -343,9 +346,19 @@ SELECT is(
 SELECT throws_ok(
   $$ UPDATE public.pessoas SET percentual_producao = 150 WHERE email = 'pessoa@pgtap.test' $$,
   '23514', NULL, 'admin: percentual acima de 100 é recusado pelo banco');
-SELECT lives_ok(
+SELECT throws_ok(
   $$ UPDATE public.escopos SET status = 'aprovado' WHERE id = '77777777-0000-0000-0000-000000000002' $$,
-  'admin: aprova aditivo');
+  'P0001', 'Confirme a cobrança pela aba Escopo e aditivos do projeto',
+  'admin: aprovação direta não pode pular a cobrança');
+SELECT lives_ok($$
+  SELECT public.rpc_confirmar_cobranca_aditivo(
+    '77777777-0000-0000-0000-000000000002',
+    public.rpc_prever_cobranca_aditivo(
+      '77777777-0000-0000-0000-000000000002', p_vencimento => CURRENT_DATE + 7
+    ),
+    p_vencimento => CURRENT_DATE + 7
+  )
+$$, 'admin: aprova e registra a cobrança do aditivo');
 
 -- =====================================================================
 -- B5. Admin de outra empresa: nada da empresa A

@@ -10,11 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { FormDialog } from "@/components/FormDialog";
 import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
 import { FilterBar } from "@/components/filters/FilterBar";
 import { Badge } from "@/components/ui/badge";
-import { exportarFornecedores, type LinhaFornecedor } from "./exportarFornecedores";
+import type { LinhaFornecedor } from "./exportarFornecedores";
+import { ExportarFornecedoresDialog } from "./ExportarFornecedoresDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -65,8 +65,6 @@ export default function Fornecedores() {
   const [categoriasFiltro, setCategoriasFiltro] = useState<string[]>([]);
   const [novaCategoria, setNovaCategoria] = useState("");
   const [exportarOpen, setExportarOpen] = useState(false);
-  const [exportando, setExportando] = useState(false);
-  const [incluirCnpj, setIncluirCnpj] = useState(false);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -335,23 +333,6 @@ export default function Fornecedores() {
     setNovaCategoria("");
   }
 
-  async function baixarPdf() {
-    if (!filtered.length || loadError) return;
-    setExportando(true);
-    try {
-      await exportarFornecedores(
-        filtered,
-        categoriasFiltro.map((c) => (c === SEM_CATEGORIA ? "Sem categoria" : c)),
-        incluirCnpj
-      );
-      setExportarOpen(false);
-    } catch {
-      toast.error("Não foi possível exportar a lista.");
-    } finally {
-      setExportando(false);
-    }
-  }
-
   const columns: ColumnDef<Fornecedor>[] = [
     {
       key: "nome",
@@ -466,10 +447,7 @@ export default function Fornecedores() {
             variant="outline"
             size="sm"
             disabled={!filtered.length || loadError}
-            onClick={() => {
-              setIncluirCnpj(false);
-              setExportarOpen(true);
-            }}
+            onClick={() => setExportarOpen(true)}
           >
             <Download className="h-4 w-4" /> Exportar lista
           </Button>
@@ -693,22 +671,14 @@ export default function Fornecedores() {
         cancelText="Cancelar"
       />
 
-      <FormDialog
-        open={exportarOpen}
-        onOpenChange={setExportarOpen}
-        title="Exportar fornecedores"
-        description={`O PDF inclui ${filtered.length} fornecedor(es) do resultado atual.`}
-        size="sm"
-        onSubmit={baixarPdf}
-        submitLabel="Baixar PDF"
-        isPending={exportando}
-        submitDisabled={!filtered.length || loadError}
-      >
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={incluirCnpj} onChange={(e) => setIncluirCnpj(e.target.checked)} /> Incluir
-          CNPJ
-        </label>
-      </FormDialog>
+      {exportarOpen && (
+        <ExportarFornecedoresDialog
+          fechar={() => setExportarOpen(false)}
+          fornecedores={filtered}
+          categorias={categoriasFiltro.map((c) => (c === SEM_CATEGORIA ? "Sem categoria" : c))}
+          desabilitado={loadError}
+        />
+      )}
       <ReconciliarDialog open={reconciliarOpen} onOpenChange={setReconciliarOpen} />
     </PageLayout>
   );
