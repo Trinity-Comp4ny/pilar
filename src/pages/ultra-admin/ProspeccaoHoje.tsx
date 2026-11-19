@@ -152,11 +152,11 @@ export function ProspeccaoHoje() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KPICard label="Enviadas hoje" value={`${r?.enviadosHoje ?? 0} de ${LIMITE_DIARIO}`} loading={resumo.isPending} />
-        <KPICard label="Na fila" value={r?.naFila ?? 0} loading={resumo.isPending} />
-        <KPICard label="Prontos para WhatsApp" value={r?.novosProntos ?? 0} loading={resumo.isPending} />
+        <KPICard label="Na fila" value={String(r?.naFila ?? 0)} loading={resumo.isPending} />
+        <KPICard label="Prontos para WhatsApp" value={String(r?.novosProntos ?? 0)} loading={resumo.isPending} />
         <KPICard
           label="Bloqueios na semana"
-          value={r?.bloqueiosSemana ?? 0}
+          value={String(r?.bloqueiosSemana ?? 0)}
           tone={emRisco ? "danger" : undefined}
           loading={resumo.isPending}
         />
