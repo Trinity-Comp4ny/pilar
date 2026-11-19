@@ -54,12 +54,8 @@ function SettingsDialogSobDemanda() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const ocioso = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2000));
-    const id = ocioso(() => void importarSettingsDialog());
-    return () => {
-      if (window.cancelIdleCallback) window.cancelIdleCallback(id as number);
-      else window.clearTimeout(id as number);
-    };
+    const id = window.setTimeout(() => void importarSettingsDialog(), 3000);
+    return () => window.clearTimeout(id);
   }, [isAuthenticated]);
 
   if (!montado) return null;
