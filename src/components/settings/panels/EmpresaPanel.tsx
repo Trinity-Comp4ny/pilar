@@ -6,13 +6,14 @@ import { toast } from "sonner";
 import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { reportInvokeError } from "@/lib/monitoring";
 import { getSafeErrorMessage } from "@/lib/safeError";
-import { Building2, Users as UsersIcon, Palette } from "lucide-react";
+import { Building2, Users as UsersIcon, Palette, LayoutGrid } from "lucide-react";
 import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
 import type { CompanyData, CompanyUser } from "@/pages/company/types";
 import { ROLES } from "@/pages/company/types";
 import { CompanySummaryCard } from "@/pages/company/components/CompanySummaryCard";
 import { CompanyDataTab } from "@/pages/company/components/CompanyDataTab";
 import { CompanyUsersTab } from "@/pages/company/components/CompanyUsersTab";
+import { CompanyModulosTab } from "@/pages/company/components/CompanyModulosTab";
 import { CompanyVisualTab } from "@/pages/company/components/CompanyVisualTab";
 import { LogoPreviewDialog, EditUserDialog, DeleteUserDialog } from "@/pages/company/components/CompanyDialogs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -420,6 +421,7 @@ export function EmpresaPanel() {
                 { id: "dados", label: "Dados", icon: Building2 },
                 { id: "usuarios", label: "Usuários", icon: UsersIcon, badge: users.length },
                 { id: "visual", label: "Personalização", icon: Palette },
+                ...(isAdmin ? [{ id: "modulos", label: "Módulos", icon: LayoutGrid }] : []),
               ]}
             />
 
@@ -460,6 +462,12 @@ export function EmpresaPanel() {
                 }}
               />
             </TabsContent>
+
+            {isAdmin && (
+              <TabsContent value="modulos" className="mt-5">
+                <CompanyModulosTab empresaId={companyId} />
+              </TabsContent>
+            )}
 
             <TabsContent value="visual" className="mt-5">
               <CompanyVisualTab

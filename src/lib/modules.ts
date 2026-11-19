@@ -177,6 +177,12 @@ export function routeToModule(pathname: string): ModuleId | null {
   return null;
 }
 
+/** Normaliza a coluna `modulos_ocultos` (text[]): ignora valor desconhecido e duplicado. */
+export function parseModulosOcultos(raw: unknown): ModuleId[] {
+  if (!Array.isArray(raw)) return [];
+  return MODULE_ORDER.filter((id) => raw.includes(id));
+}
+
 export const ULTIMO_MODULO_KEY = "pilar.ultimo-modulo";
 
 function isModuleId(value: unknown): value is ModuleId {

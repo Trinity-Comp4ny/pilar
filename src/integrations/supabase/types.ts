@@ -2380,6 +2380,7 @@ export type Database = {
           logo_url: string | null
           max_projetos_override: number | null
           max_usuarios_override: number | null
+          modulos_ocultos: string[]
           nivel_override: string | null
           nivel_override_em: string | null
           nivel_override_motivo: string | null
@@ -2429,6 +2430,7 @@ export type Database = {
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          modulos_ocultos?: string[]
           nivel_override?: string | null
           nivel_override_em?: string | null
           nivel_override_motivo?: string | null
@@ -2478,6 +2480,7 @@ export type Database = {
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          modulos_ocultos?: string[]
           nivel_override?: string | null
           nivel_override_em?: string | null
           nivel_override_motivo?: string | null
@@ -7270,6 +7273,7 @@ export type Database = {
           last_name: string
           linkedin_url: string | null
           metas_delegado: boolean
+          modulos_ocultos: string[]
           nome: string | null
           onboarding_completed: boolean | null
           onboarding_state: Json
@@ -7294,6 +7298,7 @@ export type Database = {
           last_name?: string
           linkedin_url?: string | null
           metas_delegado?: boolean
+          modulos_ocultos?: string[]
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
@@ -7318,6 +7323,7 @@ export type Database = {
           last_name?: string
           linkedin_url?: string | null
           metas_delegado?: boolean
+          modulos_ocultos?: string[]
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
@@ -12537,6 +12543,10 @@ export type Database = {
       }
       set_metas_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      set_modulos_ocultos: {
+        Args: { p_alvo: string; p_modulos: string[]; p_usuario_id: string }
         Returns: undefined
       }
       set_onboarding_state: { Args: { patch: Json }; Returns: Json }

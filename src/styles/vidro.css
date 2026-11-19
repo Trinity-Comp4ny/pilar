@@ -108,7 +108,7 @@
     top: 6px;
     bottom: 6px;
     left: 6px;
-    width: calc((100% - 20px) / 5);
+    width: calc((100% - 20px) / var(--lente-n, 5));
     border-radius: 26px;
     pointer-events: none;
     background: hsl(var(--brand-accent));

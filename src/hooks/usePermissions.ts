@@ -2,7 +2,8 @@ import { useContext, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ImpersonationContext } from "@/contexts/ImpersonationContext";
 import { canDo, reasonFor, type Action, type Feature, type UserRole } from "@/lib/permissions";
-import { parseCompanyFeatures } from "@/lib/features";
+import { moduleOfFeature, parseCompanyFeatures, type FeatureKey } from "@/lib/features";
+import { parseModulosOcultos, type ModuleId } from "@/lib/modules";
 
 type ButtonProps = {
   disabled: boolean;
@@ -30,6 +31,16 @@ export function usePermissions() {
     [profile]
   );
 
+  // ADR 0066: módulos ocultos = união da lista da empresa com a do usuário.
+  // Gate de experiência, não de dados. Admin nunca é restringido (checado no useMemo).
+  const modulosOcultosBrutos = useMemo(
+    () => [
+      ...parseModulosOcultos((profile as { empresas?: { modulos_ocultos?: unknown } | null } | null)?.empresas?.modulos_ocultos),
+      ...parseModulosOcultos((profile as { modulos_ocultos?: unknown } | null)?.modulos_ocultos),
+    ],
+    [profile]
+  );
+
   // ADR 0034 (e sua extensão para equipe/metas): concessão é do PRÓPRIO
   // usuário (não muda com impersonation de role, que só troca a hierarquia
   // simulada).
@@ -40,7 +51,16 @@ export function usePermissions() {
   return useMemo(() => {
     const ctx = { role: effectiveRole, companyFeatures, financeiroDelegado, equipeDelegado, metasDelegado };
 
-    const can = (feature: Feature, action: Action = "view") => canDo(ctx, feature, action);
+    const isAdminRole = effectiveRole === "admin" || effectiveRole === ("ultra_admin" as UserRole);
+    const modulosOcultos: ModuleId[] = isAdminRole ? [] : Array.from(new Set(modulosOcultosBrutos));
+    const moduloVisivel = (id: ModuleId) => !modulosOcultos.includes(id);
+
+    // ADR 0066: feature de módulo oculto some para quem não vê o módulo (menu, painel, onboarding, rota).
+    const can = (feature: Feature, action: Action = "view") => {
+      const modulo = moduleOfFeature(feature as FeatureKey);
+      if (modulo && !moduloVisivel(modulo)) return false;
+      return canDo(ctx, feature, action);
+    };
     const cannot = (feature: Feature, action: Action = "view") => !can(feature, action);
 
     const getButtonProps = (feature: Feature, action: Action = "edit"): ButtonProps => {
@@ -61,6 +81,8 @@ export function usePermissions() {
     };
 
     return {
+      modulosOcultos,
+      moduloVisivel,
       role: effectiveRole,
       realRole,
       isImpersonating: impersonation?.isImpersonating ?? false,
@@ -82,6 +104,7 @@ export function usePermissions() {
     impersonation?.isImpersonating,
     impersonation?.loading,
     companyFeatures,
+    modulosOcultosBrutos,
     financeiroDelegado,
     equipeDelegado,
     metasDelegado,
