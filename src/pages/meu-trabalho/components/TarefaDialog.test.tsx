@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TarefaDialog } from "./TarefaDialog";
-import type { Etapa } from "../useEtapas";
+import { TarefaDialog } from "@/components/tarefas/TarefaDialog";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
 
 vi.mock("@/hooks/useComentarioAutoria", () => ({
   useComentarioAutoria: () => ({ autorId: "u-eu", podeExcluir: () => false }),
@@ -15,7 +15,7 @@ vi.mock("@/components/ui/responsive-detail-panels", () => ({
     </div>
   ),
 }));
-vi.mock("@/pages/projetos/components/AtividadeComposer", () => ({ AtividadeComposer: () => null }));
+vi.mock("@/components/atividades/AtividadeComposerComMencoes", () => ({ AtividadeComposer: () => null }));
 
 const etapas: Etapa[] = [{ id: "e1", nome: "A fazer", ordem: 0, cor: null, bucket: "a_fazer" }];
 

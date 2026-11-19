@@ -14,9 +14,11 @@ import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
-interface Entrega {
+export interface Entrega {
   id: string;
   titulo: string;
+  numero_revisao?: number | null;
+  revisao_anterior_id?: string | null;
   descricao: string | null;
   tipo: string | null;
   status: "pendente" | "aprovado" | "revisao_solicitada";
@@ -61,6 +63,9 @@ export function EntregasContent({
   mostrarOrigem,
   apenasPendentes,
   vazioTexto,
+  apenasRevisoes,
+  onPublicarRevisao,
+  onCriarTarefa,
 }: {
   projetoId?: string;
   obraId?: string;
@@ -70,6 +75,9 @@ export function EntregasContent({
   /** Só o que aguarda resposta (Início e visão geral); sem nada, mostra `vazioTexto` ou não mostra nada. */
   apenasPendentes?: boolean;
   vazioTexto?: string;
+  apenasRevisoes?: boolean;
+  onPublicarRevisao?: (entrega: Entrega) => void;
+  onCriarTarefa?: (entrega: Entrega) => void;
 }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +104,7 @@ export function EntregasContent({
         let query = supabase
           .from("portal_entregas")
           .select(
-            "id, titulo, descricao, tipo, status, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
+            "id, titulo, descricao, tipo, status, numero_revisao, revisao_anterior_id, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
           );
         if (projetoId) query = query.eq("projeto_id", projetoId);
         if (obraId) query = query.eq("obra_id", obraId);
@@ -193,18 +201,23 @@ export function EntregasContent({
     );
   }
 
-  if (entregas.length === 0) {
+  const visiveis = apenasRevisoes ? entregas.filter((e) => e.numero_revisao != null) : entregas;
+  if (visiveis.length === 0) {
     return (
       <Card>
         <CardContent className="p-0">
-          <EmptyState icon={FileText} title="Nenhuma solicitação no momento" />
+          <EmptyState
+            icon={FileText}
+            title={apenasRevisoes ? "Nenhuma revisão publicada" : "Nenhuma solicitação no momento"}
+          />
         </CardContent>
       </Card>
     );
   }
 
-  const pendentes = entregas.filter((e) => e.status === "pendente");
-  const concluidos = apenasPendentes ? [] : entregas.filter((e) => e.status !== "pendente");
+  const pendentes = visiveis.filter((e) => e.status === "pendente");
+  const concluidos = apenasPendentes ? [] : visiveis.filter((e) => e.status !== "pendente");
+  const substituidas = new Set(entregas.map((e) => e.revisao_anterior_id).filter(Boolean));
 
   return (
     <div className="space-y-6">
@@ -258,6 +271,22 @@ export function EntregasContent({
                 onCancelRevisao={() => undefined}
                 onAprovar={() => undefined}
                 onSolicitar={() => undefined}
+                acoes={
+                  readOnly && e.status === "revisao_solicitada" && !substituidas.has(e.id) ? (
+                    <div className="flex flex-wrap gap-2">
+                      {onCriarTarefa && (
+                        <Button variant="outline" size="sm" onClick={() => onCriarTarefa(e)}>
+                          Criar tarefa de ajuste
+                        </Button>
+                      )}
+                      {onPublicarRevisao && e.numero_revisao != null && (
+                        <Button variant="outline" size="sm" onClick={() => onPublicarRevisao(e)}>
+                          Publicar nova versão
+                        </Button>
+                      )}
+                    </div>
+                  ) : undefined
+                }
                 saving={false}
                 readOnly={readOnly}
                 mostrarOrigem={mostrarOrigem}
@@ -282,8 +311,10 @@ function EntregaCard({
   saving,
   readOnly,
   mostrarOrigem,
+  acoes,
 }: {
   entrega: Entrega;
+  acoes?: React.ReactNode;
   isResponding: boolean;
   resposta: string;
   setResposta: (v: string) => void;
@@ -308,6 +339,9 @@ function EntregaCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-medium">{entrega.titulo}</p>
+              {entrega.numero_revisao != null && (
+                <Badge variant="outline">R{String(entrega.numero_revisao).padStart(2, "0")}</Badge>
+              )}
               {mostrarOrigem && origem && (
                 <Badge variant="outline" className="text-[10px]">
                   {entrega.obra_nome ? "Obra" : "Projeto"}: {origem}
@@ -392,6 +426,7 @@ function EntregaCard({
             )}
           </div>
         )}
+        {acoes}
       </CardContent>
     </Card>
   );

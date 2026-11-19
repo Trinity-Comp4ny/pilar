@@ -15,7 +15,7 @@ import { calcularSaldoConta, realizadoPorEtapa, SEM_ETAPA } from "@/lib/obras";
 import { agruparPlanejamentoManual, useObraPlanejamentoMes } from "@/pages/obras/hooks/useObraPlanejamentoMes";
 import { montarFisicoFinanceiro, periodosPorNo } from "@/pages/obras/lib/fisicoFinanceiro";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
-import { usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
+import { usePessoasEmpresa } from "@/hooks/tarefas/useTarefas";
 import { AplicarFluxoObraDialog } from "./AplicarFluxoObraDialog";
 import { SalvarComoFluxoDialog } from "./SalvarComoFluxoDialog";
 import { useFluxosObra } from "@/pages/obras/hooks/useFluxosObra";

@@ -43,7 +43,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { HorasMinutosField } from "@/components/HorasMinutosField";
-import { AtividadeComposer } from "./AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposerComMencoes";
 import { useDisciplinaChecklist } from "@/pages/projetos/hooks/useProjetoDisciplinaChecklist";
 import { useDisciplinaPausas, totalDiasParados } from "@/pages/projetos/hooks/useDisciplinaPausas";
 import { useDisciplinaRevisoes, revisaoAberta } from "@/pages/projetos/hooks/useDisciplinaRevisoes";

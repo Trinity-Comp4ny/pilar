@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
 import { agruparPorEtapa, colunaDaEtapa, useItensTrabalho, type ItemTrabalho } from "./useItensTrabalho";
-import { useEtapaMutations, useEtapas, type Etapa } from "./useEtapas";
+import { useEtapaMutations, useEtapas, type Etapa } from "@/hooks/tarefas/useEtapas";
 
 /**
  * Board unificado: tarefas e disciplinas viram ItemTrabalho, o filtro de tipo

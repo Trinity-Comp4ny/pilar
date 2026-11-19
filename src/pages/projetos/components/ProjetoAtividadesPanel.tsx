@@ -1,5 +1,5 @@
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
-import { AtividadeComposer } from "./AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposerComMencoes";
 import { notificarMencao } from "@/lib/notificarMencao";
 import { ComentariosLista } from "@/components/atividades/ComentariosLista";
 import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";

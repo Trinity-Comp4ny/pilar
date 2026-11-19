@@ -32,9 +32,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { agruparPorEtapa, type ItemTrabalho } from "../useItensTrabalho";
-import type { Etapa } from "../useEtapas";
-import type { PessoaOpcao } from "../hooks";
-import { corDaEtapa, CORES_ETAPA, type Prioridade } from "../status";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
+import type { PessoaOpcao } from "@/hooks/tarefas/useTarefas";
+import { corDaEtapa, CORES_ETAPA, type Prioridade } from "@/lib/tarefas/status";
 import type { EtapaControls } from "./QuadroTrabalho";
 import { COLUNAS_ORDEM, COLUNA_LABEL, COLUNA_LARGURA, type ColunaLista, type ColunasLista } from "../colunas";
 import { EtiquetasCell, HorasCell, PrazoCell, PrioridadeCell, ProjetoCell, ResponsavelCell } from "./CelulasLista";

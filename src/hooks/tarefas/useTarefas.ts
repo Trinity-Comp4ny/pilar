@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toPrioridade, type Prioridade, type StatusBucket } from "./status";
+import { toPrioridade, type Prioridade, type StatusBucket } from "@/lib/tarefas/status";
 import type { LinkItem } from "@/components/LinksEditor";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 
@@ -48,6 +48,9 @@ export type TarefaItem = {
   /** Conjunto de responsáveis (tabela ponte tarefa_responsaveis). */
   responsaveis: PessoaOpcao[];
   projeto_id: string | null;
+  projeto_disciplina_id?: string | null;
+  retrabalho?: boolean;
+  portal_entrega_id?: string | null;
   etapa_id: string | null;
   /** Obra e serviço do cronograma (SPEC 111). Nulos em tarefa avulsa. */
   obra_id: string | null;
@@ -74,6 +77,9 @@ export type TarefaInput = {
   /** Conjunto de responsáveis (ids de pessoa). Fonte de verdade da ponte. */
   responsaveis?: string[];
   projeto_id?: string | null;
+  projeto_disciplina_id?: string | null;
+  retrabalho?: boolean;
+  portal_entrega_id?: string | null;
   etapa_id?: string | null;
   /** Tarefa que nasce numa obra (aba Tarefas da obra, SPEC 140). */
   obra_id?: string | null;
@@ -203,7 +209,7 @@ export function useSetDisciplinaStatus() {
 }
 
 const TAREFA_SELECT =
-  "id, numero, titulo, descricao, status, prioridade, created_by, responsavel_id, projeto_id, etapa_id, obra_id, obra_frente_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
+  "id, numero, titulo, descricao, status, prioridade, created_by, responsavel_id, projeto_id, projeto_disciplina_id, retrabalho, portal_entrega_id, etapa_id, obra_id, obra_frente_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
 
 type TarefaRowSelect = {
   status: string;
@@ -259,12 +265,14 @@ function paraTarefaItem<T extends TarefaRowSelect>(t: T): TarefaItem {
  * "sem filtro" (senão a RLS, que libera tudo pra admin, mostraria a empresa
  * inteira mesmo filtrando "eu").
  */
-export function useTarefas(pessoaIds: string[] | null) {
+export function useTarefas(pessoaIds: string[] | null, projetoId?: string) {
   return useQuery({
-    queryKey: tarefasQueryKey(pessoaIds),
+    queryKey: projetoId ? [...tarefasQueryKey(pessoaIds), projetoId] : tarefasQueryKey(pessoaIds),
     staleTime: 60 * 1000,
     queryFn: async (): Promise<TarefaItem[]> => {
       let q = supabase.from("tarefas").select(TAREFA_SELECT).order("prazo", { ascending: true, nullsFirst: false });
+
+      if (projetoId) q = q.eq("projeto_id", projetoId);
 
       if (pessoaIds !== null) {
         if (pessoaIds.length === 0) return [];
@@ -343,6 +351,9 @@ export function useTarefaMutations() {
           prioridade: input.prioridade ?? "media",
           responsavel_id: responsaveis[0] ?? null,
           projeto_id: input.projeto_id ?? null,
+          projeto_disciplina_id: input.projeto_disciplina_id ?? null,
+          retrabalho: input.retrabalho ?? false,
+          portal_entrega_id: input.portal_entrega_id ?? null,
           etapa_id: input.etapa_id ?? null,
           obra_id: input.obra_id ?? null,
           obra_frente_id: input.obra_frente_id ?? null,
@@ -371,6 +382,8 @@ export function useTarefaMutations() {
       if (input.status !== undefined) patch.status = input.status;
       if (input.prioridade !== undefined) patch.prioridade = input.prioridade;
       if (input.projeto_id !== undefined) patch.projeto_id = input.projeto_id;
+      if (input.projeto_disciplina_id !== undefined) patch.projeto_disciplina_id = input.projeto_disciplina_id;
+      if (input.retrabalho !== undefined) patch.retrabalho = input.retrabalho;
       if (input.etapa_id !== undefined) patch.etapa_id = input.etapa_id;
       if (input.obra_frente_id !== undefined) patch.obra_frente_id = input.obra_frente_id;
       if (input.prazo !== undefined) patch.prazo = input.prazo;

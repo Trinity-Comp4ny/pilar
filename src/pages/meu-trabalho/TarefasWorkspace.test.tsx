@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
-import type { TarefaInput, TarefaItem } from "./hooks";
+import type { TarefaInput, TarefaItem } from "@/hooks/tarefas/useTarefas";
 import { TarefasWorkspace, type MolduraTarefasProps } from "./TarefasWorkspace";
 import MeuTrabalho from "./index";
 
@@ -51,7 +51,7 @@ vi.mock("@/components/PilarPage", () => ({
     </main>
   ),
 }));
-vi.mock("./components/TarefaDialog", () => ({
+vi.mock("@/components/tarefas/TarefaDialog", () => ({
   TarefaDialog: (p: {
     open: boolean;
     tarefa: TarefaItem | null;

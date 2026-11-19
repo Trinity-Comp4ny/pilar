@@ -30,7 +30,7 @@ vi.mock("@/pages/obras/hooks/useObraTarefas", () => ({
   useUpdateObraTarefa: () => mut(m.updateTarefa),
   useDeleteObraTarefa: () => mut(m.deleteTarefa),
 }));
-vi.mock("@/pages/meu-trabalho/hooks", () => ({ useTarefaMutations: () => ({ atualizar: mut(m.atualizarGestao) }) }));
+vi.mock("@/hooks/tarefas/useTarefas", () => ({ useTarefaMutations: () => ({ atualizar: mut(m.atualizarGestao) }) }));
 
 import { useCronogramaAcoes } from "./useCronogramaAcoes";
 
