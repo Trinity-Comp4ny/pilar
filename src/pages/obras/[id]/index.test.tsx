@@ -58,6 +58,7 @@ vi.mock("../components/ObraContaTab", () => ({ ObraContaTab: stub("aba-conta") }
 vi.mock("../components/ObraCotacoesTab", () => ({ ObraCotacoesTab: stub("aba-cotacoes") }));
 vi.mock("../components/ObraResumoExecutivo", () => ({ ObraResumoExecutivo: () => null }));
 vi.mock("../components/ObraEstoqueTab", () => ({ ObraEstoqueTab: stub("aba-estoque") }));
+vi.mock("../components/ObraRelatoriosTab", () => ({ ObraRelatoriosTab: stub("aba-relatorios") }));
 vi.mock("../components/ObraFormDialog", () => ({
   ObraFormDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog">form-obra</div> : null),
 }));
@@ -150,6 +151,7 @@ describe("ObraDetalhePage", () => {
       "Cotações",
       "Estoque",
       "Financeiro",
+      "Relatórios",
       "Acessos",
     ]);
     expect(screen.getByRole("link", { name: "Projeto Silva" })).toHaveAttribute("href", "/projetos/proj-1");
