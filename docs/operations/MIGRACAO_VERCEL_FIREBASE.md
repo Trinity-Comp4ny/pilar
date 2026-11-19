@@ -15,7 +15,7 @@ o sistema se seguido em ordem. Reverter = reapontar o DNS de volta.
 | `firebase.app.json` | Config de hosting do app (headers, CSP, fallback SPA) |
 | `apps/marketing/firebase.marketing.json` | Idem para a landing (+ 3 redirects para o app) |
 | `scripts/gerar-firebase-config.mjs` | Gera os dois acima a partir dos `vercel.json`. Não editar à mão |
-| `.github/workflows/deploy-firebase-hosting.yml` | Build + deploy. Só `workflow_dispatch` até o passo 6 |
+| `.github/workflows/deploy-firebase-hosting.yml` | Build + deploy. PR que mexe nos arquivos do Firebase publica canal de preview; `live` só por `workflow_dispatch` até o passo 6 |
 
 Diferença deliberada em relação ao `vercel.json`: o Firebase cacheia HTML por 1 h por padrão
 (a Vercel revalida). Os configs gerados forçam `Cache-Control: no-cache` no HTML e mantêm

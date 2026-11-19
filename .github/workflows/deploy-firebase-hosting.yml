@@ -2,9 +2,10 @@ name: Deploy Firebase Hosting
 
 # Migração Vercel -> Firebase Hosting (ver docs/operations/MIGRACAO_VERCEL_FIREBASE.md).
 #
-# DISPARO SÓ MANUAL de propósito: enquanto a Vercel serve produção, este workflow não
-# pode rodar em PR nem em push, nem gastar build. Os gatilhos `pull_request` (canal de
-# preview) e `push` em staging/main entram DEPOIS do cutover, no passo 6 do runbook.
+# Enquanto a Vercel serve produção, este workflow só publica em CANAL DE PREVIEW (expira
+# em 7 dias) automaticamente, e só em PR que mexe nos arquivos do Firebase. Publicar `live`
+# exige disparo manual (workflow_dispatch). Os gatilhos amplos (todo PR, push em
+# staging/main) entram DEPOIS do cutover, no passo 6 do runbook.
 #
 # Dois sites no mesmo projeto GCP: o app (raiz) e a landing (apps/marketing). Cada um
 # tem o seu firebase.*.json, gerado a partir do vercel.json (CSP e headers idênticos).
@@ -23,6 +24,13 @@ on:
         options: [preview, live]
         default: preview
         required: true
+  pull_request:
+    branches: [staging]
+    paths:
+      - ".github/workflows/deploy-firebase-hosting.yml"
+      - "firebase.app.json"
+      - "apps/marketing/firebase.marketing.json"
+      - "scripts/gerar-firebase-config.mjs"
 
 # Permissão mínima. `id-token` é para a federação de identidade (sem chave JSON).
 permissions:
@@ -30,19 +38,25 @@ permissions:
   id-token: write
 
 concurrency:
-  group: firebase-hosting-${{ inputs.alvo }}-${{ inputs.canal }}
+  group: firebase-hosting-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', inputs.alvo, inputs.canal) || format('pr-{0}', github.event.number) }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # PR publica os dois sites; o disparo manual publica só o escolhido.
+        alvo: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.alvo)) || fromJSON('["app","marketing"]') }}
     # Variáveis e segredos de build ficam em Environments (staging x produção usam
     # Supabase diferentes). `live` usa `production`; preview usa `staging`.
-    environment: ${{ inputs.canal == 'live' && 'production' || 'staging' }}
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && 'production' || 'staging' }}
     env:
+      CANAL: ${{ github.event_name == 'workflow_dispatch' && inputs.canal || 'preview' }}
       SENTRY_RELEASE: ${{ github.sha }}
-      SENTRY_ENV: ${{ inputs.canal == 'live' && 'production' || 'preview' }}
+      SENTRY_ENV: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && 'production' || 'preview' }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
@@ -55,11 +69,11 @@ jobs:
       VITE_STATUS_URL: ${{ vars.VITE_STATUS_URL }}
       VITE_MARKETING_APP_URL: ${{ vars.VITE_MARKETING_APP_URL }}
       # Upload de sourcemap só em produção (igual à Vercel). Sem token o plugin pula.
-      SENTRY_AUTH_TOKEN: ${{ inputs.canal == 'live' && secrets.SENTRY_AUTH_TOKEN || '' }}
+      SENTRY_AUTH_TOKEN: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && secrets.SENTRY_AUTH_TOKEN || '' }}
       SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ inputs.alvo == 'app' && vars.SENTRY_PROJECT || '' }}
+      SENTRY_PROJECT: ${{ matrix.alvo == 'app' && vars.SENTRY_PROJECT || '' }}
       FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT_ID }}
-      SITE_ID: ${{ inputs.alvo == 'app' && vars.FIREBASE_SITE_APP || vars.FIREBASE_SITE_MARKETING }}
+      SITE_ID: ${{ matrix.alvo == 'app' && vars.FIREBASE_SITE_APP || vars.FIREBASE_SITE_MARKETING }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -73,7 +87,7 @@ jobs:
 
       - name: Build
         run: |
-          if [ "${{ inputs.alvo }}" = "app" ]; then npm run build; else npm run build:marketing; fi
+          if [ "${{ matrix.alvo }}" = "app" ]; then npm run build; else npm run build:marketing; fi
 
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         with:
@@ -82,13 +96,14 @@ jobs:
 
       - name: Publicar
         run: |
-          if [ "${{ inputs.alvo }}" = "app" ]; then DIR=.; CFG=firebase.app.json; else DIR=apps/marketing; CFG=firebase.marketing.json; fi
+          if [ "${{ matrix.alvo }}" = "app" ]; then DIR=.; CFG=firebase.app.json; else DIR=apps/marketing; CFG=firebase.marketing.json; fi
           cd "$DIR"
           # O id do site entra aqui para o repo não carregar o id do projeto.
           jq --arg s "$SITE_ID" '.hosting.site = $s' "$CFG" > firebase.json
-          if [ "${{ inputs.canal }}" = "live" ]; then
+          if [ "$CANAL" = "live" ]; then
             npx --yes firebase-tools@14 deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
           else
-            npx --yes firebase-tools@14 hosting:channel:deploy "manual-${{ github.run_number }}" \
+            CANAL_NOME="${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || format('manual-{0}', github.run_number) }}"
+            npx --yes firebase-tools@14 hosting:channel:deploy "$CANAL_NOME" \
               --project "$FIREBASE_PROJECT" --expires 7d --non-interactive
           fi
