@@ -31,6 +31,7 @@ import { useOnboardingRespostas } from "@/hooks/useOnboardingRespostas";
 import { ROTULOS_CADASTRO_DONO } from "@/lib/onboarding/etapasCadastro";
 import { dorPrincipalDe, type RespostasOnboarding } from "@/lib/onboarding/dores";
 import type { PlanoOnboarding } from "@/lib/onboarding/plano";
+import { VideoLateral } from "@/components/auth/VideoLateral";
 
 type Etapa = "escritorio" | "wizard";
 
@@ -361,15 +362,7 @@ export default function CompanySetup() {
 
       <div className="hidden lg:flex w-1/2 relative bg-black items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video
-            src="/video-login.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-70 scale-105 animate-pulse-slow grayscale"
-            style={{ animationDuration: "20s" }}
-          />
+          <VideoLateral className="w-full h-full object-cover opacity-70 scale-105 animate-pulse-slow grayscale" />
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>

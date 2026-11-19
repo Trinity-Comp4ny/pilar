@@ -11,8 +11,16 @@ import { STORAGE_KEYS } from "@/constants";
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Empresa = Database["public"]["Tables"]["empresas"]["Row"];
 
+/** Linha de pilar_subscriptions que o PrivateRoute usa para decidir o acesso. */
+export type AssinaturaInicial = { status: string; current_period_end: string | null };
+
 export type ProfileWithEmpresa = Profile & {
   empresas: Empresa | null;
+  /**
+   * Vem na mesma consulta do perfil (uma ida ao banco a menos na entrada).
+   * undefined = não veio junto (o PrivateRoute busca); null = empresa sem assinatura.
+   */
+  assinatura?: AssinaturaInicial | null;
 };
 
 export type MfaLevel = "aal1" | "aal2";
@@ -82,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let data;
     let error;
     try {
-      ({ data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single());
+      ({ data, error } = await supabase
+        .from("profiles")
+        .select("*, empresas(*, pilar_subscriptions(status, current_period_end))")
+        .eq("id", userId)
+        .single());
     } catch (err) {
       if (activeUserId.current === userId && request === profileRequest.current) {
         setProfileError(true);
@@ -106,7 +118,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return;
     }
-    const p = data as ProfileWithEmpresa;
+    const { empresas: empresaBruta, ...resto } = data as unknown as Profile & {
+      empresas: (Empresa & { pilar_subscriptions?: AssinaturaInicial | AssinaturaInicial[] | null }) | null;
+    };
+    const { pilar_subscriptions: assinaturas, ...empresaSemAssinatura } = empresaBruta ?? {};
+    const assinatura = empresaBruta ? ((Array.isArray(assinaturas) ? assinaturas[0] : assinaturas) ?? null) : undefined;
+    const p: ProfileWithEmpresa = {
+      ...resto,
+      empresas: empresaBruta ? (empresaSemAssinatura as Empresa) : null,
+      assinatura,
+    };
     setProfile(p);
     setProfileError(false);
     // Só id, empresa e papel: telemetria não recebe contato da pessoa (docs/ROPA.md,
