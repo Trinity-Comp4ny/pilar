@@ -70,3 +70,31 @@ export function agruparDespesas(
     })
     .sort((a, b) => b.total - a.total);
 }
+
+export type ClasseAbc = "A" | "B" | "C";
+
+export interface GrupoAbc extends GrupoDespesa {
+  classe: ClasseAbc;
+  /** % do gasto total já somado até este grupo, inclusive. */
+  acumuladoPct: number;
+}
+
+/** Cortes da curva ABC: A é o que responde pelos primeiros 80% do gasto, B até 95%, C o resto. */
+const CORTE_A = 80;
+const CORTE_B = 95;
+
+/**
+ * Curva ABC sobre grupos já ordenados do maior para o menor. O grupo que cruza o corte fica na classe em que
+ * começou (um item que sozinho passa de 80% é A, não B). Sem gasto, devolve [].
+ */
+export function classificarAbc(grupos: ReadonlyArray<GrupoDespesa>): GrupoAbc[] {
+  const total = grupos.reduce((a, g) => a + g.total, 0);
+  if (total <= 0) return [];
+  let antes = 0;
+  return grupos.map((g) => {
+    const pctAntes = (antes / total) * 100;
+    antes += g.total;
+    const classe: ClasseAbc = pctAntes < CORTE_A ? "A" : pctAntes < CORTE_B ? "B" : "C";
+    return { ...g, classe, acumuladoPct: Math.round((antes / total) * 100) };
+  });
+}
