@@ -10,7 +10,7 @@ import { ProjetoRevisoesTab } from "./ProjetoRevisoesTab";
 import { useRevisoesPendentes } from "../hooks/useRevisoesPendentes";
 import { atribuicaoDisciplina } from "../lib/atribuicaoDisciplina";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState, useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useState, useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -54,8 +54,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
-import { ProjetoVisaoGeralTab } from "./ProjetoVisaoGeralTab";
 import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
+import { PageLoader } from "@/components/motion/PageLoader";
+
+// Os gráficos (recharts, ~430 KB) só descem quando a aba Visão geral abre.
+const ProjetoVisaoGeralTab = lazy(() =>
+  import("./ProjetoVisaoGeralTab").then((m) => ({ default: m.ProjetoVisaoGeralTab }))
+);
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -376,47 +381,49 @@ export function ProjetoDetailTabs({
         <div className="flex-1 min-w-0">
           <TabsContent value="visao-geral">
             {activeTab === "visao-geral" && (
-              <ProjetoVisaoGeralTab
-                projetoId={projeto.id}
-                disciplinas={disciplinasLegacy}
-                progresso={progresso}
-                detalhes={detalhes}
-                entregas={entregas}
-                proximasAcoes={
-                  tarefas && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold">Próximas ações</p>
-                      {tarefas
-                        .filter((t) => tarefaAtrasada(t, hoje))
-                        .slice(0, 3)
-                        .map((t) => (
-                          <p key={t.id} className="text-sm text-muted-foreground">
-                            {t.titulo}
-                          </p>
-                        ))}
-                      <Button size="sm" variant="outline" onClick={() => abrirIndicador("tarefas")}>
-                        Tarefas concluídas · {concluidas}/{tarefas.length}
-                      </Button>
-                    </div>
-                  )
-                }
-                indicadores={
-                  <>
-                    {indicadores}
-                    <ProjetoIndicadoresOperacionais
-                      projetoId={projeto.id}
-                      hoje={hoje}
-                      tarefas={tarefas}
-                      atrasadas={atrasadas}
-                      internas={internasAbertas}
-                      cliente={entregas?.pendentes}
-                      disciplinas={dbDisciplinas}
-                      financeiro={financeiro}
-                      abrir={abrirIndicador}
-                    />
-                  </>
-                }
-              />
+              <Suspense fallback={<PageLoader />}>
+                <ProjetoVisaoGeralTab
+                  projetoId={projeto.id}
+                  disciplinas={disciplinasLegacy}
+                  progresso={progresso}
+                  detalhes={detalhes}
+                  entregas={entregas}
+                  proximasAcoes={
+                    tarefas && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold">Próximas ações</p>
+                        {tarefas
+                          .filter((t) => tarefaAtrasada(t, hoje))
+                          .slice(0, 3)
+                          .map((t) => (
+                            <p key={t.id} className="text-sm text-muted-foreground">
+                              {t.titulo}
+                            </p>
+                          ))}
+                        <Button size="sm" variant="outline" onClick={() => abrirIndicador("tarefas")}>
+                          Tarefas concluídas · {concluidas}/{tarefas.length}
+                        </Button>
+                      </div>
+                    )
+                  }
+                  indicadores={
+                    <>
+                      {indicadores}
+                      <ProjetoIndicadoresOperacionais
+                        projetoId={projeto.id}
+                        hoje={hoje}
+                        tarefas={tarefas}
+                        atrasadas={atrasadas}
+                        internas={internasAbertas}
+                        cliente={entregas?.pendentes}
+                        disciplinas={dbDisciplinas}
+                        financeiro={financeiro}
+                        abrir={abrirIndicador}
+                      />
+                    </>
+                  }
+                />
+              </Suspense>
             )}
           </TabsContent>
 

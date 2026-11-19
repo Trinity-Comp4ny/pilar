@@ -39,7 +39,9 @@ export function PrivateRoute() {
   const subStatus = empresaId
     ? subscription?.empresaId === empresaId
       ? subscription.status
-      : subStatusCache.get(empresaId)
+      : (subStatusCache.get(empresaId) ??
+        // Veio junto com o perfil: sem uma consulta extra de assinatura na entrada.
+        (profile?.assinatura !== undefined ? (statusDeAcesso(profile.assinatura) as SubStatus) : undefined))
     : undefined;
 
   useEffect(() => {

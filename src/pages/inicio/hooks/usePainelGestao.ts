@@ -132,6 +132,21 @@ export type PainelExtra = z.infer<typeof extraSchema>;
 export type PainelGestao = z.infer<typeof painelSchema> & { extra: PainelExtra | null };
 export type PainelSecao = "gestao" | "projetos" | "obras" | "financeiro";
 
+export async function fetchPainelGestao(): Promise<PainelGestao> {
+  // Duas chamadas em paralelo: a principal e a dos blocos que vieram depois.
+  // Se a extra falhar, o painel inteiro não cai: os widgets dela mostram
+  // estado vazio e o resto da tela continua servindo.
+  const [principal, extra] = await Promise.all([supabase.rpc("get_painel_gestao"), supabase.rpc("get_painel_extra")]);
+  if (principal.error) throw principal.error;
+
+  const parsed = painelSchema.safeParse(principal.data);
+  if (!parsed.success) {
+    throw new Error(`Painel veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
+  }
+  const parsedExtra = extra.error ? null : extraSchema.safeParse(extra.data);
+  return { ...parsed.data, extra: parsedExtra?.success ? parsedExtra.data : null };
+}
+
 export function usePainelGestao(enabled = true) {
   const { profile } = useAuth();
   const empresaId = profile?.empresa_id ?? null;
@@ -142,23 +157,7 @@ export function usePainelGestao(enabled = true) {
     // todo o QueryClient (p.ex. impersonação e troca de contexto).
     queryKey: ["painel-gestao", empresaId, usuarioId],
     enabled: enabled && !!empresaId && !!usuarioId,
-    queryFn: async (): Promise<PainelGestao> => {
-      // Duas chamadas em paralelo: a principal e a dos blocos que vieram depois.
-      // Se a extra falhar, o painel inteiro não cai: os widgets dela mostram
-      // estado vazio e o resto da tela continua servindo.
-      const [principal, extra] = await Promise.all([
-        supabase.rpc("get_painel_gestao"),
-        supabase.rpc("get_painel_extra"),
-      ]);
-      if (principal.error) throw principal.error;
-
-      const parsed = painelSchema.safeParse(principal.data);
-      if (!parsed.success) {
-        throw new Error(`Painel veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
-      }
-      const parsedExtra = extra.error ? null : extraSchema.safeParse(extra.data);
-      return { ...parsed.data, extra: parsedExtra?.success ? parsedExtra.data : null };
-    },
+    queryFn: fetchPainelGestao,
     staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 5,
   });

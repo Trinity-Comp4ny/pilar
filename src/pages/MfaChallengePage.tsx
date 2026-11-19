@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Logo } from "@/components/Logo";
 import { AuthPromessa } from "@/components/AuthPromessa";
+import { VideoLateral } from "@/components/auth/VideoLateral";
 
 export default function MfaChallengePage() {
   usePageTitle("Verificação de dois fatores");
@@ -50,15 +51,7 @@ export default function MfaChallengePage() {
       {/* Lado Direito - Visual */}
       <div className="hidden lg:flex w-1/2 relative bg-black items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video
-            src="/video-login.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-70 scale-105 animate-pulse-slow grayscale"
-            style={{ animationDuration: "20s" }}
-          />
+          <VideoLateral className="w-full h-full object-cover opacity-70 scale-105 animate-pulse-slow grayscale" />
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>
