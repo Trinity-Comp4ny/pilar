@@ -1,7 +1,7 @@
 import { assert, assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { lerEntrada, TETO_TRANSCRIPT } from "./entrada.ts";
-import { type Dependencias, processarReuniao } from "./processar.ts";
-import type { RespostaModelo } from "./prompt.ts";
+import { lerEntrada, TETO_TRANSCRIPT } from "../_shared/cerebro/entrada.ts";
+import { type Dependencias, processarReuniao } from "../_shared/cerebro/processar.ts";
+import type { RespostaModelo } from "../_shared/cerebro/prompt.ts";
 
 // Fixtures sintéticas (repositório público): reproduzem as falhas reais sem dado real.
 const TRANSCRIPT = [
