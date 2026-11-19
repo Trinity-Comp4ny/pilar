@@ -49,7 +49,7 @@ export function useProjetoEtapas() {
   return useQuery({
     queryKey: KEY,
     staleTime: 5 * 60 * 1000,
-    queryFn: fetchEtapasProjeto
+    queryFn: fetchEtapasProjeto,
   });
 }
 

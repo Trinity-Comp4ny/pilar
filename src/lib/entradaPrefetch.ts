@@ -1,6 +1,4 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { fetchProjetos } from "@/pages/projetos/hooks/useProjetosData";
-import { fetchEtapasProjeto, KEY_ETAPAS_PROJETO } from "@/pages/projetos/hooks/useProjetoEtapas";
 
 const STALE = 5 * 60 * 1000;
 
@@ -12,9 +10,14 @@ const STALE = 5 * 60 * 1000;
 const ROTAS: Array<{ prefixo: string; buscar: (qc: QueryClient) => Array<Promise<unknown>> }> = [
   {
     prefixo: "/projetos",
+    // Import dinâmico: o código da tela não entra no bundle inicial (orçamento de bundle).
     buscar: (qc) => [
-      qc.prefetchQuery({ queryKey: ["projetos"], queryFn: fetchProjetos, staleTime: STALE }),
-      qc.prefetchQuery({ queryKey: KEY_ETAPAS_PROJETO, queryFn: fetchEtapasProjeto, staleTime: STALE }),
+      import("@/pages/projetos/hooks/useProjetosData").then(({ fetchProjetos }) =>
+        qc.prefetchQuery({ queryKey: ["projetos"], queryFn: fetchProjetos, staleTime: STALE })
+      ),
+      import("@/pages/projetos/hooks/useProjetoEtapas").then(({ fetchEtapasProjeto, KEY_ETAPAS_PROJETO }) =>
+        qc.prefetchQuery({ queryKey: KEY_ETAPAS_PROJETO, queryFn: fetchEtapasProjeto, staleTime: STALE })
+      ),
     ],
   },
 ];
