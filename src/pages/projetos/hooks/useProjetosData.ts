@@ -14,10 +14,7 @@ export async function fetchProjetos() {
   // financeiro. Views não embedam relação via PostgREST (sem FK visível),
   // então clientes e projeto_disciplinas (com seus responsáveis) são
   // resolvidos à parte e remontados no mesmo formato de antes.
-  const { data, error } = await supabase
-    .from("projetos_safe")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("projetos_safe").select("*").order("created_at", { ascending: false });
 
   if (error) throw error;
 
@@ -165,7 +162,7 @@ export function useProjetosData() {
     refetch: refetchProjetos,
   } = useQuery({
     queryKey: ["projetos"],
-    queryFn: fetchProjetos
+    queryFn: fetchProjetos,
   });
 
   const { data: clientes = [] } = useQuery({
