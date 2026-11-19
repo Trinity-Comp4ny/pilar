@@ -117,6 +117,9 @@ const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases
 const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
 const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
 const UltraDoresMercado = lazy(() => ultraAdmin().then((m) => ({ default: m.DoresMercado })));
+const UltraReunioes = lazy(() => ultraAdmin().then((m) => ({ default: m.Reunioes })));
+const UltraReuniaoDetalhe = lazy(() => ultraAdmin().then((m) => ({ default: m.ReuniaoDetalhe })));
+const UltraCerebro = lazy(() => ultraAdmin().then((m) => ({ default: m.Cerebro })));
 const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
 const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
@@ -468,6 +471,9 @@ const App = () => {
                               <Route path="ajuda" element={<UltraAjudaLacunas />} />
                               <Route path="satisfacao" element={<UltraSatisfacao />} />
                               <Route path="dores" element={<UltraDoresMercado />} />
+                              <Route path="reunioes" element={<UltraReunioes />} />
+                              <Route path="reunioes/:id" element={<UltraReuniaoDetalhe />} />
+                              <Route path="cerebro" element={<UltraCerebro />} />
                               <Route path="comunicados" element={<UltraComunicados />} />
                               <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />
