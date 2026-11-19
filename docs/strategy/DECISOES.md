@@ -11,6 +11,23 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-19 · Prospecção outbound no Ultra: agentes mapeiam, o fundador dispara pelo WhatsApp
+
+**Decisão:** o Ultra ganha o agente `prospeccao`, que mapeia leads toda semana (Google Places e base de CNPJ,
+cascata de Marília para o Brasil) e deixa 10 mensagens por dia prontas. O envio é sempre semi-manual: o botão
+abre `wa.me` com o texto pronto e quem envia é o fundador. Sem API de WhatsApp. Duas mensagens: pessoa
+(nome confirmado) e empresa (pergunta quem decide). Marcenaria, planejados e marmoraria entram só como
+teste de mercado, sem mudar o ICP. Canal por lead: celular vai para WhatsApp, fixo para e-mail ou ligação,
+com chip dedicado e parada no primeiro "não".
+
+Contexto: meta de partida de 10 mensagens por dia (~200 por mês). API oficial exige opt-in e custa por mensagem;
+automação não oficial arrisca banir o número. Detalhe na [SPEC 172](../specs/172-prospeccao-outbound-no-ultra.md).
+
+**Supera:** a linha "CRM de prospecção outbound usa o módulo Leads" da SPEC 126 (aqui a prospecção tem tabelas próprias
+e só promove ao Leads quando a reunião é marcada).
+
+---
+
 ## 2026-11-19 · Módulos ocultáveis por empresa e por usuário (lista de exclusão)
 
 **Decisão:** o admin do escritório pode ocultar módulos (Gestão, Projetos, Obras) para a empresa toda e por usuário.
