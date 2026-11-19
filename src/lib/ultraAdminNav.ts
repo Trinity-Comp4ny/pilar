@@ -8,6 +8,7 @@ import {
   Activity,
   Brain,
   Mic,
+  Send,
   Building2,
   Calculator,
   Coins,
@@ -42,6 +43,7 @@ export type UltraSecaoId =
   | "satisfacao"
   | "dores"
   | "reunioes"
+  | "prospeccao"
   | "cerebro"
   | "comunicados"
   | "previas"
@@ -88,6 +90,7 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
   { id: "satisfacao", title: "Satisfação", url: `${ULTRA_ADMIN_BASE}/satisfacao`, icon: Smile, group: "Produto" },
   { id: "dores", title: "Dores do mercado", url: `${ULTRA_ADMIN_BASE}/dores`, icon: Target, group: "Produto" },
   { id: "reunioes", title: "Reuniões", url: `${ULTRA_ADMIN_BASE}/reunioes`, icon: Mic, group: "Produto" },
+  { id: "prospeccao", title: "Prospecção", url: `${ULTRA_ADMIN_BASE}/prospeccao`, icon: Send, group: "Produto" },
   { id: "cerebro", title: "Cérebro", url: `${ULTRA_ADMIN_BASE}/cerebro`, icon: Brain, group: "Produto" },
   {
     id: "previas",
