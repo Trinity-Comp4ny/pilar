@@ -30,7 +30,8 @@ const CRUZADOS_ACEITOS: Record<string, number> = {
   "obras -> meu-trabalho": 6,
   "pessoas -> meu-trabalho": 1,
   "portal -> cliente": 3,
-  "projetos -> mapa": 1,
+  // 2: MapaTab e o painel lateral MapaDetalheSheet (extraído para respeitar o teto de linhas) leem as constantes do mapa.
+  "projetos -> mapa": 2,
 };
 
 // Genérico por natureza (não sabe de domínio), mesmo usado por um módulo hoje.
