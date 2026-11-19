@@ -5807,6 +5807,8 @@ export type Database = {
           empresa_id: string
           fluxo_obra_id: string | null
           id: string
+          placa_data: string | null
+          placa_status: string
           latitude: number | null
           localizacao: string | null
           longitude: number | null
@@ -5835,6 +5837,8 @@ export type Database = {
           empresa_id: string
           fluxo_obra_id?: string | null
           id?: string
+          placa_data?: string | null
+          placa_status?: string
           latitude?: number | null
           localizacao?: string | null
           longitude?: number | null
@@ -5863,6 +5867,8 @@ export type Database = {
           empresa_id?: string
           fluxo_obra_id?: string | null
           id?: string
+          placa_data?: string | null
+          placa_status?: string
           latitude?: number | null
           localizacao?: string | null
           longitude?: number | null
@@ -8143,6 +8149,8 @@ export type Database = {
           exemplo: boolean
           fluxo_id: string | null
           id: string
+          placa_data: string | null
+          placa_status: string
           latitude: number | null
           links: Json
           localizacao: string | null
@@ -8176,6 +8184,8 @@ export type Database = {
           exemplo?: boolean
           fluxo_id?: string | null
           id?: string
+          placa_data?: string | null
+          placa_status?: string
           latitude?: number | null
           links?: Json
           localizacao?: string | null
@@ -8209,6 +8219,8 @@ export type Database = {
           exemplo?: boolean
           fluxo_id?: string | null
           id?: string
+          placa_data?: string | null
+          placa_status?: string
           latitude?: number | null
           links?: Json
           localizacao?: string | null
@@ -10238,6 +10250,8 @@ export type Database = {
           empresa_id: string | null
           etapa_id: string | null
           id: string | null
+          placa_data: string | null
+          placa_status: string | null
           latitude: number | null
           links: Json | null
           localizacao: string | null
@@ -10270,6 +10284,8 @@ export type Database = {
           empresa_id?: string | null
           etapa_id?: string | null
           id?: string | null
+          placa_data?: string | null
+          placa_status?: string | null
           latitude?: number | null
           links?: Json | null
           localizacao?: string | null
@@ -10302,6 +10318,8 @@ export type Database = {
           empresa_id?: string | null
           etapa_id?: string | null
           id?: string | null
+          placa_data?: string | null
+          placa_status?: string | null
           latitude?: number | null
           links?: Json | null
           localizacao?: string | null

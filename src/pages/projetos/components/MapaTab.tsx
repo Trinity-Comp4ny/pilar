@@ -2,7 +2,11 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { createPortal } from "react-dom";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
+import { PlacaSelect } from "@/components/placa/PlacaSelect";
+import { toast } from "sonner";
+import { dataDaPlaca, PLACA_LABEL, PLACA_STATUS, placaStatusDe, type PlacaStatus } from "@/lib/placa";
 import { FilterSelect } from "@/components/filters/FilterBar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,6 +29,7 @@ import {
 
 import type { Map as LeafletMap } from "leaflet";
 import {
+  OBRA_STATUS_NO_MAPA,
   STATUS_MARKER_COLORS,
   TILE_LAYERS,
   temCoordenadaValida,
@@ -42,6 +47,12 @@ import { ReadingRing } from "@/components/motion/ReadingRing";
 // demanda: só entram no bundle quando a aba do Mapa monta, não no inicial.
 const MapCanvas = lazy(() => import("@/pages/mapa/MapCanvas"));
 
+// Linha do mapa antes de saber se tem coordenada válida (latitude/longitude podem vir nulas).
+type ProjetoMapaLinha = Omit<ProjetoMapa, "latitude" | "longitude"> & {
+  latitude: number | null;
+  longitude: number | null;
+};
+
 function formatDate(d: string | null) {
   if (!d) return null;
   // Parse local (T00:00:00): sem isso, uma data-only em UTC-3 exibia o dia anterior.
@@ -52,6 +63,16 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
   const moneyMask = useMoneyMask();
   const formatCurrency = (v: number | null) => (v ? moneyMask(v) : null);
   const navigate = useNavigate();
+  const { can } = usePermissions();
+  const [searchParams] = useSearchParams();
+  const podeVerProjetos = can("projetos", "view");
+  const podeVerObras = can("obras", "view");
+  // O botão Mapa de Obras abre este mesmo mapa já em "Obras" (?ver=obras).
+  const [ver, setVer] = useState<string>(() => {
+    const v = searchParams.get("ver");
+    return v === "obras" || v === "projetos" ? v : "ambos";
+  });
+  const [placaFilter, setPlacaFilter] = useState<string>("todas");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedProjeto, setSelectedProjeto] = useState<ProjetoMapa | null>(null);
@@ -78,18 +99,20 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
   }, []);
 
   const {
-    data: todosOsProjetos = [],
-    isLoading,
-    isError,
+    data: projetosDoMapa = [],
+    isLoading: carregandoProjetos,
+    isError: erroProjetos,
+    refetch: refetchProjetos,
   } = useQuery({
     queryKey: ["projetos-mapa"],
-    queryFn: async () => {
+    enabled: podeVerProjetos,
+    queryFn: async (): Promise<ProjetoMapaLinha[]> => {
       // projetos_safe mascara valor_contrato sem financeiro. View não embeda
       // clientes(nome) via PostgREST (sem FK visível) — resolve à parte.
       const { data, error } = await supabase
         .from("projetos_safe")
         .select(
-          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id"
+          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id, placa_status"
         )
         .limit(1000);
 
@@ -103,8 +126,10 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
       }
 
       return (data || []).map((p) => ({
-        id: p.id,
-        nome: p.nome,
+        tipo: "projeto" as const,
+        placa_status: placaStatusDe(p.placa_status),
+        id: p.id as string,
+        nome: p.nome as string,
         codigo_projeto: p.codigo_projeto ?? "—",
         status: p.status as ProjectStatus,
         localizacao: p.localizacao,
@@ -122,9 +147,65 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
     staleTime: 1000 * 60 * 5,
   });
 
+  const {
+    data: obrasDoMapa = [],
+    isLoading: carregandoObras,
+    isError: erroObras,
+    refetch: refetchObras,
+  } = useQuery({
+    queryKey: ["obras-mapa"],
+    enabled: podeVerObras,
+    queryFn: async (): Promise<ProjetoMapaLinha[]> => {
+      const { data, error } = await supabase
+        .from("obras")
+        .select(
+          "id, nome, status, localizacao, latitude, longitude, data_inicio_prevista, data_fim_prevista, cliente_id, placa_status"
+        )
+        .is("deleted_at", null)
+        .limit(1000);
+      if (error) throw error;
+
+      const clienteIds = [...new Set((data ?? []).map((o) => o.cliente_id).filter((id): id is string => !!id))];
+      const nomeByClienteId = new Map<string, string>();
+      if (clienteIds.length > 0) {
+        const { data: clientesData } = await supabase.from("clientes").select("id, nome").in("id", clienteIds);
+        for (const c of clientesData ?? []) nomeByClienteId.set(c.id, c.nome);
+      }
+
+      return (data ?? []).map((o) => ({
+        tipo: "obra" as const,
+        placa_status: placaStatusDe(o.placa_status),
+        id: o.id,
+        nome: o.nome,
+        codigo_projeto: "—",
+        status: OBRA_STATUS_NO_MAPA[o.status] ?? "Planejamento",
+        localizacao: o.localizacao,
+        latitude: o.latitude as number,
+        longitude: o.longitude as number,
+        valor_contrato: null,
+        cliente_nome: o.cliente_id ? (nomeByClienteId.get(o.cliente_id) ?? null) : null,
+        cliente_id: o.cliente_id,
+        data_inicio: o.data_inicio_prevista,
+        data_previsao: o.data_fim_prevista,
+        area_m2: null,
+        prioridade: null,
+      }));
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isLoading = (podeVerProjetos && carregandoProjetos) || (podeVerObras && carregandoObras);
+  const isError = (podeVerProjetos && erroProjetos) || (podeVerObras && erroObras);
+
+  // Quem escolhe "Obras" ou "Projetos" vê só aquele tipo; "Ambos" junta os dois.
+  const todosOsProjetos = useMemo(
+    () => [...(ver === "obras" ? [] : projetosDoMapa), ...(ver === "projetos" ? [] : obrasDoMapa)],
+    [ver, projetosDoMapa, obrasDoMapa]
+  );
+
   const { projetos, semCoordenadas } = useMemo(() => {
     const com: ProjetoMapa[] = [];
-    const sem: typeof todosOsProjetos = [];
+    const sem: ProjetoMapaLinha[] = [];
     for (const p of todosOsProjetos) {
       if (temCoordenadaValida(p.latitude, p.longitude)) {
         com.push(p as ProjetoMapa);
@@ -135,10 +216,35 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
     return { projetos: com, semCoordenadas: sem };
   }, [todosOsProjetos]);
 
-  const filtrados = useMemo(() => {
-    if (statusFilter === "todos") return projetos;
-    return projetos.filter((p) => p.status === statusFilter);
-  }, [projetos, statusFilter]);
+  const filtrados = useMemo(
+    () =>
+      projetos.filter(
+        (p) =>
+          (statusFilter === "todos" || p.status === statusFilter) &&
+          (placaFilter === "todas" || p.placa_status === placaFilter)
+      ),
+    [projetos, statusFilter, placaFilter]
+  );
+
+  const semPlaca = useMemo(() => filtrados.filter((p) => p.placa_status === "nao_instalada").length, [filtrados]);
+
+  const rotaDe = (p: { tipo: string; id: string }) => (p.tipo === "obra" ? `/obras/${p.id}` : `/projetos/${p.id}`);
+
+  const trocarPlaca = useCallback(
+    async (item: ProjetoMapa, status: PlacaStatus) => {
+      const { error } = await supabase
+        .from(item.tipo === "obra" ? "obras" : "projetos")
+        .update({ placa_status: status, placa_data: dataDaPlaca(status) })
+        .eq("id", item.id);
+      if (error) {
+        toast.error("Não foi possível atualizar a placa", { description: "Tente de novo." });
+        return;
+      }
+      setSheetProjeto({ ...item, placa_status: status });
+      await Promise.all([refetchProjetos(), refetchObras()]);
+    },
+    [refetchProjetos, refetchObras]
+  );
 
   const contagemPorStatus = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -245,6 +351,31 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
         </PopoverContent>
       </Popover>
 
+      {podeVerProjetos && podeVerObras && (
+        <FilterSelect
+          label="Mostrar"
+          value={ver}
+          emptyValue="ambos"
+          onChange={setVer}
+          options={[
+            { value: "ambos", label: "Projetos e obras" },
+            { value: "projetos", label: "Só projetos" },
+            { value: "obras", label: "Só obras" },
+          ]}
+        />
+      )}
+
+      <FilterSelect
+        label="Placa"
+        value={placaFilter}
+        emptyValue="todas"
+        onChange={setPlacaFilter}
+        options={[
+          { value: "todas", label: "Todas as placas" },
+          ...PLACA_STATUS.map((s) => ({ value: s, label: PLACA_LABEL[s] })),
+        ]}
+      />
+
       <FilterSelect
         label="Status"
         value={statusFilter}
@@ -309,9 +440,9 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                 <div className="border-t divide-y divide-border/50">
                   {semCoordenadas.map((p) => (
                     <button
-                      key={p.id}
+                      key={`${p.tipo}-${p.id}`}
                       type="button"
-                      onClick={() => navigate(`/projetos/${p.id}`)}
+                      onClick={() => navigate(rotaDe(p))}
                       className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left"
                     >
                       <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" />
@@ -360,7 +491,10 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                 </button>
               );
             })}
-            <span className="text-xs text-muted-foreground ml-auto">{filtrados.length} projeto(s) no mapa</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filtrados.length} no mapa
+              {semPlaca > 0 && <span className="ml-2 font-medium text-foreground">· {semPlaca} sem placa</span>}
+            </span>
           </div>
 
           <div
@@ -483,6 +617,9 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
 
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {sheetProjeto.tipo === "obra" ? "Obra" : "Projeto"}
+                  </Badge>
                   <Badge className={PROJECT_STATUS_CONFIG[sheetProjeto.status]?.color || ""}>
                     {sheetProjeto.status}
                   </Badge>
@@ -494,6 +631,14 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-1.5">
+                    <p className="text-2xs text-muted-foreground uppercase tracking-wide">Placa</p>
+                    <PlacaSelect
+                      value={sheetProjeto.placa_status}
+                      onChange={(status) => trocarPlaca(sheetProjeto, status)}
+                    />
+                  </div>
+
                   {sheetProjeto.cliente_nome && (
                     <div className="flex items-start gap-2.5">
                       <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -552,12 +697,12 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                 <Button
                   className="w-full gap-2"
                   onClick={() => {
-                    navigate(`/projetos/${sheetProjeto.id}`);
+                    navigate(rotaDe(sheetProjeto));
                     setSheetProjeto(null);
                   }}
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Abrir Projeto
+                  {sheetProjeto.tipo === "obra" ? "Abrir Obra" : "Abrir Projeto"}
                 </Button>
               </div>
             </>

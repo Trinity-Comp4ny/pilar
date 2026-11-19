@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { GitBranch, HardHat, Plus, User } from "lucide-react";
+import { GitBranch, HardHat, MapPin, Plus, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PilarPage } from "@/components/PilarPage";
 import { KPICard } from "@/components/KPICard";
@@ -23,6 +24,7 @@ import { Button } from "@/components/ui/button";
 export default function ObrasPage() {
   usePageTitle("Obras");
   const { can } = usePermissions();
+  const navigate = useNavigate();
   const canCreate = can("obras", "create");
   // Com a estimativa ligada na empresa, "Nova obra" pergunta como começar (SPEC 136, BEZ-24).
   const podeEstimar = can("estimativa_obra", "create");
@@ -72,12 +74,24 @@ export default function ObrasPage() {
         dataTour: "onb-nova-obra",
       }}
       actions={
-        canCreate ? (
-          <Button variant="outline" className="h-9 rounded-full text-sm" onClick={() => setFluxosOpen(true)}>
-            <GitBranch className="mr-2 h-4 w-4" aria-hidden="true" />
-            Fluxos
-          </Button>
-        ) : undefined
+        <>
+          {can("mapa", "view") && (
+            <Button
+              variant="outline"
+              className="h-9 rounded-full text-sm"
+              onClick={() => navigate("/projetos/mapa?ver=obras")}
+            >
+              <MapPin className="mr-2 h-4 w-4" aria-hidden="true" />
+              Mapa
+            </Button>
+          )}
+          {canCreate && (
+            <Button variant="outline" className="h-9 rounded-full text-sm" onClick={() => setFluxosOpen(true)}>
+              <GitBranch className="mr-2 h-4 w-4" aria-hidden="true" />
+              Fluxos
+            </Button>
+          )}
+        </>
       }
       toolbar={
         <FilterBar>
