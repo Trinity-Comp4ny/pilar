@@ -118,6 +118,8 @@ const resumo = {
   despesas: 0,
   saldo: 0,
   atrasadosCount: 0,
+  atrasadosPagar: 0,
+  atrasadosReceber: 0,
 };
 
 function setup() {

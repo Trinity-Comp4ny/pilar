@@ -178,12 +178,17 @@ export default function Lancamentos() {
                 itens={[
                   { texto: `recebido ${formatCurrency(resumo.recebido, { compact: true })}` },
                   { texto: `pago ${formatCurrency(resumo.pago, { compact: true })}` },
-                  { texto: `a receber ${formatCurrency(resumo.aReceber, { compact: true })}` },
+                  {
+                    texto: `a receber ${formatCurrency(resumo.aReceber, { compact: true })}${
+                      resumo.atrasadosReceber > 0 ? ` (${resumo.atrasadosReceber} atrasados)` : ""
+                    }`,
+                    alerta: resumo.atrasadosReceber > 0,
+                  },
                   {
                     texto: `a pagar ${formatCurrency(resumo.aPagar, { compact: true })}${
-                      resumo.atrasadosCount > 0 ? ` (${resumo.atrasadosCount} atrasados)` : ""
+                      resumo.atrasadosPagar > 0 ? ` (${resumo.atrasadosPagar} atrasados)` : ""
                     }`,
-                    alerta: resumo.atrasadosCount > 0,
+                    alerta: resumo.atrasadosPagar > 0,
                   },
                 ]}
               />
@@ -219,6 +224,8 @@ export default function Lancamentos() {
                 icon={Clock}
                 tone="positive"
                 loading={loadingResumo}
+                subtitle={resumo.atrasadosReceber > 0 ? `${resumo.atrasadosReceber} atrasado(s)` : undefined}
+                subtitleTone="danger"
                 onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
               />
               <KPICard
@@ -228,7 +235,7 @@ export default function Lancamentos() {
                 icon={Clock}
                 tone="danger"
                 loading={loadingResumo}
-                subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
+                subtitle={resumo.atrasadosPagar > 0 ? `${resumo.atrasadosPagar} atrasado(s)` : undefined}
                 subtitleTone="danger"
                 onClick={() => patchFilters({ tipo: "despesa", status: "pendentes" })}
               />
