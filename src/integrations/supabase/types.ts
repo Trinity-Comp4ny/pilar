@@ -11708,6 +11708,7 @@ export type Database = {
         }[]
       }
       limpar_registros_acesso: { Args: never; Returns: number }
+      limpar_transcricoes_reuniao: { Args: never; Returns: number }
       listar_clientes_paginado: {
         Args: {
           p_com_projeto?: boolean

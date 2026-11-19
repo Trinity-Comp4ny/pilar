@@ -8,7 +8,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(13);
+SELECT plan(16);
 
 SET LOCAL session_replication_role = 'replica';
 
@@ -99,6 +99,16 @@ SELECT throws_ok(
   $$INSERT INTO public.reuniao (titulo, ocorreu_em) VALUES ('x', now())$$, '42501', NULL,
   'ultra admin não insere pela API');
 RESET ROLE;
+
+-- Retenção: transcript com mais de 12 meses é zerado; a reunião e os pontos ficam.
+INSERT INTO public.reuniao (id, titulo, ocorreu_em, transcript_redigido, created_at) VALUES
+  ('a9690000-0000-0000-0000-0000000000f1', 'Antiga', now() - interval '13 months', 'texto antigo', now() - interval '13 months'),
+  ('a9690000-0000-0000-0000-0000000000f2', 'Recente', now(), 'texto recente', now());
+SELECT is(public.limpar_transcricoes_reuniao(), 1, 'limpeza zera só a transcrição com mais de 12 meses');
+SELECT is((SELECT transcript_redigido FROM public.reuniao WHERE id = 'a9690000-0000-0000-0000-0000000000f1'), NULL,
+  'transcrição antiga some e a reunião continua');
+SELECT is((SELECT transcript_redigido FROM public.reuniao WHERE id = 'a9690000-0000-0000-0000-0000000000f2'), 'texto recente',
+  'transcrição recente fica');
 
 SELECT * FROM finish();
 ROLLBACK;

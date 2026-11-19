@@ -25,6 +25,16 @@ e no [ADR 0066](../architecture/adr/0066-modulos-ocultos-por-usuario-lista-de-ex
 
 ---
 
+## 2026-11-19 · Cérebro de reuniões: aviso de gravação e retenção do transcript
+
+**Decisão:** o fundador sempre pergunta ao escritório antes de gravar a reunião, então a pergunta de aviso de gravação está
+respondida. Os pontos da reunião (dores, ideias, objeções, compromissos) ficam sem prazo; a transcrição redigida é apagada
+12 meses depois, por cron diário (`limpar_transcricoes_reuniao`). O modelo é o mesmo dos agentes do time (`ops_inteligencia`).
+
+**Supera:** as perguntas abertas 1 e 2 da [SPEC 169](../specs/169-cerebro-de-reunioes-no-ultra.md). Libera colar transcrição de cliente em produção.
+
+---
+
 ## 2026-11-19 · Cérebro de reuniões no Ultra começa com colagem manual
 
 **Decisão:** a ingestão das reuniões do Granola começa por colagem manual da transcrição no Ultra Admin. A API do
