@@ -91,7 +91,7 @@ const PROJETO_TABS: SectionTab[] = [
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
   { id: "cliente", label: "Cliente", icon: Send },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
-  { id: "escopo", label: "Escopo", icon: ScrollText },
+  { id: "escopo", label: "Escopo e aditivos", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
 ];
 
@@ -121,10 +121,11 @@ export function ProjetoDetailTabs({
   handleRemoveResponsavel,
 }: ProjetoDetailTabsProps) {
   const { profile } = useAuth();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, can } = usePermissions();
   const { data: minhaPessoa } = useMinhaPessoa();
   const tarefasProjeto = useTarefas(null, projeto.id);
   const { data: revisoesPendentes } = useRevisoesPendentes(projeto.id);
+  const [aditivoDestacado, setAditivoDestacado] = useState<string>();
   const [novaTarefa, setNovaTarefa] = useState<NovaTarefaProjeto | null>(null);
   const [apenasAtrasadas, setApenasAtrasadas] = useState(false);
   const { data: checklistCounts } = useProjetoDisciplinaChecklistCounts(projeto.id);
@@ -321,6 +322,11 @@ export function ProjetoDetailTabs({
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     navigate(`#${v}`, { replace: true });
+  };
+
+  const abrirAditivos = (id?: string) => {
+    setAditivoDestacado(id);
+    handleTabChange("escopo");
   };
 
   const hoje = formatDateLocal(new Date());
@@ -530,6 +536,8 @@ export function ProjetoDetailTabs({
               <ProjetoRevisoesTab
                 projetoId={projeto.id}
                 revisoesInternas={internasAbertas}
+                podeCriarAditivo={canEdit && can("financeiro")}
+                abrirAditivos={abrirAditivos}
                 abrirDisciplinas={() => handleTabChange("disciplinas")}
                 criarTarefa={
                   isAdmin || minhaPessoa
@@ -556,6 +564,9 @@ export function ProjetoDetailTabs({
                 pessoas={pessoas}
                 autorNome={autorNome}
                 comentarioDestacado={disciplinaDoLink ? null : comentarioDoLink}
+                canEdit={canEdit}
+                podeCriarAditivo={canEdit && can("financeiro")}
+                disciplinas={dbDisciplinas.map(({ id, nome }) => ({ id, nome }))}
               />
             </Card>
           </TabsContent>
@@ -577,12 +588,16 @@ export function ProjetoDetailTabs({
               projetoId={projeto.id}
               canEdit={canEdit}
               disciplinas={Array.from(new Set(dbDisciplinas.map((d) => d.nome)))}
+              opcoesDisciplina={dbDisciplinas.map(({ id, nome }) => ({ id, nome }))}
+              podeVerFinanceiro={can("financeiro")}
+              aditivoDestacado={aditivoDestacado}
             />
           </TabsContent>
 
           <TabsContent value="historico">
             <ProjetoHistoricoTab
               projetoId={projeto.id}
+              abrirAditivos={abrirAditivos}
               disciplinas={dbDisciplinas.map((d) => ({ id: d.id, nome: d.nome }))}
             />
           </TabsContent>

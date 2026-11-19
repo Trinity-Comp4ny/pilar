@@ -58,7 +58,7 @@ export function MultiSelectFilter({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className={filterTriggerClass(hasSelection, className)}>
+        <Button type="button" variant="outline" className={filterTriggerClass(hasSelection, className)}>
           <span className="truncate">{triggerLabel}</span>
           {hasSelection ? (
             <span

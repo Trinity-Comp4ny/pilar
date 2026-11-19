@@ -2,9 +2,8 @@ import { test, expect, type Locator, type Page } from "./fixtures";
 import { loginComo } from "./helpers/loginComo";
 
 /**
- * Aditivo: o usuário não cria, aprova. O aditivo nasce do guardião de margem ou do
- * chat e aparece na aba Escopo do projeto; aprovar soma o valor no contrato (trigger
- * handle_escopo_aprovado). É o fluxo de escrita que mexe em dinheiro do módulo
+ * O aditivo preparado pelo guardião aparece em Escopo e aditivos.
+ * A aprovação registra a cobrança e soma o valor no contrato. É o fluxo de escrita que mexe em dinheiro do módulo
  * Projetos, então o teste confere o contrato antes e depois, não só o toast.
  *
  * Usa o aditivo pendente do seed de demo (projeto "Edifício Comercial Horizonte").
@@ -35,7 +34,7 @@ test("usuário sem acesso ao financeiro vê o aditivo sem valor e sem os botões
   test.skip(process.env.E2E_SEED_DEMO !== "1", "Depende do seed de demo (só no banco local)");
   const page = await loginComo(browser, "user@local.test");
   await page.goto(PROJETO_DEMO);
-  await page.getByRole("tab", { name: "Escopo", exact: true }).click();
+  await page.getByRole("tab", { name: "Escopo e aditivos", exact: true }).click();
 
   await expect(page.getByText("A aprovação fica com quem tem acesso ao financeiro do escritório.").first()).toBeVisible(
     {
@@ -53,7 +52,7 @@ test("aprovar aditivo soma o valor dele no contrato do projeto", async ({ page }
   await expect(page.getByText("Contrato", { exact: true })).toBeVisible({ timeout: 10_000 });
   const contratoAntes = await valorDoContrato(page);
 
-  await page.getByRole("tab", { name: "Escopo", exact: true }).click();
+  await page.getByRole("tab", { name: "Escopo e aditivos", exact: true }).click();
 
   const aprovar = page.getByRole("button", { name: "Aprovar", exact: true });
   await expect(aprovar.first()).toBeVisible({ timeout: 8_000 });
@@ -64,9 +63,12 @@ test("aprovar aditivo soma o valor dele no contrato do projeto", async ({ page }
   expect(valorAditivo).toBeGreaterThan(0);
 
   await aprovar.first().click();
-  const confirmar = page.getByRole("alertdialog", { name: /Aprovar aditivo/i });
+  const confirmar = page.getByRole("dialog", { name: /Aprovar aditivo/i });
   await expect(confirmar).toBeVisible();
-  await confirmar.getByRole("button", { name: "Aprovar", exact: true }).click();
+  const vencimento = new Date();
+  vencimento.setDate(vencimento.getDate() + 7);
+  await confirmar.getByLabel("Primeiro vencimento").fill(vencimento.toISOString().slice(0, 10));
+  await confirmar.getByRole("button", { name: "Aprovar e registrar cobrança" }).click();
 
   await expect(page.getByText(/Aditivo aprovado/i).first()).toBeVisible({ timeout: 10_000 });
   await page.getByRole("tab", { name: "Visão geral", exact: true }).click();

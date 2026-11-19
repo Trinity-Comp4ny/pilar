@@ -2610,6 +2610,7 @@ export type Database = {
           id: string
           impacto_prazo_dias: number | null
           justificativa: string | null
+          origem_manual: boolean
           projeto_id: string
           status: string | null
           tipo: string
@@ -2631,6 +2632,7 @@ export type Database = {
           id?: string
           impacto_prazo_dias?: number | null
           justificativa?: string | null
+          origem_manual?: boolean
           projeto_id: string
           status?: string | null
           tipo: string
@@ -2652,6 +2654,7 @@ export type Database = {
           id?: string
           impacto_prazo_dias?: number | null
           justificativa?: string | null
+          origem_manual?: boolean
           projeto_id?: string
           status?: string | null
           tipo?: string
@@ -3334,8 +3337,35 @@ export type Database = {
           },
         ]
       }
+      fornecedor_categorias: {
+        Row: {
+          chave: string
+          empresa_id: string
+          nome: string
+        }
+        Insert: {
+          chave: string
+          empresa_id: string
+          nome: string
+        }
+        Update: {
+          chave?: string
+          empresa_id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedor_categorias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
+          categorias: string[]
           cnpj: string | null
           contato: string | null
           created_at: string | null
@@ -3348,6 +3378,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          categorias?: string[]
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
@@ -3360,6 +3391,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          categorias?: string[]
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
@@ -6936,6 +6968,7 @@ export type Database = {
           obra_id: string | null
           projeto_disciplina_id: string | null
           projeto_id: string | null
+          respondido_cliente_id: string | null
           respondido_em: string | null
           resposta_cliente: string | null
           revisao_anterior_id: string | null
@@ -6957,6 +6990,7 @@ export type Database = {
           obra_id?: string | null
           projeto_disciplina_id?: string | null
           projeto_id?: string | null
+          respondido_cliente_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           revisao_anterior_id?: string | null
@@ -6978,6 +7012,7 @@ export type Database = {
           obra_id?: string | null
           projeto_disciplina_id?: string | null
           projeto_id?: string | null
+          respondido_cliente_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           revisao_anterior_id?: string | null
@@ -8011,6 +8046,77 @@ export type Database = {
           },
           {
             foreignKeyName: "projeto_status_historico_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projeto_registros: {
+        Row: {
+          autor_nome: string | null
+          dados: Json
+          detalhe: string
+          disciplina_id: string | null
+          empresa_id: string
+          financeiro: boolean
+          id: string
+          ocorrido_em: string
+          origem_id: string | null
+          projeto_id: string
+          tipo: string
+        }
+        Insert: {
+          autor_nome?: string | null
+          dados?: Json
+          detalhe: string
+          disciplina_id?: string | null
+          empresa_id: string
+          financeiro?: boolean
+          id?: string
+          ocorrido_em?: string
+          origem_id?: string | null
+          projeto_id: string
+          tipo: string
+        }
+        Update: {
+          autor_nome?: string | null
+          dados?: Json
+          detalhe?: string
+          disciplina_id?: string | null
+          empresa_id?: string
+          financeiro?: boolean
+          id?: string
+          ocorrido_em?: string
+          origem_id?: string | null
+          projeto_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_registros_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_registros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_registros_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_registros_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
@@ -10322,6 +10428,21 @@ export type Database = {
           },
         ]
       }
+      v_projeto_historico: {
+        Row: {
+          autor_nome: string | null
+          chave: string | null
+          dados: Json | null
+          detalhe: string | null
+          disciplina_id: string | null
+          disciplina_nome: string | null
+          ocorrido_em: string | null
+          origem_id: string | null
+          projeto_id: string | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
       v_projeto_timeline: {
         Row: {
           autor_nome: string | null
@@ -11910,6 +12031,7 @@ export type Database = {
           projeto_id: string
           projeto_nome: string
           respondido_em: string
+          respondido_por: string
           resposta_cliente: string
           revisao_anterior_id: string
           status: string
@@ -11942,6 +12064,27 @@ export type Database = {
       projeto_aditivo_prazo_criar: {
         Args: { p_dias: number; p_justificativa?: string; p_projeto: string }
         Returns: string
+      }
+      projeto_nome_ator: {
+        Args: {
+          p_id: string
+        }
+        Returns: string
+      }
+      projeto_parcelas_elegiveis: {
+        Args: {
+          p_cliente: string
+          p_empresa: string
+          p_projeto: string
+        }
+        Returns: {
+          descricao: string
+          grupo: string
+          grupo_id: string
+          id: string
+          valor: number
+          vencimento: string
+        }[]
       }
       projeto_prazo_avisar: { Args: { p_projeto: string }; Returns: number }
       projetos_com_escopo_estourado: {
@@ -12043,12 +12186,35 @@ export type Database = {
         Args: { p_concluida_em?: string; p_revisao_id: string }
         Returns: undefined
       }
+      rpc_confirmar_cobranca_aditivo: {
+        Args: {
+          p_aceite?: string
+          p_aditivo: string
+          p_grupo?: string
+          p_parcelas?: number
+          p_previa: Json
+          p_vencimento?: string
+        }
+        Returns: Json
+      }
       rpc_converter_lead_cliente: {
         Args: { p_lead_id: string; p_omit_cnpj?: boolean }
         Returns: string
       }
       rpc_converter_proposta_projeto: {
         Args: { p_proposta_id: string }
+        Returns: string
+      }
+      rpc_criar_aditivo_projeto: {
+        Args: {
+          p_descricao: string
+          p_disciplina_id?: string
+          p_entrega_id?: string
+          p_motivo: string
+          p_projeto_id: string
+          p_registro_id?: string
+          p_valor: number
+        }
         Returns: string
       }
       rpc_criar_convite_cotacao: {
@@ -12270,9 +12436,36 @@ export type Database = {
           tem_conta: boolean
         }[]
       }
+      rpc_prever_cobranca_aditivo: {
+        Args: {
+          p_aditivo: string
+          p_grupo?: string
+          p_parcelas?: number
+          p_vencimento?: string
+        }
+        Returns: Json
+      }
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
         Returns: Json
+      }
+      rpc_registrar_atividade_projeto: {
+        Args: {
+          p_anexo?: string
+          p_avaliar_cobranca?: boolean
+          p_disciplina?: string
+          p_duracao?: number
+          p_fornecedor?: string
+          p_local_canal?: string
+          p_ocorrido: string
+          p_projeto: string
+          p_proximo_passo?: string
+          p_responsavel?: string
+          p_resultado: string
+          p_resumo: string
+          p_tipo: string
+        }
+        Returns: string
       }
       rpc_registrar_revisao: {
         Args: {
@@ -12288,6 +12481,12 @@ export type Database = {
         Returns: undefined
       }
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
+      rpc_resumo_aditivos_projeto: {
+        Args: {
+          p_projeto: string
+        }
+        Returns: Json
+      }
       rpc_retomar_disciplina: {
         Args: { p_disciplina_id: string }
         Returns: undefined
