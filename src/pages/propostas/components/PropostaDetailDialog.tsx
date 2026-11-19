@@ -1,3 +1,4 @@
+import { PropostaLinksPanel } from "./PropostaLinksPanel";
 import { useState } from "react";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
@@ -60,6 +61,7 @@ interface PropostaDetailDialogProps {
   canEdit: boolean;
   /** Excluir pede permissão de exclusão no módulo. */
   canDelete: boolean;
+  podeVerLinks?: boolean;
   hoje: string;
   onEdit: () => void;
   onDelete: () => void;
@@ -149,6 +151,7 @@ export function PropostaDetailDialog({
   proposta,
   canEdit,
   canDelete,
+  podeVerLinks,
   hoje,
   onEdit,
   onDelete,
@@ -241,6 +244,16 @@ export function PropostaDetailDialog({
               <p className="text-3xs text-muted-foreground mb-1">Observações</p>
               <p className="text-sm">{proposta.observacao}</p>
             </div>
+          )}
+
+          {open && podeVerLinks && (
+            <PropostaLinksPanel
+              key={proposta.id}
+              id={proposta.id}
+              valor={proposta.valor_proposto}
+              validade={proposta.validade}
+              podePublicar={canEdit && (displayStatus === "rascunho" || displayStatus === "enviada")}
+            />
           )}
 
           {onEstimar && (displayStatus === "rascunho" || displayStatus === "enviada") && (

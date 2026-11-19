@@ -17,6 +17,9 @@ interface ProjetoVisaoGeralTabProps {
   progresso: number;
   /** Indicadores do projeto (status, prioridade, prazo, contrato...). Só esta aba os mostra. */
   indicadores?: ReactNode;
+  detalhes?: ReactNode;
+  entregas?: { total: number; aprovadas: number };
+  proximasAcoes?: ReactNode;
 }
 
 const EIXO = { fontSize: 11, fill: "hsl(var(--text-muted))" };
@@ -62,7 +65,15 @@ function Legenda({ itens }: { itens: { nome: string; cor: string; valor: string 
  * Painel do projeto: andamento das disciplinas, pagamentos e últimos eventos.
  * Os indicadores gerais do projeto moram aqui (e só aqui) desde 2026-11.
  */
-export function ProjetoVisaoGeralTab({ projetoId, disciplinas, progresso, indicadores }: ProjetoVisaoGeralTabProps) {
+export function ProjetoVisaoGeralTab({
+  projetoId,
+  disciplinas,
+  progresso,
+  indicadores,
+  detalhes,
+  entregas,
+  proximasAcoes,
+}: ProjetoVisaoGeralTabProps) {
   const { can, ready } = usePermissions();
   const veFinanceiro = ready && can("financeiro");
   const { data: pag } = usePagamentosProjeto(veFinanceiro ? projetoId : undefined);
@@ -104,140 +115,154 @@ export function ProjetoVisaoGeralTab({ projetoId, disciplinas, progresso, indica
       ]
     : [];
 
+  const totalEntregas = entregas?.total ?? 0;
+  const aprovadas = entregas?.aprovadas ?? 0;
+  const progressoExibido = totalEntregas ? Math.round((aprovadas / totalEntregas) * 100) : progresso;
   return (
     <div className="space-y-4">
       {indicadores}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Andamento</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <div className="mb-1 flex items-baseline justify-between">
-                <span className="text-2xl font-bold tabular-nums">{progresso}%</span>
-                <span className="text-xs text-muted-foreground">
-                  {disciplinas.filter((d) => statusCanonico(d.status) === "Concluído").length} de {disciplinas.length}{" "}
-                  disciplinas concluídas
-                </span>
-              </div>
-              <Progress value={progresso} className="h-2" />
-            </div>
-            {atrasadas > 0 && (
-              <p className="text-xs font-medium text-negative-strong">
-                {atrasadas} disciplina{atrasadas > 1 ? "s" : ""} atrasada{atrasadas > 1 ? "s" : ""}
-              </p>
-            )}
-            {disciplinas.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nenhuma disciplina cadastrada.</p>
-            ) : (
-              <div className="flex items-center gap-4">
-                <div className="h-28 w-28 shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={porStatus}
-                        dataKey="valor"
-                        nameKey="nome"
-                        innerRadius={32}
-                        outerRadius={52}
-                        paddingAngle={2}
-                        stroke="none"
-                      >
-                        {porStatus.map((s) => (
-                          <Cell key={s.nome} fill={STATUS_COR[s.nome]} aria-label={`${s.nome}: ${s.valor}`} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        content={({ active, payload }) =>
-                          active && payload?.[0] ? (
-                            <CaixaTooltip>
-                              {payload[0].name}: {payload[0].value}
-                            </CaixaTooltip>
-                          ) : null
-                        }
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <Legenda
-                    itens={porStatus.map((s) => ({ nome: s.nome, cor: STATUS_COR[s.nome], valor: String(s.valor) }))}
-                  />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Horas por disciplina</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {horas.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">
-                Sem horas lançadas. Defina horas previstas na aba Escopo.
-              </p>
-            ) : (
-              <ResponsiveContainer width="100%" height={Math.max(150, horas.length * 38)}>
-                <BarChart data={horas} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }} barGap={2}>
-                  <XAxis type="number" tick={EIXO} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="nome" tick={EIXO} axisLine={false} tickLine={false} width={92} />
-                  <Tooltip
-                    cursor={{ fill: "hsl(var(--chart-grid) / 0.4)" }}
-                    content={({ active, payload, label }) =>
-                      active && payload?.length ? (
-                        <CaixaTooltip>
-                          <p className="mb-0.5 font-medium">{label}</p>
-                          <p className="text-muted-foreground">Previstas: {payload[0]?.payload.estimadas} h</p>
-                          <p className="text-foreground">Realizadas: {payload[0]?.payload.realizadas} h</p>
-                        </CaixaTooltip>
-                      ) : null
-                    }
-                  />
-                  <Bar dataKey="estimadas" fill="hsl(var(--chart-neutral))" radius={[0, 4, 4, 0]} barSize={9} />
-                  <Bar dataKey="realizadas" fill="hsl(var(--chart-info))" radius={[0, 4, 4, 0]} barSize={9} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {veFinanceiro && (
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
+        <div className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Pagamentos</CardTitle>
+              <CardTitle className="text-sm font-medium">Andamento</CardTitle>
             </CardHeader>
-            <CardContent>
-              {!resumo || resumo.totalFaturado === 0 ? (
-                <p className="py-6 text-center text-xs text-muted-foreground">Nenhum pagamento lançado ainda.</p>
+            <CardContent className="space-y-3">
+              <div>
+                <div className="mb-1 flex items-baseline justify-between">
+                  <span className="text-2xl font-bold tabular-nums">{progressoExibido}%</span>
+                  <span className="text-xs text-muted-foreground">
+                    {totalEntregas
+                      ? `${aprovadas} de ${totalEntregas} entregas aprovadas`
+                      : `${disciplinas.filter((d) => statusCanonico(d.status) === "Concluído").length} de ${disciplinas.length} disciplinas concluídas`}
+                  </span>
+                </div>
+                <Progress value={progressoExibido} className="h-2" />
+              </div>
+              {atrasadas > 0 && (
+                <p className="text-xs font-medium text-negative-strong">
+                  {atrasadas} disciplina{atrasadas > 1 ? "s" : ""} atrasada{atrasadas > 1 ? "s" : ""}
+                </p>
+              )}
+              {disciplinas.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhuma disciplina cadastrada.</p>
               ) : (
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-2xl font-bold tabular-nums text-positive-strong">
-                      {formatCurrency(resumo.totalRecebido)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      recebido ({resumo.percentualRecebido}% do contrato de {formatCurrency(resumo.totalContrato)})
-                    </p>
+                <div className="flex items-center gap-4">
+                  <div className="h-28 w-28 shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={porStatus}
+                          dataKey="valor"
+                          nameKey="nome"
+                          innerRadius={32}
+                          outerRadius={52}
+                          paddingAngle={2}
+                          stroke="none"
+                        >
+                          {porStatus.map((s) => (
+                            <Cell key={s.nome} fill={STATUS_COR[s.nome]} aria-label={`${s.nome}: ${s.valor}`} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          content={({ active, payload }) =>
+                            active && payload?.[0] ? (
+                              <CaixaTooltip>
+                                {payload[0].name}: {payload[0].value}
+                              </CaixaTooltip>
+                            ) : null
+                          }
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <Progress value={resumo.percentualRecebido} className="h-2" />
-                  <Legenda
-                    itens={pagamentosChart.map((p) => ({ nome: p.nome, cor: p.cor, valor: formatCurrency(p.valor) }))}
-                  />
-                  {resumo.proximoVencimento && (
-                    <p className="text-xs text-muted-foreground">
-                      Próximo vencimento:{" "}
-                      <strong className="text-foreground">{formatDateShort(resumo.proximoVencimento)}</strong>
-                    </p>
-                  )}
+                  <div className="min-w-0 flex-1">
+                    <Legenda
+                      itens={porStatus.map((s) => ({ nome: s.nome, cor: STATUS_COR[s.nome], valor: String(s.valor) }))}
+                    />
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
-        )}
+
+          {proximasAcoes && (
+            <Card>
+              <CardContent className="p-4">{proximasAcoes}</CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Horas por disciplina</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {horas.length === 0 ? (
+                <p className="py-6 text-center text-xs text-muted-foreground">
+                  Sem horas lançadas. Defina horas previstas na aba Escopo.
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height={Math.max(150, horas.length * 38)}>
+                  <BarChart data={horas} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }} barGap={2}>
+                    <XAxis type="number" tick={EIXO} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="nome" tick={EIXO} axisLine={false} tickLine={false} width={92} />
+                    <Tooltip
+                      cursor={{ fill: "hsl(var(--chart-grid) / 0.4)" }}
+                      content={({ active, payload, label }) =>
+                        active && payload?.length ? (
+                          <CaixaTooltip>
+                            <p className="mb-0.5 font-medium">{label}</p>
+                            <p className="text-muted-foreground">Previstas: {payload[0]?.payload.estimadas} h</p>
+                            <p className="text-foreground">Realizadas: {payload[0]?.payload.realizadas} h</p>
+                          </CaixaTooltip>
+                        ) : null
+                      }
+                    />
+                    <Bar dataKey="estimadas" fill="hsl(var(--chart-neutral))" radius={[0, 4, 4, 0]} barSize={9} />
+                    <Bar dataKey="realizadas" fill="hsl(var(--chart-info))" radius={[0, 4, 4, 0]} barSize={9} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        <aside className="space-y-4" aria-label="Dados do projeto">
+          {detalhes}
+          {veFinanceiro && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Pagamentos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!resumo || resumo.totalFaturado === 0 ? (
+                  <p className="py-6 text-center text-xs text-muted-foreground">Nenhum pagamento lançado ainda.</p>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-2xl font-bold tabular-nums text-positive-strong">
+                        {formatCurrency(resumo.totalRecebido)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        recebido ({resumo.percentualRecebido}% do contrato de {formatCurrency(resumo.totalContrato)})
+                      </p>
+                    </div>
+                    <Progress value={resumo.percentualRecebido} className="h-2" />
+                    <Legenda
+                      itens={pagamentosChart.map((p) => ({ nome: p.nome, cor: p.cor, valor: formatCurrency(p.valor) }))}
+                    />
+                    {resumo.proximoVencimento && (
+                      <p className="text-xs text-muted-foreground">
+                        Próximo vencimento:{" "}
+                        <strong className="text-foreground">{formatDateShort(resumo.proximoVencimento)}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </aside>
       </div>
 
       <Card>

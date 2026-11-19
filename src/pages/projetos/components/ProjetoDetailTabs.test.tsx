@@ -31,8 +31,11 @@ const stub = vi.hoisted(
     }
 );
 vi.mock("./ProjetoVisaoGeralTab", () => ({
-  ProjetoVisaoGeralTab: ({ indicadores }: { indicadores: ReactNode }) => (
-    <div data-testid="aba-visao-geral">aba-visao-geral{indicadores}</div>
+  ProjetoVisaoGeralTab: ({ indicadores, proximasAcoes }: { indicadores: ReactNode; proximasAcoes?: ReactNode }) => (
+    <div data-testid="aba-visao-geral">
+      aba-visao-geral{indicadores}
+      {proximasAcoes}
+    </div>
   ),
 }));
 const acesso = vi.hoisted(() => ({ isAdmin: true, role: "admin" }));
@@ -313,7 +316,8 @@ describe("ProjetoDetailTabs", () => {
       if (tabela === "tarefa_etapas")
         return { data: [{ id: "et-1", nome: "A fazer", ordem: 0, bucket: "a_fazer" }], error: null };
       if (tabela === "portal_entregas" && op === "select") {
-        if (filtros.some(([tipo]) => tipo === "not")) return { data: null, count: 1, error: null };
+        if (filtros.some(([tipo]) => tipo === "not"))
+          return { data: [{ id: "r-pendente", status: "pendente", revisao_anterior_id: null }], error: null };
         if (semRevisoes) return { data: [], error: null };
         return {
           data: [
@@ -337,7 +341,7 @@ describe("ProjetoDetailTabs", () => {
     [/Revisões internas/, "#revisoes"],
     [/Aguardando cliente · 1/, "#revisoes"],
     [/Horas das disciplinas · 2h \/ 8h/, "#disciplinas"],
-    [/Prazo ·/, "#cronograma"],
+    [/Ver cronograma/, "#cronograma"],
   ])("leva do indicador %s à seção correspondente", async (indicador, hash) => {
     dadosDoProjeto();
     montar("/projetos/proj-1", {

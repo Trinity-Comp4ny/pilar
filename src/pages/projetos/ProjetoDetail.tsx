@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe, Pause, Pencil, Play } from "lucide-react";
+import { CalendarDays, Globe, Pause, Pencil, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -10,10 +10,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useRecentes } from "@/hooks/useRecentes";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
 import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
-import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
-import { KpiResumo } from "@/components/KpiResumo";
-import { formatDate, formatPercent } from "@/lib/format";
-import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ProjetoDetailInfo } from "./components/ProjetoDetailInfo";
 import { ProjetoDetailTabs } from "./components/ProjetoDetailTabs";
 import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
@@ -65,7 +61,6 @@ export default function ProjetoDetail() {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   // Resumo dos indicadores mascarado como os cards ("ocultar valores").
-  const formatCurrency = useMoneyMask();
   const [pausarOpen, setPausarOpen] = useState(false);
   const [retomarOpen, setRetomarOpen] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);
@@ -112,55 +107,9 @@ export default function ProjetoDetail() {
     handleQuickUpdateStatus(status);
   };
 
-  const indicadores = (
-    <>
-      {/* Indicadores recolhíveis, com status/prioridade/prazo na mesma linha e um resumo
-          quando recolhidos: a 1ª disciplina subia de y=540 (auditoria de espaço, 2026-11). */}
-      <CollapsibleKpiSection
-        storageKey="projeto-detalhe"
-        controls={
-          <ProjetoDetailHeader
-            projeto={projeto}
-            deadline={deadline}
-            canEdit={canEdit}
-            onUpdateStatus={handleStatusDoCabecalho}
-            onUpdatePrioridade={(prioridade) => handleQuickUpdateProjeto({ prioridade })}
-          />
-        }
-        resumo={
-          <KpiResumo
-            itens={[
-              ...(projeto.cliente_nome ? [{ texto: projeto.cliente_nome }] : []),
-              ...(projeto.valor_contrato != null
-                ? [{ texto: formatCurrency(projeto.valor_contrato, { compact: true }) }]
-                : []),
-              ...(projeto.data_previsao ? [{ texto: `prazo ${formatDate(projeto.data_previsao)}` }] : []),
-              ...(podeEditarValor && margemBrutaPct !== null
-                ? [{ texto: `margem ${formatPercent(margemBrutaPct)}`, alerta: margemBrutaPct < 0 }]
-                : []),
-              { texto: `${progress}% concluído` },
-            ]}
-          />
-        }
-      >
-        <ProjetoDetailInfo
-          projeto={projeto}
-          progress={progress}
-          margemBrutaPct={podeEditarValor ? margemBrutaPct : null}
-          margemPrometidaPct={podeEditarValor ? margemPrometidaPct : null}
-          canEdit={canEdit}
-          onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
-          // Sem financeiro o valor vem mascarado (null): deixar o campo editável
-          // faria o blur enviar 0 e tentar zerar o contrato.
-          onUpdateContrato={
-            podeEditarValor ? (valor_contrato) => handleQuickUpdateProjeto({ valor_contrato }) : undefined
-          }
-          onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
-        />
-      </CollapsibleKpiSection>
-    </>
-  );
-
+  const responsaveisDoProjeto = [
+    ...new Map(dbDisciplinas.flatMap((d) => d.responsaveis ?? []).map((pessoa) => [pessoa.id, pessoa.nome])).values(),
+  ];
   return (
     <PageLayout
       density="compact"
@@ -169,6 +118,7 @@ export default function ProjetoDetail() {
           title={projeto.nome}
           breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}
           acoes={[
+            { label: "Cronograma", icon: CalendarDays, onClick: () => navigate("#cronograma") },
             ...(canEdit && pausado
               ? [{ label: "Retomar projeto", icon: Play, onClick: () => setRetomarOpen(true), destaque: true }]
               : []),
@@ -197,7 +147,33 @@ export default function ProjetoDetail() {
       <ProjetoDetailTabs
         projeto={projeto}
         progresso={progress}
-        indicadores={indicadores}
+        indicadores={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <ProjetoDetailHeader
+              projeto={projeto}
+              deadline={deadline}
+              canEdit={canEdit}
+              onUpdateStatus={handleStatusDoCabecalho}
+              onUpdatePrioridade={(prioridade) => handleQuickUpdateProjeto({ prioridade })}
+            />
+            {responsaveisDoProjeto.length > 0 && (
+              <p className="text-xs text-muted-foreground">Responsáveis · {responsaveisDoProjeto.join(", ")}</p>
+            )}
+          </div>
+        }
+        detalhes={
+          <ProjetoDetailInfo
+            projeto={projeto}
+            canEdit={canEdit}
+            veFinanceiro={podeEditarValor}
+            onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
+            onUpdateContrato={
+              podeEditarValor ? (valor_contrato) => handleQuickUpdateProjeto({ valor_contrato }) : undefined
+            }
+            onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
+          />
+        }
+        financeiro={podeEditarValor ? { margem: margemBrutaPct, meta: margemPrometidaPct } : undefined}
         canEdit={canEdit}
         disciplinasLegacy={disciplinasLegacy}
         dbDisciplinas={dbDisciplinas}

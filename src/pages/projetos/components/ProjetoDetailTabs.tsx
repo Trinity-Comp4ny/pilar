@@ -1,9 +1,9 @@
+import { ProjetoIndicadoresOperacionais, type IndicadoresProjetoProps } from "./ProjetoIndicadoresOperacionais";
 import { Button } from "@/components/ui/button";
 import { useTarefas } from "@/hooks/tarefas/useTarefas";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useMinhaPessoa } from "@/hooks/useMinhaPessoa";
 import { formatDateLocal } from "@/lib/businessDays";
-import { formatDate, formatHoras, formatPercent } from "@/lib/format";
 import { ProjetoTarefasTab, type NovaTarefaProjeto } from "./ProjetoTarefasTab";
 import { tarefaAtrasada } from "../lib/tarefaAtrasada";
 import { ProjetoRevisoesTab } from "./ProjetoRevisoesTab";
@@ -62,6 +62,8 @@ interface ProjetoDetailTabsProps {
   /** Progresso (0-100) e indicadores do projeto: só a aba Visão geral os mostra. */
   progresso: number;
   indicadores?: ReactNode;
+  detalhes?: ReactNode;
+  financeiro?: IndicadoresProjetoProps["financeiro"];
   canEdit: boolean;
   disciplinasLegacy: DisciplinaResponsavel[];
   dbDisciplinas: ProjetoDisciplinaDB[];
@@ -107,6 +109,8 @@ export function ProjetoDetailTabs({
   projeto,
   progresso,
   indicadores,
+  detalhes,
+  financeiro,
   canEdit,
   disciplinasLegacy,
   dbDisciplinas,
@@ -124,7 +128,7 @@ export function ProjetoDetailTabs({
   const { isAdmin, can } = usePermissions();
   const { data: minhaPessoa } = useMinhaPessoa();
   const tarefasProjeto = useTarefas(null, projeto.id);
-  const { data: revisoesPendentes } = useRevisoesPendentes(projeto.id);
+  const { data: entregas } = useRevisoesPendentes(projeto.id);
   const [aditivoDestacado, setAditivoDestacado] = useState<string>();
   const [novaTarefa, setNovaTarefa] = useState<NovaTarefaProjeto | null>(null);
   const [apenasAtrasadas, setApenasAtrasadas] = useState(false);
@@ -334,11 +338,14 @@ export function ProjetoDetailTabs({
   const atrasadas = tarefas?.filter((tarefa) => tarefaAtrasada(tarefa, hoje)).length;
   const concluidas = tarefas?.filter((tarefa) => tarefa.status === "concluida").length;
   const internasAbertas = Object.values(revisoesCounts ?? {}).reduce((total, item) => total + item.abertas, 0);
-  const horasPrevistas = dbDisciplinas.reduce((total, disciplina) => total + disciplina.horas_estimadas, 0);
-  const horasRealizadas = dbDisciplinas.reduce((total, disciplina) => total + (disciplina.horas_realizadas ?? 0), 0);
-  const horasTarefas = tarefas?.reduce((total, tarefa) => total + (tarefa.horas_reais ?? 0), 0) ?? 0;
-  const horasRetrabalho =
-    tarefas?.reduce((total, tarefa) => total + (tarefa.retrabalho ? (tarefa.horas_reais ?? 0) : 0), 0) ?? 0;
+  const abrirIndicador: IndicadoresProjetoProps["abrir"] = (destino) => {
+    if (destino === "cronograma") {
+      navigate("#cronograma", { replace: true });
+      return;
+    }
+    setApenasAtrasadas(destino === "atrasadas");
+    handleTabChange(destino === "atrasadas" ? "tarefas" : destino);
+  };
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -373,62 +380,40 @@ export function ProjetoDetailTabs({
                 projetoId={projeto.id}
                 disciplinas={disciplinasLegacy}
                 progresso={progresso}
+                detalhes={detalhes}
+                entregas={entregas}
+                proximasAcoes={
+                  tarefas && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">Próximas ações</p>
+                      {tarefas
+                        .filter((t) => tarefaAtrasada(t, hoje))
+                        .slice(0, 3)
+                        .map((t) => (
+                          <p key={t.id} className="text-sm text-muted-foreground">
+                            {t.titulo}
+                          </p>
+                        ))}
+                      <Button size="sm" variant="outline" onClick={() => abrirIndicador("tarefas")}>
+                        Tarefas concluídas · {concluidas}/{tarefas.length}
+                      </Button>
+                    </div>
+                  )
+                }
                 indicadores={
                   <>
                     {indicadores}
-                    <div className="flex flex-wrap gap-2" aria-label="Indicadores operacionais">
-                      <Button variant="outline" size="sm" onClick={() => navigate("#cronograma", { replace: true })}>
-                        {projeto.data_previsao ? `Prazo · ${formatDate(projeto.data_previsao)}` : "Cronograma"}
-                      </Button>
-                      {tarefas && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setApenasAtrasadas(false);
-                              handleTabChange("tarefas");
-                            }}
-                          >
-                            Tarefas concluídas · {concluidas}/{tarefas.length}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setApenasAtrasadas(true);
-                              handleTabChange("tarefas");
-                            }}
-                          >
-                            Tarefas em atraso · {atrasadas}
-                          </Button>
-                        </>
-                      )}
-                      <Button variant="outline" size="sm" onClick={() => handleTabChange("revisoes")}>
-                        Revisões internas · {internasAbertas} abertas
-                      </Button>
-                      {revisoesPendentes !== undefined && (
-                        <Button variant="outline" size="sm" onClick={() => handleTabChange("revisoes")}>
-                          Aguardando cliente · {revisoesPendentes}
-                        </Button>
-                      )}
-                      <Button variant="outline" size="sm" onClick={() => handleTabChange("disciplinas")}>
-                        Horas das disciplinas · {formatHoras(horasRealizadas) ?? "0h"} /{" "}
-                        {formatHoras(horasPrevistas) ?? "0h"}
-                      </Button>
-                      {horasTarefas > 0 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setApenasAtrasadas(false);
-                            handleTabChange("tarefas");
-                          }}
-                        >
-                          Retrabalho nas tarefas · {formatPercent((100 * horasRetrabalho) / horasTarefas)}
-                        </Button>
-                      )}
-                    </div>
+                    <ProjetoIndicadoresOperacionais
+                      projetoId={projeto.id}
+                      hoje={hoje}
+                      tarefas={tarefas}
+                      atrasadas={atrasadas}
+                      internas={internasAbertas}
+                      cliente={entregas?.pendentes}
+                      disciplinas={dbDisciplinas}
+                      financeiro={financeiro}
+                      abrir={abrirIndicador}
+                    />
                   </>
                 }
               />

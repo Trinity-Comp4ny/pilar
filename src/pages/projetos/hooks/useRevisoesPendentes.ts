@@ -7,14 +7,20 @@ export function useRevisoesPendentes(projetoId: string) {
   return useQuery({
     queryKey: revisoesPendentesKey(projetoId),
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("portal_entregas")
-        .select("id", { count: "exact", head: true })
+        .select("id, status, revisao_anterior_id")
         .eq("projeto_id", projetoId)
-        .eq("status", "pendente")
         .not("numero_revisao", "is", null);
       if (error) throw error;
-      return count ?? 0;
+      const publicadas = data ?? [];
+      const substituidas = new Set(publicadas.map((r) => r.revisao_anterior_id));
+      const atuais = publicadas.filter((r) => !substituidas.has(r.id));
+      return {
+        total: atuais.length,
+        aprovadas: atuais.filter((r) => r.status === "aprovado").length,
+        pendentes: atuais.filter((r) => r.status === "pendente").length,
+      };
     },
   });
 }

@@ -8373,6 +8373,7 @@ export type Database = {
       }
       proposta_versoes: {
         Row: {
+          aceita_em: string | null
           arquivo_path: string
           condicoes_pagamento: string
           created_at: string
@@ -8380,15 +8381,20 @@ export type Database = {
           empresa_id: string
           enviado_em: string | null
           id: string
+          link_snapshot: string | null
+          link_token: string | null
           motivo_revisao: string
           nome_arquivo: string
           numero: number
+          primeira_abertura_em: string | null
           proposta_id: string
           tamanho: number
+          ultima_abertura_em: string | null
           validade: string | null
           valor_proposto: number
         }
         Insert: {
+          aceita_em?: string | null
           arquivo_path: string
           condicoes_pagamento?: string
           created_at?: string
@@ -8396,15 +8402,20 @@ export type Database = {
           empresa_id: string
           enviado_em?: string | null
           id?: string
+          link_snapshot?: string | null
+          link_token?: string | null
           motivo_revisao?: string
           nome_arquivo: string
           numero?: number
+          primeira_abertura_em?: string | null
           proposta_id: string
           tamanho: number
+          ultima_abertura_em?: string | null
           validade?: string | null
           valor_proposto: number
         }
         Update: {
+          aceita_em?: string | null
           arquivo_path?: string
           condicoes_pagamento?: string
           created_at?: string
@@ -8412,11 +8423,15 @@ export type Database = {
           empresa_id?: string
           enviado_em?: string | null
           id?: string
+          link_snapshot?: string | null
+          link_token?: string | null
           motivo_revisao?: string
           nome_arquivo?: string
           numero?: number
+          primeira_abertura_em?: string | null
           proposta_id?: string
           tamanho?: number
+          ultima_abertura_em?: string | null
           validade?: string | null
           valor_proposto?: number
         }
@@ -11019,6 +11034,7 @@ export type Database = {
       _ultra_admin_mfa_ok: { Args: never; Returns: boolean }
       _universal_features: { Args: never; Returns: string[] }
       aceitar_convite_pendente: { Args: never; Returns: string }
+      acessar_link_proposta: { Args: { p_acao: string; p_token: string }; Returns: Json }
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json
@@ -12113,6 +12129,8 @@ export type Database = {
           projeto_id: string
         }[]
       }
+      proposta_link_digest: { Args: { p_proposta_id: string }; Returns: string }
+      publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }
       rate_limit_cleanup: { Args: never; Returns: undefined }
       rate_limit_cleanup_monitored: { Args: never; Returns: undefined }

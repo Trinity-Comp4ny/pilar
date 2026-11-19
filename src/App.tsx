@@ -88,6 +88,7 @@ const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
+const PropostaPublica = lazy(() => import("./pages/propostas/PropostaPublica"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteConvite = lazy(() => import("./pages/cliente/ClienteConvite"));
 const CotarPage = lazy(() => import("./pages/cotar/CotarPage"));
@@ -280,6 +281,7 @@ const App = () => {
                         <Route path="/termos" element={<ExternalRedirect path="/termos" />} />
                         <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
                         <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/proposta-compartilhada" element={<PropostaPublica />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                           path="/cadastro"

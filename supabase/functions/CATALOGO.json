@@ -254,6 +254,10 @@
     "dominio": "comunicacao",
     "descricao": "E-mail manual da empresa para um cliente dela (nunca endereço livre)."
   },
+  "proposta-link": {
+    "dominio": "comunicacao",
+    "descricao": "Abre e aceita uma versão de proposta por token, com limite de requisições e URL temporária do PDF."
+  },
   "send-proposta-email": {
     "dominio": "comunicacao",
     "descricao": "Envia a proposta por e-mail ao cliente."
