@@ -4,6 +4,7 @@ import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cor
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { propostaLinkSchema } from "./entrada.ts";
 
 interface Versao {
   arquivo_path: string;
@@ -17,15 +18,9 @@ serve(
   withSentry("proposta-link", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Método indisponível", req);
-    const entrada = await lerJson(req);
-    const { token, acao } = entrada && typeof entrada === "object" ? (entrada as Record<string, unknown>) : {};
-    if (
-      typeof token !== "string" ||
-      !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(token) ||
-      (acao !== "abrir" && acao !== "aceitar")
-    ) {
-      return safeErrorResponse(400, "Link inválido", req);
-    }
+    const entrada = propostaLinkSchema.safeParse(await lerJson(req));
+    if (!entrada.success) return safeErrorResponse(400, "Link inválido", req);
+    const { token, acao } = entrada.data;
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const limit = await checkDbRateLimit(admin, {
       bucket: "proposta_link",
