@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
-import { CalendarClock, ChevronDown, ChevronRight } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
@@ -32,6 +32,7 @@ import {
 import { GANTT_LABEL_W, GANTT_FRAME } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { baixarCsv, cronogramaParaCsv } from "@/pages/obras/lib/cronogramaCsv";
 import { desembolsoPorColuna } from "@/pages/obras/lib/custoPorPeriodo";
 import type { FisicoFinanceiro } from "@/pages/obras/lib/fisicoFinanceiro";
 import { achatarOrcado, type LinhaOrcado, type OrcadoRealizado } from "@/lib/orcadoRealizado";
@@ -67,6 +68,7 @@ export function CronogramaGantt({
   orcado,
   fisicoFinanceiro,
   despesas,
+  nomeArquivo = "cronograma-obra",
 }: {
   fases: Arvore[];
   recolhidos: ReadonlySet<string>;
@@ -80,6 +82,8 @@ export function CronogramaGantt({
   fisicoFinanceiro?: FisicoFinanceiro | null;
   /** Despesas da obra, para o gasto por período. */
   despesas?: ReadonlyArray<{ data: string; valor: number }>;
+  /** Nome do CSV exportado (sem extensão). */
+  nomeArquivo?: string;
 }) {
   const formatCurrency = useMoneyMask();
   const isMobile = useIsMobile();
@@ -246,6 +250,16 @@ export function CronogramaGantt({
             {isDragging && <span className="text-3xs text-muted-foreground">Esc cancela</span>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => baixarCsv(cronogramaParaCsv(fases), nomeArquivo)}
+              disabled={fases.length === 0}
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              Exportar
+            </Button>
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={scrollToToday} disabled={todayPct < 0}>
               Hoje
             </Button>
