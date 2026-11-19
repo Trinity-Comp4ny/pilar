@@ -34,9 +34,10 @@ export function useModulosOcultos(empresaId: string | null | undefined) {
           .single(),
         supabase
           .from("profiles")
-          .select("id, nome, email, role, modulos_ocultos")
+          .select("id, first_name, last_name, email, role, modulos_ocultos")
           .eq("empresa_id", empresaId as string)
-          .order("nome"),
+          .is("desativado_em", null)
+          .order("first_name"),
       ]);
       if (empresa.error) throw empresa.error;
       if (pessoas.error) throw pessoas.error;
@@ -44,8 +45,8 @@ export function useModulosOcultos(empresaId: string | null | undefined) {
         empresa: parseModulosOcultos(empresa.data.modulos_ocultos),
         pessoas: (pessoas.data ?? []).map((p) => ({
           id: p.id,
-          nome: p.nome ?? p.email ?? "",
-          email: p.email ?? "",
+          nome: [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || p.email,
+          email: p.email,
           role: String(p.role),
           ocultos: parseModulosOcultos(p.modulos_ocultos),
         })),
