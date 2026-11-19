@@ -2,8 +2,13 @@ import { useContext, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ImpersonationContext } from "@/contexts/ImpersonationContext";
 import { canDo, reasonFor, type Action, type Feature, type UserRole } from "@/lib/permissions";
-import { moduleOfFeature, parseCompanyFeatures, type FeatureKey } from "@/lib/features";
-import { parseModulosOcultos, type ModuleId } from "@/lib/modules";
+import {
+  moduleOfFeature,
+  parseCompanyFeatures,
+  parseModulosOcultos,
+  type FeatureKey,
+  type FeatureModuleId as ModuleId,
+} from "@/lib/features";
 
 type ButtonProps = {
   disabled: boolean;
@@ -35,7 +40,9 @@ export function usePermissions() {
   // Gate de experiência, não de dados. Admin nunca é restringido (checado no useMemo).
   const modulosOcultosBrutos = useMemo(
     () => [
-      ...parseModulosOcultos((profile as { empresas?: { modulos_ocultos?: unknown } | null } | null)?.empresas?.modulos_ocultos),
+      ...parseModulosOcultos(
+        (profile as { empresas?: { modulos_ocultos?: unknown } | null } | null)?.empresas?.modulos_ocultos
+      ),
       ...parseModulosOcultos((profile as { modulos_ocultos?: unknown } | null)?.modulos_ocultos),
     ],
     [profile]
