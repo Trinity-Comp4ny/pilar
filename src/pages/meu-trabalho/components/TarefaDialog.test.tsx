@@ -227,7 +227,7 @@ describe("TarefaDialog: vínculo com projeto e apontamento", () => {
     expect(screen.getByRole("combobox", { name: "Disciplina" })).toBeDisabled();
     expect(screen.getByRole("checkbox", { name: /Correção interna/ })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Salvar" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "Fechar", exact: true })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Fechar" })[0]);
     expect(fechar).toHaveBeenCalledWith(false);
   });
 });

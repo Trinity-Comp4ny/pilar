@@ -1,10 +1,11 @@
 import { type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fake, rpcComEmpresa } from "@/pages/obras/testing/supabaseFake";
+import { formatDateLocal } from "@/lib/businessDays";
 import type { Projeto } from "@/types/projetos";
 import type { ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
 
@@ -36,11 +37,16 @@ import { ProjetosMobileList } from "./ProjetosMobileList";
 import { ProjetosKPIs } from "./ProjetosKPIs";
 import { ProjetosEmptyState } from "./ProjetosEmptyState";
 
-const hoje = new Date();
+const hoje = new Date(2026, 10, 18, 12);
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(hoje);
+});
+afterEach(() => vi.useRealTimers());
 const iso = (dias: number) => {
   const d = new Date(hoje);
   d.setDate(d.getDate() + dias);
-  return d.toISOString().slice(0, 10);
+  return formatDateLocal(d);
 };
 
 const projetos = [
