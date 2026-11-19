@@ -21,5 +21,6 @@ export { default as TimeCentral } from "./time/Central";
 export { default as TimeAgenteFicha } from "./time/AgenteFicha";
 export { default as DoresMercado } from "./DoresMercado";
 export { default as Reunioes } from "./Reunioes";
+export { default as Prospeccao } from "./Prospeccao";
 export { default as ReuniaoDetalhe } from "./ReuniaoDetalhe";
 export { default as Cerebro } from "./Cerebro";
