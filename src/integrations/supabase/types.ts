@@ -8615,6 +8615,155 @@ export type Database = {
           },
         ]
       }
+      prospec_bloqueios: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          motivo: string
+          telefone_e164: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          motivo?: string
+          telefone_e164?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          motivo?: string
+          telefone_e164?: string | null
+        }
+        Relationships: []
+      }
+      prospec_envios: {
+        Row: {
+          canal: string | null
+          created_at: string
+          criado_por: string | null
+          id: string
+          lead_id: string
+          resultado: string
+          texto: string | null
+        }
+        Insert: {
+          canal?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          lead_id: string
+          resultado: string
+          texto?: string | null
+        }
+        Update: {
+          canal?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          lead_id?: string
+          resultado?: string
+          texto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospec_envios_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospec_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospec_leads: {
+        Row: {
+          canal: string
+          cidade: string | null
+          confianca_contato: string
+          contato_nome: string | null
+          created_at: string
+          criado_por: string | null
+          email: string | null
+          endereco: string | null
+          fila_em: string | null
+          id: string
+          nome: string
+          nota_encaixe: number
+          origem: string
+          pulado_em: string | null
+          qualidade: string | null
+          segmento: string
+          segmento_teste: boolean
+          site: string | null
+          status: string
+          telefone: string | null
+          telefone_adicional: string | null
+          telefone_e164: string | null
+          tipo_telefone: string
+          uf: string | null
+          ultimo_contato_em: string | null
+          whatsapp_na_fonte: boolean
+        }
+        Insert: {
+          canal?: string
+          cidade?: string | null
+          confianca_contato?: string
+          contato_nome?: string | null
+          created_at?: string
+          criado_por?: string | null
+          email?: string | null
+          endereco?: string | null
+          fila_em?: string | null
+          id?: string
+          nome: string
+          nota_encaixe?: number
+          origem?: string
+          pulado_em?: string | null
+          qualidade?: string | null
+          segmento: string
+          segmento_teste?: boolean
+          site?: string | null
+          status?: string
+          telefone?: string | null
+          telefone_adicional?: string | null
+          telefone_e164?: string | null
+          tipo_telefone?: string
+          uf?: string | null
+          ultimo_contato_em?: string | null
+          whatsapp_na_fonte?: boolean
+        }
+        Update: {
+          canal?: string
+          cidade?: string | null
+          confianca_contato?: string
+          contato_nome?: string | null
+          created_at?: string
+          criado_por?: string | null
+          email?: string | null
+          endereco?: string | null
+          fila_em?: string | null
+          id?: string
+          nome?: string
+          nota_encaixe?: number
+          origem?: string
+          pulado_em?: string | null
+          qualidade?: string | null
+          segmento?: string
+          segmento_teste?: boolean
+          site?: string | null
+          status?: string
+          telefone?: string | null
+          telefone_adicional?: string | null
+          telefone_e164?: string | null
+          tipo_telefone?: string
+          uf?: string | null
+          ultimo_contato_em?: string | null
+          whatsapp_na_fonte?: boolean
+        }
+        Relationships: []
+      }
       rate_limit_attempts: {
         Row: {
           created_at: string
@@ -12133,6 +12282,20 @@ export type Database = {
         }[]
       }
       proposta_link_digest: { Args: { p_proposta_id: string }; Returns: string }
+      prospec_montar_fila: {
+        Args: { p_canal?: string; p_limite?: number }
+        Returns: number
+      }
+      prospec_registrar: {
+        Args: {
+          p_canal?: string
+          p_contato_nome?: string
+          p_lead: string
+          p_resultado: string
+          p_texto?: string
+        }
+        Returns: undefined
+      }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }
       rate_limit_cleanup: { Args: never; Returns: undefined }
