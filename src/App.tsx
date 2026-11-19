@@ -12,7 +12,7 @@ import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
 import { avisarAssinaturaSuspensa, ehErroDeAssinaturaSuspensa } from "@/lib/assinaturaSuspensa";
 import { jaReportadoPelaRede } from "@/lib/supabaseFetch";
 import { usePageTracking } from "@/hooks/usePageTracking";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { isEntryVeilMounted } from "@/components/motion/veilState";

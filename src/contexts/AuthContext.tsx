@@ -12,7 +12,7 @@ type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Empresa = Database["public"]["Tables"]["empresas"]["Row"];
 
 /** Linha de pilar_subscriptions que o PrivateRoute usa para decidir o acesso. */
-export type AssinaturaInicial = { status: string; current_period_end: string | null };
+type AssinaturaInicial = { status: string; current_period_end: string | null };
 
 export type ProfileWithEmpresa = Profile & {
   empresas: Empresa | null;
