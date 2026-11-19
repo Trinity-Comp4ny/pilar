@@ -145,4 +145,38 @@ describe("useNovaVersao", () => {
     info.mock.calls[0][1].action.onClick();
     expect(reload).toHaveBeenCalledTimes(1);
   });
+
+  it("com novidades publicadas, o botão principal leva para /novidades e o outro recarrega", async () => {
+    servidorRespondendo("sha-mais-nova");
+    rpc.mockResolvedValue({
+      data: {
+        visto_ate: null,
+        releases: [
+          {
+            id: "r1",
+            sha: "sha-mais-nova",
+            titulo: "Release",
+            versao: null,
+            publicada_em: "2026-11-17T00:00:00Z",
+            nova: true,
+            itens: [{ id: "i1", texto: "Algo novo", impacto: "melhoria", modulo: null, voce_pediu: false }],
+          },
+        ],
+      },
+      error: null,
+    });
+    const reload = vi.fn();
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, reload, assign });
+    renderHook(() => useNovaVersao());
+
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    const opcoes = info.mock.calls[0][1];
+    expect(opcoes.action.label).toBe("Ver novidades");
+    opcoes.action.onClick();
+    expect(assign).toHaveBeenCalledWith("/novidades");
+    expect(opcoes.cancel.label).toBe("Recarregar");
+    opcoes.cancel.onClick();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });

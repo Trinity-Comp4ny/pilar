@@ -90,15 +90,17 @@ export function useNovaVersao(): void {
       avisado.current = true;
       const itens = await itensDaRelease(remoto);
       if (cancelado) return;
+      // Com novidades publicadas, o botão principal leva direto para /novidades: o carregamento
+      // completo já traz o bundle novo, então a página abre na versão certa.
       toast.info(itens ? `Nova versão com ${contagemNovidades(itens)}` : "Nova versão disponível", {
         description: itens
-          ? "Recarregue para ver o que mudou na Pilar."
+          ? "Veja o que mudou na Pilar ou só recarregue."
           : "Recarregue para usar a versão mais recente da Pilar.",
         duration: Infinity,
-        action: {
-          label: "Recarregar",
-          onClick: () => window.location.reload(),
-        },
+        action: itens
+          ? { label: "Ver novidades", onClick: () => window.location.assign("/novidades") }
+          : { label: "Recarregar", onClick: () => window.location.reload() },
+        cancel: itens ? { label: "Recarregar", onClick: () => window.location.reload() } : undefined,
       });
     };
 
