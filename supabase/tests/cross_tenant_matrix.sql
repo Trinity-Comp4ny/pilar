@@ -27,7 +27,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(14);
+SELECT plan(17);
 
 -- =============================================================================
 -- Setup: Empresa A e B, com todas as features ligadas, e usuários por papel.
@@ -156,6 +156,19 @@ SELECT is((SELECT count(*)::int FROM public.receitas WHERE id = 'bbced000-0000-0
   'admin A não lê receita da Empresa B');
 SELECT is((SELECT count(*)::int FROM public.propostas WHERE id = 'bbced000-0000-0000-0000-0000000000b8'), 0,
   'admin A não lê proposta da Empresa B');
+
+-- Views *_safe usam o owner (SECURITY DEFINER), portanto a RLS da tabela-base
+-- pode não agir como esperado. Estes checks passam pelo papel authenticated
+-- e contam registros reais de B inseridos acima, não views vazias fictícias.
+SELECT is((SELECT count(*)::int FROM public.projetos_safe
+  WHERE id = 'bbced000-0000-0000-0000-0000000000b2'), 0,
+  'view projetos_safe não expõe projeto da Empresa B a admin A');
+SELECT is((SELECT count(*)::int FROM public.leads_safe
+  WHERE id = 'bbced000-0000-0000-0000-0000000000b3'), 0,
+  'view leads_safe não expõe lead da Empresa B a admin A');
+SELECT is((SELECT count(*)::int FROM public.pessoas_safe
+  WHERE id = 'bbced000-0000-0000-0000-0000000000b4'), 0,
+  'view pessoas_safe não expõe pessoa da Empresa B a admin A');
 RESET ROLE;
 
 -- =============================================================================
