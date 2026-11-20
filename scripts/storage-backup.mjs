@@ -229,13 +229,17 @@ if (executado) {
     process.exit(2);
   }
   const tarefa =
-    modo === "backup" ? backup(pasta) : modo === "restore" ? restore(pasta, flag === "--sobrescrever") : verificarIntegridade(pasta);
+    modo === "backup"
+      ? backup(pasta)
+      : modo === "restore"
+        ? restore(pasta, flag === "--sobrescrever")
+        : verificarIntegridade(pasta);
   tarefa
     .then((res) => {
       if (modo === "verify") console.log(`Storage íntegro: ${res.buckets} bucket(s), ${res.arquivos} arquivo(s).`);
     })
     .catch((err) => {
-    console.error(`::error::${err.message}`);
-    process.exit(1);
-  });
+      console.error(`::error::${err.message}`);
+      process.exit(1);
+    });
 }
