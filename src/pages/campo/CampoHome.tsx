@@ -131,7 +131,8 @@ export default function CampoHome() {
         {pendenciasAntigas > 0 && (
           <div role="status" className="rounded-2xl border border-warning-soft bg-warning-soft/40 px-4 py-3">
             <p className="text-sm font-medium text-ink">
-              {pendenciasAntigas} {pendenciasAntigas === 1 ? "registro antigo preservado" : "registros antigos preservados"} neste aparelho
+              {pendenciasAntigas}{" "}
+              {pendenciasAntigas === 1 ? "registro antigo preservado" : "registros antigos preservados"} neste aparelho
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Foram salvos antes da proteção por conta. Por segurança, não são exibidos nem enviados
