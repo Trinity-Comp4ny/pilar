@@ -149,6 +149,9 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/storage-backup.mjs backup storage-backup
+          # Confere cada hash/tamanho antes de guardar um arquivo cifrado
+          # potencialmente corrompido. Em falha, o job não declara backup completo.
+          node scripts/storage-backup.mjs verify storage-backup
           tar -czf - storage-backup \
             | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -out "storage-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
           rm -rf storage-backup
