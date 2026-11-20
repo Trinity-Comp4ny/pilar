@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { supabaseFake } from "@/hooks/testing/supabaseFake";
 
+const track = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
+
 vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/hooks/testing/supabaseFake")).supabaseFake.client,
 }));
@@ -28,6 +31,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 beforeEach(() => {
   supabaseFake.reset();
+  track.mockClear();
   client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   supabaseFake.respondRpc("get_user_empresa_id", { data: "emp-1" });
 });
@@ -62,6 +66,7 @@ describe("mutations de proposta", () => {
       valor_proposto: 1000,
       empresa_id: "emp-1",
     });
+    expect(track).toHaveBeenCalledExactlyOnceWith("proposta_criada");
   });
 
   it("criar sem empresa não grava", async () => {
@@ -69,6 +74,7 @@ describe("mutations de proposta", () => {
     const { result } = renderHook(() => useCreateProposta(), { wrapper });
     await expect(result.current.mutateAsync({ titulo: "X" })).rejects.toThrow("Usuário não vinculado a uma empresa");
     expect(supabaseFake.callsTo("propostas")).toHaveLength(0);
+    expect(track).not.toHaveBeenCalled();
   });
 
   it("código duplicado no banco é propagado", async () => {

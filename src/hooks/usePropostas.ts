@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { analytics } from "@/lib/analytics";
 import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -107,6 +108,7 @@ export const useCreateProposta = () => {
       return data;
     },
     onSuccess: () => {
+      analytics.track("proposta_criada");
       queryClient.invalidateQueries({ queryKey: ["propostas"] });
     },
   });
