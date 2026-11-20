@@ -41,9 +41,14 @@ melhor que o intervalo do backup manual.
   que exporta apenas o schema. Os artifacts anteriores a essa data não servem para
   recuperar dado de cliente.
 - **Verificação mensal automática:** `.github/workflows/drill-restore-mensal.yml` (dia 1)
-  baixa o último backup de produção, restaura num Supabase vazio no runner (Postgres 17)
-  e compara cada tabela com o manifesto, além de RLS e funções de segurança
-  (`scripts/backup-restore-test.sh`). Falha abre issue.
+  baixa o par de artifacts do **mesmo run** de produção. Restaura o banco num
+  Supabase vazio no runner (Postgres 17), compara cada tabela com o manifesto,
+  RLS e funções de segurança (`scripts/backup-restore-test.sh`). Também
+  descriptografa o archive do Storage em área temporária e verifica sem extrair
+  os dados: manifesto, nomes de objetos, tipos de entrada do tar, tamanho e
+  SHA-256 de cada arquivo (`scripts/backup/verify_storage_archive.py`).
+  Falta de qualquer um dos dois artifacts, corrupção ou inconsistência falha
+  o drill e abre issue. **Ainda não é ensaio de upload real para um bucket novo**.
 
 ### Código
 
@@ -70,6 +75,10 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
   O restore também confere os hashes presentes antes de enviar os objetos.
   Artifacts legados sem hash seguem restauráveis, mas não têm prova
   criptográfica de integridade por arquivo.
+- **Drill:** o mensal agora valida que os bytes de todas as fotos, templates,
+  áudios e documentos do Storage permanecem recuperáveis dentro do backup
+  criptografado. Isso não comprova API de upload/bucket nem leitura autenticada
+  em um projeto Supabase restaurado; implementar um ensaio separado para isso.
 - **Restore:** ver "Restore do Storage" no runbook abaixo. Repõe só o que sumiu;
   recria bucket apagado com a mesma configuração.
 - **Limitação:** mesmo RPO do banco (até 24h). Arquivo enviado e apagado no mesmo dia
