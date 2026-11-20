@@ -179,6 +179,9 @@ export function parseCsv(text: string, delim?: string): string[][] {
       campo += c;
     }
   }
+  if (emAspas) {
+    throw new Error("CSV inválido: campo com aspas não encerradas.");
+  }
   if (campo.length > 0 || linha.length > 0) {
     linha.push(campo);
     rows.push(linha);
@@ -234,7 +237,12 @@ function linhaHeuristica(cells: string[], formato: "br" | "us" = "br"): LinhaExt
  * por linha. Linhas sem data+valor viram avisos, não entram no resultado.
  */
 export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: string[] } {
-  const rows = parseCsv(text);
+  let rows: string[][];
+  try {
+    rows = parseCsv(text);
+  } catch {
+    return { linhas: [], avisos: ["CSV inválido: confira as aspas e exporte novamente a planilha."] };
+  }
   const avisos: string[] = [];
   if (rows.length === 0) return { linhas: [], avisos: ["Arquivo vazio ou ilegível."] };
 
