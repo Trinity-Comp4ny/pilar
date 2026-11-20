@@ -34,8 +34,13 @@ decisão (o Jev cobra US$ 0,042 por milhão de entrada e nada de saída).
 No CI, o workflow mede a configuração das variáveis de repositório `AI_MODELO_AI_CHAT` e
 `AI_DECISAO_AI_CHAT` (mantenha iguais às das Edge Functions de produção).
 
-No GitHub: Actions → **Evals da IA** → Run workflow. Também roda sozinho em PR que mexe em
-prompt, schema, extração ou no cliente do modelo, e toda segunda.
+No GitHub, use Actions → **Evals da IA** → Run workflow. O workflow também roda às segundas
+e em PRs internos que mexem no chat, no estimador, nas migrations do catálogo ou no cliente do modelo.
+
+Cadastre o secret `GEMINI_API_KEY` para Gemini direto ou `AI_GATEWAY_API_KEY` para modelos
+`gateway:*`. Um modelo de decisão no gateway também precisa da chave do gateway. A execução
+interna falha se a credencial do provedor configurado estiver ausente e indica isso no resumo.
+PRs de forks e do Dependabot executam os testes offline no CI normal.
 
 ## O que mede
 
