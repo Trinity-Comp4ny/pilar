@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Dados do painel do /inicio (SPEC 092, ADR 0037 e 0038).
@@ -132,9 +133,15 @@ export type PainelGestao = z.infer<typeof painelSchema> & { extra: PainelExtra |
 export type PainelSecao = "gestao" | "projetos" | "obras" | "financeiro";
 
 export function usePainelGestao(enabled = true) {
+  const { profile } = useAuth();
+  const empresaId = profile?.empresa_id ?? null;
+  const usuarioId = profile?.id ?? null;
   return useQuery({
-    queryKey: ["painel-gestao"],
-    enabled,
+    // A tela contém dados financeiros e comerciais sob RLS. A chave deve
+    // variar ao trocar perfil/empresa sem depender apenas de logout limpar
+    // todo o QueryClient (p.ex. impersonação e troca de contexto).
+    queryKey: ["painel-gestao", empresaId, usuarioId],
+    enabled: enabled && !!empresaId && !!usuarioId,
     queryFn: async (): Promise<PainelGestao> => {
       // Duas chamadas em paralelo: a principal e a dos blocos que vieram depois.
       // Se a extra falhar, o painel inteiro não cai: os widgets dela mostram
