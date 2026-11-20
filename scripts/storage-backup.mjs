@@ -42,10 +42,21 @@ export async function verificarIntegridade(pasta, exigirChecksum = true) {
   if (!Array.isArray(manifest.buckets)) throw new Error("Manifesto do Storage inválido: buckets ausentes.");
   let arquivos = 0;
   let bytesTotal = 0;
+  const bucketsVisitados = new Set();
+  const objetosVisitados = new Set();
   for (const bucket of manifest.buckets) {
+    if (typeof bucket.id !== "string" || bucketsVisitados.has(bucket.id)) {
+      throw new Error("Bucket duplicado ou inválido no manifesto de Storage.");
+    }
+    bucketsVisitados.add(bucket.id);
     if (!Array.isArray(bucket.arquivos)) throw new Error(`Manifesto inválido no bucket ${bucket.id}`);
     for (const item of bucket.arquivos) {
-      const bytes = await readFile(caminhoDoObjeto(pasta, bucket.id, item.caminho));
+      const destino = caminhoDoObjeto(pasta, bucket.id, item.caminho);
+      if (objetosVisitados.has(destino)) {
+        throw new Error("Objeto duplicado no manifesto de Storage: " + bucket.id + "/" + item.caminho);
+      }
+      objetosVisitados.add(destino);
+      const bytes = await readFile(destino);
       conferirArquivo(bytes, item, bucket.id, exigirChecksum);
       arquivos++;
       bytesTotal += bytes.length;
