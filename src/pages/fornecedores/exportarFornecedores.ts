@@ -62,7 +62,7 @@ export function linhasParaExportacao(fornecedores: LinhaFornecedor[], incluirCnp
 
 /** Impede que campos controlados por terceiros virem fórmulas no Excel ao abrir CSV. */
 function celulaSeguraCsv(valor: string): string {
-  const texto = /^[\s\u0000-\u001f]*[=+@-]/.test(valor) ? "'" + valor : valor;
+  const texto = /^[=+@-]/.test(valor.trimStart()) ? "'" + valor : valor;
   return '"' + texto.replace(/"/g, '""') + '"';
 }
 
