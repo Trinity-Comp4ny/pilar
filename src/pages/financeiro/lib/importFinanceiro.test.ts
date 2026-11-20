@@ -102,6 +102,13 @@ describe("parseCsv / detectarDelimitador", () => {
   it("detecta ponto e vírgula", () => {
     expect(detectarDelimitador("a;b;c\n1;2;3")).toBe(";");
   });
+  it("recusa campo com aspas não encerradas", () => {
+    expect(() => parseCsv('Data;Valor\n"2026-11-20;100')).toThrow(/aspas não encerradas/);
+    const retorno = csvParaLinhas('Data;Valor\n"2026-11-20;100');
+    expect(retorno.linhas).toEqual([]);
+    expect(retorno.avisos[0]).toContain("CSV inválido");
+  });
+
   it("respeita aspas com delimitador dentro", () => {
     const rows = parseCsv('data,desc,valor\n10/07/2026,"MERCADO, LTDA",100,00');
     expect(rows[1][1]).toBe("MERCADO, LTDA");
