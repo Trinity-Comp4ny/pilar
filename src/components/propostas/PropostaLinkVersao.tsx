@@ -1,3 +1,14 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,12 +19,26 @@ import { formatDateTime } from "@/lib/format";
 export function PropostaLinkVersao({
   versao,
   podePublicar,
+  podeRevogar = podePublicar,
 }: {
   versao: Tables<"proposta_versoes">;
   podePublicar: boolean;
+  podeRevogar?: boolean;
 }) {
   const queryClient = useQueryClient();
   const link = (token: string) => new URL(`/proposta-compartilhada#${token}`, window.location.origin).href;
+  const atualizarVersoes = () => queryClient.invalidateQueries({ queryKey: ["proposta-versoes"] });
+  const revogar = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("revogar_link_proposta", { p_versao_id: versao.id });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await atualizarVersoes();
+      toast.success("Link revogado");
+    },
+    onError: () => toast.error("Não foi possível revogar o link. Atualize as versões e tente novamente."),
+  });
   const publicar = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("publicar_link_proposta", { p_versao_id: versao.id });
@@ -21,10 +46,7 @@ export function PropostaLinkVersao({
       return data;
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["proposta-versoes"] }),
-        queryClient.invalidateQueries({ queryKey: ["propostas"] }),
-      ]);
+      await Promise.all([atualizarVersoes(), queryClient.invalidateQueries({ queryKey: ["propostas"] })]);
       toast.success("Link publicado");
     },
     onError: () =>
@@ -57,6 +79,27 @@ export function PropostaLinkVersao({
             <Button type="button" variant="outline" size="sm" onClick={() => void copiar()}>
               Copiar link
             </Button>
+            {podeRevogar && !versao.aceita_em && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" disabled={revogar.isPending}>
+                    Revogar link
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Revogar o link da versão {versao.numero}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O endereço compartilhado deixará de abrir a proposta. O PDF e o histórico continuam no escritório.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => revogar.mutate()}>Confirmar revogação</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             {versao.primeira_abertura_em
