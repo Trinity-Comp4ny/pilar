@@ -152,6 +152,8 @@ jobs:
         run: npm run format:check
       - name: Validar testes de configuração JWT das Edge Functions
         run: node --test scripts/check-edge-jwt.node-check.mjs
+      - name: Testar verificador de integridade do restore do Storage
+        run: python3 -m unittest scripts.backup.test_verify_storage_archive -v
 
   typecheck:
     name: Typecheck (app + LP)
