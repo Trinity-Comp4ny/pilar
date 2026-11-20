@@ -33,6 +33,8 @@ on:
       - "scripts/gerar-firebase-config.mjs"
       - "scripts/verificar-firebase-ambiente.mjs"
       - "scripts/verificar-firebase-preview.mjs"
+      - "playwright.firebase.config.ts"
+      - "e2e/firebase-preview-authenticated.spec.ts"
 
 # Permissão mínima. `id-token` é para a federação de identidade (sem chave JSON).
 permissions:
@@ -109,5 +111,19 @@ jobs:
           fi
 
       - name: Validar rotas e headers do preview publicado
+        id: preview
         if: env.CANAL == 'preview'
         run: node scripts/verificar-firebase-preview.mjs "$RUNNER_TEMP/firebase-preview.json" "${{ matrix.alvo }}" "$CANAL_NOME"
+
+      - name: Preparar Chromium para o smoke autenticado
+        if: env.CANAL == 'preview' && matrix.alvo == 'app'
+        uses: ./.github/actions/setup-playwright
+
+      - name: Validar sessão e painel de staging no preview publicado
+        if: env.CANAL == 'preview' && matrix.alvo == 'app'
+        env:
+          FIREBASE_PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_TEST_TOTP_SECRET: ${{ secrets.E2E_TEST_TOTP_SECRET }}
+        run: npx playwright test --config=playwright.firebase.config.ts

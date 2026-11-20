@@ -85,5 +85,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   await verificarPreview({ origem, alvo, release: process.env.SENTRY_RELEASE });
   const resumo = `Firebase preview (${alvo}) validado: ${origem}`;
   console.log(resumo);
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=${origem}\n`);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${resumo}\n`);
 }
