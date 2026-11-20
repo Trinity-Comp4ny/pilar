@@ -423,12 +423,15 @@ jobs:
       # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
       # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
       # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
-      - name: Preparar o stack local para CI (Postgres 17, sem porta POP3)
-        # Nenhum teste usa POP3. Evita a colisão de porta observada no runner
-        # sem remover o Mailpit, seu SMTP ou a interface web.
+      - name: Preparar o stack local para CI (Postgres 17 e portas do Mailpit)
+        # O runner já colidiu em 54334 (web) e 54336 (POP3). Move as portas
+        # usadas pelo Mailpit para fora da faixa efêmera original do Linux;
+        # POP3 é desnecessário e fica sem porta publicada.
         run: |
           sed -i -E \
             -e 's/^major_version = 15$/major_version = 17/' \
+            -e 's/^port = 54334$/port = 24334/' \
+            -e 's/^smtp_port = 54335$/smtp_port = 24335/' \
             -e 's/^pop3_port[[:space:]]*=.*/pop3_port = 0/' supabase/config.toml
 
       # Em segundo plano: o pull das imagens (~1 min) corre junto com a instalação do
@@ -651,12 +654,15 @@ jobs:
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       # Mesmo motivo do job database: só a cópia deste runner sobe em PG 17.
-      - name: Preparar o stack local para CI (Postgres 17, sem porta POP3)
-        # Nenhum teste usa POP3. Evita a colisão de porta observada no runner
-        # sem remover o Mailpit, seu SMTP ou a interface web.
+      - name: Preparar o stack local para CI (Postgres 17 e portas do Mailpit)
+        # O runner já colidiu em 54334 (web) e 54336 (POP3). Move as portas
+        # usadas pelo Mailpit para fora da faixa efêmera original do Linux;
+        # POP3 é desnecessário e fica sem porta publicada.
         run: |
           sed -i -E \
             -e 's/^major_version = 15$/major_version = 17/' \
+            -e 's/^port = 54334$/port = 24334/' \
+            -e 's/^smtp_port = 54335$/smtp_port = 24335/' \
             -e 's/^pop3_port[[:space:]]*=.*/pop3_port = 0/' supabase/config.toml
       # Em segundo plano, aplicando as migrations do PR, enquanto Node e Playwright
       # instalam. Só o Studio fica de fora: o resto (inclusive edge-runtime e
