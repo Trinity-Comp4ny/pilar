@@ -14,6 +14,13 @@ const conv = (src) => {
   const i = src.match(/^\/\(index\|spa\)\.html$/); if (i) return "/@(index|spa).html";
   return src;
 };
+if (!root) {
+  console.error("Uso: node scripts/gerar-firebase-config.mjs <raiz-do-repo>");
+  process.exit(2);
+}
+// Primeiro calcula as duas configurações. Se uma entrada estiver inválida,
+// nenhuma saída existente deve ser modificada parcialmente.
+const gerados = [];
 for (const [dir, out] of [[".", "firebase.app.json"], ["apps/marketing", "firebase.marketing.json"]]) {
   const v = JSON.parse(readFileSync(`${root}/${dir}/vercel.json`, "utf8"));
   let headers = v.headers.map((h) => ({ source: conv(h.source), headers: h.headers }));
@@ -28,5 +35,6 @@ for (const [dir, out] of [[".", "firebase.app.json"], ["apps/marketing", "fireba
   });
   const rewrites = v.rewrites.filter((r) => r.source === "/(.*)").map((r) => ({ source: "**", destination: r.destination }));
   const cfg = { hosting: { public: "dist", cleanUrls: false, trailingSlash: false, ...(redirects.length ? { redirects } : {}), rewrites, headers } };
-  writeFileSync(`${root}/${dir}/${out}`, JSON.stringify(cfg, null, 2) + "\n");
+  gerados.push({ path: `${root}/${dir}/${out}`, data: JSON.stringify(cfg, null, 2) + "\n" });
 }
+for (const item of gerados) writeFileSync(item.path, item.data);
