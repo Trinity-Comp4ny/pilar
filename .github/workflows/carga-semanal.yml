@@ -82,7 +82,7 @@ jobs:
               jq -r --arg c "${f#resumo-}" '
                 def formatar: if type == "number" then ((. * 100 | round) / 100 | tostring) else "—" end;
                 .metrics |
-                "|( $c | sub("\.json$"; "") )|" +
+                ("|" + ($c | rtrimstr(".json")) + "|") +
                 ([.http_req_duration.values["p(95)"], .http_req_duration.values["p(99)"],
                   (.http_req_failed.values.rate | if type == "number" then . * 100 else null end),
                   .http_reqs.values.rate, .painel_rpc_duration.values["p(95)"]]
