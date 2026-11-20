@@ -191,6 +191,11 @@ export async function marcarJaImportados(itens: ItemImport[]): Promise<ItemImpor
     supabase.from("despesas").select("import_line_hash").in("import_line_hash", hashes).is("deleted_at", null),
     supabase.from("receitas").select("import_line_hash").in("import_line_hash", hashes).is("deleted_at", null),
   ]);
+  // Falha de rede/RLS não significa que nenhuma linha foi importada.
+  // É mais seguro impedir a prévia do que permitir lançamentos duplicados.
+  if (desp.error || rec.error) {
+    throw new Error("Não foi possível conferir lançamentos já importados. Atualize a página e tente novamente.");
+  }
   const existentes = new Set(
     [...(desp.data ?? []), ...(rec.data ?? [])]
       .map((r) => (r as { import_line_hash: string | null }).import_line_hash)
