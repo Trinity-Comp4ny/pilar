@@ -61,3 +61,13 @@ cd /tmp/drill && supabase stop --no-backup && rm -rf /tmp/drill <pasta>/backup*
   `psql`.
 - Erro de permissão numa tabela interna (`storage.*`, `supabase_*`): entrou tabela nova
   da plataforma no dump; somar à lista `EXCLUIR` do workflow de backup.
+
+
+## Conferência do Storage no simulado mensal
+
+O workflow valida o arquivo de Storage do mesmo backup do banco antes de extrair
+para um diretório privado do runner. Depois de restaurar o PostgreSQL, publica os
+objetos no Storage local descartável e confere o SHA-256 do que a API devolve.
+Ele usa a chave do stack local recém-criado e o endereço fixo de loopback. O
+resumo registra contagens e tempo da etapa. A cópia externa continua com
+validação operacional própria.
