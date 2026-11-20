@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { Etapa } from "../useEtapas";
-import type { TarefaItem } from "../hooks";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
+import type { TarefaItem } from "@/hooks/tarefas/useTarefas";
 
 const apagarNotificacoesComentario = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/notificarMencao", () => ({ notificarMencao: vi.fn(), apagarNotificacoesComentario }));
@@ -30,9 +30,9 @@ vi.mock("@/components/ui/responsive-detail-panels", () => ({
     </div>
   ),
 }));
-vi.mock("@/pages/projetos/components/AtividadeComposer", () => ({ AtividadeComposer: () => null }));
+vi.mock("@/components/atividades/AtividadeComposerComMencoes", () => ({ AtividadeComposer: () => null }));
 
-import { TarefaDialog } from "./TarefaDialog";
+import { TarefaDialog } from "@/components/tarefas/TarefaDialog";
 
 const etapas: Etapa[] = [{ id: "e1", nome: "A fazer", ordem: 0, cor: null, bucket: "a_fazer" }];
 

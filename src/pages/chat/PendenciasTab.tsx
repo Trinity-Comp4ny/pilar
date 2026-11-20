@@ -12,14 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AprovarAditivoProjeto } from "@/components/AditivoProjetoDialogs";
 import { AditivoReviewCard } from "@/components/AditivoReviewCard";
-import {
-  usePendenciasAgentes,
-  useAprovarEscopo,
-  useRejeitarEscopo,
-  useAdiarEscopo,
-  type PendenciaAditivo,
-} from "@/hooks/useEscopos";
+import { usePendenciasAgentes, useRejeitarEscopo, useAdiarEscopo, type PendenciaAditivo } from "@/hooks/useEscopos";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useAgentHeartbeat } from "@/pages/chat/hooks/useAgentHeartbeat";
 import {
@@ -48,7 +43,6 @@ const POR_GRUPO = 6;
 export function PendenciasTab() {
   const pendencias = useAgentePendencias();
   const aditivos = usePendenciasAgentes();
-  const aprovar = useAprovarEscopo();
   const rejeitar = useRejeitarEscopo();
   const adiarEscopo = useAdiarEscopo();
   const adiar = useAdiarPendencia();
@@ -105,17 +99,6 @@ export function PendenciasTab() {
       toast.success(dias === 1 ? "Adiado por 1 dia" : `Adiado por ${dias} dias`);
     } catch {
       toast.error("Não foi possível adiar");
-    }
-  };
-
-  const handleAprovar = async () => {
-    if (!confirmAprovar) return;
-    try {
-      await aprovar.mutateAsync({ escopoId: confirmAprovar.id, projetoId: confirmAprovar.projeto_id });
-      toast.success("Aditivo aprovado: contrato e orçamento atualizados");
-      setConfirmAprovar(null);
-    } catch {
-      toast.error("Não foi possível aprovar o aditivo");
     }
   };
 
@@ -299,7 +282,7 @@ export function PendenciasTab() {
                         to={`/projetos/${escopo.projeto_id}#escopo`}
                         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                       >
-                        Ver na aba Escopo do projeto <ArrowUpRight className="h-3 w-3" />
+                        Ver na aba Escopo e aditivos <ArrowUpRight className="h-3 w-3" />
                       </NavLink>
                       {podeEditarProjetos && (
                         <DropdownMenu>
@@ -384,17 +367,14 @@ export function PendenciasTab() {
         canEdit={podeEditarProjetos}
       />
 
-      <ConfirmDialog
-        open={!!confirmAprovar}
-        onOpenChange={(open) => !open && setConfirmAprovar(null)}
-        onConfirm={handleAprovar}
-        title="Aprovar aditivo"
-        itemName={confirmAprovar?.descricao}
-        description="O valor entra no contrato do projeto e no orçamento vivo imediatamente. Esta ação não pode ser desfeita pela tela."
-        confirmText="Aprovar"
-        variant="default"
-        loading={aprovar.isPending}
-      />
+      {confirmAprovar && (
+        <AprovarAditivoProjeto
+          projetoId={confirmAprovar.projeto_id}
+          aditivoId={confirmAprovar.id}
+          descricao={confirmAprovar.descricao}
+          fechar={() => setConfirmAprovar(null)}
+        />
+      )}
       <ConfirmDialog
         open={!!confirmRejeitar}
         onOpenChange={(open) => !open && setConfirmRejeitar(null)}

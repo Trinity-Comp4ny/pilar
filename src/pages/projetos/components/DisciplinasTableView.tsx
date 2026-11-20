@@ -645,7 +645,6 @@ interface ResponsaveisCellProps {
 }
 
 function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRemove }: ResponsaveisCellProps) {
-  const [selectedToAdd, setSelectedToAdd] = useState("");
   const resps = dbDisc?.responsaveis || [];
 
   const display =
@@ -680,48 +679,41 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
                     <User className="h-3 w-3" />
                     {r.nome}
                   </span>
-                  {resps.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-danger-mid"
-                      onClick={() => onRemove(discIdx, rIdx)}
-                      aria-label="Remover responsável"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-muted-foreground hover:text-danger-mid"
+                    onClick={() => onRemove(discIdx, rIdx)}
+                    aria-label={`Remover ${r.nome}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
               ))
             )}
           </div>
-          <div className="flex gap-1.5 pt-1 border-t">
-            <Select value={selectedToAdd} onValueChange={setSelectedToAdd}>
-              <SelectTrigger className="h-8 text-xs flex-1">
-                <SelectValue placeholder="Adicionar..." />
-              </SelectTrigger>
-              <SelectContent>
+          <div className="space-y-1 border-t pt-2">
+            <Label className="text-2xs font-medium text-muted-foreground">Adicionar responsável</Label>
+            {pessoas.filter((p) => !resps.some((r) => r.id === p.id)).length === 0 ? (
+              <p className="py-1 text-xs text-muted-foreground">Todas as pessoas já estão na disciplina.</p>
+            ) : (
+              <ul className="max-h-40 space-y-0.5 overflow-y-auto">
                 {pessoas
                   .filter((p) => !resps.some((r) => r.id === p.id))
                   .map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-xs">
-                      {p.nome}
-                    </SelectItem>
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => onAdd(discIdx, p.id)}
+                        className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted"
+                      >
+                        <Plus className="h-3 w-3 text-muted-foreground" />
+                        {p.nome}
+                      </button>
+                    </li>
                   ))}
-              </SelectContent>
-            </Select>
-            <Button
-              size="icon-sm"
-              variant="brand"
-              disabled={!selectedToAdd}
-              onClick={async () => {
-                await onAdd(discIdx, selectedToAdd);
-                setSelectedToAdd("");
-              }}
-              aria-label="Adicionar responsável"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+              </ul>
+            )}
           </div>
         </div>
       </PopoverContent>

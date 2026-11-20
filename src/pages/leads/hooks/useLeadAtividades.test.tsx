@@ -29,6 +29,7 @@ describe("atividades do lead", () => {
       empresa_id: "empresa",
       lead_id: "lead",
       texto: "Reunião marcada",
+      mencionados: [],
       ocorrido_em: "2026-11-17T15:00:00Z",
     });
     expect(supabaseFake.calls.every((c) => c.table === "lead_atividades")).toBe(true);

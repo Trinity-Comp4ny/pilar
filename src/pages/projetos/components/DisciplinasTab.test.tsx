@@ -115,6 +115,13 @@ describe("DisciplinasTab", () => {
     expect(screen.queryByText("Caio")).not.toBeInTheDocument();
   });
 
+  it("separa o status da disciplina do status do projeto", () => {
+    montar();
+    fireEvent.click(screen.getByRole("button", { name: /Expandir tudo/ }));
+    expect(screen.getAllByText("Status da disciplina").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Projeto:").length).toBeGreaterThan(0);
+  });
+
   it("expandir um grupo só pelo cabeçalho", () => {
     montar();
     fireEvent.click(screen.getByText("Hidráulica"));

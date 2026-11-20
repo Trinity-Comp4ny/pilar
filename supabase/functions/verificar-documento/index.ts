@@ -22,6 +22,9 @@ import {
 const log = createLogger("verificar-documento");
 const limiter = new RateLimiter(10, 60_000); // 10/min por usuário: documento não é ação de burst
 
+// Não confirma que o documento é de outra empresa: só diz que não dá para usá-lo.
+const DOCUMENTO_INDISPONIVEL = "Não foi possível usar este documento. Confira o número ou fale com o suporte.";
+
 serve(
   withSentry("verificar-documento", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -85,7 +88,7 @@ serve(
 
         if (error) {
           if (error.code === "23505") {
-            return jsonResponse({ error: "Este CNPJ já tem uma conta na Pilar." }, 409, req);
+            return jsonResponse({ error: DOCUMENTO_INDISPONIVEL }, 409, req);
           }
           log.error("update empresas (cnpj pendente) failed", error, { empresa_id: empresaId });
           return safeErrorResponse(500, "Falha ao salvar o CNPJ", req);
@@ -124,7 +127,7 @@ serve(
 
       if (error) {
         if (error.code === "23505") {
-          return jsonResponse({ error: "Este CNPJ já tem uma conta na Pilar." }, 409, req);
+          return jsonResponse({ error: DOCUMENTO_INDISPONIVEL }, 409, req);
         }
         log.error("update empresas (cnpj verificado) failed", error, { empresa_id: empresaId });
         return safeErrorResponse(500, "Falha ao salvar o CNPJ", req);
@@ -167,7 +170,7 @@ serve(
 
     if (error) {
       if (error.code === "23505") {
-        return jsonResponse({ error: "Este CPF já tem uma conta na Pilar." }, 409, req);
+        return jsonResponse({ error: DOCUMENTO_INDISPONIVEL }, 409, req);
       }
       log.error("update empresas (cpf) failed", error, { empresa_id: empresaId });
       return safeErrorResponse(500, "Falha ao salvar o CPF", req);

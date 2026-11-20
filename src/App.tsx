@@ -88,6 +88,7 @@ const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
+const PropostaPublica = lazy(() => import("./pages/propostas/PropostaPublica"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteConvite = lazy(() => import("./pages/cliente/ClienteConvite"));
 const CotarPage = lazy(() => import("./pages/cotar/CotarPage"));
@@ -117,6 +118,10 @@ const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases
 const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
 const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
 const UltraDoresMercado = lazy(() => ultraAdmin().then((m) => ({ default: m.DoresMercado })));
+const UltraReunioes = lazy(() => ultraAdmin().then((m) => ({ default: m.Reunioes })));
+const UltraReuniaoDetalhe = lazy(() => ultraAdmin().then((m) => ({ default: m.ReuniaoDetalhe })));
+const UltraProspeccao = lazy(() => ultraAdmin().then((m) => ({ default: m.Prospeccao })));
+const UltraCerebro = lazy(() => ultraAdmin().then((m) => ({ default: m.Cerebro })));
 const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
 const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
@@ -277,6 +282,7 @@ const App = () => {
                         <Route path="/termos" element={<ExternalRedirect path="/termos" />} />
                         <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
                         <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/proposta-compartilhada" element={<PropostaPublica />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                           path="/cadastro"
@@ -468,6 +474,10 @@ const App = () => {
                               <Route path="ajuda" element={<UltraAjudaLacunas />} />
                               <Route path="satisfacao" element={<UltraSatisfacao />} />
                               <Route path="dores" element={<UltraDoresMercado />} />
+                              <Route path="reunioes" element={<UltraReunioes />} />
+                              <Route path="reunioes/:id" element={<UltraReuniaoDetalhe />} />
+                              <Route path="prospeccao" element={<UltraProspeccao />} />
+                              <Route path="cerebro" element={<UltraCerebro />} />
                               <Route path="comunicados" element={<UltraComunicados />} />
                               <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />

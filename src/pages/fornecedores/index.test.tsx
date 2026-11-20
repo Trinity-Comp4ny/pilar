@@ -94,6 +94,7 @@ describe("Fornecedores: criar", () => {
       email: "vendas@areia.com",
       telefone: "14988887777",
       empresa_id: "emp-1",
+      categorias: [],
     });
     expect(toastSuccess).toHaveBeenCalledWith("Fornecedor adicionado");
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
@@ -245,9 +246,7 @@ describe("Fornecedores: lista, busca e estados", () => {
     await user.clear(busca);
     await user.type(busca, "inexistente");
     expect(screen.getByText("Nenhum resultado encontrado")).toBeInTheDocument();
-    // O X do campo de busca também se chama "Limpar busca"; aqui é o botão do estado vazio.
-    const limpar = screen.getAllByRole("button", { name: "Limpar busca" });
-    await user.click(limpar.find((b) => b.textContent === "Limpar busca") as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
     expect(screen.getByText("Aço Bom")).toBeInTheDocument();
   });
 

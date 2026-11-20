@@ -375,6 +375,16 @@ export interface PontoCurvaS {
   semana: string;
   planejadoPct: number;
   realizadoPct: number;
+  /** % do orçado já pago até o fim da semana. Só vem quando há despesas e orçado. */
+  pagoPct?: number;
+}
+
+/** Ponderação opcional da curva: peso por tarefa (valor orçado) e despesas para a linha "pago". */
+export interface OpcoesCurvaS {
+  /** tarefa_id → peso (ex.: parte do orçado da frente). Soma 0 ou ausente = peso igual por tarefa. */
+  pesos?: ReadonlyMap<string, number>;
+  despesas?: ReadonlyArray<{ data: string; valor: number }>;
+  totalPrevisto?: number;
 }
 
 interface TarefaCurvaS {
@@ -400,8 +410,13 @@ const dataDoTimestamp = (iso: string): string => iso.slice(0, 10);
  */
 export function curvaSObra(
   tarefas: ReadonlyArray<TarefaCurvaS>,
-  concluidasPorRdo: ReadonlyMap<string, string>
+  concluidasPorRdo: ReadonlyMap<string, string>,
+  opcoes: OpcoesCurvaS = {}
 ): PontoCurvaS[] {
+  const { pesos, despesas = [], totalPrevisto = 0 } = opcoes;
+  const pesoBruto = (t: TarefaCurvaS) => pesos?.get(t.id) ?? 0;
+  const ponderar = tarefas.reduce((a, t) => a + pesoBruto(t), 0) > 0;
+  const pesoDe = (t: TarefaCurvaS) => (ponderar ? pesoBruto(t) : 1);
   const comPrazo = tarefas.filter((t) => t.prazo != null);
   if (comPrazo.length === 0) return [];
 
@@ -422,6 +437,8 @@ export function curvaSObra(
     const c = conclusaoDe(t);
     if (c) datas.push(c);
   }
+  const mostrarPago = despesas.length > 0 && totalPrevisto > 0;
+  if (mostrarPago) for (const d of despesas) datas.push(parseDate(d.data) ?? startOfDay(new Date()));
   if (datas.length === 0) return [];
 
   const hoje = startOfDay(new Date());
@@ -429,25 +446,37 @@ export function curvaSObra(
   const fimDados = datas.reduce((a, b) => (b > a ? b : a));
   const fimRange = startOfWeek(fimDados > hoje ? fimDados : hoje);
 
+  const totalPlanejavel = comPrazo.reduce((a, t) => a + pesoDe(t), 0);
+  const totalGeral = tarefas.reduce((a, t) => a + pesoDe(t), 0);
+
   const pontos: PontoCurvaS[] = [];
   for (let semana = inicioRange; semana <= fimRange; semana = addDays(semana, 7)) {
     const cutoff = addDays(semana, 6); // domingo, "fim daquela semana"
 
-    const planejadas = comPrazo.filter((t) => {
-      const prazo = parseDate(t.prazo);
-      return prazo != null && prazo <= cutoff;
-    }).length;
+    const somaPeso = (lista: ReadonlyArray<TarefaCurvaS>) => lista.reduce((a, t) => a + pesoDe(t), 0);
+    const planejadas = somaPeso(
+      comPrazo.filter((t) => {
+        const prazo = parseDate(t.prazo);
+        return prazo != null && prazo <= cutoff;
+      })
+    );
+    const realizadas = somaPeso(
+      tarefas.filter((t) => {
+        const c = conclusaoDe(t);
+        return c != null && c <= cutoff;
+      })
+    );
 
-    const realizadas = tarefas.filter((t) => {
-      const c = conclusaoDe(t);
-      return c != null && c <= cutoff;
-    }).length;
-
-    pontos.push({
+    const ponto: PontoCurvaS = {
       semana: toIso(semana),
-      planejadoPct: Math.round((planejadas / comPrazo.length) * 100),
-      realizadoPct: Math.round((realizadas / tarefas.length) * 100),
-    });
+      planejadoPct: totalPlanejavel > 0 ? Math.round((planejadas / totalPlanejavel) * 100) : 0,
+      realizadoPct: totalGeral > 0 ? Math.round((realizadas / totalGeral) * 100) : 0,
+    };
+    if (mostrarPago) {
+      const pago = despesas.reduce((a, d) => ((parseDate(d.data) ?? hoje) <= cutoff ? a + d.valor : a), 0);
+      ponto.pagoPct = Math.round((pago / totalPrevisto) * 100);
+    }
+    pontos.push(ponto);
   }
   return pontos;
 }

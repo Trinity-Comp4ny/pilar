@@ -16,8 +16,28 @@ vi.mock("@/hooks/useEscopos", () => ({
   useEscopos: () => ({ data: escopos, isLoading: carregando }),
   useOrcamentoFases: () => ({ data: fases, isLoading: false }),
   useSalvarOrcamentoFase: () => ({ mutateAsync: salvarFase, isPending: false }),
-  useAprovarEscopo: () => ({ mutateAsync: aprovar, isPending: false }),
   useRejeitarEscopo: () => ({ mutateAsync: rejeitar, isPending: false }),
+}));
+vi.mock("@/hooks/useAditivosProjeto", () => ({
+  useConfirmarAditivo: () => ({ mutateAsync: aprovar, isPending: false }),
+  usePreviaAditivo: (_opcoes: unknown, enabled = true) => ({
+    // React Query preenche dataUpdatedAt na resposta real. Sem o timestamp o
+    // novo guard de prévia expirada rejeita os mocks mesmo quando o cálculo vale.
+    dataUpdatedAt: Date.now(),
+    isFetching: false,
+    isError: false,
+    data: enabled
+      ? {
+          grupos: [],
+          cliente: true,
+          contrato: 10000,
+          aditivo: 15000,
+          saldo: 8000,
+          linhas: [{ vencimento: "2027-01-15", anterior: 0, novo: 15000 }],
+        }
+      : undefined,
+    refetch: vi.fn(),
+  }),
 }));
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
@@ -33,6 +53,7 @@ const aditivo = (over: Partial<EscopoRow> = {}) =>
     descricao: "Aditivo de fundações",
     justificativa: "Solo pior que o previsto",
     valor_aditivo: 15000,
+    saldo: 8000,
     custo_estimado: 9000,
     pode_ver_valor: true,
     created_by: "u1",
@@ -121,12 +142,14 @@ describe("EscopoTab", () => {
     expect(screen.getByText("Aprovar aditivo")).toBeInTheDocument();
     expect(aprovar).not.toHaveBeenCalled();
 
-    const botoes = screen.getAllByRole("button", { name: "Aprovar" });
-    fireEvent.click(botoes[botoes.length - 1]);
-    await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith("Aditivo aprovado — contrato e orçamento atualizados")
+    const confirmar = screen.getByRole("button", { name: "Aprovar e registrar cobrança" });
+    expect(confirmar).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Primeiro vencimento"), { target: { value: "2027-01-15" } });
+    fireEvent.click(confirmar);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aditivo aprovado e cobrança atualizada"));
+    expect(aprovar).toHaveBeenCalledWith(
+      expect.objectContaining({ opcoes: { p_aditivo: "esc-1", p_vencimento: "2027-01-15", p_parcelas: 1 } })
     );
-    expect(aprovar).toHaveBeenCalledWith({ escopoId: "esc-1", projetoId: "proj-1" });
   });
 
   it("cancelar a confirmação de aprovar não grava", () => {
@@ -142,9 +165,11 @@ describe("EscopoTab", () => {
     escopos = [aditivo()];
     render(<EscopoTab projetoId="proj-1" canEdit disciplinas={[]} />);
     fireEvent.click(screen.getByRole("button", { name: "Aprovar" }));
-    const botoes = screen.getAllByRole("button", { name: "Aprovar" });
-    fireEvent.click(botoes[botoes.length - 1]);
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível aprovar o aditivo"));
+    const confirmar = screen.getByRole("button", { name: "Aprovar e registrar cobrança" });
+    expect(confirmar).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Primeiro vencimento"), { target: { value: "2027-01-15" } });
+    fireEvent.click(confirmar);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível aprovar. Confira uma nova prévia."));
   });
 
   it("rejeitar confirma e grava; falha avisa", async () => {

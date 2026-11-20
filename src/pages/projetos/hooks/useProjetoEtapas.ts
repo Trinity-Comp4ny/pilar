@@ -16,7 +16,10 @@ export type ProjetoEtapa = {
   bucket: ProjectStatus;
 };
 
-const KEY = ["projetos", "etapas"] as const;
+// Fora do prefixo ["projetos"]: criar/excluir projeto invalida ["projetos"] e não deve
+// reler as colunas, que não mudaram.
+export const KEY_ETAPAS_PROJETO = ["projeto-etapas"] as const;
+const KEY = KEY_ETAPAS_PROJETO;
 
 // Paleta das colunas (dot). Mesma família das âncoras semeadas no banco.
 export const CORES_ETAPA_PROJETO = [
@@ -33,18 +36,20 @@ export const CORES_ETAPA_PROJETO = [
 /** Cor que a coluna mostra no quadro (sem cor salva cai no cinza neutro). */
 export const corDaEtapaProjeto = (cor: string | null) => cor ?? "#94a3b8";
 
+export async function fetchEtapasProjeto(): Promise<ProjetoEtapa[]> {
+  const { data, error } = await supabase
+    .from("projeto_etapas")
+    .select("id, nome, ordem, cor, bucket")
+    .order("ordem", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((e) => ({ ...e, bucket: e.bucket as ProjectStatus }));
+}
+
 export function useProjetoEtapas() {
   return useQuery({
     queryKey: KEY,
     staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<ProjetoEtapa[]> => {
-      const { data, error } = await supabase
-        .from("projeto_etapas")
-        .select("id, nome, ordem, cor, bucket")
-        .order("ordem", { ascending: true });
-      if (error) throw error;
-      return (data ?? []).map((e) => ({ ...e, bucket: e.bucket as ProjectStatus }));
-    },
+    queryFn: fetchEtapasProjeto,
   });
 }
 

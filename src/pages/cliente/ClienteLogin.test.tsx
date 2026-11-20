@@ -42,6 +42,17 @@ beforeEach(() => {
 });
 
 describe("ClienteLogin (portal)", () => {
+  it("associa os rótulos e as mensagens de validação aos inputs de login", async () => {
+    renderPage();
+    const email = screen.getByLabelText(/Email/);
+    const senha = screen.getByLabelText(/^Senha/);
+    expect(email).toHaveAttribute("autocomplete", "username");
+    expect(senha).toHaveAttribute("autocomplete", "current-password");
+    await userEvent.setup().click(entrar());
+    await waitFor(() => expect(email).toHaveAccessibleDescription("Email inválido"));
+    expect(senha).toHaveAccessibleDescription("Informe a senha");
+  });
+
   it("campos vazios mostram erro e não chamam o servidor", async () => {
     renderPage();
     await userEvent.setup().click(entrar());

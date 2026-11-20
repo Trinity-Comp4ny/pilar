@@ -1,10 +1,24 @@
+import { ProjetoIndicadoresOperacionais, type IndicadoresProjetoProps } from "./ProjetoIndicadoresOperacionais";
+import { Button } from "@/components/ui/button";
+import { useTarefas } from "@/hooks/tarefas/useTarefas";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useMinhaPessoa } from "@/hooks/useMinhaPessoa";
+import { formatDateLocal } from "@/lib/businessDays";
+import { ProjetoTarefasTab, type NovaTarefaProjeto } from "./ProjetoTarefasTab";
+import { tarefaAtrasada } from "../lib/tarefaAtrasada";
+import { ProjetoRevisoesTab } from "./ProjetoRevisoesTab";
+import { useRevisoesPendentes } from "../hooks/useRevisoesPendentes";
+import { atribuicaoDisciplina } from "../lib/atribuicaoDisciplina";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   Layers,
+  ListTodo,
+  FileCheck,
+  LayoutDashboard,
   DollarSign,
   ScrollText,
   Table as TableIcon,
@@ -40,10 +54,16 @@ import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
+import { ProjetoVisaoGeralTab } from "./ProjetoVisaoGeralTab";
 import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
+  /** Progresso (0-100) e indicadores do projeto: só a aba Visão geral os mostra. */
+  progresso: number;
+  indicadores?: ReactNode;
+  detalhes?: ReactNode;
+  financeiro?: IndicadoresProjetoProps["financeiro"];
   canEdit: boolean;
   disciplinasLegacy: DisciplinaResponsavel[];
   dbDisciplinas: ProjetoDisciplinaDB[];
@@ -65,12 +85,15 @@ interface ProjetoDetailTabsProps {
 
 // Hash "cronograma" mantido como alias retrocompat → abre Disciplinas com view Gantt
 const PROJETO_TABS: SectionTab[] = [
+  { id: "visao-geral", label: "Visão geral", icon: LayoutDashboard },
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
+  { id: "tarefas", label: "Tarefas", icon: ListTodo },
+  { id: "revisoes", label: "Revisões", icon: FileCheck },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
   { id: "cliente", label: "Cliente", icon: Send },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
-  { id: "escopo", label: "Escopo", icon: ScrollText },
+  { id: "escopo", label: "Escopo e aditivos", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
 ];
 
@@ -84,6 +107,10 @@ const DISCIPLINA_VISOES: ViewOption<DisciplinaView>[] = [
 
 export function ProjetoDetailTabs({
   projeto,
+  progresso,
+  indicadores,
+  detalhes,
+  financeiro,
   canEdit,
   disciplinasLegacy,
   dbDisciplinas,
@@ -98,6 +125,13 @@ export function ProjetoDetailTabs({
   handleRemoveResponsavel,
 }: ProjetoDetailTabsProps) {
   const { profile } = useAuth();
+  const { isAdmin, can } = usePermissions();
+  const { data: minhaPessoa } = useMinhaPessoa();
+  const tarefasProjeto = useTarefas(null, projeto.id);
+  const { data: entregas } = useRevisoesPendentes(projeto.id);
+  const [aditivoDestacado, setAditivoDestacado] = useState<string>();
+  const [novaTarefa, setNovaTarefa] = useState<NovaTarefaProjeto | null>(null);
+  const [apenasAtrasadas, setApenasAtrasadas] = useState(false);
   const { data: checklistCounts } = useProjetoDisciplinaChecklistCounts(projeto.id);
   const { data: revisoesCounts } = useProjetoDisciplinaRevisoesCounts(projeto.id);
   const { data: fluxos = [] } = useFluxosDisciplinas();
@@ -125,13 +159,15 @@ export function ProjetoDetailTabs({
   const resolveFromHash = (hash: string): { tab: string; view: DisciplinaView | null } => {
     const h = hash.replace("#", "");
     if (h === "cronograma") return { tab: "disciplinas", view: "gantt" };
+    if (h === "disciplinas") return { tab: "disciplinas", view: null };
+    if (h === "tarefas" || h === "revisoes") return { tab: h, view: null };
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
     if (h === "escopo") return { tab: "escopo", view: null };
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
     if (h === "arquivos") return { tab: "arquivos", view: null };
     if (h === "cliente" || h === "solicitacoes") return { tab: "cliente", view: null };
-    return { tab: "disciplinas", view: null };
+    return { tab: "visao-geral", view: null };
   };
 
   const initial = resolveFromHash(location.hash);
@@ -243,6 +279,7 @@ export function ProjetoDetailTabs({
         | "horas_realizadas"
         | "tipo_execucao"
         | "prestador_nome"
+        | "responsaveis"
       >
     >
   ) => {
@@ -254,7 +291,17 @@ export function ProjetoDetailTabs({
     await handleSaveDiscChanges({ ...dbDisc, ...patch });
     // patch usa chaves de ProjetoDisciplinaDB (descricao pode ser null); no shape
     // legacy é string|undefined e nunca gravamos null aqui — cast seguro.
-    setSelectedDisc((prev) => (prev ? ({ ...prev, ...patch } as DisciplinaResponsavel) : prev));
+    setSelectedDisc((prev) =>
+      prev
+        ? ({
+            ...prev,
+            ...patch,
+            ...(patch.responsaveis
+              ? { responsaveis: patch.responsaveis.map((r) => ({ responsavel_id: r.id, responsavel_nome: r.nome })) }
+              : {}),
+          } as DisciplinaResponsavel)
+        : prev
+    );
   };
 
   const handleDiscUpdateLabels = (next: string[]) => saveDiscPatch({ labels: next });
@@ -279,6 +326,25 @@ export function ProjetoDetailTabs({
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     navigate(`#${v}`, { replace: true });
+  };
+
+  const abrirAditivos = (id?: string) => {
+    setAditivoDestacado(id);
+    handleTabChange("escopo");
+  };
+
+  const hoje = formatDateLocal(new Date());
+  const tarefas = tarefasProjeto.data;
+  const atrasadas = tarefas?.filter((tarefa) => tarefaAtrasada(tarefa, hoje)).length;
+  const concluidas = tarefas?.filter((tarefa) => tarefa.status === "concluida").length;
+  const internasAbertas = Object.values(revisoesCounts ?? {}).reduce((total, item) => total + item.abertas, 0);
+  const abrirIndicador: IndicadoresProjetoProps["abrir"] = (destino) => {
+    if (destino === "cronograma") {
+      navigate("#cronograma", { replace: true });
+      return;
+    }
+    setApenasAtrasadas(destino === "atrasadas");
+    handleTabChange(destino === "atrasadas" ? "tarefas" : destino);
   };
 
   return (
@@ -308,6 +374,52 @@ export function ProjetoDetailTabs({
           </div>
         </PageTabs>
         <div className="flex-1 min-w-0">
+          <TabsContent value="visao-geral">
+            {activeTab === "visao-geral" && (
+              <ProjetoVisaoGeralTab
+                projetoId={projeto.id}
+                disciplinas={disciplinasLegacy}
+                progresso={progresso}
+                detalhes={detalhes}
+                entregas={entregas}
+                proximasAcoes={
+                  tarefas && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">Próximas ações</p>
+                      {tarefas
+                        .filter((t) => tarefaAtrasada(t, hoje))
+                        .slice(0, 3)
+                        .map((t) => (
+                          <p key={t.id} className="text-sm text-muted-foreground">
+                            {t.titulo}
+                          </p>
+                        ))}
+                      <Button size="sm" variant="outline" onClick={() => abrirIndicador("tarefas")}>
+                        Tarefas concluídas · {concluidas}/{tarefas.length}
+                      </Button>
+                    </div>
+                  )
+                }
+                indicadores={
+                  <>
+                    {indicadores}
+                    <ProjetoIndicadoresOperacionais
+                      projetoId={projeto.id}
+                      hoje={hoje}
+                      tarefas={tarefas}
+                      atrasadas={atrasadas}
+                      internas={internasAbertas}
+                      cliente={entregas?.pendentes}
+                      disciplinas={dbDisciplinas}
+                      financeiro={financeiro}
+                      abrir={abrirIndicador}
+                    />
+                  </>
+                }
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="disciplinas">
             <div className="space-y-3">
               {/* Toggle de visualização: no celular fica aqui (no desktop, na linha das abas). */}
@@ -383,13 +495,63 @@ export function ProjetoDetailTabs({
             </div>
           </TabsContent>
 
+          <TabsContent value="tarefas">
+            {activeTab === "tarefas" && (
+              <ProjetoTarefasTab
+                projeto={projeto}
+                disciplinas={dbDisciplinas}
+                tarefas={tarefas}
+                novaExterna={novaTarefa}
+                fecharNovaExterna={() => setNovaTarefa(null)}
+                apenasAtrasadas={apenasAtrasadas}
+                setApenasAtrasadas={setApenasAtrasadas}
+                onRetry={
+                  tarefasProjeto.isError
+                    ? () => {
+                        void tarefasProjeto.refetch();
+                      }
+                    : undefined
+                }
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="revisoes">
+            {activeTab === "revisoes" && (
+              <ProjetoRevisoesTab
+                projetoId={projeto.id}
+                revisoesInternas={internasAbertas}
+                podeCriarAditivo={canEdit && can("financeiro")}
+                abrirAditivos={abrirAditivos}
+                abrirDisciplinas={() => handleTabChange("disciplinas")}
+                criarTarefa={
+                  isAdmin || minhaPessoa
+                    ? (entrega) => {
+                        setApenasAtrasadas(false);
+                        setNovaTarefa({
+                          disciplinaId: entrega.projeto_disciplina_id ?? undefined,
+                          entregaId: entrega.id,
+                          titulo: `Ajustar ${entrega.titulo}`,
+                          descricao: entrega.resposta_cliente ?? undefined,
+                        });
+                        handleTabChange("tarefas");
+                      }
+                    : undefined
+                }
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="atividades">
-            <Card className="flex h-[70dvh] min-h-[420px] flex-col p-4">
+            <Card className="flex h-[calc(100dvh-13rem)] min-h-[420px] flex-col p-4">
               <ProjetoAtividadesPanel
                 projetoId={projeto.id}
                 pessoas={pessoas}
                 autorNome={autorNome}
                 comentarioDestacado={disciplinaDoLink ? null : comentarioDoLink}
+                canEdit={canEdit}
+                podeCriarAditivo={canEdit && can("financeiro")}
+                disciplinas={dbDisciplinas.map(({ id, nome }) => ({ id, nome }))}
               />
             </Card>
           </TabsContent>
@@ -411,12 +573,16 @@ export function ProjetoDetailTabs({
               projetoId={projeto.id}
               canEdit={canEdit}
               disciplinas={Array.from(new Set(dbDisciplinas.map((d) => d.nome)))}
+              opcoesDisciplina={dbDisciplinas.map(({ id, nome }) => ({ id, nome }))}
+              podeVerFinanceiro={can("financeiro")}
+              aditivoDestacado={aditivoDestacado}
             />
           </TabsContent>
 
           <TabsContent value="historico">
             <ProjetoHistoricoTab
               projetoId={projeto.id}
+              abrirAditivos={abrirAditivos}
               disciplinas={dbDisciplinas.map((d) => ({ id: d.id, nome: d.nome }))}
             />
           </TabsContent>
@@ -433,8 +599,7 @@ export function ProjetoDetailTabs({
         onUpdateResponsaveis={handleDiscUpdateResponsaveis}
         onUpdateExecucao={
           canEdit
-            ? (tipo, prestador) =>
-                saveDiscPatch({ tipo_execucao: tipo, prestador_nome: tipo === "terceirizada" ? prestador : null })
+            ? (tipo, prestador, ids) => saveDiscPatch(atribuicaoDisciplina(tipo, prestador, ids, pessoas))
             : undefined
         }
         onUpdateLabels={handleDiscUpdateLabels}

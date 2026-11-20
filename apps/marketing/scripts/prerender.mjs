@@ -23,6 +23,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
 import { createServer } from "vite";
+import { validarPublicacao } from "./verificar-publicacao.mjs";
 
 const RAIZ = fileURLToPath(new URL("..", import.meta.url));
 const DIST = join(RAIZ, "dist");
@@ -285,6 +286,7 @@ async function main() {
   console.log(`[prerender] ${ok}/${ROTAS.length} rotas gravadas em dist/, shell com boot em dist/spa.html.`);
   console.log(`[prerender] feed do blog com ${gravarFeed()} artigos em dist/blog/feed.xml.`);
   if (falhas.length) process.exit(1);
+  validarPublicacao(DIST, BASE, ROTAS);
   // Timers de animação do jsdom seguram o processo aberto.
   process.exit(0);
 }

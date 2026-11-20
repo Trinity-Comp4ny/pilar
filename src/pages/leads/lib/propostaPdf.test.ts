@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROPOSTA_PDF_MAX_BYTES, propostaPdfSchema, validarPropostaPdf } from "./propostaPdf";
+import { PROPOSTA_PDF_MAX_BYTES, propostaPdfSchema, validarPropostaPdf } from "@/lib/propostaPdfArquivo";
 function arquivo(nome: string, texto: string, tamanho?: number) {
   return {
     name: nome,

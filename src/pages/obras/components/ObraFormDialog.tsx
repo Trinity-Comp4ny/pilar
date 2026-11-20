@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useProjetosLite, usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
+import { useProjetosLite, usePessoasEmpresa } from "@/hooks/tarefas/useTarefas";
 import { useCreateObra, useObras, useUpdateObra, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";
@@ -28,6 +28,8 @@ import { gravarPlanoDoCronograma } from "@/pages/obras/hooks/useImportarCronogra
 import { vincularObraAoFluxo } from "@/pages/obras/hooks/useSincronizarFluxoObra";
 import { planoDoFluxo } from "@/pages/obras/lib/fluxoObra";
 import { useQueryClient } from "@tanstack/react-query";
+import { PlacaSelect } from "@/components/placa/PlacaSelect";
+import { dataDaPlaca, placaStatusDe } from "@/lib/placa";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 
@@ -50,6 +52,7 @@ const schema = z
     data_inicio_prevista: z.string(),
     data_fim_prevista: z.string(),
     observacoes: z.string(),
+    placa_status: z.enum(["nao_instalada", "instalada", "retirada"]),
   })
   .superRefine((d, ctx) => {
     if (d.data_inicio_prevista && d.data_fim_prevista && d.data_fim_prevista < d.data_inicio_prevista) {
@@ -71,6 +74,7 @@ const VAZIO: FormData = {
   data_inicio_prevista: "",
   data_fim_prevista: "",
   observacoes: "",
+  placa_status: "nao_instalada",
 };
 
 type Local = { cidade: string; localizacao: string; latitude: number | null; longitude: number | null };
@@ -130,6 +134,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         data_inicio_prevista: obra.data_inicio_prevista ?? "",
         data_fim_prevista: obra.data_fim_prevista ?? "",
         observacoes: obra.observacoes ?? "",
+        placa_status: placaStatusDe(obra.placa_status),
       });
       setLocal(
         obra.localizacao || obra.latitude != null
@@ -198,6 +203,12 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
       data_inicio_prevista: data.data_inicio_prevista || null,
       data_fim_prevista: data.data_fim_prevista || null,
       observacoes: data.observacoes.trim() || null,
+      placa_status: data.placa_status,
+      // Só regrava a data quando a situação muda; senão mantém a que já estava.
+      placa_data:
+        obra && placaStatusDe(obra.placa_status) === data.placa_status
+          ? (obra.placa_data ?? null)
+          : dataDaPlaca(data.placa_status),
     };
     try {
       if (isEdit && obra) {
@@ -448,6 +459,11 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
               <p className="text-xs text-danger-strong">{formState.errors.data_fim_prevista.message}</p>
             )}
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="placa">Placa da obra</Label>
+          <PlacaSelect id="placa" value={watch("placa_status")} onChange={(v) => setValue("placa_status", v)} />
         </div>
 
         {!isEdit && fluxos.length > 0 && (

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
-import { filaOfflineDb, filaRegistroDb } from "./campoOfflineDb";
+import { contarPendenciasAntigas, filaOfflineDb, filaRegistroDb } from "./campoOfflineDb";
 import {
   sincronizarFila,
   type FilaDiaPayload,
@@ -105,11 +105,17 @@ let sincronizacaoAtual: Promise<void> | null = null;
 export function useCampoSync() {
   const queryClient = useQueryClient();
   const [pendentes, setPendentes] = useState(0);
+  const [pendenciasAntigas, setPendenciasAntigas] = useState(0);
   const [locais, setLocais] = useState<FilaRegistroItem[]>([]);
   const [sincronizando, setSincronizando] = useState(false);
 
   const atualizarContagem = useCallback(async () => {
-    const [dias, registros] = await Promise.all([filaOfflineDb.listar(), filaRegistroDb.listar()]);
+    const [dias, registros, antigas] = await Promise.all([
+      filaOfflineDb.listar(),
+      filaRegistroDb.listar(),
+      contarPendenciasAntigas(),
+    ]);
+    setPendenciasAntigas(antigas);
     setLocais(registros);
     setPendentes(dias.length + registros.filter((r) => !r.erroDefinitivo).length);
   }, []);
@@ -178,5 +184,5 @@ export function useCampoSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { pendentes, locais, sincronizando, sincronizar, registrar, descartarRegistro };
+  return { pendentes, pendenciasAntigas, locais, sincronizando, sincronizar, registrar, descartarRegistro };
 }

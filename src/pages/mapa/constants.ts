@@ -1,5 +1,6 @@
 import { Map as MapIcon, Satellite } from "lucide-react";
 import type { ProjectStatus } from "@/constants";
+import type { PlacaStatus } from "@/lib/placa";
 
 // Constantes puras (sem dependência do Leaflet) compartilhadas entre a casca da
 // página (index.tsx) e o canvas do mapa carregado sob demanda (MapCanvas.tsx).
@@ -41,7 +42,26 @@ export const STATUS_SYMBOLS: Record<string, string> = {
   Cancelado: "✕",
 };
 
+/** O mapa mostra projetos e obras; a obra reaproveita as cores de status do projeto. */
+export type TipoMapa = "projeto" | "obra";
+
+export const OBRA_STATUS_NO_MAPA: Record<string, ProjectStatus> = {
+  planejada: "Planejamento",
+  em_andamento: "Em andamento",
+  paralisada: "Paralisado",
+  concluida: "Concluído",
+};
+
+// Selo da placa no marcador: símbolo além da cor (WCAG 1.4.1).
+export const PLACA_SELO: Record<PlacaStatus, { simbolo: string; cor: string }> = {
+  instalada: { simbolo: "✓", cor: "hsl(var(--status-done))" },
+  retirada: { simbolo: "↩", cor: "hsl(var(--status-unknown))" },
+  nao_instalada: { simbolo: "!", cor: "hsl(var(--status-review))" },
+};
+
 export interface ProjetoMapa {
+  tipo: TipoMapa;
+  placa_status: PlacaStatus;
   id: string;
   nome: string;
   codigo_projeto: string;

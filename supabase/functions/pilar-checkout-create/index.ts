@@ -41,6 +41,11 @@ function todayISO(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+// Mesma resposta para "já tem conta" e "checkout em andamento": a resposta não confirma
+// que o e-mail é de cliente (o limite por IP segura a varredura em massa).
+const EMAIL_INDISPONIVEL =
+  "Não foi possível iniciar o checkout com esse e-mail. Se você já tem conta, faça login em /login; se acabou de tentar, verifique sua caixa de entrada ou aguarde alguns minutos.";
+
 serve(
   withSentry("pilar-checkout-create", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -82,7 +87,7 @@ serve(
       const { data: existing } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
 
       if (existing) {
-        return jsonResponse({ error: "Já existe uma conta com esse email. Faça login em /login." }, 409, req);
+        return jsonResponse({ error: EMAIL_INDISPONIVEL }, 409, req);
       }
     } catch {
       // segue
@@ -98,14 +103,7 @@ serve(
         .maybeSingle();
 
       if (pendingSignup) {
-        return jsonResponse(
-          {
-            error:
-              "Já existe um checkout em andamento com esse email. Verifique sua caixa de entrada ou aguarde alguns minutos.",
-          },
-          409,
-          req
-        );
+        return jsonResponse({ error: EMAIL_INDISPONIVEL }, 409, req);
       }
     } catch {
       // segue
@@ -151,14 +149,7 @@ serve(
       // só uma vence — a outra cai aqui e NÃO toca em Asaas (sem duplicar customer/subscription).
       if (signupErr && (signupErr as { code?: string }).code === "23505") {
         log.warn("checkout duplicado bloqueado pelo unique index", { email });
-        return jsonResponse(
-          {
-            error:
-              "Já existe um checkout em andamento com esse email. Verifique sua caixa de entrada ou aguarde alguns minutos.",
-          },
-          409,
-          req
-        );
+        return jsonResponse({ error: EMAIL_INDISPONIVEL }, 409, req);
       }
       log.error("signup insert failed", signupErr, { plan_id: plan.id, plan_slug: body.plan_slug });
       return jsonResponse({ error: "Erro ao iniciar checkout" }, 500, req);

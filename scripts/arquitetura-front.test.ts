@@ -30,11 +30,14 @@ const CRUZADOS_ACEITOS: Record<string, number> = {
   "obras -> meu-trabalho": 6,
   "pessoas -> meu-trabalho": 1,
   "portal -> cliente": 3,
-  "projetos -> mapa": 1,
+  // 2: MapaTab e o painel lateral MapaDetalheSheet (extraído para respeitar o teto de linhas) leem as constantes do mapa.
+  "projetos -> mapa": 2,
 };
 
 // Genérico por natureza (não sabe de domínio), mesmo usado por um módulo hoje.
 const GENERICOS = new Set([
+  "components/MargemPropostaBadge.tsx", // SPEC 168: selo da margem prometida, vai ao lead e ao projeto sem leads importar de pages/propostas
+  "lib/margemLiquida.ts", // SPEC 168: cálculo puro de margem líquida; Propostas calcula e lib/margemProposta.ts o lê para Leads e Projetos
   "components/billing/TrocarPlano.ts", // ponte para a troca de plano: Admin e o aviso de limite a usam sem importar de pages/billing
   "components/DuplicateWarningDialog.tsx",
   "components/filters/FilterBar.tsx", // SPEC 124: toolbar padrão, vai a todas as listas (fase 2 em diante)

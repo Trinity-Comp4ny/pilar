@@ -52,9 +52,24 @@ export async function carregarConexao(svc: SupabaseClient, empresaId: string): P
   return (data as ConexaoDrive | null) ?? null;
 }
 
-export async function acessoDaConexao(amb: AmbienteDrive, conexao: ConexaoDrive): Promise<string> {
+// Token de acesso do Google vale ~1h; reaproveitar evita uma ida ao Google (e o decifrar)
+// em toda ação do Drive. Vive na memória da instância; TTL curto para uma revogação
+// pelo Google aparecer logo. A chave inclui o refresh cifrado: reconectar invalida.
+const TTL_TOKEN_MS = 30 * 60 * 1000;
+const cacheToken = new Map<string, { token: string; expira: number }>();
+
+export async function acessoDaConexao(
+  amb: AmbienteDrive,
+  conexao: ConexaoDrive,
+  agora: () => number = Date.now
+): Promise<string> {
+  const chave = `${conexao.empresa_id}:${conexao.refresh_token_cifrado}`;
+  const hit = cacheToken.get(chave);
+  if (hit && hit.expira > agora()) return hit.token;
   const refresh = await decifrar(conexao.refresh_token_cifrado, amb.chaveToken);
-  return tokenDeAcesso(amb, refresh);
+  const token = await tokenDeAcesso(amb, refresh);
+  cacheToken.set(chave, { token, expira: agora() + TTL_TOKEN_MS });
+  return token;
 }
 
 /** Caminho de retorno no app: relativo, sem "//" (não vira redirecionamento aberto). */

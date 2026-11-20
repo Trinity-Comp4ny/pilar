@@ -44,7 +44,7 @@ export function errosDeCampos(esperados: CamposEsperados, obtidos: Record<string
   for (const [campo, esperado] of Object.entries(esperados)) {
     const obtido = obtidos[campo];
     if (typeof esperado === "number") {
-      if (typeof obtido !== "number" || Math.abs(obtido - esperado) > 0.01) {
+      if (typeof obtido !== "number" || !Number.isFinite(obtido) || Math.abs(obtido - esperado) > 0.01) {
         erros.push(`${campo} = ${JSON.stringify(obtido ?? null)}, esperado ${esperado}`);
       }
       continue;
@@ -59,6 +59,7 @@ export function errosDeCampos(esperados: CamposEsperados, obtidos: Record<string
 export type ResultadoCaso = {
   id: string;
   intencaoOk: boolean;
+  critico?: true;
   /** null quando o caso não tem campos a conferir ou a intenção já errou a entidade. */
   camposOk: boolean | null;
   erros: string[];
@@ -76,6 +77,9 @@ export type Limites = { intencao: number; campos: number };
 export const LIMITES: Limites = { intencao: 0.9, campos: 0.85 };
 
 export function resumir(resultados: ResultadoCaso[], limites: Limites = LIMITES) {
+  const falhasCriticas = resultados
+    .filter((r) => r.critico && (!r.intencaoOk || r.camposOk === false))
+    .map((r) => r.id);
   const comCampos = resultados.filter((r) => r.camposOk !== null);
   const intencao = resultados.filter((r) => r.intencaoOk).length / Math.max(resultados.length, 1);
   const campos = comCampos.length ? comCampos.filter((r) => r.camposOk).length / comCampos.length : 1;
@@ -90,6 +94,8 @@ export function resumir(resultados: ResultadoCaso[], limites: Limites = LIMITES)
     tokensEntrada: resultados.reduce((a, r) => a + (r.tokensEntrada ?? 0), 0),
     tokensSaida: resultados.reduce((a, r) => a + (r.tokensSaida ?? 0), 0),
     viaDecisao: resultados.filter((r) => r.via === "decisao").length,
-    aprovado: intencao >= limites.intencao && campos >= limites.campos,
+    falhasCriticas,
+    aprovado: resultados.length > 0 && falhasCriticas.length === 0 &&
+      intencao >= limites.intencao && campos >= limites.campos,
   };
 }

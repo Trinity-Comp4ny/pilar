@@ -25,6 +25,9 @@ export function getCampoToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY);
 }
 export function setCampoToken(token: string): void {
+  // Um novo login não pode reutilizar o cache verificado de uma sessão
+  // anterior. O próximo verify vincula o token à conta/obra corretas.
+  sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
   sessionStorage.setItem(TOKEN_KEY, token);
 }
 export function clearCampoToken(): void {
@@ -36,7 +39,21 @@ function getCachedAccount(): CampoAccount | null {
   const raw = sessionStorage.getItem(ACCOUNT_CACHE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as CampoAccount;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const obj = value as Record<string, unknown>;
+    if (
+      typeof obj.account_id !== "string" ||
+      typeof obj.obra_id !== "string" ||
+      typeof obj.empresa_id !== "string" ||
+      typeof obj.nome !== "string" ||
+      typeof obj.must_change_senha !== "boolean" ||
+      !obj.account_id ||
+      !obj.obra_id ||
+      !obj.empresa_id
+    )
+      return null;
+    return obj as unknown as CampoAccount;
   } catch {
     return null;
   }

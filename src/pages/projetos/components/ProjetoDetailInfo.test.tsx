@@ -27,29 +27,20 @@ const projeto = (p: Partial<Projeto> = {}) =>
   }) as Projeto;
 
 describe("ProjetoDetailInfo", () => {
-  it("somente leitura: mostra os valores e a margem", () => {
-    render(
-      <ProjetoDetailInfo
-        projeto={projeto({ cliente_nome: undefined, area_m2: undefined })}
-        progress={40}
-        margemBrutaPct={-3}
-      />
-    );
-    expect(screen.getByText("—")).toBeInTheDocument();
+  it("apresenta os dados cadastrais num card lateral", () => {
+    render(<ProjetoDetailInfo projeto={projeto({ localizacao: "Marília" })} veFinanceiro />);
+    expect(screen.getByRole("heading", { name: "Detalhes do projeto" })).toBeInTheDocument();
+    expect(screen.getByText("Construtora")).toBeInTheDocument();
+    expect(screen.getByText("Marília")).toBeInTheDocument();
     expect(screen.getByText("R$ 1000")).toBeInTheDocument();
-    expect(screen.getByText("0 m²")).toBeInTheDocument();
-    expect(screen.getByText("-3.0%")).toBeInTheDocument();
-    expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.getByText("120 m²")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Contrato" })).not.toBeInTheDocument();
   });
 
-  it.each([
-    [null, "—"],
-    [25, "25.0%"],
-    [5, "5.0%"],
-  ])("margem %s vira %s", (margem, texto) => {
-    render(<ProjetoDetailInfo projeto={projeto()} progress={0} margemBrutaPct={margem} />);
-    expect(screen.getAllByText(texto).length).toBeGreaterThan(0);
+  it("oculta o contrato sem permissão financeira", () => {
+    render(<ProjetoDetailInfo projeto={projeto({ cliente_nome: undefined, area_m2: undefined })} />);
+    expect(screen.getByText("0 m²")).toBeInTheDocument();
+    expect(screen.queryByText("Contrato")).not.toBeInTheDocument();
   });
 
   it("edita contrato, área e prazo; só grava quando muda", () => {
@@ -59,8 +50,7 @@ describe("ProjetoDetailInfo", () => {
     render(
       <ProjetoDetailInfo
         projeto={projeto()}
-        progress={0}
-        margemBrutaPct={null}
+        veFinanceiro
         canEdit
         onUpdateContrato={onUpdateContrato}
         onUpdateArea={onUpdateArea}
@@ -96,8 +86,7 @@ describe("ProjetoDetailInfo", () => {
     render(
       <ProjetoDetailInfo
         projeto={projeto({ area_m2: undefined, data_inicio: undefined, data_previsao: undefined })}
-        progress={0}
-        margemBrutaPct={null}
+        veFinanceiro
         canEdit
         onUpdateArea={onUpdateArea}
         onUpdatePrazo={vi.fn()}
@@ -112,8 +101,7 @@ describe("ProjetoDetailInfo", () => {
 
   it("valor e área que mudam por fora resincronizam os campos", () => {
     const props = {
-      progress: 0,
-      margemBrutaPct: null,
+      veFinanceiro: true,
       canEdit: true,
       onUpdateContrato: vi.fn(),
       onUpdateArea: vi.fn(),

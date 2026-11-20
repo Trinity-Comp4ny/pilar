@@ -201,6 +201,11 @@ export default function FornecedorDetalhePage() {
       {/* Dados do cadastro */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         {fornecedor.cnpj && <span className="tabular-nums">{formatCNPJ(fornecedor.cnpj)}</span>}
+        {(fornecedor.categorias ?? []).map((categoria) => (
+          <Badge key={categoria} variant="secondary">
+            {categoria}
+          </Badge>
+        ))}
         {fornecedor.contato && (
           <span className="inline-flex items-center gap-1.5">
             <User className="h-3.5 w-3.5" />

@@ -32,7 +32,12 @@ docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d p
 # Aprovar aditivo é definitivo, e o spec aditivo-authenticated aprova o do seed de
 # demo. Para rodar de novo, o aditivo volta a pendente e o contrato ao valor do seed.
 docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d postgres -q -c \
-  "update public.escopos set status = 'pendente_aprovacao', aprovado_por = null, aprovado_em = null
+  "delete from public.receitas where id in (
+     select jsonb_array_elements_text(dados->'receitas')::uuid from public.projeto_registros
+     where origem_id = '00000000-0000-0000-0000-000000000422' and tipo = 'aditivo_cobranca'
+   );
+   delete from public.projeto_registros where origem_id = '00000000-0000-0000-0000-000000000422';
+   update public.escopos set status = 'pendente_aprovacao', aprovado_por = null, aprovado_em = null
      where id = '00000000-0000-0000-0000-000000000422';
    update public.projetos set valor_contrato = 320000
      where id = '00000000-0000-0000-0000-000000000401';"

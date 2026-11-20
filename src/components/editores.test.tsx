@@ -77,7 +77,7 @@ describe("LinksEditor", () => {
   it("normaliza a URL, adiciona por Enter, botão e blur, e remove", async () => {
     const user = userEvent.setup();
     render(<Links />);
-    const input = screen.getByPlaceholderText(/Colar URL/);
+    const input = screen.getByPlaceholderText(/Cole o link/);
     await user.type(input, "drive.google.com/x{Enter}");
     expect(screen.getByRole("link", { name: "https://drive.google.com/x" })).toHaveAttribute(
       "rel",

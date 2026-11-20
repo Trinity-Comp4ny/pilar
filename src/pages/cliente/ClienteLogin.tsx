@@ -123,17 +123,21 @@ export default function ClienteLogin() {
                     <FormLabel className="text-ink-soft font-medium">
                       Email <span className="text-danger-mid">*</span>
                     </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                    <div className="relative group">
+                      <Mail
+                        aria-hidden="true"
+                        className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors"
+                      />
+                      <FormControl>
                         <Input
                           {...field}
+                          autoComplete="username"
                           type="email"
                           placeholder="seu@email.com"
                           className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -147,26 +151,30 @@ export default function ClienteLogin() {
                     <FormLabel className="text-ink-soft font-medium">
                       Senha <span className="text-danger-mid">*</span>
                     </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                    <div className="relative group">
+                      <Lock
+                        aria-hidden="true"
+                        className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors"
+                      />
+                      <FormControl>
                         <Input
                           {...field}
+                          autoComplete="current-password"
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                          aria-pressed={showPassword}
-                          className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                        aria-pressed={showPassword}
+                        className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

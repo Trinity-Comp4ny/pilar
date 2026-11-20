@@ -78,6 +78,16 @@ describe("ClienteDashboard", () => {
     expect(h.rpc).toHaveBeenCalledWith("get_cliente_projetos", { p_token: "tok" });
   });
 
+  it("refaz a consulta com a mesma sessão após uma falha, sem recarregar a página", async () => {
+    h.rpcs.get_cliente_projetos = { data: null, error: new Error("falha de rede") };
+    renderPage();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar seus projetos");
+    h.rpcs.get_cliente_projetos = { data: [PROJETO], error: null };
+    await userEvent.setup().click(screen.getByRole("button", { name: /Tentar carregar projetos novamente/ }));
+    expect(await screen.findByText("Residência Seed")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("projeto sem disciplinas mostra 0% e datas ausentes como traço", async () => {
     h.rpcs.get_cliente_projetos = {
       data: [{ ...PROJETO, disciplinas: [], data_inicio: null, data_previsao: null }],

@@ -29,7 +29,7 @@ import {
   type ItemForm,
   type ReleaseAdmin,
   type ReleaseItemAdmin,
-} from "./releases";
+} from "./releasesData";
 
 const TODOS = "todos";
 const MODULOS = FEATURES.filter((f) => !f.dormant && !f.parent);

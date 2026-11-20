@@ -325,18 +325,19 @@ describe("useProjetoDetail: disciplinas", () => {
     expect(toast.error).toHaveBeenCalledWith("Erro ao adicionar responsável");
   });
 
-  it("remover responsável: último não sai; outro sai", async () => {
+  it("remover responsável: qualquer um sai, inclusive o último", async () => {
     const { result } = await pronto();
     await act(async () => {
       await result.current.handleRemoveResponsavel(1, 0);
     });
-    expect(toast.error).toHaveBeenCalledWith("A disciplina precisa ter ao menos um responsável");
+    expect(disc.upsert).toHaveBeenCalledTimes(1);
+    expect(disc.upsert.mock.calls[0][0].responsavel_ids).toEqual([]);
     await act(async () => {
       await result.current.handleRemoveResponsavel(0, 1);
       await result.current.handleRemoveResponsavel(9, 0);
     });
-    expect(disc.upsert).toHaveBeenCalledTimes(1);
-    expect(disc.upsert.mock.calls[0][0].responsavel_ids).toEqual(["pes-1"]);
+    expect(disc.upsert).toHaveBeenCalledTimes(2);
+    expect(disc.upsert.mock.calls[1][0].responsavel_ids).toEqual(["pes-1"]);
     disc.upsert.mockRejectedValue(new Error("x"));
     await act(async () => {
       await result.current.handleRemoveResponsavel(0, 0);

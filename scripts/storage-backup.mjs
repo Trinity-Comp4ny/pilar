@@ -17,9 +17,53 @@
  * normal é repor o que sumiu, não voltar o bucket inteiro no tempo.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { dirname, join, resolve, sep } from "node:path";
 
 const PAGINA = 1000;
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function conferirArquivo(bytes, item, bucket, exigirChecksum) {
+  if (!Number.isSafeInteger(item.tamanhoBaixado) || item.tamanhoBaixado < 0 || !/^[a-f0-9]{64}$/.test(item.sha256 || "")) {
+    if (exigirChecksum) throw new Error(`Manifesto do Storage sem tamanho/checksum válido: ${bucket}/${item.caminho}`);
+    return;
+  }
+  if (bytes.length !== item.tamanhoBaixado || sha256(bytes) !== item.sha256) {
+    throw new Error(`Arquivo do Storage corrompido ou incompleto: ${bucket}/${item.caminho}`);
+  }
+}
+
+/** Verificação local, sem segredo nem acesso à API, antes de criptografar ou restaurar. */
+export async function verificarIntegridade(pasta, exigirChecksum = true) {
+  const manifest = JSON.parse(await readFile(join(pasta, "manifest.json"), "utf8"));
+  if (!Array.isArray(manifest.buckets)) throw new Error("Manifesto do Storage inválido: buckets ausentes.");
+  let arquivos = 0;
+  let bytesTotal = 0;
+  const bucketsVisitados = new Set();
+  const objetosVisitados = new Set();
+  for (const bucket of manifest.buckets) {
+    if (typeof bucket.id !== "string" || bucketsVisitados.has(bucket.id)) {
+      throw new Error("Bucket duplicado ou inválido no manifesto de Storage.");
+    }
+    bucketsVisitados.add(bucket.id);
+    if (!Array.isArray(bucket.arquivos)) throw new Error(`Manifesto inválido no bucket ${bucket.id}`);
+    for (const item of bucket.arquivos) {
+      const destino = caminhoDoObjeto(pasta, bucket.id, item.caminho);
+      if (objetosVisitados.has(destino)) {
+        throw new Error("Objeto duplicado no manifesto de Storage: " + bucket.id + "/" + item.caminho);
+      }
+      objetosVisitados.add(destino);
+      const bytes = await readFile(destino);
+      conferirArquivo(bytes, item, bucket.id, exigirChecksum);
+      arquivos++;
+      bytesTotal += bytes.length;
+    }
+  }
+  return { buckets: manifest.buckets.length, arquivos, bytes: bytesTotal };
+}
 
 async function credenciais() {
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF } = process.env;
@@ -97,6 +141,15 @@ export function caminhoDoObjeto(pasta, bucket, caminho) {
   if (!/^[\w .-]+$/.test(bucket) || bucket === "." || bucket === "..") {
     throw new Error(`Nome de bucket inválido no backup: ${JSON.stringify(bucket)}`);
   }
+  // Normalize sem aceitar caminhos equivalentes que escapariam ao controle
+  // de duplicidade do manifesto (a/../b, segmentos vazios, backslash Windows).
+  if (
+    typeof caminho !== "string" ||
+    caminho.includes("\\") ||
+    caminho.split("/").some((parte) => !parte || parte === "." || parte === "..")
+  ) {
+    throw new Error(`Caminho de objeto fora da pasta do backup: ${JSON.stringify(`${bucket}/${caminho}`)}`);
+  }
   const base = resolve(pasta, "objetos", bucket);
   const destino = resolve(base, caminho);
   if (!caminho || !destino.startsWith(base + sep)) {
@@ -135,6 +188,8 @@ async function backup(pasta) {
     const arquivos = await listarTudo(api.listar, b.id);
     for (const a of arquivos) {
       const conteudo = await api.baixar(b.id, a.caminho);
+      a.tamanhoBaixado = conteudo.length;
+      a.sha256 = sha256(conteudo);
       const destino = caminhoDoObjeto(pasta, b.id, a.caminho);
       await mkdir(dirname(destino), { recursive: true });
       await writeFile(destino, conteudo);
@@ -159,8 +214,7 @@ async function backup(pasta) {
   );
 }
 
-async function restore(pasta, sobrescrever) {
-  const api = cliente(await credenciais());
+async function restore(pasta, sobrescrever, api) {
   const manifest = JSON.parse(await readFile(join(pasta, "manifest.json"), "utf8"));
   const existentes = new Set((await api.buckets()).map((b) => b.id));
   let enviados = 0;
@@ -170,6 +224,8 @@ async function restore(pasta, sobrescrever) {
     if (!existentes.has(b.id)) await api.criarBucket(b);
     for (const a of b.arquivos) {
       const bytes = await readFile(caminhoDoObjeto(pasta, b.id, a.caminho));
+      // Backup legado sem SHA continua restaurável; backups novos são conferidos.
+      conferirArquivo(bytes, a, b.id, false);
       try {
         await api.enviar(b.id, a.caminho, bytes, a.contentType, sobrescrever);
         enviados += 1;
@@ -184,15 +240,47 @@ async function restore(pasta, sobrescrever) {
   console.log(`Restore do Storage: ${enviados} enviado(s), ${pulados} já existia(m).`);
 }
 
+async function drill(pasta) {
+  await verificarIntegridade(pasta);
+  const chave = process.env.SUPABASE_DRILL_SERVICE_ROLE_KEY;
+  if (!chave) throw new Error("Chave do Supabase local ausente.");
+  // O drill usa somente o Supabase descartável criado no próprio runner.
+  // Nenhuma URL ou credencial de projeto hospedado entra nesse caminho.
+  const api = cliente({ url: "http://127.0.0.1:54321", chave });
+  await restore(pasta, true, api);
+  const manifest = JSON.parse(await readFile(join(pasta, "manifest.json"), "utf8"));
+  let conferidos = 0;
+  for (const bucket of manifest.buckets) {
+    for (const item of bucket.arquivos) {
+      const bytes = await api.baixar(bucket.id, item.caminho);
+      conferirArquivo(bytes, item, bucket.id, true);
+      conferidos++;
+    }
+  }
+  console.log(`Storage restaurado e relido do Supabase local: ${conferidos} objeto(s).`);
+}
+
 const [modo, pasta, flag] = process.argv.slice(2);
 const executado = import.meta.url === `file://${process.argv[1]}`;
 if (executado) {
-  if (!pasta || !["backup", "restore"].includes(modo)) {
-    console.error("Uso: node scripts/storage-backup.mjs backup|restore <pasta> [--sobrescrever]");
+  if (!pasta || !["backup", "restore", "verify", "drill"].includes(modo)) {
+    console.error("Uso: node scripts/storage-backup.mjs backup|restore|verify|drill <pasta> [--sobrescrever]");
     process.exit(2);
   }
-  (modo === "backup" ? backup(pasta) : restore(pasta, flag === "--sobrescrever")).catch((err) => {
-    console.error(`::error::${err.message}`);
-    process.exit(1);
-  });
+  const tarefa =
+    modo === "backup"
+      ? backup(pasta)
+      : modo === "restore"
+        ? credenciais().then((credencial) => restore(pasta, flag === "--sobrescrever", cliente(credencial)))
+        : modo === "drill"
+          ? drill(pasta)
+          : verificarIntegridade(pasta);
+  tarefa
+    .then((res) => {
+      if (modo === "verify") console.log(`Storage íntegro: ${res.buckets} bucket(s), ${res.arquivos} arquivo(s).`);
+    })
+    .catch((err) => {
+      console.error(modo === "drill" ? "::error::Falha ao restaurar ou conferir o Storage local." : `::error::${err.message}`);
+      process.exit(1);
+    });
 }

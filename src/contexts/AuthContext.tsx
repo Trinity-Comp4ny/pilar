@@ -125,8 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshMfaLevel = useCallback(async () => {
     const userId = activeUserId.current;
-    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    // Em paralelo: eram duas idas ao Auth em sequência na entrada.
+    const [{ data }, { data: factorsData }] = await Promise.all([
+      supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      supabase.auth.mfa.listFactors(),
+    ]);
     if (activeUserId.current !== userId) return;
     setMfaCurrentLevel((data?.currentLevel as MfaLevel) ?? "aal1");
     setMfaNextLevel((data?.nextLevel as MfaLevel) ?? "aal1");
@@ -186,9 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hydrate = async (nextUser: User, currentGeneration: number) => {
       if (!mounted || generation !== currentGeneration) return;
       try {
-        await fetchProfile(nextUser.id);
+        // Perfil e nível de MFA não dependem um do outro: saem juntos.
+        await Promise.all([fetchProfile(nextUser.id), refreshMfaLevel()]);
         if (!mounted || generation !== currentGeneration) return;
-        await refreshMfaLevel();
         void syncConsentForUser(nextUser.id);
       } catch (error) {
         monitoring.captureException(error, { context: "auth-session-load", userId: nextUser.id });

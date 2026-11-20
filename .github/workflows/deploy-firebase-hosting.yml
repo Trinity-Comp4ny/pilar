@@ -1,0 +1,129 @@
+name: Deploy Firebase Hosting
+
+# Migração Vercel -> Firebase Hosting (ver docs/operations/MIGRACAO_VERCEL_FIREBASE.md).
+#
+# Enquanto a Vercel serve produção, este workflow só publica em CANAL DE PREVIEW (expira
+# em 7 dias) automaticamente, e só em PR que mexe nos arquivos do Firebase. Publicar `live`
+# exige disparo manual (workflow_dispatch). Os gatilhos amplos (todo PR, push em
+# staging/main) entram DEPOIS do cutover, no passo 6 do runbook.
+#
+# Dois sites no mesmo projeto GCP: o app (raiz) e a landing (apps/marketing). Cada um
+# tem o seu firebase.*.json, gerado a partir do vercel.json (CSP e headers idênticos).
+
+on:
+  workflow_dispatch:
+    inputs:
+      alvo:
+        description: "Qual site publicar"
+        type: choice
+        options: [app, marketing]
+        required: true
+      canal:
+        description: "preview = canal temporário (7 dias), live = produção do site"
+        type: choice
+        options: [preview, live]
+        default: preview
+        required: true
+  pull_request:
+    branches: [staging]
+    paths:
+      - ".github/workflows/deploy-firebase-hosting.yml"
+      - "firebase.app.json"
+      - "apps/marketing/firebase.marketing.json"
+      - "scripts/gerar-firebase-config.mjs"
+      - "scripts/verificar-firebase-ambiente.mjs"
+      - "scripts/verificar-firebase-preview.mjs"
+      - "playwright.firebase.config.ts"
+      - "e2e/firebase-preview-authenticated.spec.ts"
+
+# Permissão mínima. `id-token` é para a federação de identidade (sem chave JSON).
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firebase-hosting-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', inputs.alvo, inputs.canal) || format('pr-{0}', github.event.number) }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # PR publica os dois sites; o disparo manual publica só o escolhido.
+        alvo: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.alvo)) || fromJSON('["app","marketing"]') }}
+    # Variáveis e segredos de build ficam em Environments (staging x produção usam
+    # Supabase diferentes). `live` usa `production`; preview usa `staging`.
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && 'production' || 'staging' }}
+    env:
+      CANAL_NOME: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || format('manual-{0}', github.run_number) }}
+      CANAL: ${{ github.event_name == 'workflow_dispatch' && inputs.canal || 'preview' }}
+      SENTRY_RELEASE: ${{ github.sha }}
+      SENTRY_ENV: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && 'production' || 'preview' }}
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+      VITE_SENTRY_ENV: ${{ vars.VITE_SENTRY_ENV }}
+      VITE_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.VITE_SENTRY_TRACES_SAMPLE_RATE }}
+      VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+      VITE_POSTHOG_KEY: ${{ vars.VITE_POSTHOG_KEY }}
+      VITE_POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST }}
+      VITE_PASSKEY_ENABLED: ${{ vars.VITE_PASSKEY_ENABLED }}
+      VITE_STATUS_URL: ${{ vars.VITE_STATUS_URL }}
+      VITE_MARKETING_APP_URL: ${{ vars.VITE_MARKETING_APP_URL }}
+      # Upload de sourcemap só em produção (igual à Vercel). Sem token o plugin pula.
+      SENTRY_AUTH_TOKEN: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && secrets.SENTRY_AUTH_TOKEN || '' }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ matrix.alvo == 'app' && vars.SENTRY_PROJECT || '' }}
+      FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT_ID }}
+      SITE_ID: ${{ matrix.alvo == 'app' && vars.FIREBASE_SITE_APP || vars.FIREBASE_SITE_MARKETING }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: ./.github/actions/setup-deps
+
+      - name: Validar o ambiente antes do build
+        run: node scripts/verificar-firebase-ambiente.mjs
+
+      - name: Build
+        run: |
+          if [ "${{ matrix.alvo }}" = "app" ]; then npm run build; else npm run build:marketing; fi
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Publicar
+        run: |
+          if [ "${{ matrix.alvo }}" = "app" ]; then DIR=.; CFG=firebase.app.json; else DIR=apps/marketing; CFG=firebase.marketing.json; fi
+          cd "$DIR"
+          # O id do site entra aqui para o repo não carregar o id do projeto.
+          jq --arg s "$SITE_ID" '.hosting.site = $s' "$CFG" > firebase.json
+          if [ "$CANAL" = "live" ]; then
+            npx --yes firebase-tools@14 deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+          else
+            npx --yes firebase-tools@14 hosting:channel:deploy "$CANAL_NOME" \
+              --project "$FIREBASE_PROJECT" --expires 7d --non-interactive --json \
+              > "$RUNNER_TEMP/firebase-preview.json"
+          fi
+
+      - name: Validar rotas e headers do preview publicado
+        id: preview
+        if: env.CANAL == 'preview'
+        run: node scripts/verificar-firebase-preview.mjs "$RUNNER_TEMP/firebase-preview.json" "${{ matrix.alvo }}" "$CANAL_NOME"
+
+      - name: Preparar Chromium para o smoke autenticado
+        if: env.CANAL == 'preview' && matrix.alvo == 'app'
+        uses: ./.github/actions/setup-playwright
+
+      - name: Validar sessão e painel de staging no preview publicado
+        if: env.CANAL == 'preview' && matrix.alvo == 'app'
+        env:
+          FIREBASE_PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_TEST_TOTP_SECRET: ${{ secrets.E2E_TEST_TOTP_SECRET }}
+        run: npx playwright test --config=playwright.firebase.config.ts

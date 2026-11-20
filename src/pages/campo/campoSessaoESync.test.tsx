@@ -29,7 +29,11 @@ const filas = vi.hoisted(() => {
   }
   return { dias: store<FilaDiaItem>(), registros: store<FilaRegistroItem>() };
 });
-vi.mock("./campoOfflineDb", () => ({ filaOfflineDb: filas.dias, filaRegistroDb: filas.registros }));
+vi.mock("./campoOfflineDb", () => ({
+  filaOfflineDb: filas.dias,
+  filaRegistroDb: filas.registros,
+  contarPendenciasAntigas: async () => 0,
+}));
 
 import CampoLogin from "./CampoLogin";
 import { useCampoAuth, getCampoToken, setCampoToken, campoLogout } from "./useCampoAuth";
@@ -168,6 +172,16 @@ describe("CampoLogin", () => {
 });
 
 describe("useCampoAuth", () => {
+  it("não confia em cache offline incompleto ou sem identificador de empresa", async () => {
+    setCampoToken("token");
+    sessionStorage.setItem("pilar_campo_account", JSON.stringify({ account_id: "a", obra_id: "b" }));
+    fake.rpc.mockRejectedValueOnce(new Error("sem rede"));
+    const { result } = renderHook(() => useCampoAuth());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.account).toBeNull();
+    expect(result.current.error).toBe("error");
+  });
+
   it("sem token: não autenticado, sem chamar o servidor", async () => {
     const { result } = renderHook(() => useCampoAuth());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -212,6 +226,14 @@ describe("useCampoAuth", () => {
     const { result } = renderHook(() => useCampoAuth());
     await waitFor(() => expect(result.current.error).toBe("error"));
     expect(getCampoToken()).toBe("tok-1");
+  });
+
+  it("novo login descarta cache de identidade da sessão anterior", () => {
+    setCampoToken("tok-a");
+    sessionStorage.setItem("pilar_campo_account", JSON.stringify(conta));
+    setCampoToken("tok-b");
+    expect(getCampoToken()).toBe("tok-b");
+    expect(sessionStorage.getItem("pilar_campo_account")).toBeNull();
   });
 
   it("logout limpa token e cache", () => {

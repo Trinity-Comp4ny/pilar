@@ -297,7 +297,7 @@ describe("DisciplinasSection: incluir disciplina", () => {
     expect(screen.getAllByText("Fora do prazo do projeto")).toHaveLength(2);
     expect(screen.getByText("Anterior ao início do projeto")).toBeInTheDocument();
 
-    const [disciplina, , responsavel, prioridade] = screen.getAllByRole("combobox");
+    const [disciplina, responsavel, prioridade] = screen.getAllByRole("combobox");
     escolher(disciplina, "Arquitetura");
     expect(p.onTempDisciplinaChange).toHaveBeenLastCalledWith(expect.objectContaining({ disciplina: "Arquitetura" }));
     escolher(responsavel, "Ana");
@@ -319,12 +319,12 @@ describe("DisciplinasSection: incluir disciplina", () => {
     expect(screen.queryByRole("button", { name: /Incluir na lista/ })).not.toBeInTheDocument();
   });
 
-  it("sem catálogo nem pessoas: orienta, trava o responsável e não deixa incluir; Cancelar fecha", () => {
+  it("sem catálogo nem pessoas: orienta, oferece terceirizado e não deixa incluir; Cancelar fecha", () => {
     render(<DisciplinasSection {...props({ disciplinas: [], pessoas: [] })} />);
     fireEvent.click(screen.getByRole("button", { name: /Adicionar nova disciplina/ }));
     expect(screen.getByText(/Nenhuma disciplina cadastrada/)).toBeInTheDocument();
-    expect(screen.getByText("Nenhuma pessoa cadastrada")).toBeInTheDocument();
-    expect(screen.getAllByRole("combobox")[2]).toBeDisabled();
+    expect(screen.getAllByRole("combobox")[1]).toBeEnabled();
+    escolher(screen.getAllByRole("combobox")[1], "Serviço terceirizado");
     expect(screen.getByRole("button", { name: /Incluir na lista/ })).toBeDisabled();
     expect(screen.queryByText(/Prazo do projeto/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
