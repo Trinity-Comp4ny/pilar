@@ -43,9 +43,9 @@ describe("exportar fornecedores em CSV e Excel", () => {
 
   it("previne fórmulas em campos CSV controlados por fornecedores", () => {
     const csv = gerarCsvFornecedores([fornecedores[1]], false);
-    expect(csv).toContain('"\'=HYPERLINK');
-    expect(csv).toContain('"\'+SUM(1,1)"');
-    expect(csv).toContain('"\'@formula"');
+    expect(csv).toContain("'=HYPERLINK");
+    expect(csv).toContain("'+SUM(1,1)");
+    expect(csv).toContain("'@formula");
     expect(csv).not.toMatch(/\r\n"=/);
   });
 });
