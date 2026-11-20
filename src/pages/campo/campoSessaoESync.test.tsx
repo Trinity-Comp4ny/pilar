@@ -218,6 +218,14 @@ describe("useCampoAuth", () => {
     expect(getCampoToken()).toBe("tok-1");
   });
 
+  it("novo login descarta cache de identidade da sessão anterior", () => {
+    setCampoToken("tok-a");
+    sessionStorage.setItem("pilar_campo_account", JSON.stringify(conta));
+    setCampoToken("tok-b");
+    expect(getCampoToken()).toBe("tok-b");
+    expect(sessionStorage.getItem("pilar_campo_account")).toBeNull();
+  });
+
   it("logout limpa token e cache", () => {
     setCampoToken("tok-1");
     sessionStorage.setItem("pilar_campo_account", JSON.stringify(conta));
