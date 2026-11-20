@@ -130,6 +130,15 @@ export function caminhoDoObjeto(pasta, bucket, caminho) {
   if (!/^[\w .-]+$/.test(bucket) || bucket === "." || bucket === "..") {
     throw new Error(`Nome de bucket inválido no backup: ${JSON.stringify(bucket)}`);
   }
+  // Normalize sem aceitar caminhos equivalentes que escapariam ao controle
+  // de duplicidade do manifesto (a/../b, segmentos vazios, backslash Windows).
+  if (
+    typeof caminho !== "string" ||
+    caminho.includes("\\") ||
+    caminho.split("/").some((parte) => !parte || parte === "." || parte === "..")
+  ) {
+    throw new Error(`Caminho de objeto fora da pasta do backup: ${JSON.stringify(`${bucket}/${caminho}`)}`);
+  }
   const base = resolve(pasta, "objetos", bucket);
   const destino = resolve(base, caminho);
   if (!caminho || !destino.startsWith(base + sep)) {
