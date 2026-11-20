@@ -67,16 +67,14 @@ describe("padrões de data na importação", () => {
   });
 
   it("infere formato americano quando uma linha desambigua a coluna", () => {
-    const csv =
-      "Data;Descrição;Valor\n03/11/2026;Material;-100,00\n11/16/2026;Frete;-200,00";
+    const csv = "Data;Descrição;Valor\n03/11/2026;Material;-100,00\n11/16/2026;Frete;-200,00";
     const { linhas, avisos } = csvParaLinhas(csv);
     expect(linhas.map((item) => item.data)).toEqual(["2026-03-11", "2026-11-16"]);
     expect(avisos.some((aviso) => aviso.includes("americano"))).toBe(true);
   });
 
   it("recusa misturar formatos BR e US no mesmo arquivo", () => {
-    const csv =
-      "Data;Descrição;Valor\n16/11/2026;Nota 1;-100,00\n11/16/2026;Nota 2;-200,00";
+    const csv = "Data;Descrição;Valor\n16/11/2026;Nota 1;-100,00\n11/16/2026;Nota 2;-200,00";
     const { linhas, avisos } = csvParaLinhas(csv);
     expect(linhas).toHaveLength(0);
     expect(avisos.some((aviso) => aviso.includes("mistura"))).toBe(true);
