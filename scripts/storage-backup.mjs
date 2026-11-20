@@ -17,9 +17,42 @@
  * normal é repor o que sumiu, não voltar o bucket inteiro no tempo.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { dirname, join, resolve, sep } from "node:path";
 
 const PAGINA = 1000;
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function conferirArquivo(bytes, item, bucket, exigirChecksum) {
+  if (!Number.isSafeInteger(item.tamanhoBaixado) || item.tamanhoBaixado < 0 || !/^[a-f0-9]{64}$/.test(item.sha256 || "")) {
+    if (exigirChecksum) throw new Error(`Manifesto do Storage sem tamanho/checksum válido: ${bucket}/${item.caminho}`);
+    return;
+  }
+  if (bytes.length !== item.tamanhoBaixado || sha256(bytes) !== item.sha256) {
+    throw new Error(`Arquivo do Storage corrompido ou incompleto: ${bucket}/${item.caminho}`);
+  }
+}
+
+/** Verificação local, sem segredo nem acesso à API, antes de criptografar ou restaurar. */
+export async function verificarIntegridade(pasta, exigirChecksum = true) {
+  const manifest = JSON.parse(await readFile(join(pasta, "manifest.json"), "utf8"));
+  if (!Array.isArray(manifest.buckets)) throw new Error("Manifesto do Storage inválido: buckets ausentes.");
+  let arquivos = 0;
+  let bytesTotal = 0;
+  for (const bucket of manifest.buckets) {
+    if (!Array.isArray(bucket.arquivos)) throw new Error(`Manifesto inválido no bucket ${bucket.id}`);
+    for (const item of bucket.arquivos) {
+      const bytes = await readFile(caminhoDoObjeto(pasta, bucket.id, item.caminho));
+      conferirArquivo(bytes, item, bucket.id, exigirChecksum);
+      arquivos++;
+      bytesTotal += bytes.length;
+    }
+  }
+  return { buckets: manifest.buckets.length, arquivos, bytes: bytesTotal };
+}
 
 async function credenciais() {
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF } = process.env;
@@ -135,6 +168,8 @@ async function backup(pasta) {
     const arquivos = await listarTudo(api.listar, b.id);
     for (const a of arquivos) {
       const conteudo = await api.baixar(b.id, a.caminho);
+      a.tamanhoBaixado = conteudo.length;
+      a.sha256 = sha256(conteudo);
       const destino = caminhoDoObjeto(pasta, b.id, a.caminho);
       await mkdir(dirname(destino), { recursive: true });
       await writeFile(destino, conteudo);
@@ -170,6 +205,8 @@ async function restore(pasta, sobrescrever) {
     if (!existentes.has(b.id)) await api.criarBucket(b);
     for (const a of b.arquivos) {
       const bytes = await readFile(caminhoDoObjeto(pasta, b.id, a.caminho));
+      // Backup legado sem SHA continua restaurável; backups novos são conferidos.
+      conferirArquivo(bytes, a, b.id, false);
       try {
         await api.enviar(b.id, a.caminho, bytes, a.contentType, sobrescrever);
         enviados += 1;
@@ -187,11 +224,17 @@ async function restore(pasta, sobrescrever) {
 const [modo, pasta, flag] = process.argv.slice(2);
 const executado = import.meta.url === `file://${process.argv[1]}`;
 if (executado) {
-  if (!pasta || !["backup", "restore"].includes(modo)) {
-    console.error("Uso: node scripts/storage-backup.mjs backup|restore <pasta> [--sobrescrever]");
+  if (!pasta || !["backup", "restore", "verify"].includes(modo)) {
+    console.error("Uso: node scripts/storage-backup.mjs backup|restore|verify <pasta> [--sobrescrever]");
     process.exit(2);
   }
-  (modo === "backup" ? backup(pasta) : restore(pasta, flag === "--sobrescrever")).catch((err) => {
+  const tarefa =
+    modo === "backup" ? backup(pasta) : modo === "restore" ? restore(pasta, flag === "--sobrescrever") : verificarIntegridade(pasta);
+  tarefa
+    .then((res) => {
+      if (modo === "verify") console.log(`Storage íntegro: ${res.buckets} bucket(s), ${res.arquivos} arquivo(s).`);
+    })
+    .catch((err) => {
     console.error(`::error::${err.message}`);
     process.exit(1);
   });
