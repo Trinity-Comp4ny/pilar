@@ -17,6 +17,11 @@ on:
   schedule:
     - cron: "0 9 1 * *" # dia 1, 06:00 BRT
   workflow_dispatch:
+    inputs:
+      gcs_run:
+        description: "Opcional: RUN_ID-RUN_ATTEMPT da cópia no GCS. Vazio usa o último backup do GitHub."
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -27,7 +32,71 @@ env:
   SUPABASE_CLI_VERSION: "2.109.1"
 
 jobs:
+  gcs-source:
+    name: Ler a cópia cifrada do GCS
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.gcs_run != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      artifact_name: ${{ steps.artifact-id.outputs.name }}
+    environment: production-automation
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Validar o identificador do backup e a configuração
+        env:
+          BACKUP_RUN: ${{ inputs.gcs_run }}
+          GCS_BUCKET: ${{ vars.BACKUP_GCS_BUCKET }}
+          GCS_READER: ${{ vars.BACKUP_GCS_RESTORE_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$BACKUP_RUN" =~ ^[1-9][0-9]{0,19}-[1-9][0-9]{0,9}$ ]]; then
+            echo "::error::Informe o identificador como RUN_ID-RUN_ATTEMPT."
+            exit 1
+          fi
+          if [[ ! "$GCS_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$ || -z "$GCS_READER" ]]; then
+            echo "::error::Configure BACKUP_GCS_BUCKET e BACKUP_GCS_RESTORE_SERVICE_ACCOUNT."
+            exit 1
+          fi
+      - name: Autenticar a identidade de leitura do bucket
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ vars.BACKUP_GCS_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.BACKUP_GCS_WIF_PROVIDER }}
+          service_account: ${{ vars.BACKUP_GCS_RESTORE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          version: ">= 490.0.0"
+      - name: Baixar e verificar os três objetos esperados
+        env:
+          BACKUP_RUN: ${{ inputs.gcs_run }}
+          GCS_BUCKET: ${{ vars.BACKUP_GCS_BUCKET }}
+        run: |
+          set -euo pipefail
+          umask 077
+          directory="$RUNNER_TEMP/gcs-ciphertext"
+          mkdir -p "$directory"
+          for name in backup-Production.tar.gz.enc storage-Production.tar.gz.enc SHA256SUMS.txt; do
+            gcloud storage cp --quiet "gs://$GCS_BUCKET/pilar/production/$BACKUP_RUN/$name" "$directory/$name"
+          done
+          node scripts/backup/verify-gcs-ciphertext.mjs "$directory"
+      - id: artifact-id
+        run: echo "name=gcs-ciphertext-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ${{ steps.artifact-id.outputs.name }}
+          path: ${{ runner.temp }}/gcs-ciphertext/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
   drill:
+    needs: [gcs-source]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (inputs.gcs_run == '' || needs.gcs-source.result == 'success') }}
     name: Restaurar o backup de produção
     runs-on: ubuntu-latest
     # Mesmo environment do backup noturno: tem a chave de criptografia e nenhum
@@ -60,6 +129,7 @@ jobs:
       # esperados, regulares e sem caminho, chegam ao restore. Um artifact forjado não
       # consegue sobrescrever scripts do repositório nem rodar com os segredos deste job.
       - name: Baixar o backup de produção mais recente
+        if: github.event_name != 'workflow_dispatch' || inputs.gcs_run == ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -76,6 +146,21 @@ jobs:
           # um dump restaurado sem os arquivos de obra não é recuperação completa.
           gh run download "$run_id" -n "storage-Production-$run_id" -D "$RUNNER_TEMP/artifact"
           echo "BACKUP_RUN=$run_id" >> "$GITHUB_ENV"
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        if: github.event_name == 'workflow_dispatch' && inputs.gcs_run != ''
+        with:
+          name: ${{ needs.gcs-source.outputs.artifact_name }}
+          path: ${{ runner.temp }}/artifact
+
+      - name: Conferir a cópia cifrada recebida do GCS
+        if: github.event_name == 'workflow_dispatch' && inputs.gcs_run != ''
+        env:
+          BACKUP_RUN: ${{ inputs.gcs_run }}
+        run: |
+          set -euo pipefail
+          node scripts/backup/verify-gcs-ciphertext.mjs "$RUNNER_TEMP/artifact"
+          echo "BACKUP_RUN=GCS $BACKUP_RUN" >> "$GITHUB_ENV"
 
       - name: Descriptografar e validar o conteúdo
         env:
