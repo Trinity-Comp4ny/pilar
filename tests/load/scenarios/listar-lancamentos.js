@@ -15,46 +15,55 @@ export const options = {
   thresholds: defaultThresholds,
 };
 
-export function setup() {
-  const session = authenticate();
-  return { token: session.accessToken };
-}
+const PAGE_SIZE = 25;
+const TIPOS = ['receita', 'despesa'];
 
-export default function (data) {
-  const headers = supabaseHeaders(data.token);
-
-  // Random pagination + filtros típicos da UI
-  const page = Math.floor(Math.random() * 10);
-  const pageSize = 25;
-  const offset = page * pageSize;
-  const tipo = Math.random() > 0.5 ? 'receita' : 'despesa';
-
+function listar(headers, tipo, offset) {
   const url =
     `${config.SUPABASE_URL}/rest/v1/lancamentos` +
     `?select=id,descricao,valor,tipo,data_vencimento,status` +
     `&tipo=eq.${tipo}` +
-    `&order=data_vencimento.desc` +
-    `&limit=${pageSize}` +
+    `&order=data_vencimento.desc,id.asc` +
+    `&limit=${PAGE_SIZE}` +
     `&offset=${offset}`;
-
-  const res = http.get(url, {
+  return http.get(url, {
     headers: { ...headers, Prefer: 'count=exact' },
     tags: { name: 'listar_lancamentos' },
   });
+}
 
-  const ok = check(res, {
-    'status 200': (r) => r.status === 200,
-    'returned array': (r) => {
-      try {
-        return Array.isArray(r.json());
-      } catch (_e) {
-        return false;
-      }
-    },
-    'has content-range': (r) => Boolean(r.headers['Content-Range']),
+function totalNoContentRange(res) {
+  const header = Object.keys(res.headers).find((nome) => nome.toLowerCase() === 'content-range');
+  const total = header ? /\/(\d+)$/.exec(String(res.headers[header])) : null;
+  return total ? Number(total[1]) : null;
+}
+
+function respostaValida(res) {
+  if (res.status !== 200 && res.status !== 206) return false;
+  try {
+    return Array.isArray(res.json()) && totalNoContentRange(res) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function setup() {
+  const { accessToken: token } = authenticate();
+  const headers = supabaseHeaders(token);
+  // Verifica o contrato antes da carga e limita a amostragem às páginas que existem.
+  const paginasPorTipo = TIPOS.map((tipo) => {
+    const res = listar(headers, tipo, 0);
+    if (!respostaValida(res)) throw new Error(`Preflight de lançamentos (${tipo}) falhou: HTTP ${res.status}.`);
+    return Math.max(1, Math.min(10, Math.ceil(totalNoContentRange(res) / PAGE_SIZE)));
   });
+  return { token, paginasPorTipo };
+}
 
-  if (!ok) errors.add(1);
+export default function (data) {
+  const indice = Math.random() < 0.5 ? 0 : 1;
+  const pagina = Math.floor(Math.random() * data.paginasPorTipo[indice]);
+  const res = listar(supabaseHeaders(data.token), TIPOS[indice], pagina * PAGE_SIZE);
+  if (!check(res, { 'listagem paginada válida': respostaValida })) errors.add(1);
 
   sleep(0.5);
 }

@@ -16,9 +16,29 @@ export const options = {
   thresholds: defaultThresholds,
 };
 
+function buscarPainel(headers) {
+  return http.post(
+    `${config.SUPABASE_URL}/rest/v1/rpc/get_painel_gestao`,
+    '{}',
+    { headers, tags: { name: 'dashboard_painel_gestao' } },
+  );
+}
+
+function painelValido(res) {
+  if (res.status !== 200) return false;
+  try {
+    const dados = res.json();
+    return dados !== null && typeof dados === 'object' && dados.gestao !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 export function setup() {
-  const session = authenticate();
-  return { token: session.accessToken };
+  const { accessToken: token } = authenticate();
+  const painel = buscarPainel(supabaseHeaders(token));
+  if (!painelValido(painel)) throw new Error(`Preflight do painel falhou: HTTP ${painel.status}.`);
+  return { token };
 }
 
 export default function (data) {
@@ -34,25 +54,9 @@ export default function (data) {
 
     // RPC realmente chamada pelo /inicio: mede a agregação em vez de uma
     // listagem de projetos filtrada por status "ativo" (valor inexistente).
-    const painel = http.post(
-      `${config.SUPABASE_URL}/rest/v1/rpc/get_painel_gestao`,
-      '{}',
-      { headers, tags: { name: 'dashboard_painel_gestao' } },
-    );
+    const painel = buscarPainel(headers);
     painelRpcDuration.add(painel.timings.duration);
-    if (
-      !check(painel, {
-        'painel 200 e payload de gestão': (r) => {
-          if (r.status !== 200) return false;
-          try {
-            const dados = r.json();
-            return dados !== null && typeof dados === 'object' && dados.gestao !== undefined;
-          } catch {
-            return false;
-          }
-        },
-      })
-    ) errors.add(1);
+    if (!check(painel, { 'painel 200 e payload de gestão': painelValido })) errors.add(1);
 
     // Contas
     const contas = http.get(`${config.SUPABASE_URL}/rest/v1/contas?select=id,nome,saldo_atual`, {
