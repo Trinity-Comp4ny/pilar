@@ -120,7 +120,7 @@ export function inferirFormatoDataCsv(datas: string[]): "br" | "us" | "misto" {
   let brasileiro = false;
   let americano = false;
   for (const valor of datas) {
-    const m = valor.trim().match(/^(\\d{1,2})[/.-](\\d{1,2})[/.-]\\d{2,4}$/);
+    const m = valor.trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-]\d{2,4}$/);
     if (!m) continue;
     const primeiro = Number(m[1]);
     const segundo = Number(m[2]);
@@ -254,7 +254,7 @@ export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: s
   const dataRows = usaHeader ? rows.slice(1) : rows;
   const datas = dataRows.map((cells) => {
     if (usaHeader) return cells[idx.data] ?? "";
-    return cells.find((cell) => /^\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4}$/.test(cell.trim())) ?? "";
+    return cells.find((cell) => /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/.test(cell.trim())) ?? "";
   });
   const formato = inferirFormatoDataCsv(datas);
   if (formato === "misto") {
