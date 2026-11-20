@@ -17,7 +17,11 @@ VALUES ('9a000000-0000-0000-0000-000000000003','admin-a-tenant-test@test.invalid
 
 INSERT INTO public.profiles (id,empresa_id,first_name,last_name,email,role,onboarding_completed)
 VALUES ('9a000000-0000-0000-0000-000000000003',
-        '9a000000-0000-0000-0000-000000000001','Admin','A','admin-a-tenant-test@test.invalid','admin',true);
+        '9a000000-0000-0000-0000-000000000001','Admin','A','admin-a-tenant-test@test.invalid','admin',true)
+ON CONFLICT (id) DO UPDATE SET
+  empresa_id = EXCLUDED.empresa_id, first_name = EXCLUDED.first_name,
+  last_name = EXCLUDED.last_name, email = EXCLUDED.email, role = EXCLUDED.role,
+  onboarding_completed = EXCLUDED.onboarding_completed;
 
 INSERT INTO public.projetos (id,empresa_id,nome,status)
 VALUES ('9b000000-0000-0000-0000-000000000004',
