@@ -111,6 +111,26 @@ describe("verificarIntegridade (Storage)", () => {
     });
   });
 
+  it("recusa objeto duplicado antes de declarar integridade", async () => {
+    await comBackup(async (pasta) => {
+      const path = join(pasta, "manifest.json");
+      const manifest = JSON.parse(await readFile(path, "utf8"));
+      manifest.buckets[0].arquivos.push({ ...manifest.buckets[0].arquivos[0] });
+      await writeFile(path, JSON.stringify(manifest));
+      await expect(verificarIntegridade(pasta)).rejects.toThrow(/Objeto duplicado/);
+    });
+  });
+
+  it("recusa bucket repetido em um mesmo manifesto", async () => {
+    await comBackup(async (pasta) => {
+      const path = join(pasta, "manifest.json");
+      const manifest = JSON.parse(await readFile(path, "utf8"));
+      manifest.buckets.push({ ...manifest.buckets[0] });
+      await writeFile(path, JSON.stringify(manifest));
+      await expect(verificarIntegridade(pasta)).rejects.toThrow(/Bucket duplicado/);
+    });
+  });
+
   it("recusa arquivo modificado depois do backup", async () => {
     await comBackup(async (pasta) => {
       await writeFile(join(pasta, "objetos", "obra-campo", "foto.jpg"), "conteudo alterado");
