@@ -50,8 +50,10 @@ Falta: `VITE_*` e `SENTRY_*` nos Environments, ensaio em preview (4), domínio d
    `GCP_DEPLOY_SERVICE_ACCOUNT`, mais as `VITE_*` (copiar do painel da Vercel, uma por
    ambiente) e `SENTRY_ORG`/`SENTRY_PROJECT`. `SENTRY_AUTH_TOKEN` como **secret** em `production`.
 4. **Ensaio em preview.** Rodar o workflow manual com `canal=preview` para `marketing` e `app`.
-   Abrir a URL do canal e testar: login, uma tela com dado, F5 numa rota funda, e o console sem
-   erro de CSP. O ambiente `staging` deve apontar para o Supabase de staging.
+   O workflow testa as rotas do app e a versão publicada, o HTML pré-renderizado e o sitemap da
+   landing, o redirecionamento de checkout com parâmetros, e os headers do HTML e dos bundles.
+   O resumo do job mostra a URL validada. Abra a URL e complete o ensaio com login, uma tela com
+   dados de staging, recarga da rota e inspeção do console para verificar o CSP no navegador.
 5. **Domínio em teste.** Conectar um subdomínio de teste (ex. `app-fb.pilarsoft.com.br`) ao site
    do app, validar com um usuário real, sem tocar `app.pilarsoft.com.br`.
 6. **Cutover**, em horário de baixo uso e com a Vercel ainda de pé:
