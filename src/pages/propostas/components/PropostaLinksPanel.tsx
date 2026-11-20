@@ -87,7 +87,7 @@ export function PropostaLinksPanel({
           <p className="text-xs font-medium">
             V{versao.numero} · {versao.nome_arquivo}
           </p>
-          <PropostaLinkVersao versao={versao} podePublicar={podePublicar && i === 0} />
+          <PropostaLinkVersao versao={versao} podePublicar={podePublicar && i === 0} podeRevogar={podePublicar} />
         </div>
       ))}
     </section>

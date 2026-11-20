@@ -191,6 +191,7 @@ export function LeadPropostasPanel({ lead, canEdit }: { lead: Lead; canEdit: boo
                 <PropostaLinkVersao
                   versao={v}
                   podePublicar={podeEditar && i === 0 && ["rascunho", "enviada"].includes(p.status)}
+                  podeRevogar={podeEditar}
                 />
               </article>
             ))}

@@ -12335,6 +12335,7 @@ export type Database = {
       }
       retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       reverificar_documentos_disparar: { Args: never; Returns: undefined }
+      revogar_link_proposta: { Args: { p_versao_id: string }; Returns: boolean }
       rpc_apagar_notificacoes_comentario: {
         Args: {
           p_comentario_id: string
