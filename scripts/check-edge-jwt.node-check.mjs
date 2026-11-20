@@ -40,3 +40,13 @@ test("rejects duplicate JWT settings", () => {
   const config = "[functions.webhook]\nverify_jwt = true\nverify_jwt = false";
   assert.throws(() => expectedJwtFlags(config, ["webhook"]), /mais de uma vez/);
 });
+
+test("fails closed when API returns duplicate names with conflicting JWT flags", () => {
+  assert.throws(
+    () => findJwtDrift(new Map([["critical", true]]), [
+      { slug: "critical", verify_jwt: true },
+      { slug: "critical", verify_jwt: false },
+    ]),
+    /função duplicada/
+  );
+});
