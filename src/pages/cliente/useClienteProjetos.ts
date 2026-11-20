@@ -31,6 +31,8 @@ export function useClienteProjetos() {
   return {
     projetos: q.data ?? [],
     loading: q.isLoading,
+    tentandoNovamente: q.isFetching && !q.isLoading,
+    refazerConsulta: q.refetch,
     error: q.error ? (q.error instanceof Error ? q.error.message : "Erro ao carregar projetos") : null,
   };
 }
