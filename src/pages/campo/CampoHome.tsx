@@ -129,17 +129,10 @@ export default function CampoHome() {
         </div>
 
         {pendenciasAntigas > 0 && (
-          <div role="status" className="rounded-2xl border border-warning-soft bg-warning-soft/40 px-4 py-3">
-            <p className="text-sm font-medium text-ink">
-              {pendenciasAntigas}{" "}
-              {pendenciasAntigas === 1 ? "registro antigo preservado" : "registros antigos preservados"} neste aparelho
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Foram salvos antes da proteção por conta. Por segurança, não são exibidos nem enviados
-              automaticamente. Não apague os dados deste navegador; peça ajuda ao suporte da Pilar
-              para recuperar os registros da obra correta.
-            </p>
-          </div>
+          <p role="status" className="text-xs text-muted-foreground">
+            Existem registros antigos preservados neste aparelho. Não apague o navegador; fale com o suporte para
+            recuperar os dados da obra correta.
+          </p>
         )}
 
         {pendentes > 0 && (
