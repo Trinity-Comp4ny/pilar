@@ -89,3 +89,10 @@ Documentar aqui apos primeira execucao limpa contra sandbox dedicado.
 - [ ] Adicionar scenario para portal cliente (auth flow diferente).
 - [ ] Integrar com CI: rodar smoke (5 VUs, 1min) em PRs que mexem em `supabase/`.
 - [ ] Dashboard Grafana com historico de baselines.
+
+
+O resumo semanal separa o p95 da RPC `get_painel_gestao` do p95 geral
+do cenário e grava p99, percentual de falhas, throughput e SHA. Preencha a
+tabela de referência a partir de uma execução válida em staging, mantendo o
+artefato bruto. O cenário composto inclui autenticação e outras leituras, por
+isso o p95 geral não representa a latência isolada do painel.

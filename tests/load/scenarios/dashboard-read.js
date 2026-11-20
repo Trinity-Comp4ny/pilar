@@ -3,14 +3,16 @@
 
 import http from 'k6/http';
 import { check, sleep, group } from 'k6';
-import { Counter } from 'k6/metrics';
+import { Counter, Trend } from 'k6/metrics';
 import { authenticate } from '../utils/auth.js';
-import { config, defaultStages, defaultThresholds, supabaseHeaders } from '../utils/setup.js';
+import { config, defaultStages, defaultThresholds, summaryTrendStats, supabaseHeaders } from '../utils/setup.js';
 
 export const errors = new Counter('errors');
+const painelRpcDuration = new Trend('painel_rpc_duration', true);
 
 export const options = {
   stages: defaultStages,
+  summaryTrendStats,
   thresholds: defaultThresholds,
 };
 
@@ -37,6 +39,7 @@ export default function (data) {
       '{}',
       { headers, tags: { name: 'dashboard_painel_gestao' } },
     );
+    painelRpcDuration.add(painel.timings.duration);
     if (
       !check(painel, {
         'painel 200 e payload de gestão': (r) => {

@@ -5,12 +5,13 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Counter } from 'k6/metrics';
 import { authenticate } from '../utils/auth.js';
-import { config, defaultStages, defaultThresholds, supabaseHeaders } from '../utils/setup.js';
+import { config, defaultStages, defaultThresholds, summaryTrendStats, supabaseHeaders } from '../utils/setup.js';
 
 export const errors = new Counter('errors');
 
 export const options = {
   stages: defaultStages,
+  summaryTrendStats,
   thresholds: defaultThresholds,
 };
 
