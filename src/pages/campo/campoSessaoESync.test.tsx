@@ -172,6 +172,17 @@ describe("CampoLogin", () => {
 });
 
 describe("useCampoAuth", () => {
+  it("não confia em cache offline incompleto ou sem identificador de empresa", async () => {
+    setCampoToken("token");
+    sessionStorage.setItem("pilar_campo_account", JSON.stringify({ account_id: "a", obra_id: "b" }));
+    fake.rpc.mockRejectedValueOnce(new Error("sem rede"));
+    const { result } = renderHook(() => useCampoAuth());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.account).toBeNull();
+    expect(result.current.error).toBe("error");
+  });
+
+
   it("sem token: não autenticado, sem chamar o servidor", async () => {
     const { result } = renderHook(() => useCampoAuth());
     await waitFor(() => expect(result.current.loading).toBe(false));
