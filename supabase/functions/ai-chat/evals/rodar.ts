@@ -76,6 +76,7 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
 
     return {
       id: caso.id,
+      critico: caso.critico,
       intencaoOk,
       camposOk,
       erros,
@@ -88,6 +89,7 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
   } catch (e) {
     return {
       id: caso.id,
+      critico: caso.critico,
       intencaoOk: false,
       camposOk: caso.campos ? false : null,
       erros: [`falha na chamada: ${e instanceof Error ? e.message.slice(0, 200) : String(e)}`],
@@ -140,6 +142,10 @@ if (import.meta.main) {
   }
   const filtro = arg("--filtro");
   const casos = filtro ? CASOS.filter((c) => c.id.includes(filtro)) : CASOS;
+  if (!casos.length) {
+    console.error("Nenhum caso corresponde ao filtro.");
+    Deno.exit(2);
+  }
 
   // Três por vez: rápido sem esbarrar no limite de requisições do modelo.
   const resultados: ResultadoCaso[] = [];
@@ -164,6 +170,7 @@ if (import.meta.main) {
   linha(`Casos:      ${s.casos}`);
   linha(`Intenção:   ${pct(s.intencao)} (limite ${pct(LIMITES.intencao)})`);
   linha(`Campos:     ${pct(s.campos)} (limite ${pct(LIMITES.campos)})`);
+  linha(`Falhas críticas: ${s.falhasCriticas.length ? s.falhasCriticas.join(", ") : "nenhuma"}`);
   linha(`Latência:   p95 ${s.latenciaP95Ms} ms`);
   linha(`Tokens:     ${s.tokens} (entrada ${s.tokensEntrada}, saída ${s.tokensSaida})`);
   const preco = await precoPorToken(modelo);

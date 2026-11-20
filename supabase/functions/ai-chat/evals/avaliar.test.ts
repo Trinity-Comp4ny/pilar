@@ -78,3 +78,18 @@ Deno.test("dataset: ids únicos e valores válidos nos schemas do ai-chat", () =
   }
   assert(CASOS.length >= 40, "suíte com pelo menos 40 casos");
 });
+
+
+Deno.test("uma falha crítica reprova mesmo com intenção e extração acima dos limites", () => {
+  const passou = { id: "consulta", intencaoOk: true, camposOk: null, erros: [], latenciaMs: 100, tokens: 1 };
+  const falhou = { ...passou, id: "injecao", critico: true as const, intencaoOk: false };
+  const resultado = resumir([...Array(20).fill(passou), falhou]);
+  assertEquals(resultado.falhasCriticas, ["injecao"]);
+  assertEquals(resultado.aprovado, false);
+  assertEquals(resumir([passou]).aprovado, true);
+  assertEquals(resumir([]).aprovado, false);
+});
+
+Deno.test("números não finitos não passam na avaliação de extração", () => {
+  assertEquals(errosDeCampos({ valor: 10 }, { valor: NaN }).length, 1);
+});
