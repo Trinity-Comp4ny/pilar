@@ -4,7 +4,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(8);
+SELECT plan(11);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-0000000fb001'::uuid, 'Empresa Parcelas', NULL, TRUE,
@@ -70,6 +70,20 @@ SELECT is((SELECT valor_contrato FROM public.projetos_safe WHERE id = 'bbbbbbbb-
 SELECT is((SELECT valor FROM public.receitas
   WHERE projeto_id = 'bbbbbbbb-0000-0000-0000-0000000fb001' AND parcela_numero = 1),
   3000::numeric, 'a parcela recebida mantém o valor original');
+SELECT is(
+  (SELECT count(*)::int FROM public.receitas
+   WHERE projeto_id = 'bbbbbbbb-0000-0000-0000-0000000fb001' AND deleted_at IS NULL),
+  3, 'a redistribuição não cria títulos duplicados');
+
+SELECT is(
+  (SELECT sum(valor) FROM public.receitas
+   WHERE projeto_id = 'bbbbbbbb-0000-0000-0000-0000000fb001' AND deleted_at IS NULL),
+  10500.01::numeric, 'a soma das parcelas após o aditivo bate centavo a centavo com o contrato');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.projeto_registros
+   WHERE tipo = 'aditivo_cobranca' AND origem_id = (SELECT aditivo FROM dados LIMIT 1)),
+  1, 'a aprovação repetida mantém apenas um registro de cobrança auditável');
 
 SELECT set_config('role', 'postgres', true);
 SELECT * FROM finish();
