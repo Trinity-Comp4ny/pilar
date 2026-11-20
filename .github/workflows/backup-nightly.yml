@@ -188,13 +188,14 @@ jobs:
   gcs-secondary-copy:
     name: Copia externa criptografada (Google Cloud Storage)
     needs: [backup]
-    if: ${{ needs.backup.result == 'success' && vars.BACKUP_GCS_BUCKET != '' }}
+    if: ${{ needs.backup.result == 'success' && github.ref == 'refs/heads/main' && vars.BACKUP_GCS_BUCKET != '' }}
     runs-on: ubuntu-latest
     environment: production-automation
     timeout-minutes: 15
     permissions:
       contents: read
       actions: read
+      issues: write
       id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
