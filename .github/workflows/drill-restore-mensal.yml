@@ -159,7 +159,7 @@ jobs:
             cat storage-drill.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          rm -f storage-restore.tar.gz
+
 
       # Projeto Supabase vazio, fora do repositório: sem as migrations do app, o restore
       # cria tudo a partir do schema do backup, como seria num desastre de verdade.
@@ -201,6 +201,29 @@ jobs:
             echo '```'
             sed -n '/DR drill/,$p' drill.log
             echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Restaurar arquivos e conferir a leitura pelo Storage local
+        run: |
+          set -euo pipefail
+          umask 077
+          archive="$RUNNER_TEMP/artifact/storage-restore.tar.gz"
+          recuperado=$(mktemp -d "$RUNNER_TEMP/storage-drill.XXXXXX")
+          trap 'rm -rf -- "$recuperado"; rm -f -- "$archive"' EXIT
+          # O tar acabou de passar pela validação de caminhos, tipos e manifesto.
+          tar -xzf "$archive" -C "$recuperado" --no-same-owner --no-same-permissions
+          SUPABASE_DRILL_SERVICE_ROLE_KEY=$(
+            cd "$RUNNER_TEMP/drill"
+            supabase status -o json | jq -er '.SERVICE_ROLE_KEY | select(type == "string" and length > 0)'
+          )
+          echo "::add-mask::$SUPABASE_DRILL_SERVICE_ROLE_KEY"
+          export SUPABASE_DRILL_SERVICE_ROLE_KEY
+          inicio=$SECONDS
+          node scripts/storage-backup.mjs drill "$recuperado/storage-backup" | tee storage-restore.log
+          {
+            echo "### Restauração do Storage"
+            cat storage-restore.log
+            echo "Upload e releitura concluídos em $((SECONDS - inicio)) s."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Notificar falha

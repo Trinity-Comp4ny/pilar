@@ -214,8 +214,7 @@ async function backup(pasta) {
   );
 }
 
-async function restore(pasta, sobrescrever) {
-  const api = cliente(await credenciais());
+async function restore(pasta, sobrescrever, api) {
   const manifest = JSON.parse(await readFile(join(pasta, "manifest.json"), "utf8"));
   const existentes = new Set((await api.buckets()).map((b) => b.id));
   let enviados = 0;
@@ -241,25 +240,47 @@ async function restore(pasta, sobrescrever) {
   console.log(`Restore do Storage: ${enviados} enviado(s), ${pulados} já existia(m).`);
 }
 
+async function drill(pasta) {
+  await verificarIntegridade(pasta);
+  const chave = process.env.SUPABASE_DRILL_SERVICE_ROLE_KEY;
+  if (!chave) throw new Error("Chave do Supabase local ausente.");
+  // O drill usa somente o Supabase descartável criado no próprio runner.
+  // Nenhuma URL ou credencial de projeto hospedado entra nesse caminho.
+  const api = cliente({ url: "http://127.0.0.1:54321", chave });
+  await restore(pasta, true, api);
+  const manifest = JSON.parse(await readFile(join(pasta, "manifest.json"), "utf8"));
+  let conferidos = 0;
+  for (const bucket of manifest.buckets) {
+    for (const item of bucket.arquivos) {
+      const bytes = await api.baixar(bucket.id, item.caminho);
+      conferirArquivo(bytes, item, bucket.id, true);
+      conferidos++;
+    }
+  }
+  console.log(`Storage restaurado e relido do Supabase local: ${conferidos} objeto(s).`);
+}
+
 const [modo, pasta, flag] = process.argv.slice(2);
 const executado = import.meta.url === `file://${process.argv[1]}`;
 if (executado) {
-  if (!pasta || !["backup", "restore", "verify"].includes(modo)) {
-    console.error("Uso: node scripts/storage-backup.mjs backup|restore|verify <pasta> [--sobrescrever]");
+  if (!pasta || !["backup", "restore", "verify", "drill"].includes(modo)) {
+    console.error("Uso: node scripts/storage-backup.mjs backup|restore|verify|drill <pasta> [--sobrescrever]");
     process.exit(2);
   }
   const tarefa =
     modo === "backup"
       ? backup(pasta)
       : modo === "restore"
-        ? restore(pasta, flag === "--sobrescrever")
-        : verificarIntegridade(pasta);
+        ? credenciais().then((credencial) => restore(pasta, flag === "--sobrescrever", cliente(credencial)))
+        : modo === "drill"
+          ? drill(pasta)
+          : verificarIntegridade(pasta);
   tarefa
     .then((res) => {
       if (modo === "verify") console.log(`Storage íntegro: ${res.buckets} bucket(s), ${res.arquivos} arquivo(s).`);
     })
     .catch((err) => {
-      console.error(`::error::${err.message}`);
+      console.error(modo === "drill" ? "::error::Falha ao restaurar ou conferir o Storage local." : `::error::${err.message}`);
       process.exit(1);
     });
 }
