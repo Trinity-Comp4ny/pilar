@@ -87,6 +87,20 @@ class VerifyStorageArchiveTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Entrada nao regular"):
             verify_storage_tar(self.path)
 
+    def test_reject_oversized_manifest_before_reading(self):
+        make_tar(self.path)
+        from unittest.mock import patch
+        with patch("scripts.backup.verify_storage_archive.MAX_MANIFEST_BYTES", 1):
+            with self.assertRaisesRegex(ValueError, "Manifesto.*excede"):
+                verify_storage_tar(self.path)
+
+    def test_reject_excessive_archive_entries(self):
+        make_tar(self.path, add_unknown=True)
+        from unittest.mock import patch
+        with patch("scripts.backup.verify_storage_archive.MAX_ARCHIVE_MEMBERS", 1):
+            with self.assertRaisesRegex(ValueError, "Limite de entradas"):
+                verify_storage_tar(self.path)
+
     def test_reject_unmanifested_files(self):
         make_tar(self.path, add_unknown=True)
         with self.assertRaisesRegex(ValueError, "nao declarados"):
