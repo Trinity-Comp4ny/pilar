@@ -52,8 +52,11 @@ Falta: `VITE_*` e `SENTRY_*` nos Environments, ensaio em preview (4), domínio d
 4. **Ensaio em preview.** Rodar o workflow manual com `canal=preview` para `marketing` e `app`.
    O workflow testa as rotas do app e a versão publicada, o HTML pré-renderizado e o sitemap da
    landing, o redirecionamento de checkout com parâmetros, e os headers do HTML e dos bundles.
-   O resumo do job mostra a URL validada. Abra a URL e complete o ensaio com login, uma tela com
-   dados de staging, recarga da rota e inspeção do console para verificar o CSP no navegador.
+   No preview do app, o Playwright usa a conta E2E de staging para verificar a sessão e a
+   consulta ao painel antes e depois de recarregar `/inicio`. Usa os mesmos secrets
+   `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD` e `E2E_TEST_TOTP_SECRET` do E2E de staging,
+   com traces, vídeos e screenshots desativados. O resumo mostra a URL do preview para
+   completar o exercício do formulário de login e a inspeção manual do console.
 5. **Domínio em teste.** Conectar um subdomínio de teste (ex. `app-fb.pilarsoft.com.br`) ao site
    do app, validar com um usuário real, sem tocar `app.pilarsoft.com.br`.
 6. **Cutover**, em horário de baixo uso e com a Vercel ainda de pé:
