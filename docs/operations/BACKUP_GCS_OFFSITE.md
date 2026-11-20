@@ -63,7 +63,7 @@ noturno, sem aprovação humana que bloquearia a execução agendada.
   verifica que ambos não estão vazios e grava `SHA256SUMS.txt` sobre os dois
   arquivos cifrados.
 - Os três objetos vão para
-  `gs://BUCKET/pilar/production/RUN_ID/{backup-Production.tar.gz.enc,storage-Production.tar.gz.enc,SHA256SUMS.txt}`.
+  `gs://BUCKET/pilar/production/RUN_ID-RUN_ATTEMPT/{backup-Production.tar.gz.enc,storage-Production.tar.gz.enc,SHA256SUMS.txt}`.
   O job compara tamanhos locais e remotos. A transferência é feita por
   `gcloud storage`, não por `gsutil`.
 - Nenhum SQL, foto, áudio ou documento é descriptografado durante a cópia.
@@ -72,7 +72,7 @@ noturno, sem aprovação humana que bloquearia a execução agendada.
 
 1. Após a configuração, disparar **manualmente o workflow na branch `main`**
    e confirmar que `backup` e `gcs-secondary-copy` estão verdes.
-2. No bucket, conferir os três objetos no mesmo `RUN_ID`, tamanhos e hash dos
+2. No bucket, conferir os três objetos no mesmo `RUN_ID-RUN_ATTEMPT`, tamanhos e hash dos
    dois arquivos cifrados usando o `SHA256SUMS.txt`. Verificar que o acesso
    público está desabilitado, que há retenção e que ninguém consegue apagar
    arquivos durante o período protegido.
