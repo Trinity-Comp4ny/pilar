@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { parseCurrencyString } from "@/lib/currencyUtils";
+import { previaAditivoAtualizada } from "@/lib/aditivoPrevia";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import {
   useConfirmarAditivo,
@@ -145,6 +146,13 @@ export function AprovarAditivoProjeto({
 
   async function aprovar() {
     if (!previa.data || previa.isFetching || previa.isError) return;
+    // Não confirme valores calculados antes de mudanças recentes de parcelas
+    // ou aditivos por outra pessoa. O backend segue validando o snapshot.
+    if (!previaAditivoAtualizada(previa.dataUpdatedAt)) {
+      toast.error("A prévia das parcelas expirou. Recalculando antes de aprovar.");
+      void previa.refetch();
+      return;
+    }
     try {
       await confirmar.mutateAsync({ opcoes, previa: previa.data, aceite });
       toast.success("Aditivo aprovado e cobrança atualizada");
