@@ -50,3 +50,10 @@ test("fails closed when API returns duplicate names with conflicting JWT flags",
     /função duplicada/
   );
 });
+
+test("rejects stale configuration for function absent from source tree", () => {
+  assert.throws(
+    () => expectedJwtFlags("[functions.removed]\nverify_jwt = false", ["current"]),
+    /função ausente no repositório/
+  );
+});
