@@ -151,7 +151,7 @@ jobs:
         # passava sem formatar: em 10/11 havia 18 arquivos fora do padrão em src/.
         run: npm run format:check
       - name: Validar testes de configuração JWT das Edge Functions
-        run: node --test scripts/check-edge-jwt.test.mjs
+        run: node --test scripts/check-edge-jwt.node-check.mjs
 
   typecheck:
     name: Typecheck (app + LP)
