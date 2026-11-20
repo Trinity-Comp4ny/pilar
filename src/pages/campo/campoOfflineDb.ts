@@ -108,7 +108,10 @@ function criarStore<T extends { id: string }>(
       });
     },
     async remover(id) {
-      const owner = requireOwner();
+      // A fila pode terminar um envio após logout: não apaga itens sem a
+      // identidade correta, mas também não transforma esse caso em erro fatal.
+      const owner = ownerAtual();
+      if (!owner) return;
       const existentes = await lerTudo<T>(nome);
       if (!existentes.some((x) => x.id === id && x[OWNER_KEY] === owner)) return;
       if (ownerAtual() !== owner) return;
