@@ -58,7 +58,7 @@ describe("caminhoDoObjeto (pasta do backup)", () => {
   });
 
   it("recusa nome de arquivo que sai da pasta (../ ou absoluto)", () => {
-    for (const caminho of ["../../etc/passwd", "a/../../../x", "/etc/passwd", ""]) {
+    for (const caminho of ["../../etc/passwd", "a/../../../x", "/etc/passwd", "", "a/../b", "a//b", "a/./b", "a\\\\b"]) {
       expect(() => caminhoDoObjeto("/tmp/bk", "obra-campo", caminho), caminho).toThrow(/fora da pasta/);
     }
   });
