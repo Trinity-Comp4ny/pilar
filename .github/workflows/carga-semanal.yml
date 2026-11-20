@@ -41,8 +41,11 @@ jobs:
             echo "::error::Secrets do Environment Staging ausentes (STAGING_SUPABASE_URL, E2E_TEST_EMAIL)."
             exit 1
           fi
+          # Fail closed: recusa qualquer host não explicitamente associado
+          # ao projeto staging. Não basta bloquear só o ref de produção.
           case "$K6_SUPABASE_URL" in
-            *vepnsonbnsimqcsfcagm*) echo "::error::URL de PRODUÇÃO. Carga só roda em staging."; exit 1 ;;
+            https://rizaklgstyfrwgmdsldf.supabase.co) ;;
+            *) echo "::error::Carga permitida somente para o Supabase staging configurado."; exit 1 ;;
           esac
 
       - name: Instalar k6 (release oficial, checksum conferido)
@@ -71,8 +74,10 @@ jobs:
             echo "## k6 semanal (staging)"
             for f in resumo-*.json; do
               [ -f "$f" ] || continue
-              p95=$(jq -r '.metrics.http_req_duration["p(95)"] // "?"' "$f")
-              falha=$(jq -r '.metrics.http_req_failed.value // "?"' "$f")
+              # k6 --summary-export armazena os valores em metrics.*.values,
+              # não diretamente em metrics.*. O código anterior mostrava "?".
+              p95=$(jq -r '.metrics.http_req_duration.values["p(95)"] // "?"' "$f")
+              falha=$(jq -r '.metrics.http_req_failed.values.rate // "?"' "$f")
               echo "- **${f#resumo-}**: p95 ${p95} ms, falha ${falha}"
             done
           } >> "$GITHUB_STEP_SUMMARY"
