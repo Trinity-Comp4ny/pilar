@@ -39,6 +39,9 @@ export function findJwtDrift(expected, deployed) {
   const actual = new Map();
   for (const fn of deployed) {
     if (typeof fn.slug === "string" && typeof fn.verify_jwt === "boolean") {
+      if (actual.has(fn.slug)) {
+        throw new Error("Management API devolveu função duplicada: " + fn.slug);
+      }
       actual.set(fn.slug, fn.verify_jwt);
     }
   }
