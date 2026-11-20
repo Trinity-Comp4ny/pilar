@@ -31,6 +31,7 @@ on:
       - "firebase.app.json"
       - "apps/marketing/firebase.marketing.json"
       - "scripts/gerar-firebase-config.mjs"
+      - "scripts/verificar-firebase-ambiente.mjs"
 
 # Permissão mínima. `id-token` é para a federação de identidade (sem chave JSON).
 permissions:
@@ -77,13 +78,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Falha cedo se a configuração do GCP não existe
-        run: |
-          for v in FIREBASE_PROJECT SITE_ID VITE_SUPABASE_URL; do
-            if [ -z "${!v}" ]; then echo "::error::variável $v vazia no Environment"; exit 1; fi
-          done
-
       - uses: ./.github/actions/setup-deps
+
+      - name: Validar o ambiente antes do build
+        run: node scripts/verificar-firebase-ambiente.mjs
 
       - name: Build
         run: |

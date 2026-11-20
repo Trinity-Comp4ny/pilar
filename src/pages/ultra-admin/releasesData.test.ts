@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ordenarReleases, type ReleaseAdmin } from "./releases";
+import { ordenarReleases, type ReleaseAdmin } from "./releasesData";
 
 const r = (id: string, criadaEm: string, publicadaEm: string | null): ReleaseAdmin => ({
   id,

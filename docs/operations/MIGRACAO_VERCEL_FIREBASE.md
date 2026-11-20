@@ -27,7 +27,8 @@ Diferença deliberada em relação ao `vercel.json`: o Firebase cacheia HTML por
 - `/assets/*` imutável; `/`, rotas do SPA e `index.html` revalidam; `sw.js` e `version.json` sem cache.
 - Fallback de SPA para `/index.html` (app) e `/spa.html` (landing).
 - Landing: `/dashboard` e as rotas do app respondem 307 para `app.pilarsoft.com.br`.
-- Não verificado: build completo (no macOS o `./Releases` resolve para `releases.ts`; no Linux do CI funciona) e o comportamento no Firebase real. Validar no passo 4.
+- O helper de releases usa um nome distinto da página `Releases.tsx`, inclusive no macOS.
+- Verificar o comportamento no Firebase real no passo 4.
 
 ## Estado (19/11/2026)
 
@@ -67,7 +68,7 @@ Falta: `VITE_*` e `SENTRY_*` nos Environments, ensaio em preview (4), domínio d
 ## Riscos conhecidos
 
 - **Variáveis `VITE_*` erradas** geram bundle que builda e abre, mas aponta para o Supabase errado.
-  O passo 4 em staging existe para pegar isso; nunca publicar `live` sem o ensaio.
+  O workflow confere a URL antes do build e aceita `live` somente em disparo manual a partir da main. Validar o fluxo no preview antes do cutover.
 - **Sentry** perde `VERCEL_ENV`/`VERCEL_GIT_COMMIT_SHA`; o workflow seta `SENTRY_ENV` e `SENTRY_RELEASE`.
 - **Firewall / Attack Challenge Mode** da Vercel (DEPLOY_CHECKLIST) não existe no Firebase Hosting.
   O Turnstile já protege o login; se quiser WAF, é Cloudflare na frente (decisão à parte).
