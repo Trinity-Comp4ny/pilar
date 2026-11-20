@@ -27,7 +27,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(17);
+SELECT plan(18);
 
 -- =============================================================================
 -- Setup: Empresa A e B, com todas as features ligadas, e usuários por papel.
@@ -90,6 +90,17 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.propostas (id, empresa_id, titulo, status)
 VALUES ('bbced000-0000-0000-0000-0000000000b8', 'bb000000-0000-0000-0000-0000000000b0', 'Proposta B', 'enviada')
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed real de escopo da empresa B para cobrir a quarta view com privilégios
+-- do criador. Sem dado real de cliente, tudo dentro do BEGIN/ROLLBACK pgTAP.
+INSERT INTO public.escopos (id, empresa_id, projeto_id, descricao, tipo, custo_estimado, valor_aditivo)
+VALUES (
+  'bbced000-0000-0000-0000-0000000000b9',
+  'bb000000-0000-0000-0000-0000000000b0',
+  'bbced000-0000-0000-0000-0000000000b2',
+  'Escopo da Empresa B', 'aditivo', 1000, 1500
+)
 ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
@@ -169,6 +180,9 @@ SELECT is((SELECT count(*)::int FROM public.leads_safe
 SELECT is((SELECT count(*)::int FROM public.pessoas_safe
   WHERE id = 'bbced000-0000-0000-0000-0000000000b4'), 0,
   'view pessoas_safe não expõe pessoa da Empresa B a admin A');
+SELECT is((SELECT count(*)::int FROM public.escopos_safe
+  WHERE id = 'bbced000-0000-0000-0000-0000000000b9'), 0,
+  'view escopos_safe não expõe escopo e valor financeiro da Empresa B a admin A');
 RESET ROLE;
 
 -- =============================================================================
