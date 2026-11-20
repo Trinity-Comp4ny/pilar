@@ -127,6 +127,7 @@ describe("campoOfflineDb", () => {
     const { filaOfflineDb } = await import("./campoOfflineDb");
     idb.falhas.getAll = true;
     await expect(filaOfflineDb.listar()).rejects.toThrow("getAll falhou");
+    idb.falhas.getAll = false;
     idb.falhas.tx = true;
     await expect(filaOfflineDb.salvar({ id: "d1" } as never)).rejects.toThrow("tx falhou");
     await expect(filaOfflineDb.remover("d1")).rejects.toThrow("tx falhou");
