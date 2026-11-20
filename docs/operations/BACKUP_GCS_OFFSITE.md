@@ -76,12 +76,16 @@ noturno, sem aprovação humana que bloquearia a execução agendada.
    dois arquivos cifrados usando o `SHA256SUMS.txt`. Verificar que o acesso
    público está desabilitado, que há retenção e que ninguém consegue apagar
    arquivos durante o período protegido.
-3. Fazer **restauração de ensaio isolada**, usando uma cópia baixada do GCS.
-   A chave de cifragem só deve ser usada no runner/ambiente de ensaio
-   autorizado; nunca imprimir ou guardar a chave junto aos arquivos.
-   Reutilizar `scripts/backup-restore-test.sh` para o banco e
-   `scripts/storage-backup.mjs verify` para o Storage. O ensaio completo de
-   banco + objetos em um projeto descartável é uma melhoria subsequente.
+3. Configurar uma conta de serviço separada, somente para ler objetos no
+   bucket (`storage.objects.get`), e vinculá-la à federação restrita à
+   `main` e a `production-automation`. Definir
+   `BACKUP_GCS_RESTORE_SERVICE_ACCOUNT` com o e-mail dessa conta. Disparar o
+   workflow **Drill de restore (mensal)** pela `main` com `gcs_run` igual ao
+   sufixo `RUN_ID-RUN_ATTEMPT` de uma cópia confirmada. O job com acesso GCS
+   valida o par cifrado e passa somente esse par e o manifesto ao job de
+   restauração. O segundo job usa a chave de cifragem e comprova o retorno do
+   PostgreSQL e do Storage no stack local do runner. Um disparo sem
+   `gcs_run` continua usando o último backup agendado no GitHub.
 4. Configurar monitoramento para ausências do backup no GCS (> 26 horas),
    mesmo que GitHub Actions esteja indisponível. Revisar despesas do bucket
    e recuperação trimestralmente.
@@ -89,8 +93,7 @@ noturno, sem aprovação humana que bloquearia a execução agendada.
 ## Limites e decisões deliberadas
 
 - A cópia externa **não reduz o RPO de 24 horas** nem implementa PITR.
-- O drill mensal atual ainda utiliza o artifact do GitHub, não o GCS;
-  acrescentar um teste de recuperação da cópia independente é a próxima etapa.
+- O agendamento mensal usa os artifacts do GitHub. O GCS é uma origem explícita do ensaio manual.
 - A criptografia atual é AES-256-CBC com PBKDF2 e oferece confidencialidade,
   mas não autenticação criptográfica do arquivo cifrado. O manifesto SHA-256
   detecta corrupção acidental, não substitui assinatura autenticada contra um
