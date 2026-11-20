@@ -68,7 +68,7 @@ describe("padrões de data na importação", () => {
 
   it("infere formato americano quando uma linha desambigua a coluna", () => {
     const csv =
-      "Data;Descrição;Valor\\n03/11/2026;Material;-100,00\\n11/16/2026;Frete;-200,00";
+      "Data;Descrição;Valor\n03/11/2026;Material;-100,00\n11/16/2026;Frete;-200,00";
     const { linhas, avisos } = csvParaLinhas(csv);
     expect(linhas.map((item) => item.data)).toEqual(["2026-03-11", "2026-11-16"]);
     expect(avisos.some((aviso) => aviso.includes("americano"))).toBe(true);
@@ -76,7 +76,7 @@ describe("padrões de data na importação", () => {
 
   it("recusa misturar formatos BR e US no mesmo arquivo", () => {
     const csv =
-      "Data;Descrição;Valor\\n16/11/2026;Nota 1;-100,00\\n11/16/2026;Nota 2;-200,00";
+      "Data;Descrição;Valor\n16/11/2026;Nota 1;-100,00\n11/16/2026;Nota 2;-200,00";
     const { linhas, avisos } = csvParaLinhas(csv);
     expect(linhas).toHaveLength(0);
     expect(avisos.some((aviso) => aviso.includes("mistura"))).toBe(true);
@@ -84,18 +84,18 @@ describe("padrões de data na importação", () => {
 
   it("continua brasileiro quando todas as datas são ambíguas", () => {
     expect(inferirFormatoDataCsv(["03/11/2026", "04/11/2026"])).toBe("br");
-    const { linhas } = csvParaLinhas("Data;Histórico;Valor\\n03/11/2026;PIX;-50,00");
+    const { linhas } = csvParaLinhas("Data;Histórico;Valor\n03/11/2026;PIX;-50,00");
     expect(linhas[0].data).toBe("2026-11-03");
   });
 
   it("não inventa dia 31 de fevereiro nem importa datas inválidas", () => {
-    const { linhas, avisos } = csvParaLinhas("Data;Histórico;Valor\\n02/31/2026;Despesa;-50,00");
+    const { linhas, avisos } = csvParaLinhas("Data;Histórico;Valor\n02/31/2026;Despesa;-50,00");
     expect(linhas).toHaveLength(0);
     expect(avisos.length).toBeGreaterThan(0);
   });
 
   it("reconhece formato US mesmo em CSV sem header", () => {
-    const { linhas } = csvParaLinhas("03/11/2026;Mercado;-50,00\\n11/16/2026;Taxa;-10,00");
+    const { linhas } = csvParaLinhas("03/11/2026;Mercado;-50,00\n11/16/2026;Taxa;-10,00");
     expect(linhas.map((item) => item.data)).toEqual(["2026-03-11", "2026-11-16"]);
   });
 });
