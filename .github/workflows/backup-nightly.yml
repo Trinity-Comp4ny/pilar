@@ -178,3 +178,110 @@ jobs:
           job-name: Backup noturno (${{ matrix.target }})
           token: ${{ github.token }}
           status: success
+
+  # Segunda copia independente dos artifacts de 30 dias do GitHub.
+  # So habilita quando o bucket for configurado como variable do repositorio.
+  # Banco e Storage ja chegam cifrados: o Google Cloud nunca recebe o dump cru.
+  # Isolado do job de backup para nao expor permissao OIDC aos passos que
+  # manipulam as credenciais da Supabase e para nao comprometer os artifacts
+  # existentes caso a conta GCP esteja temporariamente indisponivel.
+  gcs-secondary-copy:
+    name: Copia externa criptografada (Google Cloud Storage)
+    needs: [backup]
+    if: ${{ needs.backup.result == 'success' && vars.BACKUP_GCS_BUCKET != '' }}
+    runs-on: ubuntu-latest
+    environment: production-automation
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Baixar somente o dump cifrado da producao
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: backup-Production-${{ github.run_id }}
+          path: ${{ runner.temp }}/backup-external
+
+      - name: Baixar somente os arquivos cifrados da producao
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storage-Production-${{ github.run_id }}
+          path: ${{ runner.temp }}/backup-external
+
+      - name: Validar configuracao GCP e arquivos cifrados
+        env:
+          GCS_BUCKET: ${{ vars.BACKUP_GCS_BUCKET }}
+          GCS_PROVIDER: ${{ vars.BACKUP_GCS_WIF_PROVIDER }}
+          GCS_SA: ${{ vars.BACKUP_GCS_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GCS_PROVIDER" ] || [ -z "$GCS_SA" ]; then
+            echo "::error::Configure BACKUP_GCS_WIF_PROVIDER e BACKUP_GCS_SERVICE_ACCOUNT (variables do repositorio)."
+            exit 1
+          fi
+          if [[ ! "$GCS_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$ ]]; then
+            echo "::error::BACKUP_GCS_BUCKET deve conter apenas o nome do bucket, sem gs:// nem caminho."
+            exit 1
+          fi
+          cd "$RUNNER_TEMP/backup-external"
+          for arquivo in backup-Production.tar.gz.enc storage-Production.tar.gz.enc; do
+            test -s "$arquivo" || { echo "::error::Artifact cifrado ausente ou vazio: $arquivo"; exit 1; }
+          done
+          sha256sum backup-Production.tar.gz.enc storage-Production.tar.gz.enc > SHA256SUMS.txt
+
+      # OIDC federado, sem exportar ou guardar chave JSON duradoura no GitHub.
+      # Permitir no GCP apenas GitHub repo Trinity-Comp4ny/pilar,
+      # branch main e environment production-automation.
+      - name: Autenticar por Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: ${{ vars.BACKUP_GCS_WIF_PROVIDER }}
+          service_account: ${{ vars.BACKUP_GCS_SERVICE_ACCOUNT }}
+
+      - name: Instalar Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          version: ">= 490.0.0"
+
+      - name: Copiar arquivos cifrados e conferir tamanhos no GCS
+        env:
+          GCS_BUCKET: ${{ vars.BACKUP_GCS_BUCKET }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/backup-external"
+          destino="gs://$GCS_BUCKET/pilar/production/$GITHUB_RUN_ID"
+          for arquivo in backup-Production.tar.gz.enc storage-Production.tar.gz.enc SHA256SUMS.txt; do
+            gcloud storage cp --quiet "$arquivo" "$destino/$arquivo"
+            local_bytes=$(wc -c < "$arquivo" | tr -d ' ')
+            remote_bytes=$(gcloud storage objects describe "$destino/$arquivo" --format="value(size)")
+            if [ "$local_bytes" != "$remote_bytes" ]; then
+              echo "::error::Tamanho divergente no GCS para $arquivo."
+              exit 1
+            fi
+          done
+          {
+            echo "### Backup criptografado replicado"
+            echo "- Run GitHub Actions: $GITHUB_RUN_ID"
+            echo "- Objetos: banco, Storage e SHA256SUMS.txt"
+            echo "- Destino: \`gs://$GCS_BUCKET/pilar/production/$GITHUB_RUN_ID/\`"
+            echo "- Politica de retencao e imutabilidade: configurar no bucket GCS"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notificar falha da copia secundaria
+        if: failure()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Copia externa GCS (Production)
+          token: ${{ github.token }}
+      - name: Fechar alerta de copia externa
+        if: success()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Copia externa GCS (Production)
+          token: ${{ github.token }}
+          status: success
