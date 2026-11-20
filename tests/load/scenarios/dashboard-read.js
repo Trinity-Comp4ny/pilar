@@ -30,12 +30,26 @@ export default function (data) {
     );
     if (!check(lanc, { 'lancamentos 200': (r) => r.status === 200 })) errors.add(1);
 
-    // Projetos ativos
-    const proj = http.get(
-      `${config.SUPABASE_URL}/rest/v1/projetos?select=id,nome,status&status=eq.ativo&limit=20`,
-      { headers, tags: { name: 'dashboard_projetos' } },
+    // RPC realmente chamada pelo /inicio: mede a agregação em vez de uma
+    // listagem de projetos filtrada por status "ativo" (valor inexistente).
+    const painel = http.post(
+      `${config.SUPABASE_URL}/rest/v1/rpc/get_painel_gestao`,
+      '{}',
+      { headers, tags: { name: 'dashboard_painel_gestao' } },
     );
-    if (!check(proj, { 'projetos 200': (r) => r.status === 200 })) errors.add(1);
+    if (
+      !check(painel, {
+        'painel 200 e payload de gestão': (r) => {
+          if (r.status !== 200) return false;
+          try {
+            const dados = r.json();
+            return dados !== null && typeof dados === 'object' && dados.gestao !== undefined;
+          } catch {
+            return false;
+          }
+        },
+      })
+    ) errors.add(1);
 
     // Contas
     const contas = http.get(`${config.SUPABASE_URL}/rest/v1/contas?select=id,nome,saldo_atual`, {
