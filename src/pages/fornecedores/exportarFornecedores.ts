@@ -97,7 +97,7 @@ export async function exportarFornecedoresPlanilha(
   const dados = linhasParaExportacao(fornecedores, incluirCnpj);
   const folha = XLSX.utils.aoa_to_sheet(dados);
   folha["!cols"] = dados[0].map((_, index) => ({
-    wch: Math.min(54, Math.max(16, ...dados.map((linha) => (linha[index] ?? "").length + 2))),
+    wch: dados.reduce((max, linha) => Math.min(54, Math.max(max, (linha[index] ?? "").length + 2)), 16),
   }));
   const livro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(livro, folha, "Fornecedores");
