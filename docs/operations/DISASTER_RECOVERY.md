@@ -63,6 +63,13 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 - **Credencial:** `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` no environment do
   cron; o script busca a service key na Management API e mascara no log. Sem o par,
   o passo falha e o `notify-cron-failure` abre issue.
+- **Integridade:** backups novos registram `sha256` e `tamanhoBaixado` de
+  cada objeto no `manifest.json`; o job roda
+  `node scripts/storage-backup.mjs verify storage-backup` antes da
+  criptografia e falha se algum arquivo estiver incompleto ou corrompido.
+  O restore também confere os hashes presentes antes de enviar os objetos.
+  Artifacts legados sem hash seguem restauráveis, mas não têm prova
+  criptográfica de integridade por arquivo.
 - **Restore:** ver "Restore do Storage" no runbook abaixo. Repõe só o que sumiu;
   recria bucket apagado com a mesma configuração.
 - **Limitação:** mesmo RPO do banco (até 24h). Arquivo enviado e apagado no mesmo dia
