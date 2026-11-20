@@ -52,7 +52,7 @@ export default function CampoHome() {
   const [rdoAberto, setRdoAberto] = useState<RdoDia | null>(null);
   const navigate = useNavigate();
   const { account } = useOutletContext<{ account: CampoAccount }>();
-  const { pendentes, locais, sincronizando, sincronizar, registrar, descartarRegistro } = useCampoSync();
+  const { pendentes, pendenciasAntigas, locais, sincronizando, sincronizar, registrar, descartarRegistro } = useCampoSync();
   const {
     servidor,
     isLoading: carregandoRegistros,
@@ -127,6 +127,19 @@ export default function CampoHome() {
           <p className="text-sm text-muted-foreground">Olá,</p>
           <h1 className="text-2xl font-semibold text-ink">{account.nome}</h1>
         </div>
+
+        {pendenciasAntigas > 0 && (
+          <div role="status" className="rounded-2xl border border-warning-soft bg-warning-soft/40 px-4 py-3">
+            <p className="text-sm font-medium text-ink">
+              {pendenciasAntigas} {pendenciasAntigas === 1 ? "registro antigo preservado" : "registros antigos preservados"} neste aparelho
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Foram salvos antes da proteção por conta. Por segurança, não são exibidos nem enviados
+              automaticamente. Não apague os dados deste navegador; peça ajuda ao suporte da Pilar
+              para recuperar os registros da obra correta.
+            </p>
+          </div>
+        )}
 
         {pendentes > 0 && (
           <div className="flex items-center gap-3 rounded-2xl border border-warning-soft bg-warning-soft/40 px-4 py-3">
