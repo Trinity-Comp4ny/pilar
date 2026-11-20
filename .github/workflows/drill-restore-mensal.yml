@@ -72,6 +72,9 @@ jobs:
           fi
           mkdir -p "$RUNNER_TEMP/artifact"
           gh run download "$run_id" -n "backup-Production-$run_id" -D "$RUNNER_TEMP/artifact"
+          # Os dois artifacts devem pertencer ao MESMO run bem-sucedido:
+          # um dump restaurado sem os arquivos de obra não é recuperação completa.
+          gh run download "$run_id" -n "storage-Production-$run_id" -D "$RUNNER_TEMP/artifact"
           echo "BACKUP_RUN=$run_id" >> "$GITHUB_ENV"
 
       - name: Descriptografar e validar o conteúdo
@@ -114,6 +117,49 @@ jobs:
             && { echo "::error::Backup com entrada que não é arquivo regular."; exit 1; }
           echo "BACKUP_DIR=$RUNNER_TEMP/restore/backup" >> "$GITHUB_ENV"
           ls -l "$RUNNER_TEMP/restore/backup"
+
+      # Descriptografa SOMENTE em diretório efêmero, sem extrair fotos, documentos
+      # ou áudios: a auditoria lê o tar como stream, valida caminhos, tipo,
+      # unicidade, manifesto, contagens, tamanhos e SHA-256 de cada objeto.
+      # Exige o Storage do MESMO run do dump para evitar falso DR verde.
+      - name: Verificar integridade do backup do Storage (sem extrair)
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_ENCRYPTION_KEY_PREVIOUS: ${{ secrets.BACKUP_ENCRYPTION_KEY_PREVIOUS }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/artifact"
+          test -s storage-Production.tar.gz.enc || {
+            echo "::error::Backup criptografado do Storage ausente ou vazio."
+            exit 1
+          }
+          decifrado=0
+          for chave in "$BACKUP_ENCRYPTION_KEY" "${BACKUP_ENCRYPTION_KEY_PREVIOUS:-}"; do
+            [ -n "$chave" ] || continue
+            for iter in "-iter 600000" ""; do
+              # Formato antigo sem iter explícito só é aceito para retrocompatibilidade.
+              # shellcheck disable=SC2086
+              if openssl enc -d -aes-256-cbc -pbkdf2 $iter \
+                   -in storage-Production.tar.gz.enc -k "$chave" -out storage-restore.tar.gz 2>/dev/null \
+                 && tar -tzf storage-restore.tar.gz >/dev/null 2>&1; then
+                decifrado=1
+                break 2
+              fi
+            done
+          done
+          [ "$decifrado" = "1" ] || {
+            echo "::error::Não foi possível decifrar o backup de Storage."
+            exit 1
+          }
+          python3 "$GITHUB_WORKSPACE/scripts/backup/verify_storage_archive.py" storage-restore.tar.gz \
+            | tee storage-drill.log
+          {
+            echo "### Integridade do Storage: backup do run $BACKUP_RUN"
+            echo '```'
+            cat storage-drill.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          rm -f storage-restore.tar.gz
 
       # Projeto Supabase vazio, fora do repositório: sem as migrations do app, o restore
       # cria tudo a partir do schema do backup, como seria num desastre de verdade.
