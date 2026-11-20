@@ -257,7 +257,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/backup-external"
-          destino="gs://$GCS_BUCKET/pilar/production/$GITHUB_RUN_ID"
+          destino="gs://$GCS_BUCKET/pilar/production/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           for arquivo in backup-Production.tar.gz.enc storage-Production.tar.gz.enc SHA256SUMS.txt; do
             gcloud storage cp --quiet "$arquivo" "$destino/$arquivo"
             local_bytes=$(wc -c < "$arquivo" | tr -d ' ')
