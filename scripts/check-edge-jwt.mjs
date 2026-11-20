@@ -18,6 +18,9 @@ export function expectedJwtFlags(toml, directories) {
     const header = /^\s*\[functions\.([\w-]+)\]\s*(?:#.*)?$/.exec(line);
     if (header) {
       section = header[1];
+      if (!expected.has(section)) {
+        throw new Error("config.toml referencia função ausente no repositório: " + section);
+      }
       continue;
     }
     if (/^\s*\[/.test(line)) {
