@@ -21,6 +21,11 @@ vi.mock("@/hooks/useEscopos", () => ({
 vi.mock("@/hooks/useAditivosProjeto", () => ({
   useConfirmarAditivo: () => ({ mutateAsync: aprovar, isPending: false }),
   usePreviaAditivo: (_opcoes: unknown, enabled = true) => ({
+    // React Query preenche dataUpdatedAt na resposta real. Sem o timestamp o
+    // novo guard de prévia expirada rejeita os mocks mesmo quando o cálculo vale.
+    dataUpdatedAt: Date.now(),
+    isFetching: false,
+    isError: false,
     data: enabled
       ? {
           grupos: [],
