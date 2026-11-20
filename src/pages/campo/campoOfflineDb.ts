@@ -32,7 +32,8 @@ function ownerAtual(): string | null {
       !obj.account_id ||
       !obj.empresa_id ||
       !obj.obra_id
-    ) return null;
+    )
+      return null;
     return JSON.stringify([obj.empresa_id, obj.obra_id, obj.account_id]);
   } catch {
     return null;
@@ -62,12 +63,13 @@ function abrirDb(): Promise<IDBDatabase> {
 
 function lerTudo<T extends { id: string }>(nome: string): Promise<Owned<T>[]> {
   return abrirDb().then(
-    (db) => new Promise<Owned<T>[]>((resolve, reject) => {
-      const tx = db.transaction(nome, "readonly");
-      const req = tx.objectStore(nome).getAll();
-      req.onsuccess = () => resolve(req.result as Owned<T>[]);
-      req.onerror = () => reject(req.error);
-    })
+    (db) =>
+      new Promise<Owned<T>[]>((resolve, reject) => {
+        const tx = db.transaction(nome, "readonly");
+        const req = tx.objectStore(nome).getAll();
+        req.onsuccess = () => resolve(req.result as Owned<T>[]);
+        req.onerror = () => reject(req.error);
+      })
   );
 }
 
