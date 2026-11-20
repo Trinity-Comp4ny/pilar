@@ -29,7 +29,11 @@ const filas = vi.hoisted(() => {
   }
   return { dias: store<FilaDiaItem>(), registros: store<FilaRegistroItem>() };
 });
-vi.mock("./campoOfflineDb", () => ({ filaOfflineDb: filas.dias, filaRegistroDb: filas.registros }));
+vi.mock("./campoOfflineDb", () => ({
+  filaOfflineDb: filas.dias,
+  filaRegistroDb: filas.registros,
+  contarPendenciasAntigas: async () => 0,
+}));
 
 import CampoLogin from "./CampoLogin";
 import { useCampoAuth, getCampoToken, setCampoToken, campoLogout } from "./useCampoAuth";
