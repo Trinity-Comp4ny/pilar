@@ -1,5 +1,9 @@
+import { createHash } from "node:crypto";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { caminhoDoObjeto, listarTudo } from "./storage-backup.mjs";
+import { caminhoDoObjeto, listarTudo, verificarIntegridade } from "./storage-backup.mjs";
 
 type Item = { name: string; id: string | null; metadata?: { size: number; mimetype: string } };
 
@@ -67,5 +71,61 @@ describe("caminhoDoObjeto (pasta do backup)", () => {
 
   it("aceita bucket com espaço (existe 'Pilar Logo' em produção)", () => {
     expect(caminhoDoObjeto("/tmp/bk", "Pilar Logo", "logo.png")).toBe("/tmp/bk/objetos/Pilar Logo/logo.png");
+  });
+});
+
+describe("verificarIntegridade (Storage)", () => {
+  async function comBackup(teste: (pasta: string) => Promise<void>) {
+    const pasta = await mkdtemp(join(tmpdir(), "pilar-storage-check-"));
+    try {
+      const objetos = join(pasta, "objetos", "obra-campo");
+      await mkdir(objetos, { recursive: true });
+      await writeFile(join(objetos, "foto.jpg"), "conteudo correto");
+      const bytes = Buffer.from("conteudo correto");
+      await writeFile(
+        join(pasta, "manifest.json"),
+        JSON.stringify({
+          buckets: [
+            {
+              id: "obra-campo",
+              arquivos: [
+                {
+                  caminho: "foto.jpg",
+                  tamanhoBaixado: bytes.length,
+                  sha256: createHash("sha256").update(bytes).digest("hex"),
+                },
+              ],
+            },
+          ],
+        })
+      );
+      await teste(pasta);
+    } finally {
+      await rm(pasta, { recursive: true, force: true });
+    }
+  }
+
+  it("confere arquivo válido sem precisar de rede ou segredo", async () => {
+    await comBackup(async (pasta) => {
+      expect(await verificarIntegridade(pasta)).toEqual({ buckets: 1, arquivos: 1, bytes: 16 });
+    });
+  });
+
+  it("recusa arquivo modificado depois do backup", async () => {
+    await comBackup(async (pasta) => {
+      await writeFile(join(pasta, "objetos", "obra-campo", "foto.jpg"), "conteudo alterado");
+      await expect(verificarIntegridade(pasta)).rejects.toThrow(/corrompido/);
+    });
+  });
+
+  it("recusa backup novo sem checksum, mas aceita backup legado se for explicitamente permitido", async () => {
+    await comBackup(async (pasta) => {
+      const path = join(pasta, "manifest.json");
+      const manifest = JSON.parse(await readFile(path, "utf8"));
+      delete manifest.buckets[0].arquivos[0].sha256;
+      await writeFile(path, JSON.stringify(manifest));
+      await expect(verificarIntegridade(pasta)).rejects.toThrow(/sem tamanho\/checksum/);
+      expect((await verificarIntegridade(pasta, false)).arquivos).toBe(1);
+    });
   });
 });
