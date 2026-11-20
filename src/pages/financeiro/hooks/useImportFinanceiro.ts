@@ -1,3 +1,4 @@
+import { planilhaParaCsv } from "../lib/importFinanceiroPlanilha";
 import { useCallback, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -205,22 +206,6 @@ export async function marcarJaImportados(itens: ItemImport[]): Promise<ItemImpor
   return itens.map((i) => (existentes.has(i.lineHash) ? { ...i, jaImportado: true, incluir: false } : i));
 }
 
-/**
- * Exporta a aba como CSV com as datas em dd/mm/aaaa. Sem isso o SheetJS escreve
- * célula de data no formato americano m/d/aa (03/11 vira 11/03) e o parser BR
- * lê o mês como dia. Exige a planilha lida com `cellDates: true`.
- */
-function planilhaParaCsvBR(XLSX: typeof import("xlsx"), sheet: import("xlsx").WorkSheet): string {
-  const p2 = (n: number) => String(n).padStart(2, "0");
-  for (const [ref, cell] of Object.entries(sheet)) {
-    if (ref.startsWith("!") || !cell || (cell as import("xlsx").CellObject).t !== "d") continue;
-    const c = cell as import("xlsx").CellObject;
-    const d = c.v as Date;
-    c.w = `${p2(d.getUTCDate())}/${p2(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
-  }
-  return XLSX.utils.sheet_to_csv(sheet);
-}
-
 export function useImportFinanceiro() {
   const auxQuery = useQuery({ queryKey: ["import-financeiro-aux"], queryFn: fetchAux, staleTime: 60_000 });
   const [gravando, setGravando] = useState(false);
@@ -253,7 +238,7 @@ export function useImportFinanceiro() {
       const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
       const aba = sheetName && wb.Sheets[sheetName] ? sheetName : wb.SheetNames[0];
       if (!aba) throw new Error("Planilha sem abas legíveis.");
-      texto = planilhaParaCsvBR(XLSX, wb.Sheets[aba]);
+      texto = planilhaParaCsv(XLSX, wb.Sheets[aba]);
     } else {
       texto = await file.text();
     }
