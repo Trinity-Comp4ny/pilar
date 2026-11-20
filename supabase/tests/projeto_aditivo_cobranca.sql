@@ -4,7 +4,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(11);
+SELECT plan(17);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-0000000fb001'::uuid, 'Empresa Parcelas', NULL, TRUE,
@@ -85,6 +85,45 @@ SELECT is(
    WHERE tipo = 'aditivo_cobranca' AND origem_id = (SELECT aditivo FROM dados LIMIT 1)),
   1, 'a aprovação repetida mantém apenas um registro de cobrança auditável');
 
+-- Cobrança separada: o trigger legado também não deve criar um título extra.
+CREATE TEMP TABLE separado AS
+SELECT public.rpc_criar_aditivo_projeto(
+  'bbbbbbbb-0000-0000-0000-0000000fb001', 'Ajuste separado', 'Solicitação adicional', 200.01
+) AS aditivo, current_date + 10 AS vencimento;
+
+CREATE TEMP TABLE previa_separada AS
+SELECT aditivo, vencimento, public.rpc_prever_cobranca_aditivo(aditivo, NULL, vencimento, 2) AS previa
+FROM separado;
+SELECT lives_ok(
+  $$SELECT public.rpc_confirmar_cobranca_aditivo(aditivo, previa, NULL, vencimento, 2) FROM previa_separada$$,
+  'confirma a cobrança separada em duas parcelas');
+SELECT lives_ok(
+  $$SELECT public.rpc_confirmar_cobranca_aditivo(aditivo, previa, NULL, vencimento, 2) FROM previa_separada$$,
+  'repetir a confirmação separada é idempotente');
+SELECT is(
+  (SELECT count(*)::int FROM public.receitas
+   WHERE projeto_id = 'bbbbbbbb-0000-0000-0000-0000000fb001' AND deleted_at IS NULL),
+  5, 'a cobrança separada cria somente as duas parcelas previstas');
+SELECT is(
+  (SELECT sum(valor) FROM public.receitas
+   WHERE projeto_id = 'bbbbbbbb-0000-0000-0000-0000000fb001' AND deleted_at IS NULL),
+  10700.02::numeric, 'os títulos preservam o valor exato das duas cobranças');
+
+-- A aprovação legada autorizada ainda gera receita e atualiza o prazo.
 SELECT set_config('role', 'postgres', true);
+SELECT set_config('request.jwt.claims', '{}', true);
+UPDATE public.projetos SET data_previsao = current_date + 20
+  WHERE id = 'bbbbbbbb-0000-0000-0000-0000000fb001';
+INSERT INTO public.escopos (id, empresa_id, projeto_id, descricao, tipo, status, valor_aditivo, impacto_prazo_dias)
+VALUES ('aaaaaaaa-0000-0000-0000-0000000fb001', '00000000-0000-0000-0000-0000000fb001',
+  'bbbbbbbb-0000-0000-0000-0000000fb001', 'Teste de aprovação legada', 'aditivo', 'rascunho', 99, 3);
+UPDATE public.escopos SET status = 'aprovado' WHERE id = 'aaaaaaaa-0000-0000-0000-0000000fb001';
+SELECT is(
+  (SELECT sum(valor) FROM public.receitas WHERE projeto_id = 'bbbbbbbb-0000-0000-0000-0000000fb001'
+   AND descricao = 'Aditivo: Teste de aprovação legada' AND deleted_at IS NULL),
+  99::numeric, 'a aprovação legada autorizada ainda gera a receita');
+SELECT is(
+  (SELECT data_previsao::date FROM public.projetos WHERE id = 'bbbbbbbb-0000-0000-0000-0000000fb001'),
+  current_date + 23, 'a aprovação legada ainda atualiza o prazo');
 SELECT * FROM finish();
 ROLLBACK;
