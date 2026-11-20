@@ -81,7 +81,8 @@ noturno, sem aprovação humana que bloquearia a execução agendada.
    `main` e a `production-automation`. Definir
    `BACKUP_GCS_RESTORE_SERVICE_ACCOUNT` com o e-mail dessa conta. Disparar o
    workflow **Drill de restore (mensal)** pela `main` com `gcs_run` igual ao
-   sufixo `RUN_ID-RUN_ATTEMPT` de uma cópia confirmada. O job com acesso GCS
+   identificador `RUN_ID-RUN_ATTEMPT` de uma cópia confirmada, exibido no
+   resumo do job `gcs-secondary-copy`. O job com acesso GCS
    valida o par cifrado e passa somente esse par e o manifesto ao job de
    restauração. O segundo job usa a chave de cifragem e comprova o retorno do
    PostgreSQL e do Storage no stack local do runner. Um disparo sem
