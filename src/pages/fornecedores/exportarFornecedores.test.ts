@@ -5,13 +5,13 @@ const fornecedores: LinhaFornecedor[] = [
   {
     nome: "Pisos; & Revestimentos",
     categorias: ["Pisos", "Revestimentos"],
-    contato: "Ana \"Compras\"",
+    contato: 'Ana "Compras"',
     telefone: "14999999999",
     email: "compras@example.com",
     cnpj: "12345678000199",
   },
   {
-    nome: "=HYPERLINK(\"https://example.com\")",
+    nome: '=HYPERLINK("https://example.com")',
     categorias: [],
     email: "+SUM(1,1)",
     contato: "@formula",
