@@ -52,7 +52,8 @@ export default function CampoHome() {
   const [rdoAberto, setRdoAberto] = useState<RdoDia | null>(null);
   const navigate = useNavigate();
   const { account } = useOutletContext<{ account: CampoAccount }>();
-  const { pendentes, pendenciasAntigas, locais, sincronizando, sincronizar, registrar, descartarRegistro } = useCampoSync();
+  const { pendentes, pendenciasAntigas, locais, sincronizando, sincronizar, registrar, descartarRegistro } =
+    useCampoSync();
   const {
     servidor,
     isLoading: carregandoRegistros,
