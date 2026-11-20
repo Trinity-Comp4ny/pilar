@@ -38,6 +38,7 @@ export type EventoProduto =
   | "cliente_criado"
   | "lead_criado"
   | "projeto_criado"
+  | "proposta_criada"
   | "proposta_status_alterado"
   | "proposta_enviada"
   | "lancamento_criado"
