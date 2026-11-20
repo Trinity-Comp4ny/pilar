@@ -15,6 +15,8 @@ ROOT = "storage-backup/"
 MANIFEST = ROOT + "manifest.json"
 BUCKET = re.compile(r"^[\w .-]+$", flags=re.ASCII)
 HASH = re.compile(r"^[a-f0-9]{64}$")
+MAX_MANIFEST_BYTES = 16 * 1024 * 1024
+MAX_ARCHIVE_MEMBERS = 100_000
 
 
 def safe_path(name):
@@ -30,6 +32,8 @@ def verify_storage_tar(archive):
     with tarfile.open(archive, mode="r:gz") as tar:
         entries = {}
         for member in tar:
+            if len(entries) >= MAX_ARCHIVE_MEMBERS:
+                raise ValueError("Limite de entradas no archive de Storage excedido")
             name = safe_path(member.name)
             if member.issym() or member.islnk() or not (member.isfile() or member.isdir()):
                 raise ValueError("Entrada nao regular no tar: " + name)
@@ -40,6 +44,8 @@ def verify_storage_tar(archive):
             entries[name] = member
         if MANIFEST not in entries or not entries[MANIFEST].isfile():
             raise ValueError("Manifesto de Storage ausente")
+        if entries[MANIFEST].size > MAX_MANIFEST_BYTES:
+            raise ValueError("Manifesto do Storage excede o tamanho permitido")
         source = tar.extractfile(entries[MANIFEST])
         if source is None:
             raise ValueError("Nao foi possivel ler o manifesto")
