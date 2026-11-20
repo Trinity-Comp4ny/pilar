@@ -25,6 +25,9 @@ export function getCampoToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY);
 }
 export function setCampoToken(token: string): void {
+  // Um novo login não pode reutilizar o cache verificado de uma sessão
+  // anterior. O próximo verify vincula o token à conta/obra corretas.
+  sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
   sessionStorage.setItem(TOKEN_KEY, token);
 }
 export function clearCampoToken(): void {
