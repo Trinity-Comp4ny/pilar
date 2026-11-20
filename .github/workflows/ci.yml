@@ -423,8 +423,13 @@ jobs:
       # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
       # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
       # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
-      - name: Alinhar o Postgres do stack com produção (17)
-        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+      - name: Preparar o stack local para CI (Postgres 17, sem porta POP3)
+        # Nenhum teste usa POP3. Evita a colisão de porta observada no runner
+        # sem remover o Mailpit, seu SMTP ou a interface web.
+        run: |
+          sed -i -E \
+            -e 's/^major_version = 15$/major_version = 17/' \
+            -e 's/^pop3_port[[:space:]]*=.*/pop3_port = 0/' supabase/config.toml
 
       # Em segundo plano: o pull das imagens (~1 min) corre junto com a instalação do
       # Node e o guard. Fora Studio (a maior imagem, ~360 MB), edge-runtime e
@@ -646,8 +651,13 @@ jobs:
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       # Mesmo motivo do job database: só a cópia deste runner sobe em PG 17.
-      - name: Alinhar o Postgres do stack com produção (17)
-        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+      - name: Preparar o stack local para CI (Postgres 17, sem porta POP3)
+        # Nenhum teste usa POP3. Evita a colisão de porta observada no runner
+        # sem remover o Mailpit, seu SMTP ou a interface web.
+        run: |
+          sed -i -E \
+            -e 's/^major_version = 15$/major_version = 17/' \
+            -e 's/^pop3_port[[:space:]]*=.*/pop3_port = 0/' supabase/config.toml
       # Em segundo plano, aplicando as migrations do PR, enquanto Node e Playwright
       # instalam. Só o Studio fica de fora: o resto (inclusive edge-runtime e
       # imgproxy) é o app de verdade que os specs exercitam.
@@ -1002,12 +1012,29 @@ jobs:
       # Antes, um deploy ou E2E de staging vermelho depois do merge ficava só como um
       # X na aba Actions: ninguém era avisado. Agora vira issue (uma só, que acumula
       # comentários) e fecha sozinha no primeiro push verde.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Conferir se este commit ainda é a ponta de staging
+        id: ponta
         if: ${{ !cancelled() && (success() || steps.veredito.outputs.falhou == 'true') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PONTA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/staging" --jq '.object.sha')
+          if [[ ! "$PONTA" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "::error::A API do GitHub não retornou o SHA de staging."
+            exit 1
+          fi
+          if [ "$PONTA" != "$GITHUB_SHA" ]; then
+            echo "::notice::Execução substituída: staging avançou de ${GITHUB_SHA:0:8} para ${PONTA:0:8}."
+            exit 0
+          fi
+          echo "atual=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: ${{ !cancelled() && steps.ponta.outputs.atual == 'true' }}
         with:
           sparse-checkout: .github/actions
       - name: Abrir issue de staging quebrado
-        if: ${{ failure() && steps.veredito.outputs.falhou == 'true' }}
+        if: ${{ failure() && steps.veredito.outputs.falhou == 'true' && steps.ponta.outputs.atual == 'true' }}
         uses: ./.github/actions/notify-cron-failure
         with:
           job-name: staging
@@ -1015,7 +1042,7 @@ jobs:
           details: "Gates que não passaram: ${{ steps.veredito.outputs.falta }}"
           token: ${{ github.token }}
       - name: Fechar a issue de staging quebrado
-        if: success()
+        if: ${{ success() && steps.ponta.outputs.atual == 'true' }}
         uses: ./.github/actions/notify-cron-failure
         with:
           job-name: staging
