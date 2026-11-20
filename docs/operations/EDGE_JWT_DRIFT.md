@@ -39,7 +39,7 @@ referências e chamadas, para evitar interromper fluxos de clientes.
 
 ## Validação
 
-- `node --test scripts/check-edge-jwt.test.mjs`: parsing, valores default,
+- `node --test scripts/check-edge-jwt.node-check.mjs`: parsing, valores default,
   ausência de função, drift e funções históricas.
 - Em staging, verificar logs `JWT correto em N funções`.
 - Em produção, verificar que o deploy convergiu todas as funções do release
