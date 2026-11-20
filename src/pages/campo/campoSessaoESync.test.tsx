@@ -182,7 +182,6 @@ describe("useCampoAuth", () => {
     expect(result.current.error).toBe("error");
   });
 
-
   it("sem token: não autenticado, sem chamar o servidor", async () => {
     const { result } = renderHook(() => useCampoAuth());
     await waitFor(() => expect(result.current.loading).toBe(false));

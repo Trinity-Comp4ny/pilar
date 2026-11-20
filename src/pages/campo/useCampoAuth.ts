@@ -51,7 +51,8 @@ function getCachedAccount(): CampoAccount | null {
       !obj.account_id ||
       !obj.obra_id ||
       !obj.empresa_id
-    ) return null;
+    )
+      return null;
     return obj as unknown as CampoAccount;
   } catch {
     return null;
