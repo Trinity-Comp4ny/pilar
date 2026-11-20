@@ -5,29 +5,26 @@ name: Evals da IA
 # (agente, modo, entidade, operação) e campos extraídos nas ações, incluindo casos de
 # injeção de instrução. Reprova abaixo dos limites de evals/avaliar.ts.
 #
-# Roda quando um PR mexe em prompt, schema, extração ou no cliente do modelo, toda
-# segunda e sob demanda. A pontuação em si tem teste Deno no CI normal (sem custo); aqui
+# Roda quando um PR interno mexe no chat, no estimador ou em suas dependências,
+# toda segunda e sob demanda. A pontuação em si tem teste Deno no CI normal (sem custo); aqui
 # é a chamada real, alguns centavos por rodada.
 #
 # Mede a mesma configuração da produção: as variáveis de repositório AI_MODELO_AI_CHAT e
 # AI_DECISAO_AI_CHAT (Settings → Secrets and variables → Actions → Variables; vazias = Gemini
-# direto, sem modelo de decisão). Precisa do secret GEMINI_API_KEY e, para modelos
-# gateway:*, do AI_GATEWAY_API_KEY. Sem nenhuma chave o job avisa e não reprova.
+# direto, sem modelo de decisão). Precisa do secret do provedor configurado.
+# Os runners falham quando o provedor não tem credencial; PRs de forks e do
+# Dependabot ficam com os testes offline do CI, pois não recebem esses secrets.
 
 on:
   pull_request:
     paths:
-      - "supabase/functions/ai-chat/prompts.ts"
-      - "supabase/functions/ai-chat/schemas.ts"
-      - "supabase/functions/ai-chat/entidades.ts"
-      - "supabase/functions/ai-chat/criacao.ts"
-      - "supabase/functions/ai-chat/contexto.ts"
-      - "supabase/functions/ai-chat/roteamento.ts"
-      - "supabase/functions/ai-chat/evals/**"
+      - ".github/workflows/ai-evals.yml"
+      - "supabase/functions/ai-chat/**"
       - "supabase/functions/ai-estimativa-itens/**"
       - "supabase/migrations/20261114000100_estimativa_obra.sql"
       - "supabase/migrations/20261116000100_estimativa_terreno_inclinado.sql"
       - "supabase/migrations/20261117000100_estimativa_itens_catalogo.sql"
+      - "supabase/migrations/20261228000000_estimativa_ar_36000_btu.sql"
       - "supabase/functions/_shared/ai-client.ts"
       - "supabase/functions/_shared/llm.ts"
   schedule:
@@ -44,6 +41,7 @@ concurrency:
 
 jobs:
   evals:
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
     name: Evals do ai-chat
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -61,16 +59,15 @@ jobs:
           AI_DECISAO_AI_CHAT: ${{ vars.AI_DECISAO_AI_CHAT }}
         run: |
           set -uo pipefail
-          if [ -z "$GEMINI_API_KEY" ] && [ -z "$AI_GATEWAY_API_KEY" ]; then
-            echo "::warning::Sem os secrets GEMINI_API_KEY e AI_GATEWAY_API_KEY: evals da IA pulados."
-            exit 0
-          fi
+          status=0
           deno run --allow-env --allow-net --allow-write supabase/functions/ai-chat/evals/rodar.ts \
-            --saida evals-resultado.json | tee evals.log
-          status=${PIPESTATUS[0]}
+            --saida evals-resultado.json | tee evals.log || status=$?
           {
             echo "### Evals da IA"
             echo '```'
+            if [ "$status" -eq 2 ]; then
+              echo 'Eval não executado. Confira o modelo, a credencial do provedor e a mensagem no log.'
+            fi
             sed -n '/^Modelo:/,$p' evals.log
             grep -E '^FAIL' -A3 evals.log || true
             echo '```'
@@ -100,6 +97,7 @@ jobs:
           status: success
 
   evals-estimativa:
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
     name: Evals do ai-estimativa-itens
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -118,16 +116,15 @@ jobs:
           AI_MODELO_ESTIMATIVA_ITENS: ${{ vars.AI_MODELO_ESTIMATIVA_ITENS }}
         run: |
           set -uo pipefail
-          if [ -z "$GEMINI_API_KEY" ] && [ -z "$AI_GATEWAY_API_KEY" ]; then
-            echo "::warning::Sem os secrets GEMINI_API_KEY e AI_GATEWAY_API_KEY: evals da IA pulados."
-            exit 0
-          fi
+          status=0
           deno run --allow-env --allow-net --allow-read --allow-write \
-            supabase/functions/ai-estimativa-itens/evals/rodar.ts --saida evals-estimativa-resultado.json | tee evals-estimativa.log
-          status=${PIPESTATUS[0]}
+            supabase/functions/ai-estimativa-itens/evals/rodar.ts --saida evals-estimativa-resultado.json | tee evals-estimativa.log || status=$?
           {
             echo "### Evals do ai-estimativa-itens"
             echo '```'
+            if [ "$status" -eq 2 ]; then
+              echo 'Eval não executado. Confira o modelo, a credencial do provedor e a mensagem no log.'
+            fi
             sed -n '/^Modelo:/,$p' evals-estimativa.log
             grep -E '^FAIL' -A3 evals-estimativa.log || true
             echo '```'
