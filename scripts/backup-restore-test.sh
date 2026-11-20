@@ -53,6 +53,19 @@ if [[ "$TEST_DB_URL" == *"vepnsonbnsimqcsfcagm"* || "$TEST_DB_URL" == *"rizaklgs
     exit 1
 fi
 
+# Refusa sobrescrever uma base com tabelas de negócio. O teste mensal
+# começa com public vazio; apontar para outro projeto com dados é erro fatal.
+# Executa antes de aplicar roles, schemas ou qualquer COPY destrutivo.
+if ! PUBLIC_TABLES=$(psql "$TEST_DB_URL" -At -v ON_ERROR_STOP=1 -c \
+  "SELECT count(*) FROM pg_tables WHERE schemaname = 'public';"); then
+    echo "FAIL: não foi possível verificar se o banco de destino está vazio." >&2
+    exit 1
+fi
+if [[ "$PUBLIC_TABLES" != "0" ]]; then
+    echo "FAIL: destino contém tabelas em public; restauração exige banco vazio." >&2
+    exit 1
+fi
+
 START_TS=$(date +%s)
 LOG_FILE=$(mktemp -t pilar-restore-XXXXXX)
 echo "Log de restore: $LOG_FILE"
