@@ -88,11 +88,14 @@ afterEach(() => {
 
 function entrar(accountId: string, empresaId: string, obraId: string) {
   sessionStorage.setItem("pilar_campo_token", "token-" + accountId);
-  sessionStorage.setItem("pilar_campo_account", JSON.stringify({
-    account_id: accountId,
-    empresa_id: empresaId,
-    obra_id: obraId,
-  }));
+  sessionStorage.setItem(
+    "pilar_campo_account",
+    JSON.stringify({
+      account_id: accountId,
+      empresa_id: empresaId,
+      obra_id: obraId,
+    })
+  );
 }
 
 const owner1 = JSON.stringify(["empresa-1", "obra-1", "acc-1"]);
@@ -128,8 +131,9 @@ describe("campoOfflineDb", () => {
     idb.falhas.getAll = true;
     await expect(filaOfflineDb.listar()).rejects.toThrow("getAll falhou");
     idb.falhas.getAll = false;
+    await filaOfflineDb.salvar({ id: "d1" } as never);
     idb.falhas.tx = true;
-    await expect(filaOfflineDb.salvar({ id: "d1" } as never)).rejects.toThrow("tx falhou");
+    await expect(filaOfflineDb.salvar({ id: "d2" } as never)).rejects.toThrow("tx falhou");
     await expect(filaOfflineDb.remover("d1")).rejects.toThrow("tx falhou");
   });
 
@@ -182,5 +186,4 @@ describe("campoOfflineDb", () => {
     await expect(filaRegistroDb.salvar(registroA)).rejects.toThrow("outra conta");
     expect(await filaRegistroDb.listar()).toEqual([]);
   });
-
 });
