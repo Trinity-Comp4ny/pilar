@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +41,24 @@ const PullToRefresh = lazy(() =>
 const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );
+
+// O modal só entra na árvore quando alguém abre as configurações: o login e as telas
+// públicas não baixam esse código. Logado, ele é baixado em ocioso para abrir sem espera.
+function SettingsDialogSobDemanda() {
+  const { isOpen } = useSettingsModal();
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setMontado(true);
+  }, [isOpen]);
+
+  if (!montado) return null;
+  return (
+    <Suspense fallback={null}>
+      <SettingsDialog />
+    </Suspense>
+  );
+}
 
 const Checkout = lazy(() => import("./pages/checkout"));
 const Login = lazy(() => import("./pages/Login"));
@@ -528,9 +546,7 @@ const App = () => {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
-                    <Suspense fallback={null}>
-                      <SettingsDialog />
-                    </Suspense>
+                    <SettingsDialogSobDemanda />
                   </ValoresOcultosProvider>
                 </SettingsModalProvider>
               </ImpersonationProvider>

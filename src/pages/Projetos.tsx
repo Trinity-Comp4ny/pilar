@@ -185,7 +185,12 @@ export default function ProjetosKanban() {
     // Soft delete (deleted_at some das listagens), com "Desfazer" no toast — o delete é recuperável.
     // Via RPC: um UPDATE direto de deleted_at viola RLS, porque a policy de SELECT
     // esconde deletados e o Postgres re-checa a linha nova contra ela (42501).
+    // Otimista: o card some na hora e volta se a exclusão falhar (a releitura segue em segundo plano).
+    const anterior = queryClient.getQueryData<Projeto[]>(["projetos"]);
+    queryClient.setQueryData<Projeto[]>(["projetos"], (atual) => atual?.filter((p) => p.id !== id));
+    setProjetoToDelete(null);
     const { error } = await supabase.rpc("rpc_excluir_projeto", { p_id: id });
+    if (error) queryClient.setQueryData<Projeto[]>(["projetos"], anterior);
     if (!error) {
       toast.success(`Projeto "${nome}" excluído`, {
         action: {

@@ -11,8 +11,16 @@ import { STORAGE_KEYS } from "@/constants";
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Empresa = Database["public"]["Tables"]["empresas"]["Row"];
 
+/** Linha de pilar_subscriptions que o PrivateRoute usa para decidir o acesso. */
+type AssinaturaInicial = { status: string; current_period_end: string | null };
+
 export type ProfileWithEmpresa = Profile & {
   empresas: Empresa | null;
+  /**
+   * Vem na mesma consulta do perfil (uma ida ao banco a menos na entrada).
+   * undefined = não veio junto (o PrivateRoute busca); null = empresa sem assinatura.
+   */
+  assinatura?: AssinaturaInicial | null;
 };
 
 export type MfaLevel = "aal1" | "aal2";
@@ -82,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let data;
     let error;
     try {
-      ({ data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single());
+      ({ data, error } = await supabase
+        .from("profiles")
+        .select("*, empresas(*, pilar_subscriptions(status, current_period_end))")
+        .eq("id", userId)
+        .single());
     } catch (err) {
       if (activeUserId.current === userId && request === profileRequest.current) {
         setProfileError(true);
@@ -106,7 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return;
     }
-    const p = data as ProfileWithEmpresa;
+    const bruto = data as unknown as ProfileWithEmpresa & {
+      empresas: { pilar_subscriptions?: AssinaturaInicial | AssinaturaInicial[] | null } | null;
+    };
+    const assinaturas = bruto.empresas?.pilar_subscriptions;
+    const p: ProfileWithEmpresa = {
+      ...bruto,
+      assinatura: bruto.empresas ? ([assinaturas ?? null].flat()[0] ?? null) : undefined,
+    };
     setProfile(p);
     setProfileError(false);
     // Só id, empresa e papel: telemetria não recebe contato da pessoa (docs/ROPA.md,
