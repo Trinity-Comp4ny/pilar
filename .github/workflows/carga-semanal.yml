@@ -81,11 +81,15 @@ jobs:
               [ -f "$f" ] || continue
               jq -r --arg c "${f#resumo-}" '
                 def formatar: if type == "number" then ((. * 100 | round) / 100 | tostring) else "—" end;
+                def estatisticas: .values // . // {};
                 .metrics |
+                (.http_req_duration | estatisticas) as $duracao |
+                (.http_req_failed | estatisticas | .rate // .value) as $falhas |
                 ("|" + ($c | rtrimstr(".json")) + "|") +
-                ([.http_req_duration.values["p(95)"], .http_req_duration.values["p(99)"],
-                  (.http_req_failed.values.rate | if type == "number" then . * 100 else null end),
-                  .http_reqs.values.rate, .painel_rpc_duration.values["p(95)"]]
+                ([$duracao["p(95)"], $duracao["p(99)"],
+                  ($falhas | if type == "number" then . * 100 else null end),
+                  (.http_reqs | estatisticas | .rate),
+                  (.painel_rpc_duration | estatisticas | .["p(95)"])]
                   | map(formatar) | join("|")) + "|"
               ' "$f"
             done
