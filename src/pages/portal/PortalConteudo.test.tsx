@@ -14,6 +14,8 @@ vi.mock("@/integrations/supabase/client", async () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/monitoring", () => ({ reportInvokeError: vi.fn() }));
+const track = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
 const portal = vi.hoisted(() => ({ token: null as string | null }));
 vi.mock("@/hooks/useClienteAuth", () => ({ getPortalToken: () => portal.token }));
 
@@ -266,6 +268,7 @@ describe("EntregasContent", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Aprovar/ }));
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aprovado"));
+    expect(track).toHaveBeenCalledExactlyOnceWith("portal_entrega_aprovada");
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "tok", p_entrega_id: "e1" });
     expect(sb.client.rpc.mock.calls.filter((c) => c[0] === "portal_listar_solicitacoes")).toHaveLength(2);
   });
@@ -277,6 +280,7 @@ describe("EntregasContent", () => {
     renderComQuery(<EntregasContent projetoId="p1" token="prop" />);
     fireEvent.click(await screen.findByRole("button", { name: /Aprovar/ }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível aprovar", expect.anything()));
+    expect(track).not.toHaveBeenCalled();
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "prop", p_entrega_id: "e1" });
   });
 
@@ -311,6 +315,7 @@ describe("EntregasContent", () => {
     fireEvent.change(screen.getByPlaceholderText(/Descreva/), { target: { value: "De novo" } });
     fireEvent.click(enviar());
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Solicitação de revisão enviada"));
+    expect(track).toHaveBeenCalledExactlyOnceWith("portal_revisao_solicitada");
   });
 
   it("sem token a equipe não aprova nem pede revisão pelo portal", async () => {

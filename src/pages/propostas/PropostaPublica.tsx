@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { analytics } from "@/lib/analytics";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,10 +48,19 @@ function VersaoCompartilhada({ token }: { token: string }) {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+  const abriu = useRef(false);
+  const temVersao = Boolean(consulta.data);
+  useEffect(() => {
+    if (!temVersao || abriu.current) return;
+    abriu.current = true;
+    analytics.track("proposta_link_aberto");
+  }, [temVersao]);
+
   const queryClient = useQueryClient();
   const aceite = useMutation({
     mutationFn: () => acessar(token, "aceitar"),
     onSuccess: (versao) => {
+      if (versao.estado === "aceita") analytics.track("proposta_link_aceito");
       queryClient.setQueryData(["proposta-compartilhada", token], versao);
       setConfirmando(false);
     },

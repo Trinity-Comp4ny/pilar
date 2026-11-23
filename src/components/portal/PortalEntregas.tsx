@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,10 @@ export function EntregasContent({
       toast.error("Não foi possível aprovar", {
         description: "Tente novamente em instantes ou fale com o escritório.",
       });
-    else toast.success("Aprovado");
+    else {
+      analytics.track("portal_entrega_aprovada");
+      toast.success("Aprovado");
+    }
     await fetchEntregas();
     setSaving(false);
   };
@@ -165,7 +169,10 @@ export function EntregasContent({
       toast.error("Não foi possível enviar a solicitação", {
         description: "Tente novamente em instantes ou fale com o escritório.",
       });
-    else toast.success("Solicitação de revisão enviada");
+    else {
+      analytics.track("portal_revisao_solicitada");
+      toast.success("Solicitação de revisão enviada");
+    }
     setRespondingId(null);
     setResposta("");
     await fetchEntregas();

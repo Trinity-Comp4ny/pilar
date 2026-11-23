@@ -4,6 +4,8 @@ import { Link, MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PropostaPublica from "./PropostaPublica";
 
+const track = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke } } }));
 const token = "00000000-0000-4000-8000-000000000001";
@@ -28,7 +30,10 @@ function abrir() {
 }
 
 describe("PropostaPublica", () => {
-  beforeEach(() => invoke.mockReset());
+  beforeEach(() => {
+    invoke.mockReset();
+    track.mockClear();
+  });
 
   it("abre o PDF exato e confirma o aceite da versão do link", async () => {
     invoke.mockResolvedValueOnce({ data: dados, error: null });
@@ -46,6 +51,7 @@ describe("PropostaPublica", () => {
     expect(await screen.findByText(/Proposta aceita em/)).toBeInTheDocument();
     expect(invoke).toHaveBeenNthCalledWith(1, "proposta-link", { body: { token, acao: "abrir" } });
     expect(invoke).toHaveBeenNthCalledWith(2, "proposta-link", { body: { token, acao: "aceitar" } });
+    expect(track.mock.calls).toEqual([["proposta_link_aberto"], ["proposta_link_aceito"]]);
   });
 
   it("pede nova confirmação ao navegar para outra versão", async () => {
