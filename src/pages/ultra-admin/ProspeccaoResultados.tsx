@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { EmptyState } from "@/components/EmptyState";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { useResultados, type Dimensao, type LinhaResultado } from "./prospeccaoApi";
@@ -24,37 +24,44 @@ function rotulo(dimensao: Dimensao, chave: string): string {
 }
 
 function Tabela({ dimensao, linhas }: { dimensao: Dimensao; linhas: LinhaResultado[] }) {
+  const columns: ColumnDef<LinhaResultado>[] = [
+    {
+      key: "grupo",
+      header: "Grupo",
+      cell: (l) => (
+        <>
+          {rotulo(dimensao, l.chave)}
+          {l.enviados < AMOSTRA_MINIMA && <span className="ml-2 text-xs text-ink-muted">amostra pequena</span>}
+        </>
+      ),
+    },
+    { key: "enviados", header: "Enviados", align: "end", cell: (l) => l.enviados },
+    {
+      key: "respostas",
+      header: "Respostas",
+      align: "end",
+      cell: (l) => (
+        <>
+          {l.respostas} <span className="text-ink-muted">({taxa(l.respostas, l.enviados)})</span>
+        </>
+      ),
+    },
+    {
+      key: "reunioes",
+      header: "Reuniões",
+      align: "end",
+      cell: (l) => (
+        <>
+          {l.reunioes} <span className="text-ink-muted">({taxa(l.reunioes, l.enviados)})</span>
+        </>
+      ),
+    },
+  ];
   return (
-    <Card className="overflow-x-auto p-0">
-      <h3 className="px-4 pt-4 text-sm font-semibold">{TITULO[dimensao]}</h3>
-      <table className="w-full text-sm">
-        <thead className="text-left text-ink-muted">
-          <tr>
-            <th className="px-4 py-2 font-medium">Grupo</th>
-            <th className="px-4 py-2 text-right font-medium">Enviados</th>
-            <th className="px-4 py-2 text-right font-medium">Respostas</th>
-            <th className="px-4 py-2 text-right font-medium">Reuniões</th>
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.map((l) => (
-            <tr key={l.chave} className="border-t border-line">
-              <td className="px-4 py-2">
-                {rotulo(dimensao, l.chave)}
-                {l.enviados < AMOSTRA_MINIMA && <span className="ml-2 text-xs text-ink-muted">amostra pequena</span>}
-              </td>
-              <td className="px-4 py-2 text-right tabular-nums">{l.enviados}</td>
-              <td className="px-4 py-2 text-right tabular-nums">
-                {l.respostas} <span className="text-ink-muted">({taxa(l.respostas, l.enviados)})</span>
-              </td>
-              <td className="px-4 py-2 text-right tabular-nums">
-                {l.reunioes} <span className="text-ink-muted">({taxa(l.reunioes, l.enviados)})</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Card>
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">{TITULO[dimensao]}</h3>
+      <DataTable columns={columns} data={{ rows: linhas }} rowKey={(l) => l.chave} emptyMessage="Sem envios." />
+    </div>
   );
 }
 
