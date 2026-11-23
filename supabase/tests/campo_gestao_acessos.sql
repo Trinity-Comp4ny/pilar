@@ -7,7 +7,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(10);
+SELECT plan(13);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
@@ -99,6 +99,17 @@ SELECT is(
   'ultra_admin lista as contas de campo de obra de outra empresa'
 );
 
+-- A ação cross-tenant do ultra_admin fica registrada na auditoria
+RESET ROLE;
+SELECT is(
+  (SELECT count(*)::int FROM public.admin_audit_logs
+   WHERE category = 'acesso_cross_tenant' AND action = 'campo_listar_contas_obra'
+     AND actor_id = '77777777-0000-0000-0000-00000000d003'
+     AND empresa_id = '00000000-0000-0000-0000-00000000d0aa'),
+  1,
+  'listar contas de outra empresa grava 1 registro de auditoria'
+);
+
 -- Gestor da empresa dona lista corretamente
 SELECT test_set_auth('77777777-0000-0000-0000-00000000d001');
 
@@ -107,6 +118,15 @@ SELECT is(
   1,
   'gestor da empresa dona vê 1 conta de campo na obra'
 );
+
+RESET ROLE;
+SELECT is(
+  (SELECT count(*)::int FROM public.admin_audit_logs
+   WHERE category = 'acesso_cross_tenant' AND action = 'campo_listar_contas_obra'),
+  1,
+  'gestor da própria empresa não gera registro de auditoria'
+);
+SELECT test_set_auth('77777777-0000-0000-0000-00000000d001');
 
 SELECT lives_ok(
   $$ SELECT public.campo_revogar_acesso('00000000-0000-0000-0000-00000000d3aa') $$,
@@ -143,6 +163,14 @@ SELECT is(
   (SELECT ativo FROM public.campo_accounts WHERE id = '00000000-0000-0000-0000-00000000d3aa'),
   false,
   'conta fica inativa após o ultra_admin revogar'
+);
+
+SELECT is(
+  (SELECT count(*)::int FROM public.admin_audit_logs
+   WHERE category = 'acesso_cross_tenant' AND action = 'campo_revogar_acesso'
+     AND target_id = '00000000-0000-0000-0000-00000000d3aa'),
+  1,
+  'revogar acesso de outra empresa grava 1 registro de auditoria'
 );
 
 SELECT * FROM finish();

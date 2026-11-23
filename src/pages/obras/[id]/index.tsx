@@ -289,7 +289,7 @@ export default function ObraDetalhePage() {
         )}
         {mostrarAcessos && (
           <TabsContent value="acessos">
-            <ObraAcessosTab obraId={obra.id} canEdit={canEdit} />
+            <ObraAcessosTab obraId={obra.id} empresaId={obra.empresa_id} canEdit={canEdit} />
           </TabsContent>
         )}
       </Tabs>

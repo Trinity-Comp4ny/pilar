@@ -348,6 +348,7 @@ function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGer
         clienteId={cliente.id}
         clienteNome={`${cliente.nome}${cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}`}
         clienteEmail={cliente.email}
+        empresaId={cliente.empresa_id}
       />
     </div>
   );

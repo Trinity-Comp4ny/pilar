@@ -49,6 +49,8 @@ export type PortalStatus = "sem_acesso" | "convite_pendente" | "ativo";
 
 export interface Cliente {
   id: string;
+  /** Empresa dona do cliente (select("*") já traz); o ultra_admin usa para agir em outra empresa. */
+  empresa_id?: string;
   nome: string;
   sobrenome?: string;
   tipo_pessoa?: TipoPessoa | null;
@@ -366,9 +368,25 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   };
 
   const invitePortalMutation = useMutation({
-    mutationFn: async ({ clienteId, email, nome }: { clienteId: string; email: string; nome?: string }) => {
+    mutationFn: async ({
+      clienteId,
+      email,
+      nome,
+      empresaId,
+    }: {
+      clienteId: string;
+      email: string;
+      nome?: string;
+      /** Só o ultra_admin: empresa dona do cliente quando não é a dele (auditado no servidor). */
+      empresaId?: string;
+    }) => {
       const { data, error: fnError } = await supabase.functions.invoke("invite-cliente-portal", {
-        body: { cliente_id: clienteId, email, ...(nome ? { nome } : {}) },
+        body: {
+          cliente_id: clienteId,
+          email,
+          ...(nome ? { nome } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
+        },
       });
 
       if (fnError) throw await erroDoInvoke(fnError);
@@ -386,14 +404,21 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       clienteId,
       nomeCliente,
       accountId,
+      empresaId,
     }: {
       clienteId: string;
       nomeCliente: string;
+      empresaId?: string;
       /** Qual acesso do cliente (vários por cliente, SPEC 164). */
       accountId?: string;
     }) => {
       const { data, error: fnError } = await supabase.functions.invoke("reset-cliente-portal-password", {
-        body: { cliente_id: clienteId, nome_cliente: nomeCliente, ...(accountId ? { account_id: accountId } : {}) },
+        body: {
+          cliente_id: clienteId,
+          nome_cliente: nomeCliente,
+          ...(accountId ? { account_id: accountId } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
+        },
       });
 
       if (fnError) throw await erroDoInvoke(fnError);
