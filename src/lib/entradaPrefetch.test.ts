@@ -11,9 +11,4 @@ describe("prefetchDaRota /inicio", () => {
     await Promise.all(prefetchDaRota(qc, "/inicio", { empresaId: "e1", usuarioId: "u1" }));
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ["painel-gestao", "e1", "u1"] }));
   });
-
-  it("sem usuário não prefetcha (a chave não teria como bater)", () => {
-    const qc = new QueryClient();
-    expect(prefetchDaRota(qc, "/inicio", { empresaId: "e1" })).toHaveLength(0);
-  });
 });

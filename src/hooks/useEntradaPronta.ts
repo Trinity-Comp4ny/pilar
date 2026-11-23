@@ -10,14 +10,18 @@ export const TETO_ENTRADA_MS = 4000;
  * Começa assim que a empresa é conhecida, em paralelo com a checagem de assinatura.
  * Sem empresa ainda, não segura nada.
  */
-export function useEntradaPronta(empresaId: string | undefined, pathname: string, usuarioId?: string): boolean {
+export function useEntradaPronta(
+  empresaId: string | undefined,
+  pathname: string,
+  usuarioId: string | undefined
+): boolean {
   const qc = useQueryClient();
   const [pronta, setPronta] = useState(false);
   const rota = useRef(pathname);
   rota.current = pathname;
 
   useEffect(() => {
-    if (!empresaId) return;
+    if (!empresaId || !usuarioId) return;
     let ativo = true;
     const concluir = () => {
       if (ativo) setPronta(true);
@@ -33,5 +37,5 @@ export function useEntradaPronta(empresaId: string | undefined, pathname: string
     };
   }, [empresaId, usuarioId, qc]);
 
-  return pronta || !empresaId;
+  return pronta || !empresaId || !usuarioId;
 }
