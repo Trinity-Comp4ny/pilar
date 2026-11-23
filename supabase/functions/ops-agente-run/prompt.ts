@@ -21,7 +21,10 @@ export const respostaSchema = z.object({
   resumo: z.string().min(1).max(400),
   // O Gemini às vezes devolve destaque sem `texto` ou com mais de 5 refs (Sentry PILAR-58).
   // Em vez de reprovar a resposta inteira, descarta o destaque sem texto e corta as refs.
-  destaques: z.preprocess(saneaDestaques, z.array(z.object({ texto: z.string().min(1).max(240), refs: z.array(z.string()).min(1).max(5) })).max(3)),
+  destaques: z.preprocess(
+    saneaDestaques,
+    z.array(z.object({ texto: z.string().min(1).max(240), refs: z.array(z.string()).min(1).max(5) })).max(3),
+  ) as unknown as z.ZodType<Array<{ texto: string; refs: string[] }>>,
   mensagens: z.array(z.object({ ref: z.string(), texto: z.string().min(1).max(700) })).max(40),
 });
 
