@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { monitoring } from "@/lib/monitoring";
 import { analytics } from "@/lib/analytics";
+import { CONSENT_CHANGED_EVENT } from "@/lib/cookieConsent";
 import { syncConsentForUser } from "@/lib/cookieConsentSync";
 import { STORAGE_KEYS } from "@/constants";
 
@@ -61,18 +62,6 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Uma vez por sessão do navegador (recarregar a página não conta como novo login). */
-function registrarLogin(userId: string, role: string | undefined) {
-  const chave = "pilar_login_registrado";
-  try {
-    if (sessionStorage.getItem(chave) === userId) return;
-    sessionStorage.setItem(chave, userId);
-  } catch {
-    // sem sessionStorage: registra mesmo assim, melhor contar a mais que perder o login
-  }
-  analytics.track("login_realizado", { role });
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
@@ -82,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaCurrentLevel, setMfaCurrentLevel] = useState<MfaLevel>("aal1");
   const [mfaNextLevel, setMfaNextLevel] = useState<MfaLevel>("aal1");
   const [hasVerifiedMfaFactor, setHasVerifiedMfaFactor] = useState(false);
+  const [analyticsUser, setAnalyticsUser] = useState<string | null>(null);
   const activeUserId = useRef<string | null>(null);
   const profileRequest = useRef(0);
 
@@ -135,12 +125,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       empresa_id: p.empresa_id ?? undefined,
       role: p.role ?? undefined,
     });
-    analytics.identify(p.id, {
-      empresa_id: p.empresa_id ?? undefined,
-      role: p.role ?? undefined,
-    });
-    registrarLogin(p.id, p.role ?? undefined);
   }, []);
+
+  useEffect(() => {
+    if (!profile || analyticsUser !== profile.id) return;
+    const registrar = () => {
+      if (activeUserId.current !== profile.id) return;
+      const traits = { empresa_id: profile.empresa_id ?? undefined, role: profile.role ?? undefined };
+      analytics.identify(profile.id, traits);
+      analytics.trackLogin(profile.id, traits);
+    };
+    registrar();
+    window.addEventListener(CONSENT_CHANGED_EVENT, registrar);
+    return () => window.removeEventListener(CONSENT_CHANGED_EVENT, registrar);
+  }, [profile, analyticsUser]);
 
   const refreshMfaLevel = useCallback(async (sessionUser?: User) => {
     const userId = activeUserId.current;
@@ -181,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     activeUserId.current = null;
     profileRequest.current++;
     setUser(null);
+    setAnalyticsUser(null);
     setProfile(null);
     setProfileError(false);
     setMfaCurrentLevel("aal1");
@@ -200,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (activeUserId.current !== (nextUser?.id ?? null)) {
         activeUserId.current = nextUser?.id ?? null;
         profileRequest.current++;
+        setAnalyticsUser(null);
         setProfile(null);
         setProfileError(false);
         setMfaCurrentLevel("aal1");
@@ -219,7 +219,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Perfil e nível de MFA não dependem um do outro: saem juntos.
         await Promise.all([fetchProfile(nextUser.id), refreshMfaLevel(nextUser)]);
         if (!mounted || generation !== currentGeneration) return;
-        void syncConsentForUser(nextUser.id);
+        const aindaAtual = () => mounted && generation === currentGeneration;
+        void syncConsentForUser(nextUser.id, aindaAtual).then(() => {
+          if (aindaAtual()) setAnalyticsUser(nextUser.id);
+        });
       } catch (error) {
         monitoring.captureException(error, { context: "auth-session-load", userId: nextUser.id });
       } finally {

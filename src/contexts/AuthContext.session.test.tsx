@@ -29,8 +29,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("@/lib/monitoring", () => ({
   monitoring: { setUser: mocks.setUser, captureException: mocks.captureException },
 }));
-vi.mock("@/lib/analytics", () => ({ analytics: { identify: vi.fn(), reset: mocks.reset } }));
-vi.mock("@/lib/cookieConsentSync", () => ({ syncConsentForUser: vi.fn() }));
+vi.mock("@/lib/analytics", () => ({ analytics: { identify: vi.fn(), trackLogin: vi.fn(), reset: mocks.reset } }));
+vi.mock("@/lib/cookieConsentSync", () => ({ syncConsentForUser: vi.fn().mockResolvedValue(undefined) }));
 
 function Probe() {
   const a = useAuth();
