@@ -8,8 +8,11 @@ const refs = {
 const env = process.env;
 const canal = env.CANAL;
 if (!Object.hasOwn(refs, canal)) throw new Error("Canal do Firebase inválido.");
-if (canal === "live" && (env.GITHUB_EVENT_NAME !== "workflow_dispatch" || env.GITHUB_REF !== "refs/heads/main")) {
-  throw new Error("Hosting live exige um disparo manual a partir da main.");
+// Live só sai de main: por disparo manual nela, ou pelo CI de main que terminou verde.
+const liveManual = env.GITHUB_EVENT_NAME === "workflow_dispatch" && env.GITHUB_REF === "refs/heads/main";
+const liveDoCi = env.GITHUB_EVENT_NAME === "workflow_run" && env.CI_HEAD_BRANCH === "main";
+if (canal === "live" && !liveManual && !liveDoCi) {
+  throw new Error("Hosting live exige disparo manual da main ou o CI verde da main.");
 }
 for (const nome of ["FIREBASE_PROJECT", "SITE_ID", "VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"]) {
   if (!env[nome]?.trim()) throw new Error(`Variável ${nome} ausente no Environment.`);
