@@ -27,6 +27,40 @@ const ROTAS: Array<{ prefixo: string; buscar: (qc: QueryClient, ctx: ContextoEnt
     ],
   },
   {
+    prefixo: "/clientes",
+    // Mesma chave e parâmetros iniciais da tela (página 0, ordem por nome, sem filtro).
+    buscar: (qc) => [
+      Promise.all([import("@/hooks/useClientes"), import("@/pages/clientes/pagination")]).then(
+        ([{ fetchClientesPagina, chaveClientesLista }, { CLIENTES_PAGE_SIZE }]) => {
+          const params = {
+            page: 0,
+            pageSize: CLIENTES_PAGE_SIZE,
+            search: "",
+            origem: "all",
+            tipoPessoa: "all",
+            portal: "all",
+            projeto: "all",
+            sortField: "nome",
+            sortDir: "asc",
+          } as const;
+          return qc.prefetchQuery({
+            queryKey: chaveClientesLista(params),
+            queryFn: () => fetchClientesPagina(params),
+            staleTime: STALE,
+          });
+        }
+      ),
+    ],
+  },
+  {
+    prefixo: "/obras",
+    buscar: (qc) => [
+      import("@/pages/obras/hooks/useObras").then(({ fetchObras, KEY_OBRAS_LISTA }) =>
+        qc.prefetchQuery({ queryKey: KEY_OBRAS_LISTA, queryFn: fetchObras, staleTime: STALE })
+      ),
+    ],
+  },
+  {
     prefixo: "/inicio",
     // Mesma chave de usePainelGestao (empresa e usuário).
     buscar: (qc, { empresaId, usuarioId }) => [
