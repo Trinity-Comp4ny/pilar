@@ -1,5 +1,6 @@
-import { cnpjValido, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+  cnpjValido,
   decidirCanal,
   decidirConfianca,
   ehDaRegiao,
