@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { monitoring } from "@/lib/monitoring";
 
 // Sessão do Pilar Campo: token próprio (não é auth do Supabase), guardado por
 // aba. Espelha o portal do cliente (useClienteAuth), mas a conta é escopada a
@@ -102,6 +103,8 @@ export function useCampoAuth() {
         must_change_senha: !!res.must_change_senha,
       };
       setCachedAccount(acc);
+      // O Campo não passa pelo AuthContext: sem isso, o erro do pedreiro chega ao Sentry sem empresa.
+      monitoring.setUser({ id: acc.account_id, empresa_id: acc.empresa_id, role: "campo" });
       setAccount(acc);
       setError(null);
       setLoading(false);

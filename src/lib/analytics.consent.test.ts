@@ -90,7 +90,7 @@ describe("analytics: gate de consentimento (ADR 0022)", () => {
     expect(initMock).toHaveBeenCalledTimes(1);
 
     analytics.track("cliente_criado");
-    expect(captureMock).toHaveBeenCalledWith("cliente_criado", undefined);
+    expect(captureMock).toHaveBeenCalledWith("cliente_criado", { origin: "app" });
   });
 
   it("identify registra o escritório em todos os eventos seguintes", async () => {
