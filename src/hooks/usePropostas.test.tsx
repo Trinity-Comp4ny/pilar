@@ -56,17 +56,18 @@ describe("usePropostas", () => {
 
 describe("mutations de proposta", () => {
   it("criar grava na empresa do usuário", async () => {
-    supabaseFake.respond("propostas", "insert", { data: { id: "p9" } });
+    supabaseFake.respond("propostas", "insert", { data: { id: "p9", empresa_id: "emp-1" } });
     const { result } = renderHook(() => useCreateProposta(), { wrapper });
     await expect(result.current.mutateAsync({ titulo: "Clínica", valor_proposto: 1000 })).resolves.toEqual({
       id: "p9",
+      empresa_id: "emp-1",
     });
     expect(supabaseFake.callsTo("propostas", "insert")[0].payload).toEqual({
       titulo: "Clínica",
       valor_proposto: 1000,
       empresa_id: "emp-1",
     });
-    expect(track).toHaveBeenCalledExactlyOnceWith("proposta_criada");
+    expect(track).toHaveBeenCalledExactlyOnceWith("proposta_criada", { empresa_id: "emp-1" });
   });
 
   it("criar sem empresa não grava", async () => {
