@@ -304,6 +304,8 @@ export function saudacao(agora: Date = new Date()): "Bom dia" | "Boa tarde" | "B
 }
 
 export interface LeadParaMensagem {
+  /** Define a variante A/B (par = A, ímpar = B). Sem id, sempre A. */
+  id?: string;
   nome: string;
   segmento: string;
   cidade: string | null;
@@ -317,6 +319,8 @@ export interface LeadParaMensagem {
 export interface Contato {
   canal: Canal;
   texto: string;
+  /** Modelo usado, gravado no envio para medir o teste A/B (ex.: pessoa_a, empresa_b). */
+  modelo: string;
   assunto?: string;
   /** Link que abre o app certo (wa.me, mailto ou tel). Nulo quando não há canal. */
   href: string | null;
@@ -328,11 +332,41 @@ export function linkWhatsapp(e164: string, texto: string): string {
   return `https://wa.me/${e164}?text=${encodeURIComponent(texto)}`;
 }
 
+export type Variante = "a" | "b";
+
+/** Variante estável por lead: o mesmo lead sempre recebe o mesmo texto. */
+export function varianteDoLead(id: string | undefined): Variante {
+  const ultimo = (id ?? "").replace(/[^0-9a-f]/gi, "").slice(-1);
+  return ultimo && parseInt(ultimo, 16) % 2 === 1 ? "b" : "a";
+}
+
+/** Follow-up único, curto, para quem recebeu a primeira mensagem e não respondeu. */
+export function textoFollowup(lead: LeadParaMensagem, agora: Date = new Date()): string {
+  const nome = lead.confianca_contato === "pessoa" && lead.contato_nome ? `, ${primeiroNome(lead.contato_nome)}` : "";
+  return [
+    `${saudacao(agora)}${nome}! Matheus, da Pilar, de novo.`,
+    "Mandei uma mensagem outro dia e queria só saber se faz sentido conversarmos rapidinho.",
+    "Se não for o momento, é só me avisar que eu não incomodo mais.",
+  ].join("\n");
+}
+
 function textoWhatsapp(lead: LeadParaMensagem, agora: Date): string {
   const seg = SEGMENTOS[lead.segmento] ?? SEGMENTOS.arquitetura;
   const local = ehDaRegiao(lead.cidade);
   const origem = local ? "aqui em Marília" : "em Marília (SP)";
   const s = saudacao(agora);
+
+  const b = varianteDoLead(lead.id) === "b";
+
+  if (b) {
+    const quem =
+      lead.confianca_contato === "pessoa" && lead.contato_nome ? `${s}, ${primeiroNome(lead.contato_nome)}!` : `${s}!`;
+    return [
+      `${quem} Matheus, da Pilar (${origem}).`,
+      "Hoje, como vocês controlam orçamento, equipe e financeiro?",
+      `A Pilar é um software de gestão para ${seg.publico}. Posso te mostrar em 15 minutos?`,
+    ].join("\n");
+  }
 
   if (lead.confianca_contato === "pessoa" && lead.contato_nome) {
     const alvo = local ? "empresas da região" : "empresas do setor";
@@ -356,7 +390,8 @@ export function montarContato(lead: LeadParaMensagem, agora: Date = new Date()):
 
   if (lead.canal === "whatsapp" && lead.telefone_e164) {
     const texto = textoWhatsapp(lead, agora);
-    return { canal: "whatsapp", texto, href: linkWhatsapp(lead.telefone_e164, texto) };
+    const modelo = `${lead.confianca_contato === "pessoa" && lead.contato_nome ? "pessoa" : "empresa"}_${varianteDoLead(lead.id)}`;
+    return { canal: "whatsapp", texto, modelo, href: linkWhatsapp(lead.telefone_e164, texto) };
   }
 
   if (lead.canal === "email" && lead.email) {
@@ -370,6 +405,7 @@ export function montarContato(lead: LeadParaMensagem, agora: Date = new Date()):
       canal: "email",
       assunto,
       texto,
+      modelo: "email_a",
       href: `mailto:${lead.email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(texto)}`,
     };
   }
@@ -378,10 +414,10 @@ export function montarContato(lead: LeadParaMensagem, agora: Date = new Date()):
     const texto =
       "Olá! Aqui é o Matheus, da Pilar. Gostaria de saber quem na empresa cuida da gestão dos projetos e orçamentos. " +
       "Posso falar rapidamente ou enviar uma apresentação por e-mail?";
-    return { canal: "ligacao", texto, href: `tel:+${lead.telefone_e164}` };
+    return { canal: "ligacao", texto, modelo: "ligacao_a", href: `tel:+${lead.telefone_e164}` };
   }
 
-  return { canal: "nenhum", texto: "", href: null };
+  return { canal: "nenhum", texto: "", modelo: "nenhum", href: null };
 }
 
 export const ROTULO_CANAL: Record<Canal, string> = {
@@ -407,3 +443,9 @@ export function formatarTelefone(e164: string | null): string {
   if (!e164) return "";
   return extrairTelefones(e164)[0]?.exibicao ?? e164;
 }
+
+/** Amostra pequena engana: abaixo disso a taxa aparece, mas com aviso. */
+export const AMOSTRA_MINIMA = 30;
+
+export const taxa = (parte: number, total: number): string =>
+  total === 0 ? "-" : `${((parte / total) * 100).toFixed(1).replace(".", ",")}%`;

@@ -9,6 +9,9 @@ import {
   formatarTelefone,
   linhaParaLead,
   montarContato,
+  taxa,
+  textoFollowup,
+  varianteDoLead,
   notaPorPrioridade,
   saudacao,
   segmentoPorRotulo,
@@ -236,5 +239,39 @@ describe("cnpjValido", () => {
     expect(cnpjValido("11.222.333/0001-81")).toBe("11222333000181");
     expect(cnpjValido("123")).toBeNull();
     expect(cnpjValido(null)).toBeNull();
+  });
+});
+
+describe("fase 3: A/B, follow-up e taxa", () => {
+  it("varianteDoLead é estável e divide por paridade do id", () => {
+    expect(varianteDoLead(undefined)).toBe("a");
+    expect(varianteDoLead("00000000-0000-0000-0000-000000000002")).toBe("a");
+    expect(varianteDoLead("00000000-0000-0000-0000-000000000003")).toBe("b");
+    expect(varianteDoLead("00000000-0000-0000-0000-00000000000f")).toBe("b");
+  });
+
+  it("a variante B muda o texto e o modelo gravado", () => {
+    const a = montarContato({ ...base, id: "00000000-0000-0000-0000-000000000002" }, MANHA);
+    const b = montarContato({ ...base, id: "00000000-0000-0000-0000-000000000003" }, MANHA);
+    expect(a.modelo).toBe("empresa_a");
+    expect(b.modelo).toBe("empresa_b");
+    expect(b.texto).not.toBe(a.texto);
+    expect(b.texto).toContain("15 minutos");
+  });
+
+  it("modelo com nome vira pessoa_*", () => {
+    const c = montarContato({ ...base, confianca_contato: "pessoa", contato_nome: "Liane Souza" }, MANHA);
+    expect(c.modelo).toBe("pessoa_a");
+  });
+
+  it("follow-up é curto, usa o nome e oferece saída", () => {
+    const t = textoFollowup({ ...base, confianca_contato: "pessoa", contato_nome: "Liane Souza" }, MANHA);
+    expect(t).toContain("Bom dia, Liane!");
+    expect(t).toContain("não incomodo mais");
+  });
+
+  it("taxa formata percentual e evita divisão por zero", () => {
+    expect(taxa(1, 4)).toBe("25,0%");
+    expect(taxa(0, 0)).toBe("-");
   });
 });
