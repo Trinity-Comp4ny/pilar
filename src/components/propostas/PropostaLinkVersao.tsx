@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,7 @@ export function PropostaLinkVersao({
     },
     onSuccess: async () => {
       await Promise.all([atualizarVersoes(), queryClient.invalidateQueries({ queryKey: ["propostas"] })]);
+      analytics.track("proposta_link_publicado");
       toast.success("Link publicado");
     },
     onError: () =>

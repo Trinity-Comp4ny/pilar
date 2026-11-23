@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -135,6 +136,9 @@ export function useCampoSync() {
 
       const registros = await sincronizarRegistros(filaRegistroDb, (item) => enviarRegistroRemoto(token, item));
       if (registros.enviados > 0) queryClient.invalidateQueries({ queryKey: ["campo_registros"] });
+      if (resumo.enviados > 0 || registros.enviados > 0) {
+        analytics.track("campo_fila_sincronizada", { dias: resumo.enviados, registros: registros.enviados });
+      }
     },
     [queryClient]
   );
