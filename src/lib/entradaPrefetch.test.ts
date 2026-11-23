@@ -12,3 +12,17 @@ describe("prefetchDaRota /inicio", () => {
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ["painel-gestao", "e1", "u1"] }));
   });
 });
+
+describe("prefetchDaRota /obras e /clientes", () => {
+  it("usa as chaves das listas iniciais", async () => {
+    const qc = new QueryClient();
+    const spy = vi.spyOn(qc, "prefetchQuery").mockResolvedValue(undefined);
+    const ctx = { empresaId: "e1", usuarioId: "u1" };
+    await Promise.all(prefetchDaRota(qc, "/obras", ctx));
+    await Promise.all(prefetchDaRota(qc, "/clientes", ctx));
+    const chaves = spy.mock.calls.map((c) => JSON.stringify((c[0] as { queryKey: unknown }).queryKey));
+    expect(chaves[0]).toBe('["obras","lista"]');
+    expect(chaves[1]).toContain('"clientes","lista"');
+    expect(chaves[1]).toContain('"sortField":"nome"');
+  });
+});
