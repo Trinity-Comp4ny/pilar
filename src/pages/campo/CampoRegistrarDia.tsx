@@ -29,7 +29,6 @@ import type {
   FilaEfetivo,
   FilaFoto,
   FilaImpedimento,
-  FilaMedicao,
   FilaTarefaVinculo,
   FilaVisita,
 } from "./campoOfflineQueue";
