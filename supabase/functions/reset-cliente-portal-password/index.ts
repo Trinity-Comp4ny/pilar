@@ -9,6 +9,7 @@ import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
+import { resolverEmpresaAlvo } from "../_shared/empresa-alvo.ts";
 
 const log = createLogger("reset-cliente-portal-password");
 
@@ -34,11 +35,17 @@ serve(
       if (!["admin", "ultra_admin", "coordenador"].includes(profile.role)) {
         return safeErrorResponse(403, "Apenas admin ou coordenador pode redefinir senhas do portal", req);
       }
-      if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
       const { cliente_id, account_id, nome_cliente } = entrada.data;
+
+      const alvo = await resolverEmpresaAlvo(supabaseClient, profile, entrada.data.empresa_id, "portal_reset_senha", {
+        tipo: "cliente",
+        id: String(entrada.data.cliente_id),
+      });
+      if (!alvo.ok) return safeErrorResponse(alvo.status, alvo.error, req);
+      const empresaId = alvo.empresaId;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -58,7 +65,7 @@ serve(
         .from("cliente_portal_accounts")
         .select("id, email, nome")
         .eq("cliente_id", cliente_id)
-        .eq("empresa_id", profile.empresa_id);
+        .eq("empresa_id", empresaId);
       if (account_id) consulta = consulta.eq("id", account_id);
       const { data: contas, error: accountError } = await consulta.limit(2);
 
@@ -70,7 +77,7 @@ serve(
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
         .select("nome, email")
-        .eq("id", profile.empresa_id)
+        .eq("id", empresaId)
         .maybeSingle();
 
       if (!empresa?.email)
@@ -90,7 +97,7 @@ serve(
           tipo: "portal_senha_redefinida",
           to: account.email,
           empresa: {
-            id: profile.empresa_id,
+            id: empresaId,
             nome: empresa?.nome ?? "Seu escritório",
             email: empresa?.email,
           },
@@ -105,7 +112,7 @@ serve(
       } catch (emailErr) {
         log.error("sendEmail failed — senha NÃO alterada", emailErr, {
           account_id: account.id,
-          empresa_id: profile.empresa_id,
+          empresa_id: empresaId,
         });
         return safeErrorResponse(
           502,
@@ -122,7 +129,7 @@ serve(
       if (resetError) {
         log.error("_portal_reset_password_convite failed", resetError, {
           account_id: account.id,
-          empresa_id: profile.empresa_id,
+          empresa_id: empresaId,
           user_id: user.id,
         });
         return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
