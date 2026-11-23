@@ -1,3 +1,4 @@
+import { origemAtual } from "./origem";
 import { scrubString, scrubTelemetry } from "@/lib/scrubTelemetry";
 /**
  * Monitoring layer — Sentry-backed com fallback no-op.
@@ -126,6 +127,7 @@ const sentryMonitoring: Monitoring = {
       // na entrada de toda página, para gravar só sessões com erro.
       integrations: [Sentry.browserTracingIntegration()],
       beforeSendTransaction(event) {
+        event.tags = { ...event.tags, origin: origemAtual() };
         const txName = event.transaction ?? "";
         if (IGNORED_TX_ROUTES.some((re) => re.test(txName))) return null;
         if (event.transaction) event.transaction = scrubString(event.transaction);
@@ -133,6 +135,7 @@ const sentryMonitoring: Monitoring = {
         return event;
       },
       beforeSend(event) {
+        event.tags = { ...event.tags, origin: origemAtual() };
         if (event.request?.url) event.request.url = scrubString(event.request.url);
         if (event.request?.data) {
           event.request.data = scrub(event.request.data);

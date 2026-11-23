@@ -7,7 +7,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(7);
+SELECT plan(10);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
@@ -20,7 +20,8 @@ SET LOCAL session_replication_role = 'replica';
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
 VALUES
   ('77777777-0000-0000-0000-00000000d001', 'gestao_campo_admin@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('77777777-0000-0000-0000-00000000d002', 'gestao_campo_intruso@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+  ('77777777-0000-0000-0000-00000000d002', 'gestao_campo_intruso@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
+  ('77777777-0000-0000-0000-00000000d003', 'gestao_campo_ultra@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
@@ -28,7 +29,8 @@ SET LOCAL session_replication_role = 'origin';
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
   ('77777777-0000-0000-0000-00000000d001', '00000000-0000-0000-0000-00000000d0aa', 'Gestao', 'Admin', 'gestao_campo_admin@test.com', 'admin', TRUE),
-  ('77777777-0000-0000-0000-00000000d002', '00000000-0000-0000-0000-00000000d0bb', 'Gestao', 'Intruso', 'gestao_campo_intruso@test.com', 'admin', TRUE)
+  ('77777777-0000-0000-0000-00000000d002', '00000000-0000-0000-0000-00000000d0bb', 'Gestao', 'Intruso', 'gestao_campo_intruso@test.com', 'admin', TRUE),
+  ('77777777-0000-0000-0000-00000000d003', '00000000-0000-0000-0000-00000000d0bb', 'Gestao', 'Ultra', 'gestao_campo_ultra@test.com', 'ultra_admin', TRUE)
 ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, empresa_id = EXCLUDED.empresa_id;
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
@@ -88,6 +90,15 @@ SELECT throws_ok(
   'gestor de outra empresa não revoga acesso de obra alheia'
 );
 
+-- Ultra_admin (aal2, empresa diferente) lista as contas da obra alheia
+SELECT test_set_auth('77777777-0000-0000-0000-00000000d003');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.campo_listar_contas_obra('00000000-0000-0000-0000-00000000d2aa')),
+  1,
+  'ultra_admin lista as contas de campo de obra de outra empresa'
+);
+
 -- Gestor da empresa dona lista corretamente
 SELECT test_set_auth('77777777-0000-0000-0000-00000000d001');
 
@@ -113,6 +124,25 @@ SELECT is(
   (public.campo_verify_session(current_setting('pgtap.campo_gestao_token'))->>'ok')::boolean,
   false,
   'revogar invalida a sessão corrente, mesmo com token não expirado'
+);
+
+-- Ultra_admin revoga acesso de outra empresa (a conta já foi revogada acima, então reativa antes)
+RESET ROLE;
+UPDATE public.campo_accounts SET ativo = true WHERE id = '00000000-0000-0000-0000-00000000d3aa';
+SELECT test_set_auth('77777777-0000-0000-0000-00000000d003');
+
+SELECT lives_ok(
+  $$ SELECT public.campo_revogar_acesso('00000000-0000-0000-0000-00000000d3aa') $$,
+  'ultra_admin revoga acesso de campo de outra empresa'
+);
+
+-- Lê como superusuário: a RLS de campo_accounts ainda não tem bypass de ultra_admin (PR de policies).
+RESET ROLE;
+
+SELECT is(
+  (SELECT ativo FROM public.campo_accounts WHERE id = '00000000-0000-0000-0000-00000000d3aa'),
+  false,
+  'conta fica inativa após o ultra_admin revogar'
 );
 
 SELECT * FROM finish();

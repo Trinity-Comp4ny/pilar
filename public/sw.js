@@ -8,8 +8,8 @@
 //     antiga pra sempre (o favicon branco de julho seguia aparecendo).
 //   - Sem cache de chamadas Supabase/API (sempre rede).
 
-// Trocar a versão descarta o cache anterior no activate.
-const CACHE_NAME = "pilar-v2";
+// Trocar a versão descarta o cache anterior no activate (v3: purga assets com HTML gravado).
+const CACHE_NAME = "pilar-v3";
 const SHELL = ["/", "/index.html", "/pilar-logo.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -65,7 +65,10 @@ self.addEventListener("fetch", (event) => {
       caches.match(req).then((hit) => {
         if (hit) return hit;
         return fetch(req).then((res) => {
-          if (res.ok) {
+          // O host responde 200 com index.html (fallback de SPA) para asset que ainda não existe
+          // (janela de deploy). Cachear isso prende o HTML no lugar do .js para sempre (cache-first).
+          const tipo = res.headers.get("content-type") || "";
+          if (res.ok && !tipo.includes("text/html")) {
             const copy = res.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(req, copy).catch(() => undefined));
           }

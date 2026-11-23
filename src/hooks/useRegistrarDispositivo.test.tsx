@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: h.user }) }));
 vi.mock("@/lib/dispositivo", () => ({ idDoDispositivo: () => h.id, descricaoDoNavegador: () => "Chrome no Windows" }));
 
+vi.mock("@/hooks/useAposPrimeiraPintura", () => ({ useAposPrimeiraPintura: () => true }));
 import { useRegistrarDispositivo } from "./useRegistrarDispositivo";
 
 const registros = () => supabaseFake.rpcCalls.filter((c) => c.fn === "registrar_dispositivo");

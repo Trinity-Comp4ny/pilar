@@ -18,14 +18,14 @@ describe("useEntradaPronta", () => {
 
   it("não segura nada sem empresa", () => {
     prefetch.mockReturnValue([]);
-    const { result } = renderHook(() => useEntradaPronta(undefined, "/projetos"), { wrapper });
+    const { result } = renderHook(() => useEntradaPronta(undefined, "/projetos", undefined), { wrapper });
     expect(result.current).toBe(true);
   });
 
   it("segura o véu até os dados chegarem", async () => {
     let fim!: () => void;
     prefetch.mockReturnValue([new Promise<void>((r) => (fim = r))]);
-    const { result } = renderHook(() => useEntradaPronta("e1", "/projetos"), { wrapper });
+    const { result } = renderHook(() => useEntradaPronta("e1", "/projetos", "u1"), { wrapper });
     expect(result.current).toBe(false);
     await act(async () => {
       fim();
@@ -35,7 +35,7 @@ describe("useEntradaPronta", () => {
 
   it("libera no teto mesmo se os dados não chegam", async () => {
     prefetch.mockReturnValue([new Promise(() => {})]);
-    const { result } = renderHook(() => useEntradaPronta("e1", "/projetos"), { wrapper });
+    const { result } = renderHook(() => useEntradaPronta("e1", "/projetos", "u1"), { wrapper });
     expect(result.current).toBe(false);
     await act(async () => {
       vi.advanceTimersByTime(TETO_ENTRADA_MS + 10);
@@ -45,7 +45,7 @@ describe("useEntradaPronta", () => {
 
   it("libera na hora quando a rota não tem pré-carregamento", async () => {
     prefetch.mockReturnValue([]);
-    const { result } = renderHook(() => useEntradaPronta("e1", "/outra"), { wrapper });
+    const { result } = renderHook(() => useEntradaPronta("e1", "/outra", "u1"), { wrapper });
     await act(async () => {});
     expect(result.current).toBe(true);
   });
