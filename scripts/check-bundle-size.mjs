@@ -103,6 +103,7 @@ const BUDGETS = {
   // Mesma data, Prospecção (SPEC 172): o ícone Send entra no menu (boot): +0,1 kB sobre o teto.
   // 2026-11-23: 343 kB (era 342). A tag de origem na telemetria e o funil do portal e do Campo
   // somaram uns poucos bytes ao boot (342,0 kB medidos no CI, colado no teto).
+  // Mesma data, contagens do onboarding adiadas até a primeira pintura (perf): +0,1 kB gzip.
   initialLoad: 343 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,

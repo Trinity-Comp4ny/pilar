@@ -41,7 +41,7 @@ export function ContaPanel() {
   const { user, profile, profileError, refreshProfile } = useAuth();
   const [retrying, setRetrying] = useState(false);
   const { reset: resetOnboarding, state: onboardingState, markTourSeen } = useOnboardingState();
-  const { steps: passosOnboarding, loading: carregandoPassos } = useOnboardingProgress();
+  const { steps: passosOnboarding, loading: carregandoPassos } = useOnboardingProgress({ mesmoDispensado: true });
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isRemoveAvatarConfirmOpen, setIsRemoveAvatarConfirmOpen] = useState(false);
