@@ -1,7 +1,7 @@
 ---
 titulo: Quanto cobrar por projeto elétrico: método para chegar ao preço
-tituloSeo: Quanto cobrar por projeto elétrico: o método
-descricao: Quanto cobrar por projeto elétrico: como estimar horas por entregável, ajustar pela complexidade e conferir por área, sem depender de tabela pronta.
+tituloSeo: Quanto cobrar por projeto elétrico? Veja um exemplo
+descricao: Calcule o preço do projeto elétrico por hora técnica, entregáveis e margem. Confira um exemplo de orçamento e use a calculadora de honorários.
 palavraChave: quanto cobrar projeto elétrico
 categoria: Financeiro
 modulo: gestao

@@ -99,7 +99,7 @@ Ao fechar um projeto, compare o que foi vendido com o que entrou e com quanto a 
 
 ## Como a Pilar ajuda
 
-A Pilar não calcula o seu preço por você. Ele guarda o que foi vendido, por disciplina, e liga isso ao que entra no caixa, para a próxima proposta partir de dado real. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
+A Pilar não calcula o seu preço por você. Ele guarda o que foi vendido, por disciplina, e liga isso ao que entra no caixa, para a próxima proposta partir de dado real. Veja como o [software de gestão para escritórios de engenharia](/engenharia) reúne propostas, disciplinas e financeiro. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
 
 - Proposta por disciplina em DOCX no modelo do escritório, com funil e motivo de perda registrado ([Gestão](/gestao)).
 - Proposta aceita vira projeto com as parcelas no financeiro, em parcelas mensais ou marcos.

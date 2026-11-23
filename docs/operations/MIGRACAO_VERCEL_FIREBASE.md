@@ -25,7 +25,7 @@ Diferença deliberada em relação ao `vercel.json`: o Firebase cacheia HTML por
 
 - CSP e HSTS idênticos ao `vercel.json` (comparação byte a byte).
 - `/assets/*` imutável; `/`, rotas do SPA e `index.html` revalidam; `sw.js` e `version.json` sem cache.
-- Fallback de SPA para `/index.html` (app) e `/spa.html` (landing).
+- O app mantém o fallback de SPA para `/index.html`. A landing serve HTML pré-renderizado e usa `404.html` para URLs desconhecidas.
 - Landing: `/dashboard` e as rotas do app respondem 307 para `app.pilarsoft.com.br`.
 - O helper de releases usa um nome distinto da página `Releases.tsx`, inclusive no macOS.
 - Verificar o comportamento no Firebase real no passo 4.

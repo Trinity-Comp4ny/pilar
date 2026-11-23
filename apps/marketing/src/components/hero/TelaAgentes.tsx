@@ -46,7 +46,7 @@ export function TelaAgentes({ ato }: { ato: number }) {
     <div className="h-full flex flex-col">
       {/* Cabeçalho do app: título, alternância Conversar/Pendências e ação primária. */}
       <header className="h-14 shrink-0 flex items-center gap-3 px-6 border-b border-black/5">
-        <h3 className="text-[15px] font-medium tracking-tight text-ink">Agentes</h3>
+        <p className="text-[15px] font-medium tracking-tight text-ink">Agentes</p>
 
         <span className="mx-auto inline-flex items-center gap-1 text-[11.5px] font-medium">
           <span className="px-3 py-1.5 rounded-full bg-app-muted text-ink">Conversar</span>

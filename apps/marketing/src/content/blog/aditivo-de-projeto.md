@@ -78,7 +78,7 @@ Com isso no contrato, o aditivo deixa de ser uma negociação e vira a aplicaç�
 
 ## Como a Pilar ajuda
 
-A Pilar não faz o aditivo por você; o documento formal continua sendo do escritório. O que ele faz é manter o histórico que sustenta a cobrança, no [módulo Projetos](/projetos) e no [módulo Gestão](/gestao).
+A Pilar não faz o aditivo por você; o documento formal continua sendo do escritório. O que ele faz é manter o histórico que sustenta a cobrança, no [módulo Projetos](/projetos) e no [módulo Gestão](/gestao). Veja também como a [Pilar conecta propostas, projetos e financeiro para equipes de engenharia](/engenharia).
 
 - Proposta montada por disciplina, no template do escritório, gerada em DOCX e enviada por e-mail: o escopo original fica claro desde o começo.
 - Comentário, etiqueta e link em cada disciplina, para o pedido do cliente ficar registrado onde o trabalho acontece.
