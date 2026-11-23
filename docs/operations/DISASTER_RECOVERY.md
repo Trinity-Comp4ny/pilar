@@ -15,9 +15,14 @@ melhor que o intervalo do backup manual.
 
 | Métrica                            | Target                                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------ |
-| **RTO** (Recovery Time Objective)  | 4 horas (drill real: dump 2min + restore 1-2s — o gargalo é humano, não técnico)     |
+| **RTO** (Recovery Time Objective)  | 4 horas. O resumo do drill registra o tempo técnico de recuperação     |
 | **RPO** (Recovery Point Objective) | 24 horas (backup noturno via GitHub Actions, ver abaixo — **não é PITR de verdade**) |
 | **Disponibilidade alvo**           | 99.9% (43min downtime/mês)                                                           |
+
+O tempo registrado pelo drill cobre a recuperação do backup até a releitura do Storage
+no runner. Para GCS, começa no job que baixa a cópia e inclui a espera pelo job de
+restauração. O RTO de um incidente também inclui a mobilização da equipe e a volta
+do tráfego, etapas realizadas fora do drill.
 
 ## Backups
 

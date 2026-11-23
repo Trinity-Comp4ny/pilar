@@ -39,11 +39,15 @@ jobs:
     timeout-minutes: 15
     outputs:
       artifact_name: ${{ steps.artifact-id.outputs.name }}
+      started_at: ${{ steps.clock.outputs.started_at }}
     environment: production-automation
     permissions:
       contents: read
       id-token: write
     steps:
+      - name: Marcar início da recuperação pelo GCS
+        id: clock
+        run: echo "started_at=$(date +%s)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -104,6 +108,15 @@ jobs:
     environment: production-automation
     timeout-minutes: 30
     steps:
+      - name: Marcar início da recuperação
+        env:
+          GCS_STARTED_AT: ${{ needs.gcs-source.outputs.started_at }}
+        run: |
+          set -euo pipefail
+          started_at="${GCS_STARTED_AT:-$(date +%s)}"
+          [[ "$started_at" =~ ^[0-9]{1,12}$ ]]
+          echo "DRILL_STARTED_AT=$started_at" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
@@ -309,6 +322,22 @@ jobs:
             echo "### Restauração do Storage"
             cat storage-restore.log
             echo "Upload e releitura concluídos em $((SECONDS - inicio)) s."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Registrar tempo total e resultado da recuperação
+        if: ${{ always() && env.DRILL_STARTED_AT != '' }}
+        env:
+          DRILL_STATUS: ${{ job.status }}
+          DRILL_SOURCE: ${{ inputs.gcs_run != '' && 'GCS' || 'GitHub Actions' }}
+        run: |
+          set -euo pipefail
+          agora=$(date +%s)
+          duracao=$((agora - DRILL_STARTED_AT))
+          {
+            echo "### Tempo da recuperação no runner"
+            echo "- Origem: $DRILL_SOURCE"
+            echo "- Resultado: $DRILL_STATUS"
+            echo "- Tempo decorrido: ${duracao} s"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Notificar falha
