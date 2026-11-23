@@ -1,12 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { Link, MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PropostaPublica from "./PropostaPublica";
 
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke } } }));
 const token = "00000000-0000-4000-8000-000000000001";
+const outroToken = "00000000-0000-4000-8000-000000000002";
 const dados = {
   empresa: "Escritório",
   numero: 2,
@@ -19,6 +20,7 @@ function abrir() {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[`/proposta-compartilhada#${token}`]}>
+        <Link to={`/proposta-compartilhada#${outroToken}`}>Abrir outra versão</Link>
         <PropostaPublica />
       </MemoryRouter>
     </QueryClientProvider>
@@ -44,6 +46,39 @@ describe("PropostaPublica", () => {
     expect(await screen.findByText(/Proposta aceita em/)).toBeInTheDocument();
     expect(invoke).toHaveBeenNthCalledWith(1, "proposta-link", { body: { token, acao: "abrir" } });
     expect(invoke).toHaveBeenNthCalledWith(2, "proposta-link", { body: { token, acao: "aceitar" } });
+  });
+
+  it("pede nova confirmação ao navegar para outra versão", async () => {
+    invoke.mockResolvedValueOnce({ data: dados, error: null });
+    invoke.mockResolvedValueOnce({ data: { ...dados, numero: 3 }, error: null });
+    abrir();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Aceitar proposta" }));
+    expect(screen.getByRole("button", { name: "Confirmar aceite" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Abrir outra versão" }));
+
+    expect(await screen.findByRole("heading", { name: /V3/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirmar aceite" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Aceitar proposta" })).toBeInTheDocument();
+    expect(invoke).toHaveBeenNthCalledWith(2, "proposta-link", { body: { token: outroToken, acao: "abrir" } });
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("atualiza o PDF depois de um aceite com PDF temporariamente indisponível", async () => {
+    const aceita = { ...dados, estado: "aceita", aceita_em: "2026-11-19T12:00:00Z" };
+    invoke
+      .mockResolvedValueOnce({ data: dados, error: null })
+      .mockResolvedValueOnce({ data: { ...aceita, pdf: null }, error: null })
+      .mockResolvedValueOnce({ data: aceita, error: null });
+
+    abrir();
+    fireEvent.click(await screen.findByRole("button", { name: "Aceitar proposta" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar aceite" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Tentar carregar o PDF" }));
+
+    expect(await screen.findByRole("link", { name: "Baixar PDF da V2" })).toHaveAttribute("href", dados.pdf);
+    expect(screen.getByText(/Proposta aceita em/)).toBeInTheDocument();
+    expect(invoke).toHaveBeenNthCalledWith(3, "proposta-link", { body: { token, acao: "abrir" } });
   });
 
   it.each(["substituida", "expirada", "encerrada"])("mostra PDF da versão %s sem oferecer aceite", async (estado) => {
