@@ -266,11 +266,11 @@ describe("ObraDetalhePage", () => {
     expect(screen.queryByText("lista-obras")).not.toBeInTheDocument();
   });
 
-  it("esconde a aba Acessos quando a obra é de outra empresa", async () => {
+  it("mantém a aba Acessos quando a obra é de outra empresa (ultra_admin gerencia qualquer empresa)", async () => {
     auth.empresaId = "emp-2";
     comObra();
     montar();
     expect(await screen.findByRole("heading", { name: "Residência Silva" })).toBeInTheDocument();
-    expect(abas()).not.toContain("Acessos");
+    expect(abas()).toContain("Acessos");
   });
 });
