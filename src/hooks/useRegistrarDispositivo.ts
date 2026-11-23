@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useAposPrimeiraPintura } from "@/hooks/useAposPrimeiraPintura";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { descricaoDoNavegador, idDoDispositivo } from "@/lib/dispositivo";
@@ -11,8 +12,9 @@ const registrados = new Set<string>();
  */
 export function useRegistrarDispositivo() {
   const { user } = useAuth();
+  const depoisDaPintura = useAposPrimeiraPintura();
   useEffect(() => {
-    if (!user || registrados.has(user.id)) return;
+    if (!user || !depoisDaPintura || registrados.has(user.id)) return;
     const id = idDoDispositivo();
     if (!id) return;
     registrados.add(user.id);
@@ -21,5 +23,5 @@ export function useRegistrarDispositivo() {
       .then(({ error }) => {
         if (error) registrados.delete(user.id);
       });
-  }, [user]);
+  }, [user, depoisDaPintura]);
 }

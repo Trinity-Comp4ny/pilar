@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useAposPrimeiraPintura } from "@/hooks/useAposPrimeiraPintura";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,11 +18,12 @@ export async function buscarNovidades(): Promise<Novidades> {
 export function useNovidades() {
   const { user } = useAuth();
   const { can } = usePermissions();
+  const depoisDaPintura = useAposPrimeiraPintura();
 
   const query = useQuery({
     queryKey: NOVIDADES_KEY,
     queryFn: buscarNovidades,
-    enabled: !!user,
+    enabled: !!user && depoisDaPintura,
     staleTime: 60 * 60 * 1000,
   });
 
