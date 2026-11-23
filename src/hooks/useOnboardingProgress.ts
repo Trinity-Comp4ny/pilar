@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useOnboardingState } from "@/hooks/useOnboardingState";
+import { useAposPrimeiraPintura } from "@/hooks/useAposPrimeiraPintura";
 import { ehObjetivo } from "@/lib/perfilEscritorio";
 import { ONBOARDING_STEPS, chaveDaContagem, ordemDosPilares, type OnboardingCheck } from "@/lib/onboarding/steps";
 import {
@@ -41,8 +43,13 @@ async function countSource(check: CheckTabela, empresaId: string): Promise<numbe
  * que a empresa/usuário pode ver (feature + admin), conta as entidades, olha o
  * próprio perfil e agrupa por seção na ordem escolhida pelo escritório.
  */
-export function useOnboardingProgress() {
+export function useOnboardingProgress({ mesmoDispensado = false }: { mesmoDispensado?: boolean } = {}) {
   const { profile } = useAuth();
+  const { state } = useOnboardingState();
+  // As ~10 contagens saíam todas junto da pintura, em toda tela, mesmo para quem já dispensou o
+  // onboarding (checklist e tour não aparecem). Esperam a primeira pintura e pulam quando dispensado.
+  const depoisDaPintura = useAposPrimeiraPintura();
+  const precisaContar = mesmoDispensado || !state.dismissed;
   const { can, isAdmin } = usePermissions();
   const empresaId = profile?.empresa_id ?? null;
   const objetivo = profile?.empresas?.objetivo_inicial;
@@ -62,9 +69,9 @@ export function useOnboardingProgress() {
     .sort()
     .join(",");
 
-  const { data: counts, isLoading } = useQuery({
+  const { data: counts, isPending } = useQuery({
     queryKey: ["onboarding-progress", empresaId, chaves],
-    enabled: !!empresaId && contagens.length > 0,
+    enabled: !!empresaId && contagens.length > 0 && depoisDaPintura && precisaContar,
     staleTime: 1000 * 60 * 2,
     queryFn: async () => {
       if (!empresaId) return {} as Record<string, number>;
@@ -76,6 +83,8 @@ export function useOnboardingProgress() {
   });
 
   const avatarUrl = profile?.avatar_url ?? null;
+  // Consulta adiada continua "carregando": sem isso o checklist piscaria com tudo pendente na 1ª pintura.
+  const isLoading = !!empresaId && contagens.length > 0 && precisaContar && isPending;
 
   return useMemo(() => {
     const ordem = ordemDosPilares(ehObjetivo(objetivo) ? objetivo : null);
