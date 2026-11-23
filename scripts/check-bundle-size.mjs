@@ -54,7 +54,9 @@ const BUDGETS = {
   // sob demanda só em tela de toque; sobra na entrada a fiação mínima (~0,5 kB gzip).
   // 2026-11-19: 132 kB (era 131). Módulos ocultos por empresa e usuário (ADR 0066): a regra vive no
   // usePermissions (boot) e some com menu, rota, painel e onboarding; ~0,3 kB gzip na entrada.
-  entry: 132 * 1024,
+  // 2026-11-23: 132,5 kB (era 132). Prefetch do painel em /inicio durante o véu e a espera dos avisos
+  // até depois da primeira pintura (perf Fase 3): ~0,3 kB no chunk de entrada, pelo ganho de 1 s na entrada.
+  entry: 132.5 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
