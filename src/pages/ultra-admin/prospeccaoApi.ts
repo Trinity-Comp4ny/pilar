@@ -242,3 +242,60 @@ export function useImportarLeads() {
     onSuccess: invalidar,
   });
 }
+
+// ─── Fase 1: mapeador Places e cobertura ─────────────────────────────────────
+
+export interface CoberturaRegiao {
+  regiao: string;
+  total: number;
+  feitas: number;
+  leads: number;
+}
+
+export interface MapeadorEstado {
+  ativo: boolean;
+  tetoSemanal: number;
+  buscasSemana: number;
+  cobertura: CoberturaRegiao[];
+}
+
+export function useMapeador() {
+  return useQuery({
+    queryKey: ["ultra-prospec-mapeador"],
+    queryFn: async (): Promise<MapeadorEstado> => {
+      const inicioSemana = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const [cfg, cel, bus] = await Promise.all([
+        supabase.from("prospec_config").select("ativo, teto_semanal_buscas").maybeSingle(),
+        supabase.from("prospec_celulas").select("regiao, ultima_busca_em, leads_novos"),
+        supabase.from("prospec_buscas").select("id", { count: "exact", head: true }).gte("created_at", inicioSemana),
+      ]);
+      const erro = cfg.error ?? cel.error ?? bus.error;
+      if (erro) throw erro;
+      const porRegiao = new Map<string, CoberturaRegiao>();
+      for (const c of cel.data ?? []) {
+        const r = porRegiao.get(c.regiao) ?? { regiao: c.regiao, total: 0, feitas: 0, leads: 0 };
+        r.total += 1;
+        if (c.ultima_busca_em) r.feitas += 1;
+        r.leads += c.leads_novos;
+        porRegiao.set(c.regiao, r);
+      }
+      return {
+        ativo: cfg.data?.ativo ?? false,
+        tetoSemanal: cfg.data?.teto_semanal_buscas ?? 0,
+        buscasSemana: bus.count ?? 0,
+        cobertura: [...porRegiao.values()],
+      };
+    },
+  });
+}
+
+export function useSalvarMapeador() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { ativo: boolean; teto: number }) => {
+      const { error } = await supabase.rpc("prospec_config_salvar", { p_ativo: v.ativo, p_teto: v.teto });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["ultra-prospec-mapeador"] }),
+  });
+}

@@ -178,8 +178,8 @@ export function ProspeccaoHoje() {
         <div role="alert" className="flex items-start gap-2 rounded-md bg-warning-soft p-3 text-sm text-warning-strong">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            {r?.bloqueiosSemana} pedidos para parar ou números errados nos últimos 7 dias. Revise a mensagem e considere
-            pausar antes de continuar: número que recebe denúncia pode ser restringido.
+            {r?.bloqueiosSemana} pedidos para parar ou números errados nos últimos 7 dias. A fila está pausada: não
+            entra lead novo até a semana limpar. Revise a mensagem; número que recebe denúncia pode ser restringido.
           </p>
         </div>
       )}

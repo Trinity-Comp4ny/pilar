@@ -231,3 +231,20 @@ estoura a conta. Cobertura nacional completa é o que mais custa, por isso a cas
    comercial e pelo catálogo de mensagem rápida.
 4. **Segmentos adjacentes**: confirmar que entram só como teste, sem mexer no ICP.
 5. **Mensagem de saída** na segunda mensagem: aprovar o texto.
+
+## Fase 1: o que foi construído
+
+- Migration `20261234930000_prospeccao_fase_1.sql`: `prospec_celulas` (semeada: Marília e raio, polos do
+  interior de SP, capitais × 8 segmentos), `prospec_buscas` (log que conta o teto), `prospec_config`
+  (**nasce desligado**, teto semanal de buscas), RPCs `prospec_proximas_celulas` e
+  `prospec_registrar_busca` (só service role), `prospec_config_salvar` (ultra admin) e cron semanal
+  (domingo 22h BRT).
+- Edge function `prospeccao-mapeador` (cron por segredo): uma busca de texto do Places (New) por célula,
+  dedupe por `place_id`, telefone e bloqueio. Para no teto da semana e no primeiro 403/429.
+- **Pausa automática**: com 2 ou mais "parar" ou "número errado" em 7 dias, `prospec_montar_fila` não
+  completa a fila.
+- Aba **Mapeador**: liga/desliga, teto e cobertura por região.
+- **Pendente do fundador antes de ligar**: criar a chave do Places e gravar o secret
+  `GOOGLE_PLACES_API_KEY` no Supabase; conferir os termos do Google sobre guardar telefone (esta fase
+  guarda o telefone do Places; se os termos proibirem, trocar por Place Details na hora da fila).
+- Fica para a fase 2: enriquecimento por CNPJ e qualificador.

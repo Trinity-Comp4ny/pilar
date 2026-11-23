@@ -137,6 +137,10 @@ verify_jwt = false
 [functions.guardiao-margem-cron]
 verify_jwt = false
 
+# Mapeador de leads (SPEC 172 fase 1): cron por segredo, sem JWT.
+[functions.prospeccao-mapeador]
+verify_jwt = false
+
 # Agentes de operação (SPEC 126): cron por segredo ou ultra admin pelo "Rodar agora".
 [functions.ops-agente-run]
 verify_jwt = false
