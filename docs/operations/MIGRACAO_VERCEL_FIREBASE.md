@@ -10,11 +10,11 @@ o sistema se seguido em ordem. Reverter = reapontar o DNS de volta.
 
 ## Arquivos
 
-| Arquivo | Papel |
-|---|---|
-| `firebase.app.json` | Config de hosting do app (headers, CSP, fallback SPA) |
-| `apps/marketing/firebase.marketing.json` | Idem para a landing (+ 3 redirects para o app) |
-| `scripts/gerar-firebase-config.mjs` | Gera os dois acima a partir dos `vercel.json`. Não editar à mão |
+| Arquivo                                         | Papel                                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `firebase.app.json`                             | Config de hosting do app (headers, CSP, fallback SPA)                                                                          |
+| `apps/marketing/firebase.marketing.json`        | Idem para a landing (+ 3 redirects para o app)                                                                                 |
+| `scripts/gerar-firebase-config.mjs`             | Gera os dois acima a partir dos `vercel.json`. Não editar à mão                                                                |
 | `.github/workflows/deploy-firebase-hosting.yml` | Build + deploy. PR que mexe nos arquivos do Firebase publica canal de preview; `live` só por `workflow_dispatch` até o passo 6 |
 
 Diferença deliberada em relação ao `vercel.json`: o Firebase cacheia HTML por 1 h por padrão
@@ -70,7 +70,10 @@ domínio de teste (5) e o cutover (6).
    2. Baixar o TTL do DNS para 300 s, com 24 h de antecedência.
    3. Adicionar o domínio de produção no Firebase (ele pede os registros de verificação) e esperar o certificado emitir **antes** de trocar o apontamento.
    4. Trocar o DNS da landing, conferir; depois o do app, conferir.
-   5. Só então ligar os gatilhos `pull_request` (preview) e `push` (staging/main) no workflow.
+   5. Gatilhos: já ligados (23/11/2026). PR para `staging` publica preview em todo PR que muda código de
+      app ou landing (`paths-ignore` de docs, brand, research, supabase e `*.md`); o CI verde de `main`
+      dispara `workflow_run` e publica `live` nos dois sites, com o commit que o CI testou, sujeito à
+      aprovação do Environment `production`. Falta, fora do código: o site de staging no Firebase.
 7. **Reversão.** Reapontar o DNS para a Vercel (TTL de 300 s). Por isso o projeto Vercel só é
    desligado depois de ~2 semanas sem incidente.
 8. **Limpeza.** Remover `vercel.json`, `scripts/vercel-ignore.sh` e as referências em
@@ -84,3 +87,13 @@ domínio de teste (5) e o cutover (6).
 - **Firewall / Attack Challenge Mode** da Vercel (DEPLOY_CHECKLIST) não existe no Firebase Hosting.
   O Turnstile já protege o login; se quiser WAF, é Cloudflare na frente (decisão à parte).
 - **Preços** citados em conversa (US$ 0,15/GB, cota de ~10 GB) eram de memória: conferir na página do Firebase.
+
+## Automação do deploy (23/11/2026)
+
+- `live` por `workflow_run`: só roda com o CI de `main` em `success`, depois das migrations e das edge
+  functions, e `verificar-firebase-ambiente.mjs` recusa live fora de `main` (teste em
+  `scripts/verificar-firebase-ambiente.test.ts`).
+- O Environment `production` continua exigindo aprovação: cada push em `main` espera um clique. Tirar
+  essa trava é decisão sua (Settings → Environments → production).
+- Pendente fora do código: site de staging no Firebase (`staging.app.pilarsoft.com.br`), hoje na Vercel.
+- Rollback: reapontar o DNS para a Vercel (TTL de 300 s) enquanto o projeto Vercel existir.
