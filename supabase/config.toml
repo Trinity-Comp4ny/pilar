@@ -141,6 +141,10 @@ verify_jwt = false
 [functions.prospeccao-mapeador]
 verify_jwt = false
 
+# Enriquecimento por CNPJ (SPEC 172 fase 2): cron por segredo, sem JWT.
+[functions.prospeccao-enriquecer]
+verify_jwt = false
+
 # Agentes de operação (SPEC 126): cron por segredo ou ultra admin pelo "Rodar agora".
 [functions.ops-agente-run]
 verify_jwt = false

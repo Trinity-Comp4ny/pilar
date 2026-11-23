@@ -248,3 +248,18 @@ estoura a conta. Cobertura nacional completa é o que mais custa, por isso a cas
   `GOOGLE_PLACES_API_KEY` no Supabase; conferir os termos do Google sobre guardar telefone (esta fase
   guarda o telefone do Places; se os termos proibirem, trocar por Place Details na hora da fila).
 - Fica para a fase 2: enriquecimento por CNPJ e qualificador.
+
+## Fase 2: o que foi construído
+
+- Migration `20261235100000_prospeccao_fase_2.sql`: `cnpj`, `razao_social`, `cnae_principal` e
+  `enriquecido_em` em `prospec_leads`; RPCs `prospec_leads_para_enriquecer` e
+  `prospec_registrar_enriquecimento` (só service role); cron diário 06h BRT.
+- Edge function `prospeccao-enriquecer`: lote de 20 por dia na BrasilAPI (dado público, R$ 0), para no
+  primeiro 429. **Decisor**: titular quando a natureza é empresário individual/MEI, senão o
+  sócio-administrador do quadro societário; vira `contato_nome` e, com celular, o lead passa a `pessoa`.
+  **Segmento por CNAE**: divisão compatível com o segmento soma 10 na nota de encaixe, incompatível
+  tira 25 (o lead não é descartado).
+- O CNPJ entra pela importação (coluna "CNPJ" opcional). **Limite conhecido**: a BrasilAPI só consulta
+  por número, então lead vindo do Places não ganha CNPJ sozinho. Para isso falta uma fonte de busca por
+  nome (dump da Receita ou serviço pago): decisão em aberto.
+- Sem mudança visual (só dados e função de fundo).
