@@ -11,6 +11,60 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-19 · Prospecção outbound no Ultra: agentes mapeiam, o fundador dispara pelo WhatsApp
+
+**Decisão:** o Ultra ganha o agente `prospeccao`, que mapeia leads toda semana (Google Places e base de CNPJ,
+cascata de Marília para o Brasil) e deixa 10 mensagens por dia prontas. O envio é sempre semi-manual: o botão
+abre `wa.me` com o texto pronto e quem envia é o fundador. Sem API de WhatsApp. Duas mensagens: pessoa
+(nome confirmado) e empresa (pergunta quem decide). Marcenaria, planejados e marmoraria entram só como
+teste de mercado, sem mudar o ICP. Canal por lead: celular vai para WhatsApp, fixo para e-mail ou ligação,
+com chip dedicado e parada no primeiro "não".
+
+Contexto: meta de partida de 10 mensagens por dia (~200 por mês). API oficial exige opt-in e custa por mensagem;
+automação não oficial arrisca banir o número. Detalhe na [SPEC 172](../specs/172-prospeccao-outbound-no-ultra.md).
+
+**Supera:** a linha "CRM de prospecção outbound usa o módulo Leads" da SPEC 126 (aqui a prospecção tem tabelas próprias
+e só promove ao Leads quando a reunião é marcada).
+
+---
+
+## 2026-11-19 · Módulos ocultáveis por empresa e por usuário (lista de exclusão)
+
+**Decisão:** o admin do escritório pode ocultar módulos (Gestão, Projetos, Obras) para a empresa toda e por usuário.
+O modelo guarda o que está oculto (vazio = vê tudo), admin nunca é restringido, e a fase 1 é só experiência
+(menu e rota), não segurança de dado.
+
+Contexto: escritório de arquitetura que não usa Obras acha o menu sujo; dentro do escritório cada pessoa usa uma parte.
+A lista de exclusão evita o bug que levou ao ADR 0029. Detalhe na [SPEC 171](../specs/171-ocultar-modulos-por-empresa-e-usuario.md)
+e no [ADR 0066](../architecture/adr/0066-modulos-ocultos-por-usuario-lista-de-exclusao.md).
+
+**Supera:** parcialmente o ADR 0029 (volta um eixo por usuário, só de exclusão).
+
+---
+
+## 2026-11-19 · Cérebro de reuniões: aviso de gravação e retenção do transcript
+
+**Decisão:** o fundador sempre pergunta ao escritório antes de gravar a reunião, então a pergunta de aviso de gravação está
+respondida. Os pontos da reunião (dores, ideias, objeções, compromissos) ficam sem prazo; a transcrição redigida é apagada
+12 meses depois, por cron diário (`limpar_transcricoes_reuniao`). O modelo é o mesmo dos agentes do time (`ops_inteligencia`).
+
+**Supera:** as perguntas abertas 1 e 2 da [SPEC 169](../specs/169-cerebro-de-reunioes-no-ultra.md). Libera colar transcrição de cliente em produção.
+
+---
+
+## 2026-11-19 · Cérebro de reuniões no Ultra começa com colagem manual
+
+**Decisão:** a ingestão das reuniões do Granola começa por colagem manual da transcrição no Ultra Admin. A API do
+Granola exige plano Business ou Enterprise e o plano atual é gratuito; a ingestão automática noturna fica para quando
+houver plano pago. Cada reunião é classificada e rende dores, ideias e objeções com citação literal; recomendação de
+feature exige 2 ou mais escritórios distintos, senão é hipótese. Só o texto redigido é gravado.
+
+Contexto: Fase 0 rodada em 3 transcrições reais. Plano e achados na [SPEC 169](../specs/169-cerebro-de-reunioes-no-ultra.md).
+
+**Supera:** nada. Perguntas abertas de base legal (gravação) e retenção bloqueiam colar transcrição de cliente em produção.
+
+---
+
 ## 2026-11-13 · Proposta em revisão: aquisição assistida e escopo de implantação
 
 **Direção da mudança:** as páginas `/engenharia` e `/arquitetura` destacam a demonstração, com preços a um clique.

@@ -22,6 +22,7 @@ import { analytics } from "@/lib/analytics";
 import { DEMO_URL } from "@/lib/contato";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { VideoLateral } from "@/components/auth/VideoLateral";
 
 export default function Login() {
   usePageTitle("Login");
@@ -316,15 +317,7 @@ export default function Login() {
       {/* Lado Direito - Visual e Branding (Escondido no Mobile) */}
       <div className="hidden lg:flex w-1/2 relative bg-black items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video
-            src="/video-login.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
-            style={{ animationDuration: "20s" }}
-          />
+          <VideoLateral className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125" />
           <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 

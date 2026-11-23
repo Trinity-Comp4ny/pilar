@@ -6,7 +6,7 @@ palavraChave: sistema para escritório de arquitetura
 categoria: Projetos
 modulo: projetos
 publicadoEm: 2026-11-10
-atualizadoEm: 2026-11-10
+atualizadoEm: 2026-11-19
 resumo: O que um sistema para escritório de arquitetura precisa resolver de verdade: etapas, complementares, rodadas de revisão, parcelas por entrega e o cliente pedindo notícia.
 ---
 
@@ -61,7 +61,7 @@ Uma visão própria para o cliente reduz isso. O ideal é um link só de leitura
 
 ## E quando o escritório acompanha a obra?
 
-Muitos escritórios de arquitetura seguem com o cliente até a obra, por acompanhamento ou por administração. Aí entram diário de obra, fotos, cotação de material e prestação de contas. O sistema precisa aceitar registro do canteiro pelo celular, mesmo sem sinal. Para quem administra obra por taxa, a conta da obra com aporte, despesa e comprovante evita a planilha paralela. Mais em [obra por administração e prestação de contas](/blog/obra-por-administracao-prestacao-de-contas) e no módulo [Obra](/obra).
+Muitos escritórios de arquitetura seguem com o cliente até a obra, por acompanhamento ou por administração. Aí entram diário de obra, fotos, cotação de material e prestação de contas. O sistema precisa de um [aplicativo de diário de obra](/campo) que aceite o registro do canteiro pelo celular, mesmo sem sinal. Para quem administra obra por taxa, a conta da obra com aporte, despesa e comprovante evita a planilha paralela. Mais em [obra por administração e prestação de contas](/blog/obra-por-administracao-prestacao-de-contas) e no módulo [Obra](/obra).
 
 ## Checklist para escolher um sistema para escritório de arquitetura
 

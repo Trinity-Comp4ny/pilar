@@ -105,9 +105,24 @@ jobs:
         # padrão não dispara os workflows de CI do PR, então required checks em main
         # ficariam pendentes para sempre.
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+          # Um PAT ou token de GitHub App válido é necessário: PRs criados por
+          # GITHUB_TOKEN não disparam os checks exigidos pela proteção de main.
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
           set -euo pipefail
+
+          # Falha antes de mexer na branch de release. A configuração anterior
+          # só descobria um RELEASE_PAT expirado depois do force-push, com 401
+          # opaco em gh pr list (incidente observado em 19/11/2026).
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::RELEASE_PAT não configurado. Crie ou renove um token com acesso ao repositório (Contents e Pull requests: leitura/escrita) no Environment/Secrets do workflow."
+            echo "::error::GITHUB_TOKEN não é substituto para criar o PR: os checks de CI do PR não seriam disparados automaticamente."
+            exit 1
+          fi
+          if ! gh api "repos/${GITHUB_REPOSITORY}" --jq '.full_name' >/dev/null 2>&1; then
+            echo "::error::RELEASE_PAT não autenticou no repositório. Verifique expiração, autorização SSO, permissão no repo e escopos de Contents/Pull requests."
+            exit 1
+          fi
 
           git fetch origin main staging --quiet
 
@@ -166,17 +181,15 @@ jobs:
             exit 0
           fi
 
-          # Sem RELEASE_PAT nem a permissão "Allow GitHub Actions to create and approve
-          # pull requests", o GITHUB_TOKEN padrão não cria PR (política do repo/org) — e
-          # isso precisa FALHAR o job, não virar aviso: um job verde sem PR nenhum aberto
-          # é o oposto de "promoção pronta". A branch já está pronta e pushada; falta só
-          # abrir o PR (na mão, ou configurando um dos dois acima para o job se curar sozinho).
+          # O token foi validado antes do force-push. Ainda pode faltar a
+          # permissão Pull requests: write ou autorização da organização;
+          # nesse caso falhar com instrução objetiva, nunca reportar verde.
           if gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"; then
             echo "::notice::PR de release criado."
             # Com o RELEASE_PAT, "@me" é o dono do token, e todo PR do repo tem
             # assignee. Com o GITHUB_TOKEN o "@me" seria o bot: falha sem derrubar o job.
             gh pr edit "$BRANCH" --add-assignee "@me" || echo "::warning::Não consegui definir o assignee do PR de release."
           else
-            echo "::error::Não consegui criar o PR de release. A branch '$BRANCH' já está pronta e pushada — abra manualmente com: gh pr create --base main --head $BRANCH --title \"$TITLE\" --body-file <arquivo>. Para o job se curar sozinho, adicione o secret RELEASE_PAT ou habilite 'Allow GitHub Actions to create and approve pull requests' em Settings → Actions → General."
+            echo "::error::RELEASE_PAT autenticou, mas não conseguiu criar PR. Verifique Pull requests: read/write no token e política da organização/repositório. A branch '$BRANCH' já foi publicada; abra o PR manualmente ou renove as permissões."
             exit 1
           fi

@@ -100,7 +100,7 @@ export function MesView({ cursor, eventosPorDia, onEventoClick, renderNovoNoDia 
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        aria-label={`Nova tarefa em ${d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}`}
+                        aria-label={`Criar em ${d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}`}
                         className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md border bg-card text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
                       >
                         <Plus className="h-3.5 w-3.5" />

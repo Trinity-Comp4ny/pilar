@@ -84,7 +84,8 @@ export function CalendarioLegenda({ camadas }: { camadas: CamadaId[] }) {
       <div className="flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-brand" /> Concluído
       </div>
-      <div className="flex items-center gap-3 ml-auto">
+      {/* No desktop as camadas já aparecem na barra lateral (com liga/desliga): repetir aqui é ruído. */}
+      <div className="flex items-center gap-3 ml-auto md:hidden">
         {camadas.map((id) => {
           const c = CAMADA_REGISTRY[id];
           const Icon = c.icon;

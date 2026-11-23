@@ -8,7 +8,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
 import { filterTriggerClass } from "@/components/filters/filterStyles";
-import type { PessoaOpcao } from "../hooks";
+import type { PessoaOpcao } from "@/hooks/tarefas/useTarefas";
 
 /** Filtro de pessoa com avatar de iniciais (estilo ClickUp). Múltipla escolha.
  * A pessoa do usuário logado aparece uma vez só, no topo da lista, com "(você)";

@@ -35,7 +35,7 @@ export function authenticate(email, password) {
   });
 
   if (!ok) {
-    throw new Error(`Auth failed: status=${res.status} body=${res.body}`);
+    throw new Error(`Autenticação de carga falhou: HTTP ${res.status}.`);
   }
 
   const body = res.json();

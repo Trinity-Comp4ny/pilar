@@ -13,7 +13,7 @@ import { PessoaFormDialog } from "./components/PessoaFormDialog";
 import { PessoaDetailDialog } from "./components/PessoaDetailDialog";
 import { PessoaTable } from "./components/PessoaTable";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
+import { PESSOAS_EMPRESA_QUERY_KEY } from "@/hooks/tarefas/useTarefas";
 import { useAuth } from "@/contexts/AuthContext";
 import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 

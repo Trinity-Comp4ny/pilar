@@ -1,4 +1,5 @@
 import { Link, useOutletContext } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FolderKanban, ArrowRight, Building2 } from "lucide-react";
@@ -29,7 +30,7 @@ function formatDate(d: string | null): string {
 export default function ClienteDashboard() {
   usePageTitle("Portal | Dashboard");
   const account = useOutletContext<ClienteAccount>();
-  const { projetos, loading, error } = useClienteProjetos();
+  const { projetos, loading, error, tentandoNovamente, refazerConsulta } = useClienteProjetos();
   const { obras } = useClienteObras();
 
   return (
@@ -60,9 +61,19 @@ export default function ClienteDashboard() {
         {/* Erro */}
         {error && (
           <Card>
-            <CardContent className="p-6 text-center text-sm text-danger-mid">
-              Não foi possível carregar seus projetos agora. Atualize a página em instantes ou fale com o escritório se
-              o problema continuar.
+            <CardContent className="space-y-3 p-6 text-center text-sm">
+              <p role="alert" className="text-danger-mid">
+                Não foi possível carregar seus projetos agora. Fale com o escritório se o problema continuar.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                loading={tentandoNovamente}
+                onClick={() => void refazerConsulta()}
+              >
+                Tentar carregar projetos novamente
+              </Button>
             </CardContent>
           </Card>
         )}

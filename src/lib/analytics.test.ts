@@ -56,6 +56,15 @@ describe("analytics scrubber — no-op mode", () => {
     expect(props.telefone).toBe("***");
   });
 
+  it("remove o token do link da proposta antes de registrar a abertura", () => {
+    analytics.track("$pageview", {
+      url: "https://app.pilarsoft.com.br/proposta-compartilhada#1f01a715-155d-4238-a401-d7886ed09abb",
+    });
+    expect(lastArgs()[2]).toEqual({
+      url: "https://app.pilarsoft.com.br/proposta-compartilhada#[link]",
+    });
+  });
+
   it("garante anonId persistente entre chamadas", () => {
     const a = analytics.getAnonId();
     const b = analytics.getAnonId();

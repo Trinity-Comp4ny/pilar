@@ -1,4 +1,3 @@
-import { ExecucaoDisciplinaFields } from "./ExecucaoDisciplinaFields";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -29,9 +28,7 @@ function buildWizardPreviewStages(groups: ReturnType<typeof groupByEtapa>): Flux
         titulo: disc.disciplina,
         status: "nao_iniciado" as const,
         responsavelNome:
-          disc.tipo_execucao === "terceirizada"
-            ? `Terceirizado · ${disc.prestador_nome || "Prestador a definir"}`
-            : disc.responsavel_nome || undefined,
+          disc.tipo_execucao === "terceirizada" ? "Serviço terceirizado" : disc.responsavel_nome || undefined,
         metaLabel: disc.data_previsao ? formatDateShort(disc.data_previsao) : undefined,
         checklistLabel: disc.checklist_padrao?.length ? `${disc.checklist_padrao.length} itens` : undefined,
       })),
@@ -273,7 +270,7 @@ export function DisciplinasSection({
                       <User className="h-3 w-3 shrink-0" />
                       <span>
                         {pd.tipo_execucao === "terceirizada"
-                          ? `Terceirizado · ${pd.prestador_nome || "Prestador a definir"}`
+                          ? "Serviço terceirizado"
                           : resps.map((r) => r.responsavel_nome).join(", ")}
                       </span>
                       <span
@@ -517,24 +514,26 @@ export function DisciplinasSection({
                 </p>
               )}
             </div>
-            <ExecucaoDisciplinaFields
-              tipo={tempDisciplina.tipo_execucao}
-              prestador={tempDisciplina.prestador_nome}
-              onChange={(tipo, prestador) =>
-                onTempDisciplinaChange({ ...tempDisciplina, tipo_execucao: tipo, prestador_nome: prestador })
-              }
-            />
             <div className="space-y-1">
               <Label className="text-xs">Responsável</Label>
               <Select
-                value={tempDisciplina.responsavel_id}
-                onValueChange={(val) => onTempDisciplinaChange({ ...tempDisciplina, responsavel_id: val })}
-                disabled={pessoas.length === 0}
+                value={
+                  tempDisciplina.tipo_execucao === "terceirizada" ? "__terceirizada__" : tempDisciplina.responsavel_id
+                }
+                onValueChange={(val) =>
+                  onTempDisciplinaChange({
+                    ...tempDisciplina,
+                    responsavel_id: val === "__terceirizada__" ? "" : val,
+                    tipo_execucao: val === "__terceirizada__" ? "terceirizada" : "interna",
+                    prestador_nome: val === "__terceirizada__" ? "Serviço terceirizado" : undefined,
+                  })
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={pessoas.length === 0 ? "Nenhuma pessoa cadastrada" : "Selecione"} />
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__terceirizada__">Serviço terceirizado</SelectItem>
                   {pessoas.length === 0 ? (
                     <div className="px-2 py-3 text-xs text-muted-foreground">
                       Cadastre membros em <strong>Pessoas</strong> para atribuir responsáveis.

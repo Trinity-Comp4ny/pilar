@@ -224,6 +224,20 @@ describe("useImportFinanceiro", () => {
   });
 
   describe("marcarJaImportados", () => {
+    it("não libera importação quando a consulta de duplicatas em despesas falha", async () => {
+      resultados.set("despesas.select", { data: null, error: { message: "Sem conexão" } });
+      await expect(marcarJaImportados([item({ lineHash: "h-existente" })])).rejects.toThrow(
+        "Não foi possível conferir lançamentos já importados"
+      );
+    });
+
+    it("também bloqueia se a verificação de receitas falhar", async () => {
+      resultados.set("receitas.select", { data: null, error: { message: "RLS ou timeout" } });
+      await expect(marcarJaImportados([item({ lineHash: "h-existente" })])).rejects.toThrow(
+        "Não foi possível conferir lançamentos já importados"
+      );
+    });
+
     it("linha com hash já gravado vem desmarcada e sinalizada; as outras não mudam", async () => {
       resultados.set("despesas.select", { data: [{ import_line_hash: "h-velho" }], error: null });
       const r = await marcarJaImportados([item({ lineHash: "h-velho" }), item({ lineHash: "h-novo" })]);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agruparDespesas } from "./despesasAgrupadas";
+import { agruparDespesas, classificarAbc } from "./despesasAgrupadas";
 
 const nomes = new Map([["f1", "Balarotti"]]);
 
@@ -44,5 +44,30 @@ describe("agruparDespesas", () => {
       nomes
     );
     expect(g[0].quantidade).toBeNull();
+  });
+});
+
+describe("classificarAbc", () => {
+  const g = (rotulo: string, total: number) => ({
+    chave: rotulo,
+    rotulo,
+    total,
+    lancamentos: 1,
+    quantidade: null,
+    unidade: null,
+  });
+
+  it("A até 80% do gasto, B até 95%, C o resto", () => {
+    const r = classificarAbc([g("a", 600), g("b", 250), g("c", 100), g("d", 50)]);
+    expect(r.map((x) => x.classe)).toEqual(["A", "A", "B", "C"]);
+    expect(r.map((x) => x.acumuladoPct)).toEqual([60, 85, 95, 100]);
+  });
+
+  it("item que sozinho passa de 80% é A", () => {
+    expect(classificarAbc([g("a", 900), g("b", 100)]).map((x) => x.classe)).toEqual(["A", "B"]);
+  });
+
+  it("sem gasto não classifica", () => {
+    expect(classificarAbc([])).toEqual([]);
   });
 });

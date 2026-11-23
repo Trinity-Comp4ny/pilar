@@ -26,6 +26,8 @@ vi.mock("../hooks/useLancamentosResumo", () => ({
       despesas: 0,
       saldo: 0,
       atrasadosCount: resumoHook.atrasados,
+      atrasadosPagar: resumoHook.atrasados,
+      atrasadosReceber: 0,
     },
     isLoading: false,
     isError: resumoHook.isError,

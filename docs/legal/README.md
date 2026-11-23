@@ -70,8 +70,19 @@ pelo CEO em 2026-08-18). Encerrado com o CNPJ acima.
   e, depois dela, uma janela que só fecha com o aceite. Grava em `terms_acceptances` com source
   `reaceite`. Membro da equipe não precisa reaceitar. Aviso por e-mail enviado em 2026-11-11.
   Próxima mudança material: subir `TERMS_VERSION` e `TERMS_VIGENCIA_*` juntos e repetir o aviso.
-- Continua pendente (decisão ou contratação, não código): CNPJ, nome do encarregado, DPAs dos
-  fornecedores com cláusulas-padrão da ANPD (Res. 19/2024) e revisão por advogado.
+- **Identidade e encarregado já publicados:** CNPJ e contato do encarregado constam na seção
+  "Identidade legal" acima e nas páginas públicas. Não reutilizar um checklist antigo que os trate
+  como pendentes.
+- **Ainda pendente:** comprovação/avaliação dos DPAs e mecanismos de transferência internacional
+  por fornecedor (Resolução ANPD 19/2024), processo de aviso prévio de novos subprocessadores
+  e revisão de Termos/DPA/Política por advogado.
+- **Divergência publicada a revisar:** `apps/marketing/src/pages/Termos.tsx`, seção A6,
+  afirma que as garantias internacionais são adotadas; `Privacidade.tsx`, seção 5,
+  informa que sua formalização ainda está em andamento. Não afirmar conclusão contratual
+  sem evidência; revisão jurídica deve alinhar ambos.
+- **Hospedagem:** Supabase de produção em São Paulo, staging em `us-west-2`; migração
+  gradual Vercel → Firebase Hosting ainda não concluída em 19/11/2026.
+  Avaliar tratamento de dados em staging e aviso de fornecedores antes do cutover.
 
 O **mecanismo técnico de consentimento de cookies já está ativo em produção**,
 independente do CNPJ. Ver [SPEC 048](../specs/048-consentimento-cookies.md) e

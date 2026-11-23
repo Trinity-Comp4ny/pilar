@@ -20,13 +20,25 @@ export function useLeadAtividades(leadId: string) {
     enabled: !!leadId,
   });
   const adicionar = useMutation({
-    mutationFn: async ({ texto, ocorridoEm }: { texto: string; ocorridoEm: string }) => {
+    mutationFn: async ({
+      texto,
+      ocorridoEm,
+      mencionados = [],
+    }: {
+      texto: string;
+      ocorridoEm?: string;
+      mencionados?: string[];
+    }) => {
       const { data: empresaId, error: empresaError } = await supabase.rpc("get_user_empresa_id");
       if (empresaError) throw empresaError;
       if (!empresaId) throw new Error("Empresa não encontrada");
-      const { error } = await supabase
-        .from("lead_atividades")
-        .insert({ empresa_id: empresaId, lead_id: leadId, texto, ocorrido_em: ocorridoEm });
+      const { error } = await supabase.from("lead_atividades").insert({
+        empresa_id: empresaId,
+        lead_id: leadId,
+        texto,
+        ...(ocorridoEm ? { ocorrido_em: ocorridoEm } : {}),
+        mencionados,
+      });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),

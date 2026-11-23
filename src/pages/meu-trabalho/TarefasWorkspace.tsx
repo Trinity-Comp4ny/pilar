@@ -1,17 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  CalendarClock,
-  FolderKanban,
-  HardHat,
-  LayoutGrid,
-  List,
-  ListChecks,
-  ListFilter,
-  Plus,
-  type LucideIcon,
-} from "lucide-react";
+import { FolderKanban, HardHat, LayoutGrid, List, ListChecks, ListFilter, Plus, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditColumnDialog, type ColunaEditavel } from "@/components/kanban/EditColumnDialog";
@@ -25,7 +15,7 @@ import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
 import { useKanbanSort } from "@/hooks/useKanbanSort";
 import { ordenarKanban } from "@/lib/kanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
-import { TarefaDialog } from "./components/TarefaDialog";
+import { TarefaDialog } from "@/components/tarefas/TarefaDialog";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { FiltroPessoa } from "./components/FiltrosTrabalho";
@@ -40,22 +30,22 @@ import {
   useTarefaPorId,
   type TarefaInput,
   type TarefaItem,
-} from "./hooks";
+} from "@/hooks/tarefas/useTarefas";
 import { resolverPessoaIds } from "./filtroPessoas";
 import { bate, obraIdDoItem, TODOS, useFiltroProjetoObra } from "./useFiltroProjetoObra";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
-import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
+import { useEtapas, useEtapaMutations, type Etapa } from "@/hooks/tarefas/useEtapas";
 import { useColunasLista } from "./colunas";
-import type { ServicoObra } from "./servicoObra";
+import type { ServicoObra } from "@/lib/tarefas/servicoObra";
 import { EmptyState } from "@/components/EmptyState";
-import { CORES_ETAPA, corDaEtapa, type Prioridade } from "./status";
+import { CORES_ETAPA, corDaEtapa, type Prioridade } from "@/lib/tarefas/status";
+import { useFiltrosItens } from "./useFiltrosItens";
 
 import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const LS_VISAO_OBRA = "pilar.obra-tarefas.visao";
 
 type Visao = "lista" | "quadro";
-type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
 
 const VISAO_OPCOES: ViewOption<Visao>[] = [
   { value: "lista", label: "Lista", icon: List },
@@ -67,29 +57,6 @@ const TIPO_LABEL: Record<FiltroTipo, string> = {
   tarefa: "Tarefas",
   disciplina: "Disciplinas",
 };
-
-const DATA_LABEL: Record<FiltroData, string> = {
-  todas: "Tudo",
-  atrasadas: "Atrasadas",
-  hoje: "Vencem hoje",
-  semana: "Próximos 7 dias",
-  sem_prazo: "Sem prazo",
-};
-
-function noPeriodo(prazo: string | null, filtro: FiltroData): boolean {
-  if (filtro === "todas") return true;
-  if (filtro === "sem_prazo") return !prazo;
-  if (!prazo) return false;
-  const d = new Date(`${prazo}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return false;
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  if (filtro === "atrasadas") return d < hoje;
-  if (filtro === "hoje") return d.getTime() === hoje.getTime();
-  const fim = new Date(hoje);
-  fim.setDate(fim.getDate() + 7);
-  return d >= hoje && d <= fim; // semana
-}
 
 /** Peças que a moldura (página ou aba) encaixa: o espaço é dela, o conteúdo é do workspace. */
 export type MolduraTarefasProps = {
@@ -141,7 +108,6 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     }
   });
   const [tipo, setTipo] = useState<FiltroTipo>(temProjetos && !obra ? "tudo" : "tarefa");
-  const [filtroData, setFiltroData] = useState<FiltroData>("todas");
   const [busca, setBusca] = useState("");
   const [ordem, setOrdem] = useKanbanSort(obra ? "obra-tarefas" : "tarefas", TAREFAS_SORT_PADRAO, TAREFAS_SORT_KEYS);
 
@@ -190,12 +156,13 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     itens,
     projetos
   );
+  const filtrosItens = useFiltrosItens(itens);
   const itensFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return itens.filter((i) => {
       if (obra && i.tarefa?.obra?.id !== obra.id) return false;
       if (!bate(i.projetoId, filtroProjeto) || !bate(obraIdDoItem(i), filtroObra)) return false;
-      if (!noPeriodo(i.prazo, filtroData)) return false;
+      if (!filtrosItens.passa(i)) return false;
       if (!termo) return true;
       const numeroTermo = termo.replace(/^#/, "");
       return (
@@ -207,7 +174,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
     });
-  }, [itens, busca, filtroData, obra, filtroProjeto, filtroObra]);
+  }, [itens, busca, filtrosItens.passa, obra, filtroProjeto, filtroObra]);
 
   // A lista usa a mesma ordenação do quadro (o controle "Ordenar" vale para as duas visões).
   const itensOrdenados = useMemo(
@@ -505,7 +472,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
   const filtrosAtivos =
     (filtroPessoas.length > 0 ? 1 : 0) +
     (filtraTipo && tipo !== "tudo" ? 1 : 0) +
-    (filtroData !== "todas" ? 1 : 0) +
+    filtrosItens.ativos +
     (filtroProjeto !== TODOS ? 1 : 0) +
     (filtroObra !== TODOS ? 1 : 0);
   const limparFiltros = () => {
@@ -518,7 +485,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
       { replace: true }
     );
     setTipo(tipoPadrao);
-    setFiltroData("todas");
+    filtrosItens.limpar();
   };
 
   // Toolbar (SPEC 124): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
@@ -575,14 +542,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
             />
           </>
         )}
-        <FilterSelect
-          label="Prazo"
-          icon={CalendarClock}
-          value={filtroData}
-          emptyValue="todas"
-          onChange={(v) => setFiltroData(v as FiltroData)}
-          options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
-        />
+        {filtrosItens.controles}
         <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
       </>
     </FilterBar>
@@ -643,6 +603,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
           onPrioridade={mudarPrioridade}
           onExcluir={(item) => !bloqueado(item) && setAExcluir(item)}
           onMover={moverItem}
+          onCriarNoGrupo={abrirNova}
           etapaControls={etapaControls}
         />
       )}

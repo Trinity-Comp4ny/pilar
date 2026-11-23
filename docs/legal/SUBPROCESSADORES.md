@@ -40,11 +40,18 @@ Vercel (em 2026-10-13 a conta está no Hobby).
 
 ## Mudança de subprocessador
 
-Cliente com contrato ativo (DPA assinado) tem direito a ser avisado antes de um subprocessador
-novo entrar em operação, com janela pra objeção — ver cláusula correspondente em
-[`../templates/DPA_TEMPLATE.md`](../templates/DPA_TEMPLATE.md). Até o Pilar ter cliente
-pagante com DPA assinado, esta lista é atualizada por transparência, sem processo formal de
-notificação ainda ligado.
+O DPA padrão é o Anexo dos Termos v2 publicados (`apps/marketing/src/pages/Termos.tsx`,
+seção A5), que prevê **aviso por e-mail aos administradores com 30 dias de antecedência**
+antes de incluir novo fornecedor que trate dados do cliente e a possibilidade de oposição.
+Essa obrigação não depende de um DPA adicional assinado nem da existência de cliente
+pagante; verificar contratos vigentes e o processo de comunicação antes da mudança.
+
+**Transição em andamento (19/11/2026):** Vercel → Firebase Hosting para app e
+landing. Não remover a Vercel nem declarar o Google/Firebase como hosting ativo
+até o cutover real. Antes do cutover, revisar localização do processamento,
+dados envolvidos, garantias contratuais e necessidade de comunicação aos clientes.
+O Supabase de staging está em `us-west-2` (EUA); produção está em `sa-east-1`
+(São Paulo). A lista acima não representa, sozinha, todos os ambientes de teste.
 
 **Status dos DPAs:** rastreado de forma completa em
 [`../security/COMPLIANCE.md`](../security/COMPLIANCE.md) (tabela "Fornecedores críticos"), pra

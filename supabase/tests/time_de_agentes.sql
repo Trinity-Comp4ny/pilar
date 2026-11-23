@@ -105,7 +105,7 @@ SELECT is((SELECT count(*)::integer FROM public.ops_agentes), 0, 'ultra admin se
 RESET ROLE;
 
 SELECT test_time_auth('a9000000-0000-0000-0000-00000000a001'); -- ultra admin com aal2
-SELECT is((SELECT count(*)::integer FROM public.ops_agentes), 7, 'ultra admin vê os sete agentes');
+SELECT is((SELECT count(*)::integer FROM public.ops_agentes), 8, 'ultra admin vê os oito agentes');
 SELECT ok((SELECT count(*) FROM public.ops_acoes WHERE agente_id = 'receita') >= 1, 'ultra admin vê as ações');
 
 -- =============================================================================

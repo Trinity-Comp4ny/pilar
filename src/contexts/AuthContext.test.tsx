@@ -23,8 +23,8 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { setUser: vi.fn(), captureException: mocks.captureException } }));
-vi.mock("@/lib/analytics", () => ({ analytics: { identify: vi.fn(), reset: vi.fn() } }));
-vi.mock("@/lib/cookieConsentSync", () => ({ syncConsentForUser: vi.fn() }));
+vi.mock("@/lib/analytics", () => ({ analytics: { identify: vi.fn(), trackLogin: vi.fn(), reset: vi.fn() } }));
+vi.mock("@/lib/cookieConsentSync", () => ({ syncConsentForUser: vi.fn().mockResolvedValue(undefined) }));
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

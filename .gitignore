@@ -65,3 +65,6 @@ deno.lock
 
 # Contexto temporário da triagem automática do Sentry
 .sentry-triagem/
+
+# Credenciais efêmeras geradas pela Google GitHub Auth / Workload Identity
+gha-creds-*.json

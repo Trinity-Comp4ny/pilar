@@ -5,14 +5,23 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { monitoring } from "@/lib/monitoring";
 import { analytics } from "@/lib/analytics";
+import { CONSENT_CHANGED_EVENT } from "@/lib/cookieConsent";
 import { syncConsentForUser } from "@/lib/cookieConsentSync";
 import { STORAGE_KEYS } from "@/constants";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Empresa = Database["public"]["Tables"]["empresas"]["Row"];
 
+/** Linha de pilar_subscriptions que o PrivateRoute usa para decidir o acesso. */
+type AssinaturaInicial = { status: string; current_period_end: string | null };
+
 export type ProfileWithEmpresa = Profile & {
   empresas: Empresa | null;
+  /**
+   * Vem na mesma consulta do perfil (uma ida ao banco a menos na entrada).
+   * undefined = não veio junto (o PrivateRoute busca); null = empresa sem assinatura.
+   */
+  assinatura?: AssinaturaInicial | null;
 };
 
 export type MfaLevel = "aal1" | "aal2";
@@ -53,18 +62,6 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Uma vez por sessão do navegador (recarregar a página não conta como novo login). */
-function registrarLogin(userId: string, role: string | undefined) {
-  const chave = "pilar_login_registrado";
-  try {
-    if (sessionStorage.getItem(chave) === userId) return;
-    sessionStorage.setItem(chave, userId);
-  } catch {
-    // sem sessionStorage: registra mesmo assim, melhor contar a mais que perder o login
-  }
-  analytics.track("login_realizado", { role });
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
@@ -74,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaCurrentLevel, setMfaCurrentLevel] = useState<MfaLevel>("aal1");
   const [mfaNextLevel, setMfaNextLevel] = useState<MfaLevel>("aal1");
   const [hasVerifiedMfaFactor, setHasVerifiedMfaFactor] = useState(false);
+  const [analyticsUser, setAnalyticsUser] = useState<string | null>(null);
   const activeUserId = useRef<string | null>(null);
   const profileRequest = useRef(0);
 
@@ -82,7 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let data;
     let error;
     try {
-      ({ data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single());
+      ({ data, error } = await supabase
+        .from("profiles")
+        .select("*, empresas(*, pilar_subscriptions(status, current_period_end))")
+        .eq("id", userId)
+        .single());
     } catch (err) {
       if (activeUserId.current === userId && request === profileRequest.current) {
         setProfileError(true);
@@ -106,7 +108,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return;
     }
-    const p = data as ProfileWithEmpresa;
+    const bruto = data as unknown as ProfileWithEmpresa & {
+      empresas: { pilar_subscriptions?: AssinaturaInicial | AssinaturaInicial[] | null } | null;
+    };
+    const assinaturas = bruto.empresas?.pilar_subscriptions;
+    const p: ProfileWithEmpresa = {
+      ...bruto,
+      assinatura: bruto.empresas ? ([assinaturas ?? null].flat()[0] ?? null) : undefined,
+    };
     setProfile(p);
     setProfileError(false);
     // Só id, empresa e papel: telemetria não recebe contato da pessoa (docs/ROPA.md,
@@ -116,17 +125,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       empresa_id: p.empresa_id ?? undefined,
       role: p.role ?? undefined,
     });
-    analytics.identify(p.id, {
-      empresa_id: p.empresa_id ?? undefined,
-      role: p.role ?? undefined,
-    });
-    registrarLogin(p.id, p.role ?? undefined);
   }, []);
 
-  const refreshMfaLevel = useCallback(async () => {
+  useEffect(() => {
+    if (!profile || analyticsUser !== profile.id) return;
+    const registrar = () => {
+      if (activeUserId.current !== profile.id) return;
+      const traits = { empresa_id: profile.empresa_id ?? undefined, role: profile.role ?? undefined };
+      analytics.identify(profile.id, traits);
+      analytics.trackLogin(profile.id, traits);
+    };
+    registrar();
+    window.addEventListener(CONSENT_CHANGED_EVENT, registrar);
+    return () => window.removeEventListener(CONSENT_CHANGED_EVENT, registrar);
+  }, [profile, analyticsUser]);
+
+  const refreshMfaLevel = useCallback(async (sessionUser?: User) => {
     const userId = activeUserId.current;
-    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    // Quem não tem nenhum fator cadastrado (a maioria: MFA não é padrão) não precisa das duas
+    // idas ao Auth, que travavam a entrada. A sessão já traz os fatores do usuário.
+    if (sessionUser?.factors && sessionUser.factors.length === 0) {
+      setMfaCurrentLevel("aal1");
+      setMfaNextLevel("aal1");
+      setHasVerifiedMfaFactor(false);
+      return;
+    }
+    // Em paralelo: eram duas idas ao Auth em sequência na entrada.
+    const [{ data }, { data: factorsData }] = await Promise.all([
+      supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      supabase.auth.mfa.listFactors(),
+    ]);
     if (activeUserId.current !== userId) return;
     setMfaCurrentLevel((data?.currentLevel as MfaLevel) ?? "aal1");
     setMfaNextLevel((data?.nextLevel as MfaLevel) ?? "aal1");
@@ -151,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     activeUserId.current = null;
     profileRequest.current++;
     setUser(null);
+    setAnalyticsUser(null);
     setProfile(null);
     setProfileError(false);
     setMfaCurrentLevel("aal1");
@@ -170,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (activeUserId.current !== (nextUser?.id ?? null)) {
         activeUserId.current = nextUser?.id ?? null;
         profileRequest.current++;
+        setAnalyticsUser(null);
         setProfile(null);
         setProfileError(false);
         setMfaCurrentLevel("aal1");
@@ -186,10 +216,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hydrate = async (nextUser: User, currentGeneration: number) => {
       if (!mounted || generation !== currentGeneration) return;
       try {
-        await fetchProfile(nextUser.id);
+        // Perfil e nível de MFA não dependem um do outro: saem juntos.
+        await Promise.all([fetchProfile(nextUser.id), refreshMfaLevel(nextUser)]);
         if (!mounted || generation !== currentGeneration) return;
-        await refreshMfaLevel();
-        void syncConsentForUser(nextUser.id);
+        const aindaAtual = () => mounted && generation === currentGeneration;
+        void syncConsentForUser(nextUser.id, aindaAtual).then(() => {
+          if (aindaAtual()) setAnalyticsUser(nextUser.id);
+        });
       } catch (error) {
         monitoring.captureException(error, { context: "auth-session-load", userId: nextUser.id });
       } finally {

@@ -226,7 +226,7 @@ export function LancamentosItemRow({
           "whitespace-nowrap text-right font-semibold tabular-nums",
           cellTextSize,
           // Cor só pelo sentido (SPEC 150): entrada verde, saída neutra, vermelho só no vencido.
-          overdue ? "text-danger-mid" : isTransf ? "text-ink" : isReceita ? "text-positive-strong" : "text-ink"
+          isTransf ? "text-ink" : isReceita ? "text-positive-strong" : "text-negative-strong"
         )}
       >
         {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatCurrency(l.valor)}

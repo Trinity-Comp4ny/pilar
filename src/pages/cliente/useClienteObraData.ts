@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 
@@ -82,68 +82,60 @@ export interface ClienteObraData {
   registros: ClienteObraRegistro[];
 }
 
+const STALE_PORTAL = 5 * 60 * 1000;
+
+function msgErro(e: unknown, padrao: string): string {
+  return e instanceof Error ? e.message : ((e as { message?: string } | null)?.message ?? padrao);
+}
+
 /** Lista de obras que o cliente pode acompanhar no portal (só administração + visíveis). */
 export function useClienteObras() {
-  const [obras, setObras] = useState<ClienteObraResumo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = getPortalToken();
+  const token = getPortalToken();
+  const q = useQuery({
+    queryKey: ["portal-obras", token],
+    staleTime: STALE_PORTAL,
+    retry: false,
+    queryFn: async (): Promise<ClienteObraResumo[]> => {
       if (!token) throw new Error("Não autenticado");
-
       const { data, error: rpcError } = await supabase.rpc("get_cliente_obras", { p_token: token });
       if (rpcError) throw rpcError;
-      setObras((data as unknown as ClienteObraResumo[] | null) ?? []);
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : ((e as { message?: string } | null)?.message ?? "Erro ao carregar obras");
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { obras, loading, error, refresh: load };
+      return (data as unknown as ClienteObraResumo[] | null) ?? [];
+    },
+  });
+  return {
+    obras: q.data ?? [],
+    loading: q.isLoading,
+    error: q.error ? msgErro(q.error, "Erro ao carregar obras") : null,
+    refresh: async () => {
+      await q.refetch();
+    },
+  };
 }
 
 /** Detalhe de uma obra: cronograma (frentes) + prestação de contas. */
 export function useClienteObraData(obraId: string | undefined) {
-  const [data, setData] = useState<ClienteObraData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!obraId) return;
-    setLoading(true);
-    try {
-      const token = getPortalToken();
+  const token = getPortalToken();
+  const q = useQuery({
+    queryKey: ["portal-obra", token, obraId],
+    enabled: !!obraId,
+    staleTime: STALE_PORTAL,
+    retry: false,
+    queryFn: async (): Promise<ClienteObraData> => {
       if (!token) throw new Error("Não autenticado");
-
       const { data: result, error: rpcError } = await supabase.rpc("get_cliente_obra_detail", {
         p_token: token,
-        p_obra_id: obraId,
+        p_obra_id: obraId!,
       });
       if (rpcError) throw rpcError;
-      setData(result as unknown as ClienteObraData);
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : ((e as { message?: string } | null)?.message ?? "Erro ao carregar obra");
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [obraId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { data, loading, error, refresh: load };
+      return result as unknown as ClienteObraData;
+    },
+  });
+  return {
+    data: q.data ?? null,
+    loading: q.isLoading,
+    error: q.error ? msgErro(q.error, "Erro ao carregar obra") : null,
+    refresh: async () => {
+      await q.refetch();
+    },
+  };
 }

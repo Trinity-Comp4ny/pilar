@@ -9,6 +9,7 @@ import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
+import { resolverEmpresaAlvo } from "../_shared/empresa-alvo.ts";
 
 const log = createLogger("invite-cliente-portal");
 
@@ -34,11 +35,17 @@ serve(
       if (!["admin", "ultra_admin", "coordenador"].includes(profile.role)) {
         return safeErrorResponse(403, "Apenas admin ou coordenador pode criar acesso ao portal", req);
       }
-      if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
       const { cliente_id, email, nome } = entrada.data;
+
+      const alvo = await resolverEmpresaAlvo(supabaseClient, profile, entrada.data.empresa_id, "portal_invite", {
+        tipo: "cliente",
+        id: String(entrada.data.cliente_id),
+      });
+      if (!alvo.ok) return safeErrorResponse(alvo.status, alvo.error, req);
+      const empresaId = alvo.empresaId;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -68,7 +75,7 @@ serve(
         .from("clientes")
         .select("id, nome, empresa_id")
         .eq("id", cliente_id)
-        .eq("empresa_id", profile.empresa_id)
+        .eq("empresa_id", empresaId)
         .single();
 
       if (clienteError || !cliente) return safeErrorResponse(404, "Cliente não encontrado", req);
@@ -80,7 +87,7 @@ serve(
         .from("cliente_portal_accounts")
         .select("id, ativo, cliente_id")
         .eq("email", normalizedEmail)
-        .eq("empresa_id", profile.empresa_id)
+        .eq("empresa_id", empresaId)
         .maybeSingle();
 
       if (existingAccount && existingAccount.cliente_id !== cliente_id) {
@@ -94,7 +101,7 @@ serve(
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
         .select("nome, email")
-        .eq("id", profile.empresa_id)
+        .eq("id", empresaId)
         .maybeSingle();
 
       if (!empresa?.email)
@@ -115,7 +122,7 @@ serve(
           tipo: "portal_acesso_criado",
           to: normalizedEmail,
           empresa: {
-            id: profile.empresa_id,
+            id: empresaId,
             nome: empresa?.nome ?? "Seu escritório",
             email: empresa?.email,
           },
@@ -160,7 +167,7 @@ serve(
       } else {
         const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account_convite", {
           p_cliente_id: cliente.id,
-          p_empresa_id: profile.empresa_id,
+          p_empresa_id: empresaId,
           p_nome: nomeAcesso,
           p_email: normalizedEmail,
           p_token_hash: hash,
@@ -170,7 +177,7 @@ serve(
         if (insertError) {
           log.error("_portal_create_account_convite failed", insertError, {
             cliente_id,
-            empresa_id: profile.empresa_id,
+            empresa_id: empresaId,
           });
           return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
         }

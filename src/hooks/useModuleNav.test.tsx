@@ -7,11 +7,13 @@ const perms = vi.hoisted(() => ({
   isAdmin: true,
   role: "admin" as string,
   bloqueadas: new Set<string>(),
+  ocultos: new Set<string>(),
 }));
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({
     isAdmin: perms.isAdmin,
     role: perms.role,
+    moduloVisivel: (id: string) => !perms.ocultos.has(id),
     getNavItemProps: (f: string) =>
       perms.bloqueadas.has(f) ? { disabled: true, title: "Sem acesso" } : { disabled: false, title: "" },
   }),
@@ -32,6 +34,7 @@ beforeEach(() => {
   perms.isAdmin = true;
   perms.role = "admin";
   perms.bloqueadas = new Set();
+  perms.ocultos = new Set();
 });
 
 describe("useModuleNav", () => {
@@ -101,5 +104,13 @@ describe("useModuleNav", () => {
     expect(after).toHaveBeenCalled();
     act(() => result.current.nav.selectModule("projetos"));
     expect(result.current.location.pathname).toBe("/projetos");
+  });
+
+  it("módulo oculto some do switcher e o último salvo oculto cai no primeiro visível", () => {
+    perms.ocultos = new Set(["obras", "gestao"]);
+    localStorage.setItem(ULTIMO_MODULO_KEY, "obras");
+    const { result } = montar("/inicio");
+    expect(result.current.nav.visibleModules).toEqual(["projetos"]);
+    expect(result.current.nav.activeModule).toBe("projetos");
   });
 });

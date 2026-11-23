@@ -4,6 +4,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 
 const rpc = vi.fn();
+const auth = vi.hoisted(() => ({ profile: { id: "user-1", empresa_id: "empresa-1" } }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: auth.profile }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...args: unknown[]) => rpc(...args) } }));
 
 /** A tela faz duas chamadas: a principal e a dos blocos extra. */
@@ -74,7 +76,11 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe("usePainelGestao", () => {
-  beforeEach(() => rpc.mockReset());
+  beforeEach(() => {
+    rpc.mockReset();
+    auth.profile.id = "user-1";
+    auth.profile.empresa_id = "empresa-1";
+  });
 
   it("aceita o retorno da RPC e converte horas de string numérica para número", async () => {
     responder(retorno());
@@ -146,6 +152,29 @@ describe("usePainelGestao", () => {
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+
+  it("não busca dados financeiros enquanto o perfil está sem empresa", () => {
+    auth.profile.empresa_id = "";
+    renderHook(() => usePainelGestao(), { wrapper });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("usa chave de cache distinta quando o contexto muda de empresa", async () => {
+    responder(retorno());
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    function scopedWrapper({ children }: { children: ReactNode }) {
+      return createElement(QueryClientProvider, { client }, children);
+    }
+    const { result, rerender } = renderHook(() => usePainelGestao(), { wrapper: scopedWrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(client.getQueryData(["painel-gestao", "empresa-1", "user-1"])).toBeDefined();
+
+    auth.profile.empresa_id = "empresa-2";
+    rerender();
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(client.getQueryData(["painel-gestao", "empresa-2", "user-1"])).toBeDefined();
+    expect(rpc.mock.calls.filter((call) => call[0] === "get_painel_gestao")).toHaveLength(2);
   });
 
   it("não chama a RPC quando desabilitado", () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ComponentType } from "react";
 import type { ProfileWithEmpresa } from "@/contexts/AuthContext";
@@ -65,17 +66,19 @@ async function renderPrivateRoute(initialRoute = "/inicio") {
   const { PrivateRoute } = (await import("./PrivateRoute")) as { PrivateRoute: ComponentType };
 
   return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <Routes>
-        <Route path="/" element={<div data-testid="landing">Landing</div>} />
-        <Route element={<PrivateRoute />}>
-          <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
-          <Route path="/profile-setup" element={<div data-testid="profile-setup">Profile Setup</div>} />
-          <Route path="/company-setup" element={<div data-testid="company-setup">Company Setup</div>} />
-          <Route path="/mfa" element={<div data-testid="mfa">MFA</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={[initialRoute]}>
+        <Routes>
+          <Route path="/" element={<div data-testid="landing">Landing</div>} />
+          <Route element={<PrivateRoute />}>
+            <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
+            <Route path="/profile-setup" element={<div data-testid="profile-setup">Profile Setup</div>} />
+            <Route path="/company-setup" element={<div data-testid="company-setup">Company Setup</div>} />
+            <Route path="/mfa" element={<div data-testid="mfa">MFA</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -142,14 +145,16 @@ describe("PrivateRoute", () => {
     vi.resetModules();
     const { PrivateRoute } = (await import("./PrivateRoute")) as { PrivateRoute: ComponentType };
     render(
-      <MemoryRouter initialEntries={["/inicio"]}>
-        <Routes>
-          <Route path="/oauth/autorizar" element={<div data-testid="autorizar">Autorizar</div>} />
-          <Route element={<PrivateRoute />}>
-            <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={["/inicio"]}>
+          <Routes>
+            <Route path="/oauth/autorizar" element={<div data-testid="autorizar">Autorizar</div>} />
+            <Route element={<PrivateRoute />}>
+              <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     await waitFor(() => expect(screen.getByTestId("autorizar")).toBeInTheDocument());
@@ -324,13 +329,15 @@ describe("PrivateRoute", () => {
         empresas: { onboarding_completed: true },
       }) as ProfileWithEmpresa;
     const tree = () => (
-      <MemoryRouter initialEntries={["/inicio"]}>
-        <Routes>
-          <Route element={<PrivateRoute />}>
-            <Route path="/inicio" element={<div>Início</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={["/inicio"]}>
+          <Routes>
+            <Route element={<PrivateRoute />}>
+              <Route path="/inicio" element={<div>Início</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
     );
     mockSubStatus = { status: "active" };
     mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, loading: false, profile: completeProfile("a") });

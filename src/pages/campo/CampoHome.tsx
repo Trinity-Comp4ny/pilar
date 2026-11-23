@@ -52,7 +52,8 @@ export default function CampoHome() {
   const [rdoAberto, setRdoAberto] = useState<RdoDia | null>(null);
   const navigate = useNavigate();
   const { account } = useOutletContext<{ account: CampoAccount }>();
-  const { pendentes, locais, sincronizando, sincronizar, registrar, descartarRegistro } = useCampoSync();
+  const { pendentes, pendenciasAntigas, locais, sincronizando, sincronizar, registrar, descartarRegistro } =
+    useCampoSync();
   const {
     servidor,
     isLoading: carregandoRegistros,
@@ -127,6 +128,13 @@ export default function CampoHome() {
           <p className="text-sm text-muted-foreground">Olá,</p>
           <h1 className="text-2xl font-semibold text-ink">{account.nome}</h1>
         </div>
+
+        {pendenciasAntigas > 0 && (
+          <p role="status" className="text-xs text-muted-foreground">
+            Existem registros antigos preservados neste aparelho. Não apague o navegador; fale com o suporte para
+            recuperar os dados da obra correta.
+          </p>
+        )}
 
         {pendentes > 0 && (
           <div className="flex items-center gap-3 rounded-2xl border border-warning-soft bg-warning-soft/40 px-4 py-3">

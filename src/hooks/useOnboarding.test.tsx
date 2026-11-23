@@ -18,6 +18,7 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ profile: h.profile, refreshProfile: h.refreshProfile }),
 }));
 const can = (f: string) => h.liberadas.has(f);
+vi.mock("@/hooks/useAposPrimeiraPintura", () => ({ useAposPrimeiraPintura: () => true }));
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can, isAdmin: h.isAdmin }) }));
 
 // Um passo extra sem coluna de removido, para exercitar a contagem sem filtro de deleted_at.

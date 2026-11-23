@@ -8,7 +8,9 @@ import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { ARTIGOS_POR_SLUG, dataPorExtenso, relacionados, type Artigo } from "../lib/blog";
 import { analisarMarkdown, perguntasFrequentes } from "../lib/markdown";
+import { CtaNoArtigo } from "../components/blog/CtaNoArtigo";
 import { Markdown } from "../components/blog/CorpoDoArtigo";
+import { CTA_ARTIGOS, posicaoDoCta } from "../lib/ctaArtigos";
 import { MODULOS_POR_SLUG } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
 import { NotFound } from "./NotFound";
@@ -32,6 +34,8 @@ function ArtigoAberto({ artigo }: { artigo: Artigo }) {
   const blocos = useMemo(() => analisarMarkdown(artigo.corpo), [artigo.corpo]);
   const secoes = blocos.filter((b) => b.tipo === "h2") as { texto: string; id: string }[];
   const faq = perguntasFrequentes(blocos);
+  const ctaMeio = CTA_ARTIGOS[artigo.slug];
+  const corte = ctaMeio ? posicaoDoCta(blocos) : -1;
   const modulo = MODULOS_POR_SLUG[artigo.modulo];
   const url = `${BASE}/blog/${artigo.slug}`;
 
@@ -120,7 +124,15 @@ function ArtigoAberto({ artigo }: { artigo: Artigo }) {
 
           <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-12 border-t border-paper-border/80 pt-10 lg:grid-cols-[minmax(0,1fr)_260px]">
             <div className="min-w-0 max-w-[70ch]">
-              <Markdown blocos={blocos} />
+              {ctaMeio && corte > 0 ? (
+                <>
+                  <Markdown blocos={blocos.slice(0, corte)} />
+                  <CtaNoArtigo slug={artigo.slug} cta={ctaMeio} />
+                  <Markdown blocos={blocos.slice(corte)} />
+                </>
+              ) : (
+                <Markdown blocos={blocos} />
+              )}
 
               <aside className="mt-14 rounded-[24px] bg-card-brand-soft p-7 md:p-9">
                 <p className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/55">

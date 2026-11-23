@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { supabaseFake } from "@/hooks/testing/supabaseFake";
 
+const track = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
+
 vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/hooks/testing/supabaseFake")).supabaseFake.client,
 }));
@@ -28,6 +31,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 beforeEach(() => {
   supabaseFake.reset();
+  track.mockClear();
   client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   supabaseFake.respondRpc("get_user_empresa_id", { data: "emp-1" });
 });
@@ -52,16 +56,18 @@ describe("usePropostas", () => {
 
 describe("mutations de proposta", () => {
   it("criar grava na empresa do usuário", async () => {
-    supabaseFake.respond("propostas", "insert", { data: { id: "p9" } });
+    supabaseFake.respond("propostas", "insert", { data: { id: "p9", empresa_id: "emp-1" } });
     const { result } = renderHook(() => useCreateProposta(), { wrapper });
     await expect(result.current.mutateAsync({ titulo: "Clínica", valor_proposto: 1000 })).resolves.toEqual({
       id: "p9",
+      empresa_id: "emp-1",
     });
     expect(supabaseFake.callsTo("propostas", "insert")[0].payload).toEqual({
       titulo: "Clínica",
       valor_proposto: 1000,
       empresa_id: "emp-1",
     });
+    expect(track).toHaveBeenCalledExactlyOnceWith("proposta_criada", { empresa_id: "emp-1" });
   });
 
   it("criar sem empresa não grava", async () => {
@@ -69,6 +75,7 @@ describe("mutations de proposta", () => {
     const { result } = renderHook(() => useCreateProposta(), { wrapper });
     await expect(result.current.mutateAsync({ titulo: "X" })).rejects.toThrow("Usuário não vinculado a uma empresa");
     expect(supabaseFake.callsTo("propostas")).toHaveLength(0);
+    expect(track).not.toHaveBeenCalled();
   });
 
   it("código duplicado no banco é propagado", async () => {

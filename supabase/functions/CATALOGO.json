@@ -140,6 +140,10 @@
     "dominio": "plataforma",
     "descricao": "Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126)."
   },
+  "reuniao-analisar": {
+    "dominio": "plataforma",
+    "descricao": "Analisa uma reunião colada no Ultra: redige dado pessoal, extrai dores, ideias e objeções com citação literal e grava só o texto redigido (SPEC 169)."
+  },
   "ops-export-funil": {
     "dominio": "plataforma",
     "descricao": "Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128)."
@@ -249,6 +253,10 @@
   "send-manual-client-email": {
     "dominio": "comunicacao",
     "descricao": "E-mail manual da empresa para um cliente dela (nunca endereço livre)."
+  },
+  "proposta-link": {
+    "dominio": "comunicacao",
+    "descricao": "Abre e aceita uma versão de proposta por token, com limite de requisições e URL temporária do PDF."
   },
   "send-proposta-email": {
     "dominio": "comunicacao",

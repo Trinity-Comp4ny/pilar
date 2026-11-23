@@ -62,6 +62,8 @@ import { temCoordenadaValida, TILE_LAYERS } from "./constants";
 
 function projeto(p: Partial<ProjetoMapa>): ProjetoMapa {
   return {
+    tipo: "projeto",
+    placa_status: "nao_instalada",
     id: "p1",
     nome: "Torre A",
     codigo_projeto: "P-01",

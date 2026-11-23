@@ -8,28 +8,11 @@ import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, ArrowDownRight, ArrowRight, BarChart3, Trophy, CalendarClock, Receipt } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ArrowRight, Trophy, CalendarClock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  AreaChart,
-  Area,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  Bar,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Label,
-} from "recharts";
-import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Label } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { CategoriaDetalheDialog } from "../components/CategoriaDetalheDialog";
@@ -37,6 +20,8 @@ import { useFinanceData } from "@/pages/financeiro/hooks/useFinanceData";
 import { useDashboardData } from "@/pages/financeiro/hooks/useDashboardData";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
 import { useLancamentosRecentes } from "../hooks/useLancamentosRecentes";
+import { FluxoFinanceiroCard, type GraficoView } from "../components/FluxoFinanceiroCard";
+import { usePendenciasMensais } from "../hooks/usePendenciasMensais";
 import { VencimentoRow } from "../components/VencimentoRow";
 
 function VisaoGeralSkeleton() {
@@ -173,11 +158,6 @@ interface VisaoGeralProps {
   onNovoLancamento?: () => void;
 }
 
-const GRAFICO_OPCOES: ViewOption<"comparativo" | "performance">[] = [
-  { value: "comparativo", label: "Comparativo" },
-  { value: "performance", label: "Performance" },
-];
-
 export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGeralProps) {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
   const {
@@ -192,10 +172,11 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
   // cache que a Início já mantém; a lista independe do filtro de período (é a partir de hoje).
   const { data: radar } = useDashboardData();
   const { data: recentes = [], isLoading: recentesLoading } = useLancamentosRecentes();
+  const { data: pendencias = [] } = usePendenciasMensais();
   const formatCurrency = useMoneyMask();
 
   const [detalheCategoria, setDetalheCategoria] = useState<"receitas" | "despesas" | null>(null);
-  const [chartView, setChartView] = useState<"comparativo" | "performance">("comparativo");
+  const [chartView, setChartView] = useState<GraficoView>("comparativo");
 
   if (isLoading) return <VisaoGeralSkeleton />;
 
@@ -218,16 +199,19 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
   const categoriaData = dashboardData?.categoriaData || [];
   const despesasCategoriaData = dashboardData?.despesasCategoriaData || [];
 
-  const hasChartData = chartData.some((item) => item.receitas > 0 || item.despesas > 0);
-  const hasDailyData = chartDataDiario.some((item) => item.receitas > 0 || item.despesas > 0);
   const hasReceitasData = categoriaData.length > 0;
   const hasDespesasData = despesasCategoriaData.length > 0;
 
   // Formato brasileiro ("40,0%"); era toFixed, que saía "40.0%".
+  const margemMensal = (dashboardData?.chartData ?? []).map((d) => ({
+    mes: d.mes,
+    margem: d.receitas > 0 ? Math.round(((d.receitas - d.despesas) / d.receitas) * 1000) / 10 : 0,
+  }));
+
   const margem = stats.receitasTotal > 0 ? formatPercent((stats.saldo / stats.receitasTotal) * 100) : "0%";
 
   return (
-    <div className="space-y-6 w-full max-w-none">
+    <div className="space-y-8 w-full max-w-none">
       {/* KPIs uniformes: Lucro líquido é o primeiro do grid (métrica da tagline), margem no subtítulo.
           Os 5 numa linha pela largura real (container): em 1440 px o grid de 3 colunas quebrava
           em 2 linhas (~220 px). O "Atualizado" divide a linha do gatilho, e a faixa recolhe com
@@ -250,7 +234,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
           />
         }
       >
-        <div className="@container">
+        <div className="@container pb-2">
           <div className="grid w-full grid-cols-2 gap-2 @3xl:grid-cols-3 @5xl:grid-cols-5">
             <KPICard
               density="compact"
@@ -291,120 +275,15 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
         </div>
       </CollapsibleKpiSection>
 
-      {/* Gráfico principal: alterna entre comparativo (barras + saldo) e performance (área acumulada) */}
-      <Card className="w-full">
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between space-y-0">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 size={18} className="text-muted-foreground" />
-              Fluxo Financeiro
-            </CardTitle>
-            <CardDescription>
-              {chartView === "comparativo"
-                ? `Comparativo de Receitas x Despesas (${visualizacao === "dia" ? "Diário" : "Mensal"})`
-                : "Receitas e despesas acumuladas ao longo do período"}
-            </CardDescription>
-          </div>
-          <ViewSwitcher
-            options={GRAFICO_OPCOES}
-            value={chartView}
-            onChange={setChartView}
-            ariaLabel="Tipo de gráfico"
-            className="self-start"
-          />
-        </CardHeader>
-        <CardContent>
-          <div className="h-[350px] w-full relative">
-            {chartView === "comparativo" ? (
-              <>
-                {!hasChartData && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
-                    <p className="text-muted-foreground text-sm">Sem registros no período</p>
-                  </div>
-                )}
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
-                    <XAxis
-                      dataKey={visualizacao === "dia" ? "dia" : "mes"}
-                      stroke="hsl(var(--chart-neutral))"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis stroke="hsl(var(--chart-neutral))" fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Bar
-                      dataKey="receitas"
-                      name="Receitas"
-                      fill="hsl(var(--chart-success))"
-                      radius={[4, 4, 0, 0]}
-                      barSize={20}
-                    />
-                    <Bar
-                      dataKey="despesas"
-                      name="Despesas"
-                      fill="hsl(var(--chart-danger))"
-                      radius={[4, 4, 0, 0]}
-                      barSize={20}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey={(d) => d.receitas - d.despesas}
-                      name="Saldo Líquido"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={3}
-                      dot={{ r: 4 }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </>
-            ) : (
-              <>
-                {!hasDailyData && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
-                    <p className="text-muted-foreground text-sm">Sem registros no período</p>
-                  </div>
-                )}
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartDataDiario}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--chart-grid))" />
-                    <XAxis
-                      dataKey="dia"
-                      stroke="hsl(var(--chart-neutral))"
-                      fontSize={12}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis stroke="hsl(var(--chart-neutral))" fontSize={12} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="receitas"
-                      name="Receitas"
-                      stackId="1"
-                      stroke="hsl(var(--chart-success))"
-                      fill="hsl(var(--chart-success))"
-                      fillOpacity={0.6}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="despesas"
-                      name="Despesas"
-                      stackId="2"
-                      stroke="hsl(var(--chart-danger))"
-                      fill="hsl(var(--chart-danger))"
-                      fillOpacity={0.6}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <FluxoFinanceiroCard
+        chartView={chartView}
+        onChartViewChange={setChartView}
+        visualizacao={visualizacao}
+        chartData={chartData}
+        chartDataDiario={chartDataDiario}
+        pendencias={pendencias}
+        margemMensal={margemMensal}
+      />
 
       {/* Detalhamento por categoria */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">

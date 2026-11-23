@@ -53,6 +53,7 @@ export default defineConfig({
     },
     {
       name: "authenticated",
+      testIgnore: /firebase-preview-authenticated\.spec\.ts/,
       testMatch: /.*-authenticated\.spec\.ts/,
       dependencies: ["setup"],
       use: {

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Dados do painel do /inicio (SPEC 092, ADR 0037 e 0038).
@@ -131,27 +132,32 @@ export type PainelExtra = z.infer<typeof extraSchema>;
 export type PainelGestao = z.infer<typeof painelSchema> & { extra: PainelExtra | null };
 export type PainelSecao = "gestao" | "projetos" | "obras" | "financeiro";
 
-export function usePainelGestao(enabled = true) {
-  return useQuery({
-    queryKey: ["painel-gestao"],
-    enabled,
-    queryFn: async (): Promise<PainelGestao> => {
-      // Duas chamadas em paralelo: a principal e a dos blocos que vieram depois.
-      // Se a extra falhar, o painel inteiro não cai: os widgets dela mostram
-      // estado vazio e o resto da tela continua servindo.
-      const [principal, extra] = await Promise.all([
-        supabase.rpc("get_painel_gestao"),
-        supabase.rpc("get_painel_extra"),
-      ]);
-      if (principal.error) throw principal.error;
+export async function fetchPainelGestao(): Promise<PainelGestao> {
+  // Duas chamadas em paralelo: a principal e a dos blocos que vieram depois.
+  // Se a extra falhar, o painel inteiro não cai: os widgets dela mostram
+  // estado vazio e o resto da tela continua servindo.
+  const [principal, extra] = await Promise.all([supabase.rpc("get_painel_gestao"), supabase.rpc("get_painel_extra")]);
+  if (principal.error) throw principal.error;
 
-      const parsed = painelSchema.safeParse(principal.data);
-      if (!parsed.success) {
-        throw new Error(`Painel veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
-      }
-      const parsedExtra = extra.error ? null : extraSchema.safeParse(extra.data);
-      return { ...parsed.data, extra: parsedExtra?.success ? parsedExtra.data : null };
-    },
+  const parsed = painelSchema.safeParse(principal.data);
+  if (!parsed.success) {
+    throw new Error(`Painel veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
+  }
+  const parsedExtra = extra.error ? null : extraSchema.safeParse(extra.data);
+  return { ...parsed.data, extra: parsedExtra?.success ? parsedExtra.data : null };
+}
+
+export function usePainelGestao(enabled = true) {
+  const { profile } = useAuth();
+  const empresaId = profile?.empresa_id ?? null;
+  const usuarioId = profile?.id ?? null;
+  return useQuery({
+    // A tela contém dados financeiros e comerciais sob RLS. A chave deve
+    // variar ao trocar perfil/empresa sem depender apenas de logout limpar
+    // todo o QueryClient (p.ex. impersonação e troca de contexto).
+    queryKey: ["painel-gestao", empresaId, usuarioId],
+    enabled: enabled && !!empresaId && !!usuarioId,
+    queryFn: fetchPainelGestao,
     staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 5,
   });

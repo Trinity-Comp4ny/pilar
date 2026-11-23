@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -22,13 +23,12 @@ import {
   sessaoVencida,
   type MedicaoDigitada,
 } from "./registrarDiaRegras";
-import { filaOfflineDb } from "./campoOfflineDb";
+import { enfileirarOffline } from "./enfileirarOffline";
 import type {
   FilaDiaPayload,
   FilaEfetivo,
   FilaFoto,
   FilaImpedimento,
-  FilaMedicao,
   FilaTarefaVinculo,
   FilaVisita,
 } from "./campoOfflineQueue";
@@ -466,6 +466,7 @@ export default function CampoRegistrarDia() {
           description: "Vamos tentar de novo automaticamente.",
         });
       } else {
+        analytics.track("campo_dia_registrado");
         toast.success("Dia registrado");
       }
       navigate("/campo", { replace: true });
@@ -959,30 +960,4 @@ export default function CampoRegistrarDia() {
       </form>
     </div>
   );
-}
-
-/** Grava o dia na fila offline (IndexedDB) para o `useCampoSync` reenviar depois. */
-async function enfileirarOffline(args: {
-  dia: FilaDiaPayload;
-  fotos: FilaFoto[];
-  medicoes?: FilaMedicao[];
-  tarefas?: FilaTarefaVinculo[];
-  efetivos?: FilaEfetivo[];
-  impedimentos?: FilaImpedimento[];
-  visitas?: FilaVisita[];
-  rdoId?: string;
-}): Promise<void> {
-  await filaOfflineDb.salvar({
-    id: crypto.randomUUID(),
-    criadoEm: Date.now(),
-    dia: args.dia,
-    fotos: args.fotos,
-    medicoes: args.medicoes ?? [],
-    tarefas: args.tarefas ?? [],
-    efetivos: args.efetivos ?? [],
-    impedimentos: args.impedimentos ?? [],
-    visitas: args.visitas ?? [],
-    rdoId: args.rdoId,
-    tentativas: 0,
-  });
 }

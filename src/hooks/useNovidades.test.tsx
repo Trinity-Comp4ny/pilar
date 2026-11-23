@@ -14,6 +14,8 @@ vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can }) }));
 
 import { buscarNovidades, useMarcarNovidadesVistas, useNovidades } from "./useNovidades";
 
+vi.mock("@/hooks/useAposPrimeiraPintura", () => ({ useAposPrimeiraPintura: () => true }));
+
 let client: QueryClient;
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={client}>{children}</QueryClientProvider>

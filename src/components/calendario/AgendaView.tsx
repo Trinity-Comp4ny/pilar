@@ -12,7 +12,7 @@ interface AgendaViewProps {
   onEventoClick: (evento: PrazoEvento) => void;
   /**
    * Quando existe, a lista traz todos os dias do mês (inclusive os vazios), cada um com o botão
-   * "+ Tarefa" que abre este conteúdo (criar algo naquele dia).
+   * "+ Criar" que abre este conteúdo (criar algo naquele dia).
    */
   renderNovoNoDia?: (dia: Date, fechar: () => void) => ReactNode;
 }
@@ -70,7 +70,7 @@ export function AgendaView({ cursor, eventos, onEventoClick, renderNovoNoDia }: 
                   <Popover open={diaAberto === dia} onOpenChange={(aberto) => setDiaAberto(aberto ? dia : null)}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="xs" className="mt-2">
-                        <Plus className="mr-1 h-3.5 w-3.5" /> Tarefa
+                        <Plus className="mr-1 h-3.5 w-3.5" /> Criar
                         <span className="sr-only">
                           em {d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
                         </span>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { monitoring } from "@/lib/monitoring";
 
 // Sessão do Pilar Campo: token próprio (não é auth do Supabase), guardado por
 // aba. Espelha o portal do cliente (useClienteAuth), mas a conta é escopada a
@@ -25,6 +26,9 @@ export function getCampoToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY);
 }
 export function setCampoToken(token: string): void {
+  // Um novo login não pode reutilizar o cache verificado de uma sessão
+  // anterior. O próximo verify vincula o token à conta/obra corretas.
+  sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
   sessionStorage.setItem(TOKEN_KEY, token);
 }
 export function clearCampoToken(): void {
@@ -36,7 +40,21 @@ function getCachedAccount(): CampoAccount | null {
   const raw = sessionStorage.getItem(ACCOUNT_CACHE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as CampoAccount;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const obj = value as Record<string, unknown>;
+    if (
+      typeof obj.account_id !== "string" ||
+      typeof obj.obra_id !== "string" ||
+      typeof obj.empresa_id !== "string" ||
+      typeof obj.nome !== "string" ||
+      typeof obj.must_change_senha !== "boolean" ||
+      !obj.account_id ||
+      !obj.obra_id ||
+      !obj.empresa_id
+    )
+      return null;
+    return obj as unknown as CampoAccount;
   } catch {
     return null;
   }
@@ -85,6 +103,8 @@ export function useCampoAuth() {
         must_change_senha: !!res.must_change_senha,
       };
       setCachedAccount(acc);
+      // O Campo não passa pelo AuthContext: sem isso, o erro do pedreiro chega ao Sentry sem empresa.
+      monitoring.setUser({ id: acc.account_id, empresa_id: acc.empresa_id, role: "campo" });
       setAccount(acc);
       setError(null);
       setLoading(false);

@@ -11,7 +11,7 @@ import {
   useTarefaMutations,
   useTarefaPorId,
   useTarefas,
-} from "./hooks";
+} from "@/hooks/tarefas/useTarefas";
 
 /**
  * Hooks de dados de "Tarefas": filtros por pessoa (inclusive o caso "eu sem

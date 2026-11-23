@@ -65,9 +65,23 @@ describe("ObraContaTab", () => {
   it("sem permissão: nada de aporte, despesa, editar ou excluir", async () => {
     montar(false);
     expect(await screen.findByText("Concreto")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Aporte/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Despesa/ })).not.toBeInTheDocument();
+    expect(
+      screen
+        .queryByRole("button", { name: /Aporte/, pressed: undefined, description: undefined })
+        ?.hasAttribute("aria-pressed")
+    ).not.toBe(false);
+    expect(screen.queryByRole("button", { name: /Despesa/ })?.hasAttribute("aria-pressed")).not.toBe(false);
     expect(screen.queryByRole("button", { name: /Excluir lançamento/ })).not.toBeInTheDocument();
+  });
+
+  it("filtra o extrato por tipo e mostra o vazio quando nada bate", async () => {
+    montar();
+    await screen.findByText("Concreto");
+    fireEvent.click(screen.getByRole("button", { name: "Aportes" }));
+    expect(screen.queryByText("Concreto")).not.toBeInTheDocument();
+    expect(screen.getByText("Aporte inicial")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Buscar no extrato"), { target: { value: "zzz" } });
+    expect(screen.getByText("Nenhum lançamento com esse filtro")).toBeInTheDocument();
   });
 
   it("excluir despesa pede confirmação e estorna via RPC", async () => {

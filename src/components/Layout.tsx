@@ -1,4 +1,4 @@
-import { Suspense, lazy, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -73,6 +73,11 @@ function DevErrorTrigger() {
 }
 
 function LayoutContent() {
+  // Logado, baixa o modal de configurações em ocioso para abrir sem espera.
+  useEffect(() => {
+    const id = window.setTimeout(() => void import("@/components/settings/SettingsDialog"), 3000);
+    return () => window.clearTimeout(id);
+  }, []);
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
   useRouteEnter(mainRef);

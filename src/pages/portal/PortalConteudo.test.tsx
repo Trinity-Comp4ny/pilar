@@ -14,6 +14,8 @@ vi.mock("@/integrations/supabase/client", async () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/monitoring", () => ({ reportInvokeError: vi.fn() }));
+const track = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analytics", () => ({ analytics: { track } }));
 const portal = vi.hoisted(() => ({ token: null as string | null }));
 vi.mock("@/hooks/useClienteAuth", () => ({ getPortalToken: () => portal.token }));
 
@@ -62,7 +64,7 @@ describe("FinanceiroContent", () => {
       <FinanceiroContent
         receitas={[
           receita({ id: "a", descricao: "Entrada", status: "Recebido", data_recebimento: "2026-10-05" }),
-          receita({ id: "b", descricao: "Medição", status: "Pago", valor: 500 }),
+          receita({ id: "b", descricao: "Medição", status: "Pago", valor: 500, data_vencimento: "2026-11-01" }),
           receita({ id: "c", descricao: "Atrasada", data_vencimento: "2026-11-09", valor: 1500 }),
           receita({ id: "d", descricao: "Hoje", data_vencimento: "2026-11-10", valor: 1000 }),
         ]}
@@ -71,6 +73,9 @@ describe("FinanceiroContent", () => {
     expect(nb(document.body.textContent)).toContain("R$ 4.000,00");
     expect(screen.getByText("38% pago")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Progresso de pagamento" })).toHaveAttribute("aria-valuenow", "38");
+    const medicao = screen.getByText("Medição").closest("div.border") as HTMLElement;
+    expect(within(medicao).getByText("Pago")).toBeInTheDocument();
+    expect(within(medicao).queryByText("Atrasado")).not.toBeInTheDocument();
     const entrada = screen.getByText("Entrada").closest("div.border") as HTMLElement;
     expect(within(entrada).getByText(/Pago em: 05\/10\/2026/)).toBeInTheDocument();
     expect(within(screen.getByText("Atrasada").closest("div.border") as HTMLElement).getByText("Atrasado"));
@@ -137,10 +142,12 @@ describe("PendenciasCard", () => {
     );
   }
 
-  it("nada pendente: parcela que vence hoje à noite não conta como atraso", () => {
+  it("exclui parcelas recebidas ou pagas das pendências", () => {
     renderCard([
       receita({ data_vencimento: "2026-12-30" }),
       receita({ id: "x", status: "Recebido", data_vencimento: "2026-11-01" }),
+      receita({ id: "p1", status: "Pago", data_vencimento: "2026-11-01" }),
+      receita({ id: "p2", status: "Pago", data_vencimento: "2026-11-15" }),
       receita({ id: "y", data_vencimento: "" }),
     ]);
     expect(screen.getByText("Nada pendente")).toBeInTheDocument();
@@ -261,6 +268,7 @@ describe("EntregasContent", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Aprovar/ }));
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aprovado"));
+    expect(track).toHaveBeenCalledExactlyOnceWith("portal_entrega_aprovada");
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "tok", p_entrega_id: "e1" });
     expect(sb.client.rpc.mock.calls.filter((c) => c[0] === "portal_listar_solicitacoes")).toHaveLength(2);
   });
@@ -272,6 +280,7 @@ describe("EntregasContent", () => {
     renderComQuery(<EntregasContent projetoId="p1" token="prop" />);
     fireEvent.click(await screen.findByRole("button", { name: /Aprovar/ }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível aprovar", expect.anything()));
+    expect(track).not.toHaveBeenCalled();
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "prop", p_entrega_id: "e1" });
   });
 
@@ -306,6 +315,7 @@ describe("EntregasContent", () => {
     fireEvent.change(screen.getByPlaceholderText(/Descreva/), { target: { value: "De novo" } });
     fireEvent.click(enviar());
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Solicitação de revisão enviada"));
+    expect(track).toHaveBeenCalledExactlyOnceWith("portal_revisao_solicitada");
   });
 
   it("sem token a equipe não aprova nem pede revisão pelo portal", async () => {

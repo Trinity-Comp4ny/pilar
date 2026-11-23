@@ -1,6 +1,8 @@
 import { uuidObrigatorio, validar, z } from "../_shared/schemas.ts";
 
 export const entradaSchema = z.object({
+  // Só o ultra_admin: age nesta empresa em vez da própria (auditado). Os demais papéis ignoram.
+  empresa_id: z.string().uuid("empresa_id inválido").optional(),
   cliente_id: uuidObrigatorio("cliente_id inválido"),
   // Qual acesso do cliente (SPEC 164: pode haver vários). Sem ele, só funciona se o
   // cliente tiver um acesso só (compatível com a tela antiga).
