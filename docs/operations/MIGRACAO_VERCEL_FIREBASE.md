@@ -70,10 +70,8 @@ domínio de teste (5) e o cutover (6).
    2. Baixar o TTL do DNS para 300 s, com 24 h de antecedência.
    3. Adicionar o domínio de produção no Firebase (ele pede os registros de verificação) e esperar o certificado emitir **antes** de trocar o apontamento.
    4. Trocar o DNS da landing, conferir; depois o do app, conferir.
-   5. Gatilhos: já ligados (23/11/2026). PR para `staging` publica preview em todo PR que muda código de
-      app ou landing (`paths-ignore` de docs, brand, research, supabase e `*.md`); o CI verde de `main`
-      dispara `workflow_run` e publica `live` nos dois sites, com o commit que o CI testou, sujeito à
-      aprovação do Environment `production`. Falta, fora do código: o site de staging no Firebase.
+   5. Gatilhos: já ligados (23/11/2026). O CI verde de `staging` publica o site de staging e o de `main`
+      publica `live`, este sujeito à aprovação do Environment `production`. Ver "Automação do deploy".
 7. **Reversão.** Reapontar o DNS para a Vercel (TTL de 300 s). Por isso o projeto Vercel só é
    desligado depois de ~2 semanas sem incidente.
 8. **Limpeza.** Remover `vercel.json`, `scripts/vercel-ignore.sh` e as referências em
@@ -90,10 +88,14 @@ domínio de teste (5) e o cutover (6).
 
 ## Automação do deploy (23/11/2026)
 
-- `live` por `workflow_run`: só roda com o CI de `main` em `success`, depois das migrations e das edge
-  functions, e `verificar-firebase-ambiente.mjs` recusa live fora de `main` (teste em
-  `scripts/verificar-firebase-ambiente.test.ts`).
-- O Environment `production` continua exigindo aprovação: cada push em `main` espera um clique. Tirar
-  essa trava é decisão sua (Settings → Environments → production).
-- Pendente fora do código: site de staging no Firebase (`staging.app.pilarsoft.com.br`), hoje na Vercel.
+- `workflow_run` do `CI`: o de `staging` publica o site de staging (Environment `staging`, sem aprovação);
+  o de `main` publica `live` (Environment `production`, com aprovação). Só roda com o CI em `success`, ou
+  seja, depois das migrations e das edge functions. O guard `verificar-firebase-ambiente.mjs` recusa
+  qualquer outro evento ou branch e confere que o Supabase do build é o do ambiente
+  (teste em `scripts/verificar-firebase-ambiente.test.ts`).
+- Cada Environment do GitHub carrega as suas variáveis: `FIREBASE_PROJECT_ID`, `FIREBASE_SITE_APP`,
+  `FIREBASE_SITE_MARKETING`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT` e as `VITE_*`.
+  A variável de Environment prevalece sobre a de repositório, então o `staging` aponta para o projeto
+  GCP de staging e o `production` para o de produção.
+- Preview por PR: só quando o PR mexe na própria publicação (config do Firebase, scripts e smoke).
 - Rollback: reapontar o DNS para a Vercel (TTL de 300 s) enquanto o projeto Vercel existir.
