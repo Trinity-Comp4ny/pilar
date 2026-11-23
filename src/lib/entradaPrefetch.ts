@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 /** Quem está entrando: chaves de cache com dado sob RLS variam por empresa e usuário. */
 export interface ContextoEntrada {
   empresaId: string;
-  usuarioId?: string;
+  usuarioId: string;
 }
 
 const STALE = 5 * 60 * 1000;
@@ -28,19 +28,16 @@ const ROTAS: Array<{ prefixo: string; buscar: (qc: QueryClient, ctx: ContextoEnt
   },
   {
     prefixo: "/inicio",
-    // Mesma chave de usePainelGestao: sem usuário, não há como acertar o cache.
-    buscar: (qc, { empresaId, usuarioId }) =>
-      usuarioId
-        ? [
-            import("@/pages/inicio/hooks/usePainelGestao").then(({ fetchPainelGestao }) =>
-              qc.prefetchQuery({
-                queryKey: ["painel-gestao", empresaId, usuarioId],
-                queryFn: fetchPainelGestao,
-                staleTime: STALE,
-              })
-            ),
-          ]
-        : [],
+    // Mesma chave de usePainelGestao (empresa e usuário).
+    buscar: (qc, { empresaId, usuarioId }) => [
+      import("@/pages/inicio/hooks/usePainelGestao").then(({ fetchPainelGestao }) =>
+        qc.prefetchQuery({
+          queryKey: ["painel-gestao", empresaId, usuarioId],
+          queryFn: fetchPainelGestao,
+          staleTime: STALE,
+        })
+      ),
+    ],
   },
 ];
 
