@@ -12405,11 +12405,11 @@ export type Database = {
           p_resultado: string
           p_texto?: string
         }
+        Returns: undefined
+      }
       prospec_registrar_busca: {
         Args: { p_celula: string; p_erro?: string; p_leads: Json }
         Returns: number
-      }
-        Returns: undefined
       }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }
