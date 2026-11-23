@@ -93,6 +93,13 @@ export const CASOS: Caso[] = [
     descricao: "2 splits de 24.000 BTU na sala e 1 de 24 mil na suíte master",
     esperado: { itens: { ac24: 3 } },
   },
+  {
+    // O 36.000 BTU entrou no catálogo (migration 20261228000000): deixou de ser "fora do catálogo".
+    id: "simples-split-36",
+    categoria: "simples",
+    descricao: "Ar-condicionado split de 36.000 BTU na sala",
+    esperado: { itens: { ac36: 1 } },
+  },
 
   // ── completo: várias frases, ambientes, relevo, marcenaria ─────────────────
   {
@@ -219,12 +226,6 @@ export const CASOS: Caso[] = [
     categoria: "fora",
     descricao: "Casa com spa, sauna e quadra de tênis, mais piscina de 40 m²",
     esperado: { itens: { piscina: 40 }, foraDoCatalogo: 2 },
-  },
-  {
-    id: "fora-split-36",
-    categoria: "fora",
-    descricao: "Ar-condicionado split de 36.000 BTU na sala",
-    esperado: { itens: {}, foraDoCatalogo: 1 },
   },
   {
     id: "fora-heliponto",
