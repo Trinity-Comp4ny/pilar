@@ -4,7 +4,7 @@ const DESKTOP = "(min-width: 1024px)";
 
 /**
  * Vídeo do painel lateral das telas de entrada. O painel só aparece a partir de `lg`;
- * em tela menor o vídeo (14 MB) nem é pedido, em vez de baixar escondido.
+ * em tela menor o vídeo (2,9 MB) nem é pedido, em vez de baixar escondido.
  */
 export function VideoLateral({ className }: { className?: string }) {
   const [desktop, setDesktop] = useState(() =>
