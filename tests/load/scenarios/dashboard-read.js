@@ -3,20 +3,45 @@
 
 import http from 'k6/http';
 import { check, sleep, group } from 'k6';
-import { Counter } from 'k6/metrics';
+import { Counter, Trend } from 'k6/metrics';
 import { authenticate } from '../utils/auth.js';
-import { config, defaultStages, defaultThresholds, supabaseHeaders } from '../utils/setup.js';
+import { config, defaultStages, defaultThresholds, summaryTrendStats, supabaseHeaders } from '../utils/setup.js';
 
 export const errors = new Counter('errors');
+const painelRpcDuration = new Trend('painel_rpc_duration', true);
 
 export const options = {
   stages: defaultStages,
-  thresholds: defaultThresholds,
+  summaryTrendStats,
+  thresholds: {
+    ...defaultThresholds,
+    painel_rpc_duration: defaultThresholds.http_req_duration,
+  },
 };
 
+function buscarPainel(headers) {
+  return http.post(
+    `${config.SUPABASE_URL}/rest/v1/rpc/get_painel_gestao`,
+    '{}',
+    { headers, tags: { name: 'dashboard_painel_gestao' } },
+  );
+}
+
+function painelValido(res) {
+  if (res.status !== 200) return false;
+  try {
+    const dados = res.json();
+    return dados !== null && typeof dados === 'object' && dados.gestao !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 export function setup() {
-  const session = authenticate();
-  return { token: session.accessToken };
+  const { accessToken: token } = authenticate();
+  const painel = buscarPainel(supabaseHeaders(token));
+  if (!painelValido(painel)) throw new Error(`Preflight do painel falhou: HTTP ${painel.status}.`);
+  return { token };
 }
 
 export default function (data) {
@@ -30,12 +55,11 @@ export default function (data) {
     );
     if (!check(lanc, { 'lancamentos 200': (r) => r.status === 200 })) errors.add(1);
 
-    // Projetos ativos
-    const proj = http.get(
-      `${config.SUPABASE_URL}/rest/v1/projetos?select=id,nome,status&status=eq.ativo&limit=20`,
-      { headers, tags: { name: 'dashboard_projetos' } },
-    );
-    if (!check(proj, { 'projetos 200': (r) => r.status === 200 })) errors.add(1);
+    // RPC realmente chamada pelo /inicio: mede a agregação em vez de uma
+    // listagem de projetos filtrada por status "ativo" (valor inexistente).
+    const painel = buscarPainel(headers);
+    painelRpcDuration.add(painel.timings.duration);
+    if (!check(painel, { 'painel 200 e payload de gestão': painelValido })) errors.add(1);
 
     // Contas
     const contas = http.get(`${config.SUPABASE_URL}/rest/v1/contas?select=id,nome,saldo_atual`, {

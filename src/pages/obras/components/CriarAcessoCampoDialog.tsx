@@ -13,15 +13,27 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   obraId: string;
+  /** Empresa dona da obra: o ultra_admin age em obra de outra empresa (auditado no servidor). */
+  empresaId?: string;
 }
 
 type Resultado = { modo: "convite"; email: string } | { modo: "senha"; email: string; senha: string };
 
 function useInviteCampo() {
   return useMutation({
-    mutationFn: async (input: { obraId: string; nome: string; email: string }): Promise<Resultado> => {
+    mutationFn: async (input: {
+      obraId: string;
+      nome: string;
+      email: string;
+      empresaId?: string;
+    }): Promise<Resultado> => {
       const { data, error } = await supabase.functions.invoke("invite-campo", {
-        body: { obra_id: input.obraId, nome: input.nome, email: input.email || undefined },
+        body: {
+          obra_id: input.obraId,
+          nome: input.nome,
+          email: input.email || undefined,
+          empresa_id: input.empresaId,
+        },
       });
       if (error) throw new Error(await mensagemDaFunction(error, "Falha ao criar o acesso"));
       const res = data as {
@@ -39,7 +51,7 @@ function useInviteCampo() {
   });
 }
 
-export function CriarAcessoCampoDialog({ open, onOpenChange, obraId }: Props) {
+export function CriarAcessoCampoDialog({ open, onOpenChange, obraId, empresaId }: Props) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -61,7 +73,7 @@ export function CriarAcessoCampoDialog({ open, onOpenChange, obraId }: Props) {
       return;
     }
     try {
-      const r = await invite.mutateAsync({ obraId, nome: nome.trim(), email: email.trim() });
+      const r = await invite.mutateAsync({ obraId, nome: nome.trim(), email: email.trim(), empresaId });
       setResultado(r);
     } catch (err) {
       toast.error("Não foi possível criar o acesso", {

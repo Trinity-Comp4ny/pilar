@@ -37,9 +37,10 @@ import {
   useTarefaMutations,
   type TarefaInput,
   type TarefaItem,
-} from "../hooks";
-import { useEtapas } from "../useEtapas";
-import { TarefaDialog } from "./TarefaDialog";
+} from "@/hooks/tarefas/useTarefas";
+import { useEtapas } from "@/hooks/tarefas/useEtapas";
+import { TarefaDialog } from "@/components/tarefas/TarefaDialog";
+import { NovoNoDia } from "./NovoNoDia";
 import { NovaTarefaNoDia, type NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
 import {
   CHAVE_EVENTOS_AGENDA,
@@ -96,6 +97,12 @@ export function AbaAgenda({
   const [sincronizando, setSincronizando] = useState(false);
   // Diálogo da reunião: null fechado; "nova" ou a reunião aberta.
   const [reuniaoAberta, setReuniaoAberta] = useState<EventoAgenda | "nova" | null>(null);
+  // Dia em que a reunião nova nasce: o do "+" clicado, ou o do cursor pelo botão do cabeçalho.
+  const [diaReuniao, setDiaReuniao] = useState<string | null>(null);
+  const abrirNovaReuniao = (dia: Date) => {
+    setDiaReuniao(format(dia, "yyyy-MM-dd"));
+    setReuniaoAberta("nova");
+  };
 
   const camadas: CamadaId[] = [
     ...(temProjetos ? (["disciplina"] as const) : []),
@@ -223,20 +230,28 @@ export function AbaAgenda({
 
   const renderNovoNoDia = canEdit
     ? (dia: Date, fechar: () => void) => (
-        <NovaTarefaNoDia
-          rotuloDia={dia.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
-          rotuloPrazo={dia.toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}
-          pessoas={pessoas ?? []}
-          projetos={projetos ?? []}
-          minhaPessoaId={minhaPessoaId}
-          podeEscolherResponsavel={podeEscolherResponsavel}
-          onCriar={(dados) => criarNoDia(dia, dados)}
-          onMaisCampos={(titulo) => {
-            setNovaNoDia({ prazo: format(dia, "yyyy-MM-dd"), titulo });
+        <NovoNoDia
+          podeReuniao={agendaConectada && !statusAgenda?.reconectar}
+          onReuniao={() => {
+            abrirNovaReuniao(dia);
             fechar();
           }}
-          onFechar={fechar}
-        />
+        >
+          <NovaTarefaNoDia
+            rotuloDia={dia.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
+            rotuloPrazo={dia.toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}
+            pessoas={pessoas ?? []}
+            projetos={projetos ?? []}
+            minhaPessoaId={minhaPessoaId}
+            podeEscolherResponsavel={podeEscolherResponsavel}
+            onCriar={(dados) => criarNoDia(dia, dados)}
+            onMaisCampos={(titulo) => {
+              setNovaNoDia({ prazo: format(dia, "yyyy-MM-dd"), titulo });
+              fechar();
+            }}
+            onFechar={fechar}
+          />
+        </NovoNoDia>
       )
     : undefined;
 
@@ -246,7 +261,7 @@ export function AbaAgenda({
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(-1)} aria-label="Anterior">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="text-sm font-medium min-w-[150px] text-center">{labelPeriodo(view, cursor)}</span>
+        <span className="text-sm font-medium min-w-[150px] text-center capitalize">{labelPeriodo(view, cursor)}</span>
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(1)} aria-label="Próximo">
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -264,7 +279,7 @@ export function AbaAgenda({
           </Button>
         )}
         {agendaConectada && !statusAgenda?.reconectar && (
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setReuniaoAberta("nova")}>
+          <Button variant="brand" size="sm" className="h-9" onClick={() => abrirNovaReuniao(cursor)}>
             <Plus className="h-4 w-4" />
             Nova reunião
           </Button>
@@ -279,15 +294,16 @@ export function AbaAgenda({
             aria-label="Atualizar reuniões do Google Agenda"
             title="Atualizar reuniões do Google Agenda"
           >
-            <RefreshCw className="h-4 w-4" />
+            {/* Carregando, só a marca gira: o ícone de atualizar some. */}
+            {!sincronizando && <RefreshCw className="h-4 w-4" />}
           </Button>
         )}
 
-        {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
-            mobile só Agenda é oferecida, então o seletor vira redundante. */}
+        {/* Só Mês e Semana. Em 390px o grid de 7 colunas é ilegível: no celular a lista
+            (AgendaView) entra sozinha e o seletor some. */}
         {!isMobile && (
           <ViewSwitcher
-            options={(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => ({ value: v, label: VIEW_LABEL[v] }))}
+            options={(["mes", "semana"] as CalendarioView[]).map((v) => ({ value: v, label: VIEW_LABEL[v] }))}
             value={view}
             onChange={setView}
             ariaLabel="Modo do calendário"
@@ -340,7 +356,7 @@ export function AbaAgenda({
         open={!!reuniaoAberta}
         onOpenChange={(open) => !open && setReuniaoAberta(null)}
         reuniao={reuniaoAberta === "nova" ? null : reuniaoAberta}
-        diaInicial={format(cursor, "yyyy-MM-dd")}
+        diaInicial={diaReuniao ?? format(cursor, "yyyy-MM-dd")}
         avisoPadrao={statusAgenda?.lembreteMinutos ?? null}
         agendas={agendasDaConta ?? []}
       />

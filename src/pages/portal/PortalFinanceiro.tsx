@@ -8,6 +8,8 @@ import { CheckCircle2, Clock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
+import { receitaRecebida } from "./receitaRecebida";
+
 export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) {
   const formatCurrency = useMoneyMask();
   // Data local (BRT) no formato YYYY-MM-DD para comparar vencimento sem erro de fuso.
@@ -18,9 +20,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
 
   const totalPrevisto = receitas.reduce((s, r) => s + r.valor, 0);
   // "Pago" e "Recebido" contam como recebido (mesmo critério do resto do app).
-  const totalPago = receitas
-    .filter((r) => r.status === "Recebido" || r.status === "Pago")
-    .reduce((s, r) => s + r.valor, 0);
+  const totalPago = receitas.filter((r) => receitaRecebida(r.status)).reduce((s, r) => s + r.valor, 0);
   const totalPendente = receitas.filter((r) => r.status === "Pendente").reduce((s, r) => s + r.valor, 0);
 
   return (
@@ -66,7 +66,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
           ) : (
             <div className="space-y-3">
               {receitas.map((r) => {
-                const isRecebido = r.status === "Recebido";
+                const isRecebido = receitaRecebida(r.status);
                 const isAtrasado = !isRecebido && !!r.data_vencimento && r.data_vencimento < hojeLocal;
                 const statusKey = isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente";
                 return (

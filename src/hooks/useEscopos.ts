@@ -7,7 +7,7 @@ import type { Tables } from "@/integrations/supabase/types";
  * dos itens vêm nulos para quem não tem acesso ao financeiro, e `pode_ver_valor` diz qual
  * é o caso. A tabela escopos não entrega essas colunas a ninguém pela API.
  */
-export type EscopoRow = Omit<Tables<"escopos">, "valor_aditivo" | "custo_estimado"> & {
+export type EscopoRow = Omit<Tables<"escopos">, "valor_aditivo" | "custo_estimado" | "origem_manual"> & {
   valor_aditivo: number | null;
   custo_estimado: number | null;
   pode_ver_valor: boolean;
@@ -173,6 +173,7 @@ export function useRejeitarEscopo() {
     },
     onSuccess: (_data, params) => {
       qc.invalidateQueries({ queryKey: escoposKey(params.projetoId) });
+      qc.invalidateQueries({ queryKey: ["projeto-timeline", params.projetoId] });
       qc.invalidateQueries({ queryKey: pendenciasKey });
     },
   });

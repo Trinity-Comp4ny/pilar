@@ -20,13 +20,13 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
 import { usePermissions } from "@/hooks/usePermissions";
-import { PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm } from "./useProjetoForm";
 import { EstadoSelectItems } from "./EstadoSelectItems";
-import { getPriorityDotColor } from "../lib/priorityColors";
+import { PrioridadeSelect } from "./PrioridadeSelect";
+import { PlacaSelect } from "@/components/placa/PlacaSelect";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { useNivelConfianca } from "@/hooks/useNivelConfianca";
@@ -336,27 +336,10 @@ export function ProjetoFormDialog({
 
                 {/* Prioridade + Área na mesma linha */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Prioridade</Label>
-                    <Select
-                      value={form.formData.prioridade}
-                      onValueChange={(value) => form.handleInputChange("prioridade", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PRIORITY_OPTIONS.map((p) => (
-                          <SelectItem key={p} value={p}>
-                            <span className="flex items-center gap-2">
-                              <span className={cn("h-2 w-2 rounded-full", getPriorityDotColor(p))} />
-                              {PROJECT_PRIORITY_CONFIG[p].label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <PrioridadeSelect
+                    value={form.formData.prioridade}
+                    onChange={(value) => form.handleInputChange("prioridade", value)}
+                  />
                   <div className="space-y-2">
                     <Label htmlFor="area_m2">Área (m²)</Label>
                     <Input
@@ -366,6 +349,14 @@ export function ProjetoFormDialog({
                       value={form.formData.area_m2}
                       onChange={(e) => form.handleInputChange("area_m2", e.target.value)}
                       placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="placa_status">Placa</Label>
+                    <PlacaSelect
+                      id="placa_status"
+                      value={form.formData.placa_status}
+                      onChange={(v) => form.handleInputChange("placa_status", v)}
                     />
                   </div>
                 </div>

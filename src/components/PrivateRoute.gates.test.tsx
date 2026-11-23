@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ComponentType } from "react";
 
@@ -53,20 +54,22 @@ async function renderAt(path: string) {
   vi.resetModules();
   const { PrivateRoute } = (await import("./PrivateRoute")) as { PrivateRoute: ComponentType };
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/" element={<div data-testid="landing" />} />
-        <Route element={<PrivateRoute />}>
-          <Route path="/inicio" element={<div />} />
-          <Route path="/financeiro" element={<div />} />
-          <Route path="/profile-setup" element={<div data-testid="profile-setup" />} />
-          <Route path="/company-setup" element={<div data-testid="company-setup" />} />
-          <Route path="/mfa" element={<div data-testid="mfa" />} />
-          <Route path="/mfa/setup" element={<div data-testid="mfa-setup" />} />
-        </Route>
-        <Route path="/ultra-admin" element={<div data-testid="ultra" />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/" element={<div data-testid="landing" />} />
+          <Route element={<PrivateRoute />}>
+            <Route path="/inicio" element={<div />} />
+            <Route path="/financeiro" element={<div />} />
+            <Route path="/profile-setup" element={<div data-testid="profile-setup" />} />
+            <Route path="/company-setup" element={<div data-testid="company-setup" />} />
+            <Route path="/mfa" element={<div data-testid="mfa" />} />
+            <Route path="/mfa/setup" element={<div data-testid="mfa-setup" />} />
+          </Route>
+          <Route path="/ultra-admin" element={<div data-testid="ultra" />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

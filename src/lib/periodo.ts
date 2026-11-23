@@ -6,6 +6,7 @@ import {
   startOfMonth,
   startOfQuarter,
   startOfYear,
+  addDays,
   subDays,
   subMonths,
   subQuarters,
@@ -20,6 +21,8 @@ export type PeriodoPreset =
   | "mes-anterior"
   | "ultimos-7"
   | "ultimos-30"
+  | "proximos-7"
+  | "proximos-30"
   | "este-trimestre"
   | "trimestre-passado"
   | "este-ano"
@@ -36,6 +39,8 @@ export const PERIODO_PRESETS: PeriodoPresetDef[] = [
   { key: "mes-anterior", label: "Mês passado" },
   { key: "ultimos-7", label: "Últimos 7 dias" },
   { key: "ultimos-30", label: "Últimos 30 dias" },
+  { key: "proximos-7", label: "Próximos 7 dias" },
+  { key: "proximos-30", label: "Próximos 30 dias" },
   { key: "este-trimestre", label: "Este trimestre" },
   { key: "trimestre-passado", label: "Trimestre passado" },
   { key: "este-ano", label: "Este ano" },
@@ -65,6 +70,10 @@ export function rangeForPreset(preset: PeriodoPreset, now: Date = new Date()): P
       return { from: subDays(now, 6), to: now };
     case "ultimos-30":
       return { from: subDays(now, 30), to: now };
+    case "proximos-7":
+      return { from: now, to: addDays(now, 6) };
+    case "proximos-30":
+      return { from: now, to: addDays(now, 30) };
     case "este-trimestre":
       return { from: startOfQuarter(now), to: endOfQuarter(now) };
     case "trimestre-passado": {
@@ -94,6 +103,8 @@ export function detectPreset(from: Date | undefined, to: Date | undefined, now: 
   if (matches("mes-anterior")) return "mes-anterior";
   if (matches("ultimos-7")) return "ultimos-7";
   if (matches("ultimos-30")) return "ultimos-30";
+  if (matches("proximos-7")) return "proximos-7";
+  if (matches("proximos-30")) return "proximos-30";
   if (matches("este-trimestre")) return "este-trimestre";
   if (matches("trimestre-passado")) return "trimestre-passado";
   if (matches("este-ano")) return "este-ano";

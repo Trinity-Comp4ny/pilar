@@ -46,11 +46,8 @@ describe("MiniMes", () => {
     await user.click(dia10);
     expect(fmtKey(onSelect.mock.calls[0][0])).toBe("2026-11-10");
 
-    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
-    expect(screen.getByText("Dezembro 2026")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Mês anterior" }));
-    await user.click(screen.getByRole("button", { name: "Mês anterior" }));
-    expect(screen.getByText("Outubro 2026")).toBeInTheDocument();
+    // sem setas próprias: a navegação vive no cabeçalho da agenda
+    expect(screen.queryByRole("button", { name: "Próximo mês" })).not.toBeInTheDocument();
   });
 
   it("marca hoje", () => {
@@ -83,7 +80,7 @@ describe("MesView", () => {
       </button>
     ));
     render(<MesView cursor={NOV} eventosPorDia={new Map()} onEventoClick={vi.fn()} renderNovoNoDia={renderNovo} />);
-    await user.click(screen.getByRole("button", { name: /Nova tarefa em 5 de novembro/ }));
+    await user.click(screen.getByRole("button", { name: /Criar em 5 de novembro/ }));
     await user.click(await screen.findByText("criar em 2026-11-05"));
     expect(screen.queryByText("criar em 2026-11-05")).not.toBeInTheDocument();
   });
@@ -132,7 +129,7 @@ describe("AgendaView", () => {
     expect(onClick).toHaveBeenCalledWith(expect.objectContaining({ id: "5" }));
   });
 
-  it("com criação, lista todos os dias do mês com botão + Tarefa", async () => {
+  it("com criação, lista todos os dias do mês com botão + Criar", async () => {
     const user = userEvent.setup();
     render(
       <AgendaView
@@ -146,7 +143,7 @@ describe("AgendaView", () => {
         )}
       />
     );
-    const botoes = screen.getAllByRole("button", { name: /Tarefa/ });
+    const botoes = screen.getAllByRole("button", { name: /Criar/ });
     expect(botoes).toHaveLength(30);
     await user.click(botoes[2]);
     await user.click(await screen.findByText("nova em 3"));

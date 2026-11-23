@@ -407,6 +407,14 @@ export const FEATURE_MODULE: Record<FeatureKey, FeatureModuleId | null> = {
   timesheet: null,
 };
 
+const MODULE_IDS: readonly FeatureModuleId[] = ["gestao", "projetos", "obras"];
+
+/** Normaliza a coluna `modulos_ocultos` (text[]): ignora valor desconhecido e duplicado (ADR 0066). */
+export function parseModulosOcultos(raw: unknown): FeatureModuleId[] {
+  if (!Array.isArray(raw)) return [];
+  return MODULE_IDS.filter((id) => raw.includes(id));
+}
+
 /** Módulo dono da feature, ou null se transversal. */
 export function moduleOfFeature(key: FeatureKey): FeatureModuleId | null {
   return FEATURE_MODULE[key];

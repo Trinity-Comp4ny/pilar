@@ -1,6 +1,8 @@
 import { emailObrigatorio, textoObrigatorio, uuidObrigatorio, validar, z } from "../_shared/schemas.ts";
 
 export const entradaSchema = z.object({
+  // Só o ultra_admin: age nesta empresa em vez da própria (auditado). Os demais papéis ignoram.
+  empresa_id: z.string().uuid("empresa_id inválido").optional(),
   obra_id: uuidObrigatorio("obra_id inválido"),
   nome: textoObrigatorio("Informe o nome", 120),
   // Opcional (spec 099): o pessoal de campo pode não ter e-mail real e o fluxo cai

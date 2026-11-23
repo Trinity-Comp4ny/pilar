@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
 import type { PrazoEvento } from "@/components/calendario/eventos";
-import type { TarefaInput, TarefaItem } from "../hooks";
+import type { TarefaInput, TarefaItem } from "@/hooks/tarefas/useTarefas";
 import type { NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
 import { AbaAgenda } from "./AbaAgenda";
 
@@ -137,7 +137,7 @@ vi.mock("./ReuniaoDialog", () => ({
       </div>
     ) : null,
 }));
-vi.mock("./TarefaDialog", () => ({
+vi.mock("@/components/tarefas/TarefaDialog", () => ({
   TarefaDialog: (p: {
     open: boolean;
     tarefa: TarefaItem | null;
@@ -332,7 +332,7 @@ describe("AbaAgenda", () => {
     expect(screen.queryByRole("dialog", { name: "Tarefa" })).not.toBeInTheDocument();
   });
 
-  it("troca entre semana e agenda e navega no período", async () => {
+  it("troca entre mês e semana (sem visão Agenda) e navega no período", async () => {
     const user = renderAgenda();
     const periodo = () => screen.getByRole("button", { name: "Anterior" }).nextElementSibling!.textContent;
     const antes = periodo();
@@ -342,9 +342,8 @@ describe("AbaAgenda", () => {
     expect(periodo()).toBe(antes);
     await user.click(screen.getByRole("button", { name: /Semana/ }));
     expect(screen.getByRole("region", { name: "Semana" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Agenda/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Anterior" }));
-    await user.click(screen.getByRole("button", { name: /^Agenda/ }));
-    expect(screen.getByRole("region", { name: "Agenda" })).toBeInTheDocument();
   });
 
   it("sem Google Agenda conectado oferece conectar e não mostra a camada de reuniões", async () => {

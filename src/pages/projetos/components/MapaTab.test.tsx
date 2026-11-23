@@ -12,6 +12,7 @@ import { fake, rpcComEmpresa } from "@/pages/obras/testing/supabaseFake";
 vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/pages/obras/testing/supabaseFake")).fake.supabase,
 }));
+vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => true }) }));
 const mapa = vi.hoisted(() => ({ flyToBounds: vi.fn() }));
 vi.mock("@/pages/mapa/MapCanvas", () => ({
   default: ({
@@ -99,20 +100,34 @@ const linhas = [
   },
 ];
 
-function responder(projetos: unknown, erro: unknown = null) {
+const obraNoMapa = {
+  id: "o-1",
+  nome: "Obra Centro",
+  status: "em_andamento",
+  localizacao: "Rua B, 20",
+  latitude: -23.0,
+  longitude: -47.0,
+  data_inicio_prevista: null,
+  data_fim_prevista: null,
+  cliente_id: null,
+  placa_status: "nao_instalada",
+};
+
+function responder(projetos: unknown, erro: unknown = null, obras: unknown[] = []) {
   fake.responder((c) => {
+    if (c.tabela === "obras") return { data: obras, error: null };
     if (c.tabela === "projetos_safe") return { data: projetos, error: erro };
     if (c.tabela === "clientes") return { data: [{ id: "c-1", nome: "Ana Cliente" }], error: null };
     return undefined;
   });
 }
 
-function montar() {
+function montar(entrada = "/projetos/mapa") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(<MapaTab />, {
     wrapper: ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={["/projetos/mapa"]}>
+        <MemoryRouter initialEntries={[entrada]}>
           <Routes>
             <Route path="/projetos/mapa" element={children} />
             <Route path="/projetos/:id" element={<div>pagina-projeto</div>} />
@@ -151,6 +166,33 @@ describe("MapaTab", () => {
     fireEvent.click(screen.getByText(/ver projetos/));
     fireEvent.click(screen.getByRole("button", { name: /Sem coordenada/ }));
     expect(await screen.findByText("pagina-projeto")).toBeInTheDocument();
+  });
+
+  it("mostra projetos e obras juntos e conta as sem placa", async () => {
+    responder(linhas, null, [obraNoMapa]);
+    montar();
+    expect(await screen.findByRole("button", { name: "marcador:Obra Centro" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "marcador:Residência Silva" })).toBeInTheDocument();
+    expect(screen.getByText(/3 sem placa/)).toBeInTheDocument();
+  });
+
+  it("?ver=obras abre só com as obras", async () => {
+    responder(linhas, null, [obraNoMapa]);
+    montar("/projetos/mapa?ver=obras");
+    expect(await screen.findByRole("button", { name: "marcador:Obra Centro" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "marcador:Residência Silva" })).not.toBeInTheDocument();
+  });
+
+  it("filtro de placa esconde quem não tem a situação escolhida", async () => {
+    responder(linhas, null, [{ ...obraNoMapa, placa_status: "instalada" }]);
+    montar();
+    await screen.findByRole("button", { name: "marcador:Obra Centro" });
+    fireEvent.click(screen.getByRole("button", { name: "Placa" }));
+    fireEvent.click(await screen.findByText("Instalada", { selector: "[role=option] *, [role=option]" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "marcador:Residência Silva" })).not.toBeInTheDocument()
+    );
+    expect(screen.getByRole("button", { name: "marcador:Obra Centro" })).toBeInTheDocument();
   });
 
   it("legenda filtra por status e clicar de novo limpa", async () => {

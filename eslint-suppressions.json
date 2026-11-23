@@ -54,11 +54,6 @@
       "count": 1
     }
   },
-  "src/pages/projetos/components/ProjectDetailDialog.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "src/pages/projetos/components/ProjetoStatusDialogs.tsx": {
     "no-restricted-syntax": {
       "count": 1

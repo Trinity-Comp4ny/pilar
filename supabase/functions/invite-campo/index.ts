@@ -9,6 +9,7 @@ import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
+import { resolverEmpresaAlvo } from "../_shared/empresa-alvo.ts";
 
 const log = createLogger("invite-campo");
 
@@ -58,11 +59,17 @@ serve(
       if (!ROLES_GESTAO.has(profile.role)) {
         return safeErrorResponse(403, "Apenas gestão pode criar acesso de campo", req);
       }
-      if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
       const { obra_id, nome, email } = entrada.data;
+
+      const alvo = await resolverEmpresaAlvo(supabaseClient, profile, entrada.data.empresa_id, "campo_invite", {
+        tipo: "obra",
+        id: String(entrada.data.obra_id),
+      });
+      if (!alvo.ok) return safeErrorResponse(alvo.status, alvo.error, req);
+      const empresaId = alvo.empresaId;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -93,7 +100,7 @@ serve(
         .from("obras")
         .select("id, empresa_id")
         .eq("id", obra_id)
-        .eq("empresa_id", profile.empresa_id)
+        .eq("empresa_id", empresaId)
         .single();
       if (obraError || !obra) return safeErrorResponse(404, "Obra não encontrada", req);
 
@@ -112,7 +119,7 @@ serve(
           .maybeSingle();
 
         if (existing?.ativo) return safeErrorResponse(409, "Já existe um acesso de campo ativo com esse e-mail", req);
-        if (existing && existing.empresa_id !== profile.empresa_id) {
+        if (existing && existing.empresa_id !== empresaId) {
           return safeErrorResponse(409, "Já existe um acesso de campo com esse e-mail em outra empresa", req);
         }
 
@@ -124,7 +131,7 @@ serve(
         const { data: empresa } = await supabaseAdmin
           .from("empresas")
           .select("nome")
-          .eq("id", profile.empresa_id)
+          .eq("id", empresaId)
           .maybeSingle();
 
         // E-mail antes de gravar: se o envio falhar, nada foi persistido.
@@ -133,7 +140,7 @@ serve(
             classe: "escritorio",
             tipo: "campo_acesso_criado",
             to: normalizedEmail,
-            empresa: { id: profile.empresa_id, nome: empresa?.nome ?? "Seu escritório" },
+            empresa: { id: empresaId, nome: empresa?.nome ?? "Seu escritório" },
             ...templateConviteAcessoCampo({
               nome: nomeTrim,
               email: normalizedEmail,
@@ -148,7 +155,7 @@ serve(
 
         const { error: createError } = await supabaseAdmin.rpc("_campo_create_account_convite", {
           p_obra_id: obra.id,
-          p_empresa_id: profile.empresa_id,
+          p_empresa_id: empresaId,
           p_nome: nomeTrim,
           p_email: normalizedEmail,
           p_token_hash: hash,
@@ -156,7 +163,7 @@ serve(
         });
 
         if (createError) {
-          log.error("_campo_create_account_convite failed", createError, { obra_id, empresa_id: profile.empresa_id });
+          log.error("_campo_create_account_convite failed", createError, { obra_id, empresa_id: empresaId });
           return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${createError.message}`, req);
         }
 
@@ -171,7 +178,7 @@ serve(
 
       const { error: createError } = await supabaseAdmin.rpc("_campo_create_account", {
         p_obra_id: obra.id,
-        p_empresa_id: profile.empresa_id,
+        p_empresa_id: empresaId,
         p_nome: nomeTrim,
         p_email: loginGerado,
         p_senha: senha,
@@ -179,7 +186,7 @@ serve(
       });
 
       if (createError) {
-        log.error("_campo_create_account failed", createError, { obra_id, empresa_id: profile.empresa_id });
+        log.error("_campo_create_account failed", createError, { obra_id, empresa_id: empresaId });
         return safeErrorResponse(400, `Falha ao criar acesso de campo: ${createError.message}`, req);
       }
 

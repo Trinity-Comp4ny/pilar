@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GitBranch, LayoutGrid, List, MoreHorizontal, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
@@ -80,6 +80,10 @@ export default function ProjetosKanban() {
   const queryClient = useQueryClient();
   const canEdit = can("projetos", "create");
   const canViewMapa = can("mapa", "view");
+  // Baixa o código do mapa (Leaflet) em segundo plano: ao abrir a aba ele já está pronto.
+  useEffect(() => {
+    if (canViewMapa) void import("@/pages/mapa/MapCanvas");
+  }, [canViewMapa]);
   // Sem acesso a financeiro o valor do contrato vem mascarado: não oferece ordenar por ele.
   const sortKeys: KanbanSortKey[] = can("financeiro")
     ? ["priority", "dueDate", "value", "name", "created"]
@@ -108,7 +112,7 @@ export default function ProjetosKanban() {
     useProjetosUrlState(canViewMapa);
   const isColecao = activeTab === "quadro" || activeTab === "lista";
 
-  const { data: etapas = [] } = useProjetoEtapas();
+  const { data: etapas = [], isLoading: loadingEtapas } = useProjetoEtapas();
   const etapaMut = useProjetoEtapaMutations();
   const isMobile = useIsMobile();
 
@@ -181,7 +185,12 @@ export default function ProjetosKanban() {
     // Soft delete (deleted_at some das listagens), com "Desfazer" no toast — o delete é recuperável.
     // Via RPC: um UPDATE direto de deleted_at viola RLS, porque a policy de SELECT
     // esconde deletados e o Postgres re-checa a linha nova contra ela (42501).
+    // Otimista: o card some na hora e volta se a exclusão falhar (a releitura segue em segundo plano).
+    const anterior = queryClient.getQueryData<Projeto[]>(["projetos"]);
+    queryClient.setQueryData<Projeto[]>(["projetos"], (atual) => atual?.filter((p) => p.id !== id));
+    setProjetoToDelete(null);
     const { error } = await supabase.rpc("rpc_excluir_projeto", { p_id: id });
+    if (error) queryClient.setQueryData<Projeto[]>(["projetos"], anterior);
     if (!error) {
       toast.success(`Projeto "${nome}" excluído`, {
         action: {
@@ -506,9 +515,10 @@ export default function ProjetosKanban() {
             <ListaProjetos
               projetos={filteredProjetos}
               etapas={etapas}
-              rentabilidadeMap={rentabilidadeMap}
               canEdit={canEdit}
               onCardClick={handleCardClick}
+              onEditClick={handleEditClick}
+              onDelete={handleDelete}
               onMoverEtapa={moverParaEtapa}
             />
           </div>
@@ -519,6 +529,7 @@ export default function ProjetosKanban() {
                 etapas={etapas}
                 collapsedColumns={collapsedColumns}
                 loadingProjetos={loadingProjetos}
+                loadingEtapas={loadingEtapas}
                 canEdit={canEdit}
                 clientes={clientes}
                 rentabilidadeMap={rentabilidadeMap}

@@ -242,6 +242,42 @@ describe("CotacaoDetailDialog: escolher vencedora", () => {
     expect(fake.rpc).not.toHaveBeenCalledWith("rpc_obra_despesa_salvar", expect.anything());
   });
 
+  const orcamentoDaFrente = (previsto: number, gasto: number) =>
+    fake.responder((c) => {
+      if (c.op !== "select") return undefined;
+      if (c.tabela === "obra_frente")
+        return {
+          data: [
+            { id: "frente-1", parent_id: null, nivel: "fase", nome: "Estrutura", ordem: 0, created_at: "2026-01-01" },
+          ],
+          error: null,
+        };
+      if (c.tabela === "obra_orcamento_etapa")
+        return { data: [{ obra_frente_id: "frente-1", valor_previsto: previsto }], error: null };
+      if (c.tabela === "obra_conta_lancamento")
+        return {
+          data: [{ tipo: "despesa", valor: gasto, obra_frente_id: "frente-1", deleted_at: null }],
+          error: null,
+        };
+      return undefined;
+    });
+
+  it("mostra o saldo do orçamento antes e depois da compra", async () => {
+    orcamentoDaFrente(3000, 1000);
+    montar(cotacao({ propostas: propostasPadrao }));
+    fireEvent.click(within(linhaDe("Depósito Norte")).getByRole("button", { name: "Escolher" }));
+    const saldo = await screen.findByLabelText("Saldo do orçamento");
+    await waitFor(() => expect(within(saldo).getByTestId("saldo-apos")).toHaveTextContent("500"));
+    expect(screen.queryByText("Esta compra estoura o orçamento.")).not.toBeInTheDocument();
+  });
+
+  it("avisa quando a compra estoura o orçamento", async () => {
+    orcamentoDaFrente(2000, 1000);
+    montar(cotacao({ propostas: propostasPadrao }));
+    fireEvent.click(within(linhaDe("Depósito Norte")).getByRole("button", { name: "Escolher" }));
+    expect(await screen.findByText("Esta compra estoura o orçamento.")).toBeInTheDocument();
+  });
+
   it("erro do servidor ao decidir mostra o toast e mantém o diálogo", async () => {
     fake.responder((c) =>
       c.tabela === "obra_cotacao" && c.op === "update" ? { data: null, error: new Error("RLS negou") } : undefined

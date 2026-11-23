@@ -49,6 +49,8 @@ export type PortalStatus = "sem_acesso" | "convite_pendente" | "ativo";
 
 export interface Cliente {
   id: string;
+  /** Empresa dona do cliente (select("*") já traz); o ultra_admin usa para agir em outra empresa. */
+  empresa_id?: string;
   nome: string;
   sobrenome?: string;
   tipo_pessoa?: TipoPessoa | null;
@@ -103,6 +105,33 @@ export interface UseClientesPaginadosOptions {
 
 const triploToBool = (v: FiltroTriplo | undefined): boolean | null => (v === "com" ? true : v === "sem" ? false : null);
 
+type ParamsClientesPagina = Required<Omit<UseClientesPaginadosOptions, "enabled">>;
+
+/** Chave da lista paginada; o prefetch de entrada usa a mesma. */
+export const chaveClientesLista = (p: ParamsClientesPagina) => ["clientes", "lista", p] as const;
+
+export async function fetchClientesPagina(p: ParamsClientesPagina) {
+  const { page, pageSize, search, origem, tipoPessoa, portal, projeto, sortField, sortDir } = p;
+  // RPC ainda não está em types.ts (rodar gen:types após deploy da migration).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("listar_clientes_paginado", {
+    p_search: search.trim() || null,
+    p_origem: origem === "all" ? null : origem,
+    p_tipo_pessoa: tipoPessoa === "all" ? null : tipoPessoa,
+    p_tem_portal: triploToBool(portal),
+    p_com_projeto: triploToBool(projeto),
+    p_sort_field: sortField,
+    p_sort_dir: sortDir,
+    p_limit: pageSize,
+    p_offset: page * pageSize,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as (Cliente & { total_count: number })[];
+  const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+  const clientes = rows.map(({ total_count: _tc, ...c }) => c as Cliente);
+  return { clientes, total };
+}
+
 export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) {
   const {
     page = 0,
@@ -120,33 +149,9 @@ export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) 
   const query = useQuery({
     // Prefixo ["clientes"] para que as invalidações das mutations (upsert/delete/
     // restore, que invalidam ["clientes"]) também atualizem esta lista.
-    queryKey: [
-      "clientes",
-      "lista",
-      { page, pageSize, search, origem, tipoPessoa, portal, projeto, sortField, sortDir },
-    ],
-    queryFn: async () => {
-      // RPC ainda não está em types.ts (rodar gen:types após deploy da migration).
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("listar_clientes_paginado", {
-        p_search: search.trim() || null,
-        p_origem: origem === "all" ? null : origem,
-        p_tipo_pessoa: tipoPessoa === "all" ? null : tipoPessoa,
-        p_tem_portal: triploToBool(portal),
-        p_com_projeto: triploToBool(projeto),
-        p_sort_field: sortField,
-        p_sort_dir: sortDir,
-        p_limit: pageSize,
-        p_offset: page * pageSize,
-      });
-      if (error) throw error;
-
-      const rows = (data ?? []) as (Cliente & { total_count: number })[];
-      const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
-      // Remove total_count de cada linha para expor Cliente puro.
-      const clientes = rows.map(({ total_count: _tc, ...c }) => c as Cliente);
-      return { clientes, total };
-    },
+    queryKey: chaveClientesLista({ page, pageSize, search, origem, tipoPessoa, portal, projeto, sortField, sortDir }),
+    queryFn: () =>
+      fetchClientesPagina({ page, pageSize, search, origem, tipoPessoa, portal, projeto, sortField, sortDir }),
     enabled,
     // Mantém a página anterior visível durante a troca de página/filtro,
     // evitando o flash de skeleton a cada navegação.
@@ -363,9 +368,25 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   };
 
   const invitePortalMutation = useMutation({
-    mutationFn: async ({ clienteId, email, nome }: { clienteId: string; email: string; nome?: string }) => {
+    mutationFn: async ({
+      clienteId,
+      email,
+      nome,
+      empresaId,
+    }: {
+      clienteId: string;
+      email: string;
+      nome?: string;
+      /** Só o ultra_admin: empresa dona do cliente quando não é a dele (auditado no servidor). */
+      empresaId?: string;
+    }) => {
       const { data, error: fnError } = await supabase.functions.invoke("invite-cliente-portal", {
-        body: { cliente_id: clienteId, email, ...(nome ? { nome } : {}) },
+        body: {
+          cliente_id: clienteId,
+          email,
+          ...(nome ? { nome } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
+        },
       });
 
       if (fnError) throw await erroDoInvoke(fnError);
@@ -383,14 +404,21 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       clienteId,
       nomeCliente,
       accountId,
+      empresaId,
     }: {
       clienteId: string;
       nomeCliente: string;
+      empresaId?: string;
       /** Qual acesso do cliente (vários por cliente, SPEC 164). */
       accountId?: string;
     }) => {
       const { data, error: fnError } = await supabase.functions.invoke("reset-cliente-portal-password", {
-        body: { cliente_id: clienteId, nome_cliente: nomeCliente, ...(accountId ? { account_id: accountId } : {}) },
+        body: {
+          cliente_id: clienteId,
+          nome_cliente: nomeCliente,
+          ...(accountId ? { account_id: accountId } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
+        },
       });
 
       if (fnError) throw await erroDoInvoke(fnError);

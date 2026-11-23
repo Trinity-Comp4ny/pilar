@@ -3,12 +3,18 @@ import react from "@vitejs/plugin-react-swc";
 
 // App de marketing separado do produto (ADR 0021): sem Supabase, React Query,
 // Sentry ou PostHog no bundle inicial. Ver docs/specs/043-marketing-site-separado.md.
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   server: {
     host: "::",
     port: 8081,
   },
   plugins: [react()],
+  define: {
+    __MARKETING_RELEASE__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.SENTRY_RELEASE ?? "dev"),
+    __MARKETING_SENTRY_ENV__: JSON.stringify(
+      process.env.VERCEL_ENV ?? process.env.SENTRY_ENV ?? (command === "serve" ? "development" : "production")
+    ),
+  },
   build: {
     rollupOptions: {
       output: {
@@ -25,4 +31,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

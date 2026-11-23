@@ -20,6 +20,8 @@ export const config = {
   TEST_PASSWORD,
 };
 
+export const summaryTrendStats = ["avg", "med", "p(95)", "p(99)", "max"];
+
 export const defaultThresholds = {
   http_req_duration: ['p(95)<500'],
   http_req_failed: ['rate<0.01'],

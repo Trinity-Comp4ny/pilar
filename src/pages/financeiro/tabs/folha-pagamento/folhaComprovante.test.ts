@@ -12,6 +12,15 @@ const pdfDoc = {
   text: vi.fn(),
   save: vi.fn(),
   addPage: vi.fn(),
+  setFillColor: vi.fn(),
+  setDrawColor: vi.fn(),
+  setLineWidth: vi.fn(),
+  setLineCap: vi.fn(),
+  rect: vi.fn(),
+  line: vi.fn(),
+  addImage: vi.fn(),
+  setPage: vi.fn(),
+  getNumberOfPages: vi.fn(() => 1),
   lastAutoTable: undefined as { finalY: number } | undefined,
 };
 vi.mock("jspdf", () => ({
@@ -86,7 +95,7 @@ describe("gerarComprovantePDF", () => {
     });
     const t = textos();
     expect(t.filter((x) => x === "Demonstrativo de pagamento")).toHaveLength(2);
-    expect(t.some((x) => x.startsWith("CPF") || x.includes("·"))).toBe(false);
+    expect(t.some((x) => x.startsWith("CPF") || (x.includes("·") && !x.startsWith("Gerado pela Pilar")))).toBe(false);
     expect(t.some((x) => x.startsWith("Chave PIX"))).toBe(false);
     expect(corpoTabela()[0]).toEqual(["Edifício A", "100 m²", "R$ 0,00/m²", "R$ 0,00"]);
   });

@@ -50,7 +50,7 @@ let podeVerProjetos = true;
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({ can: (m: string) => (m === "projetos" ? podeVerProjetos : true) }),
 }));
-vi.mock("@/pages/meu-trabalho/hooks", () => ({
+vi.mock("@/hooks/tarefas/useTarefas", () => ({
   useProjetosLite: () => ({ data: [{ id: "proj-1", nome: "Projeto Seed" }] }),
   usePessoasEmpresa: () => ({ data: [{ id: "pes-1", nome: "Ana" }] }),
 }));

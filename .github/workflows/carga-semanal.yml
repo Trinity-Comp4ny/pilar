@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  issues: write # notify-cron-failure no agendamento
 
 concurrency:
   group: carga-semanal
@@ -37,12 +38,17 @@ jobs:
 
       - name: Guarda (staging configurado, nunca produção)
         run: |
-          if [ -z "$K6_SUPABASE_URL" ] || [ -z "$K6_TEST_EMAIL" ]; then
-            echo "::error::Secrets do Environment Staging ausentes (STAGING_SUPABASE_URL, E2E_TEST_EMAIL)."
-            exit 1
-          fi
+          for nome in K6_SUPABASE_URL K6_SUPABASE_KEY K6_TEST_EMAIL K6_TEST_PASSWORD; do
+            if [[ -z "${!nome}" ]]; then
+              echo "::error::Credencial de staging ausente no runner ($nome)."
+              exit 1
+            fi
+          done
+          # Fail closed: recusa qualquer host não explicitamente associado
+          # ao projeto staging. Não basta bloquear só o ref de produção.
           case "$K6_SUPABASE_URL" in
-            *vepnsonbnsimqcsfcagm*) echo "::error::URL de PRODUÇÃO. Carga só roda em staging."; exit 1 ;;
+            https://rizaklgstyfrwgmdsldf.supabase.co) ;;
+            *) echo "::error::Carga permitida somente para o Supabase staging configurado."; exit 1 ;;
           esac
 
       - name: Instalar k6 (release oficial, checksum conferido)
@@ -69,17 +75,47 @@ jobs:
         run: |
           {
             echo "## k6 semanal (staging)"
-            for f in resumo-*.json; do
+            echo
+            echo "Commit: ${GITHUB_SHA:0:8} · Tentativa: $GITHUB_RUN_ATTEMPT"
+            echo
+            echo "| Cenário | p95 (ms) | p99 (ms) | Falhas (%) | Requisições/s | p95 RPC do painel (ms) |"
+            echo "|---|---:|---:|---:|---:|---:|"
+            for f in resumo-dashboard.json resumo-lancamentos.json; do
               [ -f "$f" ] || continue
-              p95=$(jq -r '.metrics.http_req_duration["p(95)"] // "?"' "$f")
-              falha=$(jq -r '.metrics.http_req_failed.value // "?"' "$f")
-              echo "- **${f#resumo-}**: p95 ${p95} ms, falha ${falha}"
+              jq -r --arg c "${f#resumo-}" '
+                def formatar: if type == "number" then ((. * 100 | round) / 100 | tostring) else "—" end;
+                def estatisticas: .values // . // {};
+                .metrics |
+                (.http_req_duration | estatisticas) as $duracao |
+                (.http_req_failed | estatisticas | .rate // .value) as $falhas |
+                ("|" + ($c | rtrimstr(".json")) + "|") +
+                ([$duracao["p(95)"], $duracao["p(99)"],
+                  ($falhas | if type == "number" then . * 100 else null end),
+                  (.http_reqs | estatisticas | .rate),
+                  (.painel_rpc_duration | estatisticas | .["p(95)"])]
+                  | map(formatar) | join("|")) + "|"
+              ' "$f"
             done
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
-          name: k6-semanal-${{ github.run_id }}
+          name: k6-semanal-${{ github.run_id }}-${{ github.run_attempt }}
           path: resumo-*.json
           retention-days: 90
+
+      - name: Abrir alerta quando a carga semanal falhar
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Carga semanal k6 em staging
+          token: ${{ github.token }}
+
+      - name: Fechar alerta quando a carga voltar a passar
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Carga semanal k6 em staging
+          token: ${{ github.token }}
+          status: success

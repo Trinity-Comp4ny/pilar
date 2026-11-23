@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { fmtKey, todayKey, startOfMonth, endOfMonth, weekdayIndex, MESES } from "./eventos";
 
@@ -14,7 +13,8 @@ interface MiniMesProps {
 }
 
 export function MiniMes({ selecionado, diasComEvento, onSelectDate }: MiniMesProps) {
-  const [mes, setMes] = useState<Date>(startOfMonth(selecionado));
+  // O mês exibido segue o cursor: a navegação (setas, Hoje) vive só no cabeçalho da agenda.
+  const mes = useMemo(() => startOfMonth(selecionado), [selecionado]);
 
   const dias = useMemo(() => {
     const start = startOfMonth(mes);
@@ -36,24 +36,6 @@ export function MiniMes({ selecionado, diasComEvento, onSelectDate }: MiniMesPro
         <span className="text-sm font-medium text-ink">
           {MESES[mes.getMonth()]} {mes.getFullYear()}
         </span>
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() - 1, 1))}
-            className="h-6 w-6 grid place-items-center rounded-full text-muted-foreground hover:bg-muted"
-            aria-label="Mês anterior"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() + 1, 1))}
-            className="h-6 w-6 grid place-items-center rounded-full text-muted-foreground hover:bg-muted"
-            aria-label="Próximo mês"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-7 gap-y-0.5">

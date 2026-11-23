@@ -44,7 +44,7 @@ vi.mock("@/pages/projetos/hooks/useDisciplinaRevisoes", async (orig) => ({
 }));
 const mencao = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/notificarMencao", () => ({ notificarMencao: mencao }));
-vi.mock("./AtividadeComposer", () => ({
+vi.mock("@/components/atividades/AtividadeComposerComMencoes", () => ({
   AtividadeComposer: ({ onSubmit }: { onSubmit: (t: string, m: string[]) => void }) => (
     <button onClick={() => onSubmit("Revisar a laje", ["pes-2"])}>enviar-comentario</button>
   ),

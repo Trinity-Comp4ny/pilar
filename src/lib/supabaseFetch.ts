@@ -17,6 +17,7 @@
  */
 
 import { monitoring } from "./monitoring";
+import { ERRO_ASSINATURA_SUSPENSA } from "./assinaturaSuspensa";
 
 /** Erro sintético só para o Sentry ter stack e título estável. */
 export class SupabaseRequestError extends Error {
@@ -80,7 +81,15 @@ function levelFor(status: number): "warning" | "error" {
   return status >= 500 ? "error" : "warning";
 }
 
-type ErrorBody = { code?: string; message?: string; hint?: string; error?: string; error_description?: string };
+type ErrorBody = {
+  code?: string;
+  message?: string;
+  details?: string;
+  detail?: string;
+  hint?: string;
+  error?: string;
+  error_description?: string;
+};
 
 async function readErrorBody(res: Response): Promise<ErrorBody> {
   try {
@@ -96,9 +105,16 @@ async function readErrorBody(res: Response): Promise<ErrorBody> {
   }
 }
 
-/** 406 + PGRST116 é `.single()`/`.maybeSingle()` sem linha: esperado, não é falha. */
+/**
+ * Esperado, não é falha: 406 + PGRST116 (`.single()`/`.maybeSingle()` sem linha) e
+ * a escrita barrada pelo trigger quando a assinatura da empresa está suspensa
+ * (400 + P0001 `empresa_assinatura_suspensa`). Esse bloqueio é regra de negócio:
+ * o gate de acesso e o toast já avisam o usuário (issue #936).
+ */
 function isExpected(status: number, body: ErrorBody): boolean {
-  return status === 406 && body.code === "PGRST116";
+  if (status === 406 && body.code === "PGRST116") return true;
+  if (status !== 400 || body.code !== "P0001") return false;
+  return [body.message, body.details, body.detail].some((t) => t?.includes(ERRO_ASSINATURA_SUSPENSA));
 }
 
 /**

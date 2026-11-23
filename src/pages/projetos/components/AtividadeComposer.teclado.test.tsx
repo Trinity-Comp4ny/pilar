@@ -5,9 +5,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 // com Enter/Tab, fechar com Esc, botão @, botão Enviar, Shift+Enter e o aviso
 // no plural para várias pessoas sem conta.
 
-vi.mock("../hooks/usePessoasSemConta", () => ({ usePessoasSemConta: () => new Set(["p3", "p4"]) }));
+vi.mock("@/hooks/usePessoasSemConta", () => ({ usePessoasSemConta: () => new Set(["p3", "p4"]) }));
 
-import { AtividadeComposer } from "./AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposerComMencoes";
 
 const pessoas = [
   { id: "p1", nome: "Ana" },

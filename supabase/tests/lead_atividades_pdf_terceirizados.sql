@@ -2,7 +2,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
-SELECT plan(16);
+SELECT plan(20);
 
 INSERT INTO public.empresas(id,nome,features,onboarding_completed) VALUES
 ('a1700000-0000-0000-0000-000000000001','Comercial A','{"leads":true,"propostas":true,"projetos":true}',true),
@@ -36,6 +36,17 @@ SELECT lives_ok($$ INSERT INTO public.proposta_versoes(id,empresa_id,proposta_id
 SELECT is((SELECT numero FROM public.proposta_versoes LIMIT 1),1,'numeração definida no servidor');
 SELECT ok((SELECT enviado_em IS NULL FROM public.proposta_versoes LIMIT 1),'importar não envia');
 SELECT is((SELECT status FROM public.propostas WHERE id='d1700000-0000-0000-0000-000000000001'),'rascunho','importar mantém rascunho');
+-- Revogação do endereço preserva o PDF publicado e o registro de versão.
+RESET ROLE;
+UPDATE public.proposta_versoes SET link_token = 'e1700000-0000-0000-0000-000000000002'
+WHERE id = 'e1700000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT ok(public.revogar_link_proposta('e1700000-0000-0000-0000-000000000001'), 'admin revoga link da própria proposta');
+SELECT is(public.revogar_link_proposta('e1700000-0000-0000-0000-000000000001'), false, 'segunda revogação é idempotente');
+RESET ROLE;
+SELECT is(public.acessar_link_proposta('e1700000-0000-0000-0000-000000000002', 'abrir'), NULL::jsonb,
+  'token revogado deixa de resolver a versão pública');
+SET LOCAL ROLE authenticated;
 -- O Storage API mantém um trigger que proíbe DELETE SQL direto, mesmo sem linhas.
 -- Este trecho testa somente a RLS; a proteção de transporte fica fora do teste SQL.
 RESET ROLE;
@@ -49,6 +60,8 @@ SELECT set_config('request.jwt.claims','{"sub":"b1700000-0000-0000-0000-00000000
 SET LOCAL ROLE authenticated;
 SELECT is((SELECT count(*)::int FROM public.lead_atividades WHERE lead_id='c1700000-0000-0000-0000-000000000001'),0,'outra empresa não lê atividades');
 SELECT is((SELECT count(*)::int FROM public.proposta_versoes WHERE proposta_id='d1700000-0000-0000-0000-000000000001'),0,'outra empresa não lê revisões');
+SELECT throws_ok($$ SELECT public.revogar_link_proposta('e1700000-0000-0000-0000-000000000001') $$,
+  '22023', 'Versão indisponível', 'outra empresa não consegue revogar o link');
 SELECT ok(NOT public.pode_acessar_proposta_pdf('a1700000-0000-0000-0000-000000000001/d1700000-0000-0000-0000-000000000001/e1700000-0000-0000-0000-000000000001.pdf'),'outra empresa não baixa PDF');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);

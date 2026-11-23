@@ -1,0 +1,130 @@
+{
+  "hosting": {
+    "public": "dist",
+    "cleanUrls": false,
+    "trailingSlash": false,
+    "redirects": [
+      {
+        "source": "/dashboard",
+        "destination": "https://app.pilarsoft.com.br/inicio",
+        "type": 307
+      },
+      {
+        "regex": "^/((?:inicio|login|cadastro|forgot-password|reset-password|mfa|auth|checkout|comprar-tokens|billing|meu-trabalho|agentes|obras|leads|propostas|clientes|financeiro|pessoas|equipe|relatorios|cronograma|calendario|mapa|disciplinas|documentos|fornecedores|metas|timesheet|rentabilidade|revisao-ia|chat|profile|profile-setup|company|company-setup|admin|ultra-admin|cliente|sem-acesso)(?:/.*)?)$",
+        "destination": "https://app.pilarsoft.com.br/:1",
+        "type": 307
+      },
+      {
+        "regex": "^/((?:gestao|projetos|campo|portal)/.+)$",
+        "destination": "https://app.pilarsoft.com.br/:1",
+        "type": 307
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/spa.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "key": "X-DNS-Prefetch-Control",
+            "value": "on"
+          },
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin"
+          },
+          {
+            "key": "Cross-Origin-Resource-Policy",
+            "value": "same-site"
+          },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' https://us-assets.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io; frame-src 'none'; worker-src 'self' blob:; media-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://app.pilarsoft.com.br; frame-ancestors 'none'"
+          }
+        ]
+      },
+      {
+        "source": "/assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "/.well-known/ard.json",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json; charset=utf-8"
+          },
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
+      },
+      {
+        "source": "/fonts/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css|woff2|woff|ttf|otf|eot|webp|avif)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "/@(index|spa).html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
+      }
+    ]
+  }
+}

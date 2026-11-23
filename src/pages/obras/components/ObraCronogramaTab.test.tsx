@@ -39,7 +39,7 @@ vi.mock("@/pages/obras/hooks/useObraTarefas", () => ({
   useDeleteObraTarefa: mutacao(async () => {}),
 }));
 
-vi.mock("@/pages/meu-trabalho/hooks", () => ({
+vi.mock("@/hooks/tarefas/useTarefas", () => ({
   usePessoasEmpresa: () => ({ data: [] }),
   useTarefaMutations: () => ({ atualizar: { mutateAsync: async () => {} } }),
 }));

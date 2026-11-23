@@ -13,7 +13,7 @@ import {
   useUpdateObraTarefa,
   type PatchObraTarefa,
 } from "@/pages/obras/hooks/useObraTarefas";
-import { useTarefaMutations } from "@/pages/meu-trabalho/hooks";
+import { useTarefaMutations } from "@/hooks/tarefas/useTarefas";
 import type { NivelCronograma } from "@/pages/obras/lib/obraArvore";
 import { analytics } from "@/lib/analytics";
 

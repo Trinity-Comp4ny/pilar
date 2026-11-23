@@ -29,8 +29,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("@/lib/monitoring", () => ({
   monitoring: { setUser: mocks.setUser, captureException: mocks.captureException },
 }));
-vi.mock("@/lib/analytics", () => ({ analytics: { identify: vi.fn(), reset: mocks.reset } }));
-vi.mock("@/lib/cookieConsentSync", () => ({ syncConsentForUser: vi.fn() }));
+vi.mock("@/lib/analytics", () => ({ analytics: { identify: vi.fn(), trackLogin: vi.fn(), reset: mocks.reset } }));
+vi.mock("@/lib/cookieConsentSync", () => ({ syncConsentForUser: vi.fn().mockResolvedValue(undefined) }));
 
 function Probe() {
   const a = useAuth();
@@ -127,6 +127,14 @@ describe("AuthContext: sessão, MFA e saída", () => {
     renderAuth();
     expect(await screen.findByTestId("mfa")).toHaveTextContent("challenge");
     expect(screen.getByTestId("factor")).toHaveTextContent("true");
+  });
+
+  it("sessão sem nenhum fator cadastrado não consulta o MFA no Auth (entrada mais rápida)", async () => {
+    mocks.getSession.mockResolvedValue({ data: { session: { user: { id: "bia", factors: [] } } }, error: null });
+    renderAuth();
+    expect(await screen.findByTestId("mfa")).toHaveTextContent("ok");
+    expect(mocks.getAAL).not.toHaveBeenCalled();
+    expect(mocks.listFactors).not.toHaveBeenCalled();
   });
 
   it("aal2 já atingido não pede desafio", async () => {

@@ -14,7 +14,7 @@ import { TERMS_VERSION } from "@/lib/legalVersions";
 const { auth, versaoAceita, insert, toastSucesso } = vi.hoisted(() => ({
   auth: { user: null as { id: string } | null, profile: null as { role: string; empresa_id: string } | null },
   versaoAceita: { valor: null as string | null },
-  insert: vi.fn(async (..._a: unknown[]) => ({ error: null })),
+  insert: vi.fn(async (..._a: unknown[]) => ({ error: null as Error | null })),
   toastSucesso: vi.fn(),
 }));
 
@@ -113,6 +113,25 @@ describe("AceiteTermosBanner", () => {
     expect(await screen.findByRole("dialog", { name: "Novos Termos de Uso" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Agora não" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Li e aceito os Termos de Uso" })).toBeInTheDocument();
+  });
+
+  it("depois da vigência mantém a janela na falha e libera a navegação após gravar o aceite", async () => {
+    vi.setSystemTime(DEPOIS_DA_VIGENCIA);
+    insert.mockResolvedValueOnce({ error: new Error("falha de rede") });
+    insert.mockImplementationOnce(async () => {
+      versaoAceita.valor = TERMS_VERSION;
+      return { error: null };
+    });
+    const user = userEvent.setup();
+    renderizar("/inicio", "janela");
+    const aceitar = await screen.findByRole("button", { name: "Li e aceito os Termos de Uso" });
+    await user.click(aceitar);
+    await waitFor(() => expect(aceitar).toBeEnabled());
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(toastSucesso).not.toHaveBeenCalled();
+    await user.click(aceitar);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(insert).toHaveBeenCalledTimes(2);
   });
 
   it("não aparece na tela de completar o perfil, onde o aceite já é pedido", async () => {

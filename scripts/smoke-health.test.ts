@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const SCRIPT = resolve(__dirname, "smoke-health.sh");
@@ -17,6 +18,12 @@ describe("smoke-health.sh", () => {
     const r = rodar({});
     expect(r.status).toBe(0);
     expect(r.saida).toContain("smoke test pulado");
+  });
+
+  it("não imprime o corpo retornado pelo endpoint nos logs", () => {
+    const fonte = readFileSync(SCRIPT, "utf8");
+    expect(fonte).not.toContain('cat "$BODY"');
+    expect(fonte).not.toContain('head -c 400 "$BODY"');
   });
 
   it("sem ANON_KEY com SMOKE_OBRIGATORIO=true, falha (release de 14/10 passou com o smoke pulado)", () => {

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import {
   Area,
-  AreaChart,
+  ComposedChart,
   CartesianGrid,
   Line,
   ReferenceLine,
@@ -17,15 +17,19 @@ import { formatDate } from "@/lib/format";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
 import { useObraRdos } from "@/pages/obras/hooks/useObraRdo";
 import { useObraRdoTarefas } from "@/pages/obras/hooks/useObraRdoTarefas";
+import { useObraOrcamento } from "@/pages/obras/hooks/useObraOrcamento";
+import { useObraConta } from "@/pages/obras/hooks/useObraConta";
+import { pesosPorTarefa } from "@/pages/obras/lib/pesosCurvaS";
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: unknown[]; label?: string }) {
   if (!active || !payload || payload.length === 0) return null;
-  const p = payload[0] as { payload: { planejadoPct: number; realizadoPct: number } };
+  const p = payload[0] as { payload: { planejadoPct: number; realizadoPct: number; pagoPct?: number } };
   return (
     <div className="rounded-lg border border-black/10 bg-white px-3 py-2 text-xs shadow-sm">
       <p className="mb-1 font-medium text-ink">{formatDate(label ?? "")}</p>
       <p className="text-info-mid">Planejado: {p.payload.planejadoPct}%</p>
-      <p className="text-positive-strong">Realizado: {p.payload.realizadoPct}%</p>
+      <p className="text-positive-strong">Medido: {p.payload.realizadoPct}%</p>
+      {p.payload.pagoPct != null && <p className="text-warning-strong">Pago: {p.payload.pagoPct}%</p>}
     </div>
   );
 }
@@ -34,6 +38,8 @@ export function ObraCurvaS({ obraId }: { obraId: string }) {
   const { data: tarefas = [] } = useObraTarefas(obraId);
   const { data: rdos = [] } = useObraRdos(obraId);
   const { data: vinculos = [] } = useObraRdoTarefas(obraId);
+  const { data: orcamento = [] } = useObraOrcamento(obraId);
+  const { data: lancamentos = [] } = useObraConta(obraId);
 
   const pontos = useMemo(() => {
     const dataDoRdo = new Map(rdos.map((r) => [r.id, r.data]));
@@ -45,8 +51,18 @@ export function ObraCurvaS({ obraId }: { obraId: string }) {
       const atual = concluidasPorRdo.get(v.tarefa_id);
       if (!atual || data < atual) concluidasPorRdo.set(v.tarefa_id, data);
     }
-    return curvaSObra(tarefas, concluidasPorRdo);
-  }, [tarefas, rdos, vinculos]);
+    const previstoPorFrente = new Map(orcamento.map((o) => [o.obra_frente_id, Number(o.valor_previsto)]));
+    const totalPrevisto = [...previstoPorFrente.values()].reduce((a, b) => a + b, 0);
+    const despesas = lancamentos
+      .filter((l) => l.tipo === "despesa" && !l.deleted_at)
+      .map((l) => ({ data: l.data, valor: Number(l.valor) }));
+    return curvaSObra(tarefas, concluidasPorRdo, {
+      pesos: pesosPorTarefa(tarefas, previstoPorFrente),
+      despesas,
+      totalPrevisto,
+    });
+  }, [tarefas, rdos, vinculos, orcamento, lancamentos]);
+  const temPago = pontos.some((p) => p.pagoPct != null);
 
   if (pontos.length === 0) {
     return (
@@ -67,7 +83,7 @@ export function ObraCurvaS({ obraId }: { obraId: string }) {
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={pontos} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
+        <ComposedChart data={pontos} margin={{ top: 20, right: 8, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--chart-grid))" />
           <XAxis
             dataKey="semana"
@@ -78,7 +94,7 @@ export function ObraCurvaS({ obraId }: { obraId: string }) {
             axisLine={false}
           />
           <YAxis
-            domain={[0, 100]}
+            domain={[0, (max: number) => Math.max(100, max)]}
             tickFormatter={(v: number) => `${v}%`}
             stroke="hsl(var(--chart-neutral))"
             fontSize={11}
@@ -102,13 +118,16 @@ export function ObraCurvaS({ obraId }: { obraId: string }) {
             strokeDasharray="4 3"
             dot={false}
           />
+          {temPago && (
+            <Line type="monotone" dataKey="pagoPct" stroke="hsl(var(--chart-warning))" strokeWidth={2} dot={false} />
+          )}
           <ReferenceLine
             x={semanaAtual}
             stroke="hsl(var(--chart-warning))"
             strokeDasharray="2 2"
             label={{ value: "Hoje", fontSize: 10, position: "top" }}
           />
-        </AreaChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

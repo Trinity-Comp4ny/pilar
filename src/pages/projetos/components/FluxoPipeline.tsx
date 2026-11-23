@@ -101,9 +101,7 @@ export function FluxoPipeline({
           titulo: disc.disciplina,
           status: statusVisual(status),
           responsavelNome:
-            disc.tipo_execucao === "terceirizada"
-              ? `Terceirizado · ${disc.prestador_nome || "Prestador a definir"}`
-              : disc.responsavel_nome || undefined,
+            disc.tipo_execucao === "terceirizada" ? "Serviço terceirizado" : disc.responsavel_nome || undefined,
           metaLabel: bloqueio ? `Aguardando ${bloqueio.disciplina}` : data.label,
           metaTone: data.tone,
           checklistLabel: counts && counts.total > 0 ? `${counts.concluidos}/${counts.total}` : undefined,
@@ -321,9 +319,7 @@ export function groupByEtapa(disciplinas: DisciplinaResponsavel[]) {
   }
 
   for (const [etapa, discs] of Array.from(etapaMap.entries()).sort(([a], [b]) => a - b)) {
-    // Rótulo neutro (posição), não "Etapa N": "etapa" já nomeia o sub-passo
-    // dentro do checklist de uma disciplina (spec 071), evita colisão de nome.
-    groups.push({ etapa, nome: String(etapa), disciplinas: discs });
+    groups.push({ etapa, nome: `Etapa ${etapa}`, disciplinas: discs });
   }
 
   if (semEtapa.length > 0) {

@@ -87,6 +87,7 @@ export interface SentryContext {
   fn?: string;
   user?: { id?: string; empresa_id?: string };
   tags?: Record<string, string>;
+  fingerprint?: string[];
   extra?: Record<string, unknown>;
 }
 
@@ -142,6 +143,7 @@ interface TraceAtual {
   traceId: string;
   spanId: string;
   parentSpanId?: string;
+  erroReportado?: boolean;
 }
 
 const traceStore = new AsyncLocalStorage<TraceAtual>();
@@ -253,6 +255,7 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
   const eventId = genEventId();
   const timestamp = new Date().toISOString();
   const trace = traceStore.getStore();
+  if (trace) trace.erroReportado = true;
 
   const event = {
     event_id: eventId,
@@ -262,6 +265,7 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
     environment: ENVIRONMENT,
     release: RELEASE,
     server_name: ctx.fn,
+    fingerprint: ctx.fingerprint,
     tags: { runtime: "deno-edge", ...(ctx.fn && { fn: ctx.fn }), ...(ctx.tags ?? {}) },
     user: ctx.user ? { id: ctx.user.id, segment: ctx.user.empresa_id } : undefined,
     extra: ctx.extra ? (scrub(ctx.extra) as Record<string, unknown>) : undefined,
@@ -417,7 +421,22 @@ export function withSentry(
         sentryUserStore.run(userBox, () => genAiSpanStore.run(genAiSpans, () => handler(req)))
       );
       httpStatus = response.status;
-      if (response.status >= 500) status = "internal_error";
+      if (response.status >= 500) {
+        status = "internal_error";
+        if (PARSED && !trace.erroReportado) {
+          // Um 5xx tratado conta como erro mesmo quando o trace não foi amostrado.
+          // O corpo pode conter dados de cliente, então só enviamos status e função.
+          const task = traceStore.run(trace, () =>
+            captureException(new Error(`${fnName} retornou HTTP ${httpStatus}`), {
+              fn: fnName,
+              tags: { method: req.method, http_status: String(httpStatus) },
+              fingerprint: ["edge-http-5xx", fnName, String(httpStatus)],
+              user: userBox.value,
+            })
+          ).catch(() => undefined);
+          waitUntil(task);
+        }
+      }
     } catch (err) {
       status = "internal_error";
       await traceStore.run(trace, () =>

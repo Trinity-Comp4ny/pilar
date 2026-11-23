@@ -52,7 +52,13 @@ const BUDGETS = {
   // 2026-11-14: 131 kB (era 130). Funções de celular (PR #870: puxar para atualizar, compartilhar,
   // deslizar linha, alça do sheet, biometria, háptico, badge do ícone). O código dos gestos já carrega
   // sob demanda só em tela de toque; sobra na entrada a fiação mínima (~0,5 kB gzip).
-  entry: 131 * 1024,
+  // 2026-11-19: 132 kB (era 131). Módulos ocultos por empresa e usuário (ADR 0066): a regra vive no
+  // usePermissions (boot) e some com menu, rota, painel e onboarding; ~0,3 kB gzip na entrada.
+  // 2026-11-23: 132,5 kB (era 132). Prefetch do painel em /inicio durante o véu e a espera dos avisos
+  // até depois da primeira pintura (perf Fase 3): ~0,3 kB no chunk de entrada, pelo ganho de 1 s na entrada.
+  // 2026-11-23: 133 kB (era 132,5). Origem da telemetria nos eventos (Sentry/PostHog) e prefetch de
+  // Clientes e Obras no véu: ~0,3 kB gzip na entrada.
+  entry: 133 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
@@ -92,7 +98,13 @@ const BUDGETS = {
   // o shell passou 0,1 kB (339,1 kB medidos no CI).
   // Mesma data, painel "Falar com o escritório" (BEZ-576): o chunk lazy entra na tabela de preload
   // da entrada (+~0,1 kB) sem mexer no teto.
-  initialLoad: 340 * 1024,
+  // 2026-11-19: 341 kB (era 340). Os ícones Mic e Brain das telas Reuniões e Cérebro do Ultra
+  // entram no menu (boot): +0,2 kB gzip sobre o teto. As telas em si são lazy.
+  // Mesma data, Prospecção (SPEC 172): o ícone Send entra no menu (boot): +0,1 kB sobre o teto.
+  // 2026-11-23: 343 kB (era 342). A tag de origem na telemetria e o funil do portal e do Campo
+  // somaram uns poucos bytes ao boot (342,0 kB medidos no CI, colado no teto).
+  // Mesma data, contagens do onboarding adiadas até a primeira pintura (perf): +0,1 kB gzip.
+  initialLoad: 343 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app

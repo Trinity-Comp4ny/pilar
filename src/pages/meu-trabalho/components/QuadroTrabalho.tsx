@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { AddColumnInline } from "@/components/kanban/AddColumnInline";
 import { KANBAN_ADD_COLUMN_CLASSES, KANBAN_BOARD_CLASS } from "@/components/kanban/kanbanLayout";
@@ -8,8 +9,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ordenarKanban, type KanbanSort } from "@/lib/kanbanSort";
 import { TAREFAS_SORT_ACESSORES } from "../ordenacao";
 import { agruparPorEtapa, type ItemTrabalho } from "../useItensTrabalho";
-import type { Etapa } from "../useEtapas";
-import { corDaEtapa, CORES_ETAPA, type Prioridade } from "../status";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
+import { corDaEtapa, CORES_ETAPA, type Prioridade } from "@/lib/tarefas/status";
 import { CardTrabalho } from "./CardTrabalho";
 
 export type EtapaControls = {
@@ -30,12 +31,48 @@ type Props = {
   onExcluir: (item: ItemTrabalho) => void;
   /** Arrastou o card para outra coluna: destino = id da etapa alvo. */
   onMover: (item: ItemTrabalho, destinoEtapaId: string) => void;
+  /** "Adicionar tarefa" no fim da coluna: abre o formulário já nela. */
+  onCriarNoGrupo?: (etapaId: string) => void;
   etapaControls: EtapaControls;
 };
 
-export function QuadroTrabalho({ itens, sort, onAbrir, onPrioridade, onExcluir, onMover, etapaControls }: Props) {
+const LS_RECOLHIDAS = "pilar.meu-trabalho.quadro-recolhidas";
+
+function lerRecolhidas(): Set<string> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LS_RECOLHIDAS) ?? "[]");
+    return new Set(Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function QuadroTrabalho({
+  itens,
+  sort,
+  onAbrir,
+  onPrioridade,
+  onExcluir,
+  onMover,
+  onCriarNoGrupo,
+  etapaControls,
+}: Props) {
   const { etapas } = etapaControls;
   const isMobile = useIsMobile();
+  const [recolhidas, setRecolhidas] = useState<Set<string>>(() => lerRecolhidas());
+  const alternarRecolhida = useCallback((id: string) => {
+    setRecolhidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        localStorage.setItem(LS_RECOLHIDAS, JSON.stringify([...next]));
+      } catch {
+        // sem persistência, sem erro.
+      }
+      return next;
+    });
+  }, []);
   const grupos = useMemo(
     () => agruparPorEtapa(ordenarKanban(itens, sort, TAREFAS_SORT_ACESSORES), etapas),
     [itens, sort, etapas]
@@ -93,6 +130,20 @@ export function QuadroTrabalho({ itens, sort, onAbrir, onPrioridade, onExcluir, 
               title={grupo.titulo}
               color={corDaEtapa(etapa?.cor ?? null, etapa?.bucket ?? null)}
               count={grupo.itens.length}
+              collapsed={recolhidas.has(grupo.chave)}
+              onCollapse={() => alternarRecolhida(grupo.chave)}
+              footer={
+                onCriarNoGrupo && (
+                  <button
+                    type="button"
+                    onClick={() => onCriarNoGrupo(grupo.chave)}
+                    className="flex h-8 w-full items-center gap-1.5 rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    aria-label={`Adicionar tarefa em ${grupo.titulo}`}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Adicionar tarefa
+                  </button>
+                )
+              }
               actions={
                 etapa
                   ? {

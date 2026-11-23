@@ -1,3 +1,5 @@
+import { origemAtual } from "./origem";
+import { scrubTelemetry } from "@/lib/scrubTelemetry";
 /**
  * Analytics layer: PostHog backed com fallback no-op.
  *
@@ -42,6 +44,7 @@ interface Analytics {
   init(): void;
   identify(userId: string, traits?: AnalyticsTraits): void;
   track(event: EventoProduto, properties?: Props): void;
+  trackLogin(userId: string, traits: AnalyticsTraits): void;
   reset(): void;
   isFeatureEnabled(key: string): boolean | undefined;
   getAnonId(): string;
@@ -56,46 +59,7 @@ const HOST = env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com";
 const SENSITIVE_KEYS =
   /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario|e_?mail|telefone|phone|celular/i;
 
-const PII_PATTERNS: Array<{ re: RegExp; replace: string }> = [
-  // Link público de cotação (SPEC 144): o token na rota é o segredo, não pode ir ao PostHog.
-  { re: /\/cotar\/[A-Za-z0-9_-]{16,}/g, replace: "/cotar/[link]" },
-  { re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, replace: "[CPF]" },
-  { re: /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, replace: "[CNPJ]" },
-  { re: /\b\d{5}-?\d{3}\b/g, replace: "[CEP]" },
-  { re: /\b(?:\d[ -]?){13,16}\d\b/g, replace: "[CARD]" },
-  { re: /[^\s@<>()"']+@[^\s@<>()"']+\.[a-z]{2,}/gi, replace: "[EMAIL]" },
-];
-
-function scrubString(s: string): string {
-  let out = s;
-  for (const { re, replace } of PII_PATTERNS) {
-    out = out.replace(re, replace);
-  }
-  return out;
-}
-
-function scrub(value: unknown, depth = 0): unknown {
-  if (depth > 5) return "[max depth]";
-  if (value === null || value === undefined) return value;
-  if (typeof value === "string") {
-    const masked = scrubString(value);
-    if (masked.length > 500) return masked.slice(0, 500) + "…";
-    return masked;
-  }
-  if (typeof value !== "object") return value;
-  if (Array.isArray(value)) {
-    return value.slice(0, 20).map((v) => scrub(v, depth + 1));
-  }
-  const result: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(value)) {
-    if (SENSITIVE_KEYS.test(k)) {
-      result[k] = "***";
-    } else {
-      result[k] = scrub(v, depth + 1);
-    }
-  }
-  return result;
-}
+const scrub = (value: unknown) => scrubTelemetry(value, SENSITIVE_KEYS, true);
 
 const ANON_KEY = "pilar-analytics-anon-id";
 
@@ -124,6 +88,7 @@ const noopAnalytics: Analytics = {
   track(event, properties) {
     if (DEV) console.debug("[analytics] track", event, scrub(properties));
   },
+  trackLogin() {},
   reset() {
     if (DEV) console.debug("[analytics] reset");
   },
@@ -178,14 +143,19 @@ function ensurePosthogInit(ph: PostHog) {
     bootstrap: { distinctID: ensureAnonId() },
     sanitize_properties: (props) => scrub(props) as Record<string, unknown>,
   });
+  // A escolha da Pilar pode ter mudado desde o último uso deste navegador.
+  if (ph.has_opted_out_capturing()) ph.opt_in_capturing({ captureEventName: false });
   posthogInitialized = true;
 }
 
 /** Roda `fn` no PostHog iniciado, só com consentimento (checado de novo após o download). */
+let posthogGeneration = 0;
+
 function withPosthog(fn: (ph: PostHog) => void) {
   if (!hasAnalyticsConsent()) return;
+  const generation = posthogGeneration;
   const run = (ph: PostHog | null) => {
-    if (!ph || !hasAnalyticsConsent()) return;
+    if (!ph || generation !== posthogGeneration || !hasAnalyticsConsent()) return;
     ensurePosthogInit(ph);
     fn(ph);
   };
@@ -209,9 +179,29 @@ const posthogAnalytics: Analytics = {
     });
   },
   track(event, properties) {
-    withPosthog((ph) => ph.capture(event, scrub(properties) as Record<string, unknown> | undefined));
+    withPosthog((ph) =>
+      ph.capture(event, { origin: origemAtual(), ...(scrub(properties) as Record<string, unknown> | undefined) })
+    );
+  },
+  trackLogin(userId, traits) {
+    withPosthog((ph) => {
+      const chave = "pilar_login_registrado";
+      try {
+        if (sessionStorage.getItem(chave) === userId) return;
+      } catch {
+        // A captura continua disponível com armazenamento bloqueado.
+      }
+      const evento = ph.capture("login_realizado", { role: traits.role, empresa_id: traits.empresa_id });
+      if (!evento) return;
+      try {
+        sessionStorage.setItem(chave, userId);
+      } catch {
+        // Sem armazenamento não há como deduplicar entre recargas.
+      }
+    });
   },
   reset() {
+    posthogGeneration++;
     if (posthogInitialized) posthog?.reset();
   },
   isFeatureEnabled(key) {
@@ -239,9 +229,10 @@ export function applyCookieConsent(analyticsAccepted: boolean) {
     return;
   }
   revokeGtm();
+  posthogGeneration++;
   if (posthogInitialized && posthog) {
-    posthog.opt_out_capturing();
     posthog.reset();
+    posthog.opt_out_capturing();
     posthogInitialized = false;
   }
 }

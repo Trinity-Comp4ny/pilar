@@ -12,6 +12,7 @@ import { DEMO_URL, WHATSAPP_COMERCIAL_URL } from "../lib/contato";
 import { MODULOS } from "../lib/modules";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { CONSENT_REVIEW_REQUESTED_EVENT } from "../cookieConsent";
+import { tituloParaBusca } from "../lib/seo";
 import { LandingHeader } from "./LandingHeader";
 import { LandingFooter } from "./LandingFooter";
 import { CTASection } from "./CTASection";
@@ -270,11 +271,21 @@ describe("CTAs para a demonstração em toda página", () => {
     "/%s oferece demonstração, preserva o acesso aos preços e distingue o pedido de implantação",
     async (slug) => {
       renderNaRota(<PublicoPage slug={slug} />, `/${slug}`);
-      const demonstracao = screen.getByRole("link", { name: "Agendar demonstração" });
-      expect(demonstracao).toHaveAttribute("href", DEMO_URL);
-      demonstracao.addEventListener("click", (e) => e.preventDefault());
-      await userEvent.click(demonstracao);
+      // Dois pedidos de demonstração: o da hero e o ao lado da comparação com planilha e ERP.
+      const demonstracoes = screen.getAllByRole("link", { name: "Agendar demonstração" });
+      expect(demonstracoes).toHaveLength(2);
+      for (const demonstracao of demonstracoes) {
+        expect(demonstracao).toHaveAttribute("href", DEMO_URL);
+        demonstracao.addEventListener("click", (e) => e.preventDefault());
+        await userEvent.click(demonstracao);
+      }
       expect(trackCta).toHaveBeenCalledWith("agende_demo", `publico_${slug}`);
+      expect(trackCta).toHaveBeenCalledWith("agende_demo", `publico_${slug}_comparacao`);
+
+      for (const comparativo of ["planilha", "erp-construtora", "whatsapp"]) {
+        const link = document.querySelector(`a[href="/vs/${comparativo}"]`);
+        expect(link, `/vs/${comparativo}`).not.toBeNull();
+      }
 
       for (const planos of screen.getAllByRole("link", { name: "Ver planos" })) {
         expect(planos).toHaveAttribute("href", "/planos");
@@ -302,7 +313,7 @@ describe("páginas de módulo e comparação", () => {
         `/${outro.slug}`
       );
     }
-    expect(document.title).toBe(`${m.seo.titulo} | Pilar`);
+    expect(document.title).toBe(tituloParaBusca(`${m.seo.titulo} | Pilar`));
     const jsonLd = document.head.querySelector('script[type="application/ld+json"]');
     expect(JSON.parse(jsonLd?.textContent ?? "{}").mainEntity).toHaveLength(m.faq.length);
   });
@@ -327,7 +338,7 @@ describe("páginas de módulo e comparação", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(c.seo.h1);
     for (const l of c.linhas) expect(within(container).getAllByText(l.criterio).length).toBeGreaterThan(0);
     for (const f of c.faq) expect(screen.getByText(f.pergunta)).toBeInTheDocument();
-    expect(document.title).toBe(`${c.seo.titulo} | Pilar`);
+    expect(document.title).toBe(tituloParaBusca(`${c.seo.titulo} | Pilar`));
   });
 });
 

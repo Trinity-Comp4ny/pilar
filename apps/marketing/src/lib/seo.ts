@@ -6,6 +6,21 @@ function setMeta(selector: string, valor: string) {
   document.head.querySelector(selector)?.setAttribute("content", valor);
 }
 
+const SUFIXO_MARCA = " | Pilar";
+const LIMITE_TITULO = 60;
+
+/**
+ * O Google corta o título perto de 60 caracteres. Quando o " | Pilar" empurra
+ * além disso, o sufixo sai e a palavra-chave fica inteira: a marca já aparece
+ * no nome do site que o resultado mostra, e é a palavra-chave que ganha clique.
+ */
+export function tituloParaBusca(titulo: string) {
+  if (titulo.length > LIMITE_TITULO && titulo.endsWith(SUFIXO_MARCA)) {
+    return titulo.slice(0, -SUFIXO_MARCA.length);
+  }
+  return titulo;
+}
+
 /**
  * Meta tags por rota numa SPA: o index.html traz as da home, e cada página
  * sobrescreve title, description, canonical e OG ao montar. O Google renderiza
@@ -35,7 +50,7 @@ export function usePageMeta({
 }) {
   useEffect(() => {
     const url = `${BASE}${caminho}`;
-    document.title = titulo;
+    document.title = tituloParaBusca(titulo);
     setMeta('meta[name="description"]', descricao);
     setMeta('meta[property="og:title"]', ogTitulo ?? titulo);
     setMeta('meta[property="og:description"]', ogDescricao ?? descricao);

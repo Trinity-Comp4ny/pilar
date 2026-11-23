@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useAposPrimeiraPintura } from "@/hooks/useAposPrimeiraPintura";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,10 +76,11 @@ async function buscar(): Promise<Dados> {
 /** Dados brutos da faixa (incidentes, manutenções e comunicados), cache compartilhado. */
 export function useDadosAvisosPlataforma() {
   const { user } = useAuth();
+  const depoisDaPintura = useAposPrimeiraPintura();
   return useQuery({
     queryKey: AVISOS_PLATAFORMA_KEY,
     queryFn: buscar,
-    enabled: !!user,
+    enabled: !!user && depoisDaPintura,
     staleTime: 30_000,
     refetchInterval: 60_000,
   });
