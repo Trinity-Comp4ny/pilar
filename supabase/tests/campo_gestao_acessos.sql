@@ -136,6 +136,9 @@ SELECT lives_ok(
   'ultra_admin revoga acesso de campo de outra empresa'
 );
 
+-- Lê como superusuário: a RLS de campo_accounts ainda não tem bypass de ultra_admin (PR de policies).
+RESET ROLE;
+
 SELECT is(
   (SELECT ativo FROM public.campo_accounts WHERE id = '00000000-0000-0000-0000-00000000d3aa'),
   false,
