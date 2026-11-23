@@ -8770,12 +8770,15 @@ export type Database = {
         Row: {
           canal: string
           cidade: string | null
+          cnae_principal: string | null
+          cnpj: string | null
           confianca_contato: string
           contato_nome: string | null
           created_at: string
           criado_por: string | null
           email: string | null
           endereco: string | null
+          enriquecido_em: string | null
           fila_em: string | null
           id: string
           nome: string
@@ -8784,6 +8787,7 @@ export type Database = {
           place_id: string | null
           pulado_em: string | null
           qualidade: string | null
+          razao_social: string | null
           regiao: string | null
           segmento: string
           segmento_teste: boolean
@@ -8800,12 +8804,15 @@ export type Database = {
         Insert: {
           canal?: string
           cidade?: string | null
+          cnae_principal?: string | null
+          cnpj?: string | null
           confianca_contato?: string
           contato_nome?: string | null
           created_at?: string
           criado_por?: string | null
           email?: string | null
           endereco?: string | null
+          enriquecido_em?: string | null
           fila_em?: string | null
           id?: string
           nome: string
@@ -8814,6 +8821,7 @@ export type Database = {
           place_id?: string | null
           pulado_em?: string | null
           qualidade?: string | null
+          razao_social?: string | null
           regiao?: string | null
           segmento: string
           segmento_teste?: boolean
@@ -8830,12 +8838,15 @@ export type Database = {
         Update: {
           canal?: string
           cidade?: string | null
+          cnae_principal?: string | null
+          cnpj?: string | null
           confianca_contato?: string
           contato_nome?: string | null
           created_at?: string
           criado_por?: string | null
           email?: string | null
           endereco?: string | null
+          enriquecido_em?: string | null
           fila_em?: string | null
           id?: string
           nome?: string
@@ -8844,6 +8855,7 @@ export type Database = {
           place_id?: string | null
           pulado_em?: string | null
           qualidade?: string | null
+          razao_social?: string | null
           regiao?: string | null
           segmento?: string
           segmento_teste?: boolean
@@ -12381,7 +12393,15 @@ export type Database = {
         Args: { p_ativo: boolean; p_teto: number }
         Returns: undefined
       }
+      prospec_enriquecedor_disparar: { Args: never; Returns: undefined }
       prospec_fila_pausada: { Args: never; Returns: boolean }
+      prospec_leads_para_enriquecer: {
+        Args: { p_limite?: number }
+        Returns: {
+          cnpj: string
+          id: string
+        }[]
+      }
       prospec_mapeador_disparar: { Args: never; Returns: undefined }
       prospec_montar_fila: {
         Args: { p_canal?: string; p_limite?: number }
@@ -12410,6 +12430,16 @@ export type Database = {
       prospec_registrar_busca: {
         Args: { p_celula: string; p_erro?: string; p_leads: Json }
         Returns: number
+      }
+      prospec_registrar_enriquecimento: {
+        Args: {
+          p_ajuste_nota?: number
+          p_cnae: string
+          p_decisor: string
+          p_lead: string
+          p_razao_social: string
+        }
+        Returns: undefined
       }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }

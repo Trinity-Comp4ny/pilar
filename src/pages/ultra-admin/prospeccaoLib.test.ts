@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { cnpjValido, describe, expect, it } from "vitest";
 import {
   decidirCanal,
   decidirConfianca,
@@ -227,5 +227,13 @@ describe("formatarTelefone", () => {
     expect(formatarTelefone("5514999990001")).toBe("(14) 99999-0001");
     expect(formatarTelefone("551430000002")).toBe("(14) 3000-0002");
     expect(formatarTelefone(null)).toBe("");
+  });
+});
+
+describe("cnpjValido", () => {
+  it("aceita formatado e rejeita curto", () => {
+    expect(cnpjValido("11.222.333/0001-81")).toBe("11222333000181");
+    expect(cnpjValido("123")).toBeNull();
+    expect(cnpjValido(null)).toBeNull();
   });
 });

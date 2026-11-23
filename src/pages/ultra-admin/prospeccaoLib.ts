@@ -144,6 +144,12 @@ export function escolherTelefone(...campos: Array<string | null | undefined>): T
   return fixo ? { e164: fixo.e164, tipo: "fixo" } : { e164: null, tipo: "sem" };
 }
 
+/** CNPJ só com dígitos (14), ou null. */
+export function cnpjValido(texto: string | null | undefined): string | null {
+  const d = (texto ?? "").replace(/\D/g, "");
+  return d.length === 14 ? d : null;
+}
+
 export function emailValido(email: string | null | undefined): string | null {
   const e = (email ?? "").trim().toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? e : null;
@@ -190,6 +196,7 @@ const ALIASES = {
   endereco: ["Endereço", "Address"],
   prioridade: ["Prioridade sugerida", "Prioridade", "Priority"],
   qualidade: ["Qualidade do contato"],
+  cnpj: ["CNPJ"],
 } as const;
 
 export interface LeadImportado {
@@ -211,6 +218,7 @@ export interface LeadImportado {
   canal: Canal;
   confianca_contato: Confianca;
   nota_encaixe: number;
+  cnpj: string | null;
 }
 
 export type MotivoDescarte = "sem_nome" | "segmento_desconhecido" | "sem_contato";
@@ -261,6 +269,7 @@ export function linhaParaLead(linha: Record<string, unknown>): { lead: LeadImpor
       canal: decidirCanal(escolhido.tipo, email),
       confianca_contato: decidirConfianca({ contatoNome, tipo: escolhido.tipo, whatsappNaFonte }),
       nota_encaixe: notaPorPrioridade(campo(linha, ALIASES.prioridade), segmento.icp),
+      cnpj: cnpjValido(campo(linha, ALIASES.cnpj)),
     },
   };
 }

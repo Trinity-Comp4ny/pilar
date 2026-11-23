@@ -38,6 +38,7 @@ const SEM_RATE_LIMIT: Record<string, string> = {
   health: "leitura pública sem efeito colateral; Better Stack e smoke de deploy",
   "log-impersonation": "só ultra admin",
   "notificacoes-email-cron": "cron (cronAutorizado)",
+  "prospeccao-enriquecer": "cron (cronAutorizado); lote fixo de 20 por dia",
   "prospeccao-mapeador": "cron (cronAutorizado); teto semanal de buscas no banco",
   "ops-agente-run": "cron (cronAutorizado) ou só ultra admin com MFA",
   "reuniao-analisar": "só ultra admin com MFA; teto mensal de custo do agente",
