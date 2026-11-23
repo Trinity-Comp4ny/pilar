@@ -10,7 +10,7 @@ export const TETO_ENTRADA_MS = 4000;
  * Começa assim que a empresa é conhecida, em paralelo com a checagem de assinatura.
  * Sem empresa ainda, não segura nada.
  */
-export function useEntradaPronta(empresaId: string | undefined, pathname: string): boolean {
+export function useEntradaPronta(empresaId: string | undefined, pathname: string, usuarioId?: string): boolean {
   const qc = useQueryClient();
   const [pronta, setPronta] = useState(false);
   const rota = useRef(pathname);
@@ -23,7 +23,7 @@ export function useEntradaPronta(empresaId: string | undefined, pathname: string
       if (ativo) setPronta(true);
     };
     const teto = window.setTimeout(concluir, TETO_ENTRADA_MS);
-    void Promise.allSettled(prefetchDaRota(qc, rota.current)).then(() => {
+    void Promise.allSettled(prefetchDaRota(qc, rota.current, { empresaId, usuarioId })).then(() => {
       window.clearTimeout(teto);
       concluir();
     });
@@ -31,7 +31,7 @@ export function useEntradaPronta(empresaId: string | undefined, pathname: string
       ativo = false;
       window.clearTimeout(teto);
     };
-  }, [empresaId, qc]);
+  }, [empresaId, usuarioId, qc]);
 
   return pronta || !empresaId;
 }
