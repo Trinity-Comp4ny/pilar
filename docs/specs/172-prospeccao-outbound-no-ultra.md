@@ -263,3 +263,20 @@ estoura a conta. Cobertura nacional completa é o que mais custa, por isso a cas
   por número, então lead vindo do Places não ganha CNPJ sozinho. Para isso falta uma fonte de busca por
   nome (dump da Receita ou serviço pago): decisão em aberto.
 - Sem mudança visual (só dados e função de fundo).
+
+## Fase 3: o que foi construído
+
+- **Só custo zero.** Nada pago entra: o enriquecimento segue por CNPJ gratuito (BrasilAPI) e é
+  opcional. Para o primeiro contato o lead precisa de **nome do negócio, WhatsApp** e, se houver,
+  **nome de uma pessoa**, segundo telefone ou e-mail. CNPJ nunca é exigido.
+- Migration `20261235200000_prospeccao_fase_3.sql`: `prospec_envios.modelo`; `prospec_registrar`
+  ganha `p_modelo`; `prospec_resultados()` (enviados, respostas e reuniões por segmento, modelo e
+  região) e `prospec_followups()` (enviado há 4 dias ou mais, sem resposta, um único envio).
+- **Teste A/B**: dois textos de WhatsApp por tipo de contato, escolhidos pela paridade do id do lead
+  (estável). O modelo (`pessoa_a`, `pessoa_b`, `empresa_a`, `empresa_b`) é gravado no envio e
+  contado pelo modelo do **primeiro** envio. Os textos continuam editáveis antes de enviar.
+- **Follow-up com aprovação**: seção na aba Hoje com um texto curto e a saída "é só avisar". Um por
+  lead: o follow-up conta como segundo envio e tira o lead da lista. Nada sai sozinho.
+- Aba **Resultados**: taxas por grupo, com aviso "amostra pequena" abaixo de 30 envios. Segmento
+  adjacente só vira ICP por decisão registrada em DECISOES.md, com número que se sustente.
+- `types.ts` editado à mão (sem Docker): conferir com `gen:types:local` quando possível.

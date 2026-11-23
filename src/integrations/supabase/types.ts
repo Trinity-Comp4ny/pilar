@@ -8735,6 +8735,7 @@ export type Database = {
           criado_por: string | null
           id: string
           lead_id: string
+          modelo: string | null
           resultado: string
           texto: string | null
         }
@@ -8744,6 +8745,7 @@ export type Database = {
           criado_por?: string | null
           id?: string
           lead_id: string
+          modelo?: string | null
           resultado: string
           texto?: string | null
         }
@@ -8753,6 +8755,7 @@ export type Database = {
           criado_por?: string | null
           id?: string
           lead_id?: string
+          modelo?: string | null
           resultado?: string
           texto?: string | null
         }
@@ -12395,6 +12398,27 @@ export type Database = {
       }
       prospec_enriquecedor_disparar: { Args: never; Returns: undefined }
       prospec_fila_pausada: { Args: never; Returns: boolean }
+      prospec_followups: {
+        Args: { p_dias?: number; p_limite?: number }
+        Returns: {
+          canal: string
+          cidade: string
+          confianca_contato: string
+          contato_nome: string
+          email: string
+          fila_em: string
+          id: string
+          nome: string
+          nota_encaixe: number
+          segmento: string
+          segmento_teste: boolean
+          site: string
+          status: string
+          telefone_e164: string
+          tipo_telefone: string
+          ultimo_contato_em: string
+        }[]
+      }
       prospec_leads_para_enriquecer: {
         Args: { p_limite?: number }
         Returns: {
@@ -12422,6 +12446,7 @@ export type Database = {
           p_canal?: string
           p_contato_nome?: string
           p_lead: string
+          p_modelo?: string
           p_resultado: string
           p_texto?: string
         }
@@ -12440,6 +12465,16 @@ export type Database = {
           p_razao_social: string
         }
         Returns: undefined
+      }
+      prospec_resultados: {
+        Args: never
+        Returns: {
+          chave: string
+          dimensao: string
+          enviados: number
+          reunioes: number
+          respostas: number
+        }[]
       }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }
