@@ -118,10 +118,18 @@ const sentryMonitoring: Monitoring = {
       // toda transaction amostrada leva profile; o custo continua controlado por
       // TRACES_RATE. Só Chromium perfila, e só com o header Document-Policy: js-profiling
       // no HTML (vercel.json).
-      profilesSampleRate: 1.0,
+      profileSessionSampleRate: 1.0,
+      profileLifecycle: "trace",
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
-      sendDefaultPii: false,
+      // Sentry 11 removeu sendDefaultPii. Estes valores reproduzem o `false` antigo
+      // (sem user, cookies, headers nem corpos); os defaults novos coletariam tudo isso.
+      dataCollection: {
+        userInfo: false,
+        cookies: false,
+        httpHeaders: { request: false, response: false },
+        httpBodies: [],
+      },
       // Replay entra depois, pela CDN (abaixo): no bundle ele pesava ~260 KB de fonte
       // na entrada de toda página, para gravar só sessões com erro.
       integrations: [Sentry.browserTracingIntegration()],
@@ -149,7 +157,7 @@ const sentryMonitoring: Monitoring = {
     // Profiling via CDN da própria Sentry (script já liberado no CSP, vercel.json),
     // fora do bundle de entrada: adicionar direto em `integrations` acima estourava
     // o orçamento de bundle (ver scripts/check-bundle-size.mjs) por ~4kB pra todo
-    // usuário, mesmo quem nunca cai na amostra de profilesSampleRate. Falha de rede
+    // usuário, mesmo quem nunca cai na amostra de profileSessionSampleRate. Falha de rede
     // aqui é não-fatal: resto do Sentry (erro, tracing, replay) já está ativo.
     Sentry.lazyLoadIntegration("browserProfilingIntegration")
       .then((integrationFn) => Sentry.addIntegration(integrationFn()))
