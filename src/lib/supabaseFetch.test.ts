@@ -111,6 +111,26 @@ describe("createInstrumentedFetch", () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
+  it("ignora 400 P0001 de assinatura suspensa (bloqueio intencional)", async () => {
+    const f = createInstrumentedFetch(async () =>
+      jsonResponse(400, { code: "P0001", message: "erro", details: "empresa_assinatura_suspensa" })
+    );
+
+    await f(URL_BASE, { method: "DELETE" });
+    await flush();
+
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it("reporta 400 P0001 de outra regra", async () => {
+    const f = createInstrumentedFetch(async () => jsonResponse(400, { code: "P0001", message: "outra regra" }));
+
+    await f(URL_BASE);
+    await flush();
+
+    expect(captureException).toHaveBeenCalledTimes(1);
+  });
+
   it("reporta falha de rede e relança o erro original", async () => {
     const boom = new TypeError("Failed to fetch");
     const f = createInstrumentedFetch(async () => {
