@@ -101,7 +101,9 @@ const BUDGETS = {
   // 2026-11-19: 341 kB (era 340). Os ícones Mic e Brain das telas Reuniões e Cérebro do Ultra
   // entram no menu (boot): +0,2 kB gzip sobre o teto. As telas em si são lazy.
   // Mesma data, Prospecção (SPEC 172): o ícone Send entra no menu (boot): +0,1 kB sobre o teto.
-  initialLoad: 342 * 1024,
+  // 2026-11-23: 343 kB (era 342). A tag de origem na telemetria e o funil do portal e do Campo
+  // somaram uns poucos bytes ao boot (342,0 kB medidos no CI, colado no teto).
+  initialLoad: 343 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
