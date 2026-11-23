@@ -12,6 +12,8 @@ vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: h.user }) }))
 
 import { useAvisosPlataforma, useComunicadosModal } from "./useAvisosPlataforma";
 
+vi.mock("@/hooks/useAposPrimeiraPintura", () => ({ useAposPrimeiraPintura: () => true }));
+
 let client: QueryClient;
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={client}>{children}</QueryClientProvider>
