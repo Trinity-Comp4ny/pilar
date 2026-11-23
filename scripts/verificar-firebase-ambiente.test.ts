@@ -30,7 +30,7 @@ describe("verificar-firebase-ambiente: quem pode publicar live", () => {
   it("recusa o CI de outra branch", () => {
     const r = rodar({ GITHUB_EVENT_NAME: "workflow_run", GITHUB_REF: "refs/heads/main", CI_HEAD_BRANCH: "staging" });
     expect(r.status).not.toBe(0);
-    expect(r.stderr).toContain("Hosting live exige");
+    expect(r.stderr).toContain("não pode ser publicado");
   });
 
   it("recusa disparo manual fora da main e pull request", () => {
@@ -45,5 +45,13 @@ describe("verificar-firebase-ambiente: quem pode publicar live", () => {
       VITE_SUPABASE_URL: "https://rizaklgstyfrwgmdsldf.supabase.co",
     });
     expect(r.status).not.toBe(0);
+  });
+
+  it("staging sai do CI de staging, nunca de produção", () => {
+    const staging = { CANAL: "staging", VITE_SUPABASE_URL: "https://rizaklgstyfrwgmdsldf.supabase.co" };
+    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "workflow_run", CI_HEAD_BRANCH: "staging" }).status).toBe(0);
+    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "workflow_run", CI_HEAD_BRANCH: "feat/x" }).status).not.toBe(0);
+    const comProd = { ...staging, VITE_SUPABASE_URL: "https://vepnsonbnsimqcsfcagm.supabase.co" };
+    expect(rodar({ ...comProd, GITHUB_EVENT_NAME: "workflow_run", CI_HEAD_BRANCH: "staging" }).status).not.toBe(0);
   });
 });

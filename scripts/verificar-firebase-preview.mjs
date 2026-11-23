@@ -12,7 +12,12 @@ export function obterUrlPreview(deploy, site, canal) {
     url.protocol !== "https:" ||
     !url.hostname.startsWith(`${site}--${canal}-`) ||
     !url.hostname.endsWith(".web.app") ||
-    url.username || url.password || url.port || url.pathname !== "/" || url.search || url.hash
+    url.username ||
+    url.password ||
+    url.port ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
   ) {
     throw new Error("O Firebase não retornou a URL HTTPS do site e canal esperados.");
   }
@@ -24,7 +29,10 @@ function exigir(condicao, rota, mensagem) {
 }
 
 function temDiretiva(resposta, diretiva) {
-  return resposta.headers.get("cache-control")?.split(",").some((valor) => valor.trim() === diretiva);
+  return resposta.headers
+    .get("cache-control")
+    ?.split(",")
+    .some((valor) => valor.trim() === diretiva);
 }
 
 async function buscar(origem, rota, tipo, requisitar) {
@@ -67,7 +75,11 @@ export async function verificarHosting({ origem, alvo, release }, requisitar = f
 
   exigir(/<h1[\s>]/i.test(html), rota, "conteúdo pré-renderizado ausente");
   const sitemap = await buscar(origem, "/sitemap.xml", /(?:application|text)\/xml/i, requisitar);
-  exigir((await sitemap.text()).includes(`<loc>${ORIGEM_MARKETING}/engenharia</loc>`), "/sitemap.xml", "rota de engenharia ausente");
+  exigir(
+    (await sitemap.text()).includes(`<loc>${ORIGEM_MARKETING}/engenharia</loc>`),
+    "/sitemap.xml",
+    "rota de engenharia ausente"
+  );
   const checkout = "/checkout?plano=pro&utm_source=hosting-smoke";
   const redirecionamento = await requisitar(new URL(checkout, origem), {
     redirect: "manual",
@@ -75,7 +87,11 @@ export async function verificarHosting({ origem, alvo, release }, requisitar = f
   });
   await redirecionamento.body?.cancel();
   exigir(redirecionamento.status === 307, "/checkout", "esperado redirecionamento 307");
-  exigir(redirecionamento.headers.get("location") === `${ORIGEM_APP}${checkout}`, "/checkout", "destino ou parâmetros incorretos");
+  exigir(
+    redirecionamento.headers.get("location") === `${ORIGEM_APP}${checkout}`,
+    "/checkout",
+    "destino ou parâmetros incorretos"
+  );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -86,7 +102,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!site || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(site)) {
     throw new Error("SITE_ID do Firebase inválido.");
   }
-  if (live && canal !== "live") throw new Error("O smoke live exige o canal live.");
+  if (live && !["live", "staging"].includes(canal))
+    throw new Error("O smoke do site fixo exige o canal live ou staging.");
   const origem = live
     ? `https://${site}.web.app`
     : obterUrlPreview(JSON.parse(readFileSync(arquivo, "utf8")), site, canal);
