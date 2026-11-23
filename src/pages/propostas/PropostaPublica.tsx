@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,10 @@ async function acessar(token: string, acao: "abrir" | "aceitar") {
 export default function PropostaPublica() {
   usePageTitle("Proposta comercial");
   const token = useLocation().hash.slice(1);
+  return <VersaoCompartilhada key={token} token={token} />;
+}
+
+function VersaoCompartilhada({ token }: { token: string }) {
   const [confirmando, setConfirmando] = useState(false);
   const consulta = useQuery({
     queryKey: ["proposta-compartilhada", token],
@@ -43,8 +47,15 @@ export default function PropostaPublica() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
-  const aceite = useMutation({ mutationFn: () => acessar(token, "aceitar") });
-  const versao = aceite.data ?? consulta.data;
+  const queryClient = useQueryClient();
+  const aceite = useMutation({
+    mutationFn: () => acessar(token, "aceitar"),
+    onSuccess: (versao) => {
+      queryClient.setQueryData(["proposta-compartilhada", token], versao);
+      setConfirmando(false);
+    },
+  });
+  const versao = consulta.data;
 
   return (
     <main className="mx-auto max-w-xl px-4 py-10 sm:py-16">
@@ -67,11 +78,16 @@ export default function PropostaPublica() {
                   </a>
                 </Button>
               ) : (
-                <p>PDF temporariamente indisponível. Recarregue a página para tentar novamente.</p>
+                <div className="space-y-2">
+                  <p>PDF temporariamente indisponível.</p>
+                  <Button variant="outline" loading={consulta.isFetching} onClick={() => void consulta.refetch()}>
+                    Tentar carregar o PDF
+                  </Button>
+                </div>
               )}
               {versao.estado === "disponivel" && versao.pdf && (
                 <div className="space-y-2">
-                  {confirmando && <p>Confirmar o aceite desta versão da proposta?</p>}
+                  {confirmando && <p>Confirmar o aceite da versão {versao.numero} da proposta?</p>}
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="brand"
