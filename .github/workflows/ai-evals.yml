@@ -30,6 +30,12 @@ on:
   schedule:
     - cron: "0 10 * * 1" # segunda, 07:00 BRT
   workflow_dispatch:
+    inputs:
+      suite:
+        description: "Qual avaliação executar"
+        type: choice
+        default: todas
+        options: [todas, chat, estimativa]
 
 permissions:
   contents: read
@@ -41,7 +47,9 @@ concurrency:
 
 jobs:
   evals:
-    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
+    if: >-
+      (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'))
+      && (github.event_name != 'workflow_dispatch' || inputs.suite == 'todas' || inputs.suite == 'chat')
     name: Evals do ai-chat
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -77,7 +85,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
-          name: ai-evals-${{ github.run_id }}
+          name: ai-evals-${{ github.run_id }}-${{ github.run_attempt }}
           path: evals-resultado.json
           retention-days: 30
           if-no-files-found: ignore
@@ -97,7 +105,9 @@ jobs:
           status: success
 
   evals-estimativa:
-    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
+    if: >-
+      (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'))
+      && (github.event_name != 'workflow_dispatch' || inputs.suite == 'todas' || inputs.suite == 'estimativa')
     name: Evals do ai-estimativa-itens
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -134,7 +144,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
-          name: ai-evals-estimativa-${{ github.run_id }}
+          name: ai-evals-estimativa-${{ github.run_id }}-${{ github.run_attempt }}
           path: evals-estimativa-resultado.json
           retention-days: 30
           if-no-files-found: ignore
