@@ -12382,9 +12382,20 @@ export type Database = {
         Returns: undefined
       }
       prospec_fila_pausada: { Args: never; Returns: boolean }
+      prospec_mapeador_disparar: { Args: never; Returns: undefined }
       prospec_montar_fila: {
         Args: { p_canal?: string; p_limite?: number }
         Returns: number
+      }
+      prospec_proximas_celulas: {
+        Args: never
+        Returns: {
+          cidade: string
+          id: string
+          regiao: string
+          segmento: string
+          uf: string
+        }[]
       }
       prospec_registrar: {
         Args: {
@@ -12394,6 +12405,10 @@ export type Database = {
           p_resultado: string
           p_texto?: string
         }
+      prospec_registrar_busca: {
+        Args: { p_celula: string; p_erro?: string; p_leads: Json }
+        Returns: number
+      }
         Returns: undefined
       }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
