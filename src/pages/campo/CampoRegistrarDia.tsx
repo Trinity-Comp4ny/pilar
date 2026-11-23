@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -466,6 +467,7 @@ export default function CampoRegistrarDia() {
           description: "Vamos tentar de novo automaticamente.",
         });
       } else {
+        analytics.track("campo_dia_registrado");
         toast.success("Dia registrado");
       }
       navigate("/campo", { replace: true });
@@ -985,4 +987,5 @@ async function enfileirarOffline(args: {
     rdoId: args.rdoId,
     tentativas: 0,
   });
+  analytics.track("campo_dia_enfileirado", { parcial: Boolean(args.rdoId) });
 }
