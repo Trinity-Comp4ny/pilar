@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { deepStrictEqual as assertEquals } from "node:assert/strict";
 
 // O DSN é lido no import de sentry.ts, então precisa existir ANTES do import dinâmico.
 // Valor fake: nenhuma requisição sai, o fetch abaixo é stub.
@@ -69,4 +69,22 @@ Deno.test("captureException: objeto de erro do supabase-js não vira [object Obj
   const valor = (evento.exception as { values: Array<{ type: string; value: string }> }).values[0];
   assertEquals(valor.type, "NonError");
   assertEquals(valor.value, "permission denied for table escopos (42501)");
+});
+
+Deno.test("withSentry: reporta 503 sem amostragem e sem vazar corpo ou URL", async () => {
+  const handler = withSentry("portal", () => Promise.resolve(new Response("dado-privado", { status: 503 })));
+  const req = new Request("http://localhost/?token=dado-privado", { headers: { "sentry-trace": `${TRACE}-${SPAN}-0` } });
+  const eventos = await capturandoEnvelopes(async () => assertEquals((await handler(req)).status, 503));
+  assertEquals(eventos.length, 1);
+  assertEquals(eventos[0].fingerprint, ["edge-http-5xx", "portal", "503"]);
+  assertEquals(JSON.stringify(eventos).includes("dado-privado"), false);
+});
+
+Deno.test("withSentry: mantém um evento quando o handler já reportou o erro do 502", async () => {
+  const handler = withSentry("portal", async () => {
+    await captureException(new Error("falhou"), { fn: "portal" });
+    return new Response(null, { status: 502 });
+  });
+  const eventos = await capturandoEnvelopes(() => handler(new Request("http://localhost/")));
+  assertEquals(eventos.length, 1);
 });

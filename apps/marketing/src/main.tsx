@@ -1,11 +1,13 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
+import { initMonitoring } from "./monitoring";
 import { initAnalytics } from "./analytics";
 import { registrarOrigem } from "./lib/origem";
 import { guardarConteudoPronto } from "./lib/htmlPronto";
 import "./index.css";
 
+initMonitoring();
 registrarOrigem();
 
 // Analytics fora do caminho crítico: só inicia quando o navegador ficar ocioso
