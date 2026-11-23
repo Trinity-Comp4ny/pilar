@@ -4,15 +4,16 @@ import { resolverEmpresaAlvo } from "./empresa-alvo.ts";
 const PROPRIA = "aaaaaaaa-0000-4000-8000-000000000001";
 const OUTRA = "bbbbbbbb-0000-4000-8000-000000000002";
 
-// deno-lint-ignore no-explicit-any
-function cliente(opts: { ultra?: boolean; auditErro?: boolean }, chamadas: string[]): any {
+type ClienteFalso = Parameters<typeof resolverEmpresaAlvo>[0];
+
+function cliente(opts: { ultra?: boolean; auditErro?: boolean }, chamadas: string[]): ClienteFalso {
   return {
     rpc: (nome: string) => {
       chamadas.push(nome);
       if (nome === "is_ultra_admin") return Promise.resolve({ data: opts.ultra ?? false, error: null });
       return Promise.resolve({ data: null, error: opts.auditErro ? { message: "falhou" } : null });
     },
-  };
+  } as unknown as ClienteFalso;
 }
 
 const alvo = { tipo: "obra", id: "o1" };

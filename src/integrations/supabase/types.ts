@@ -12313,6 +12313,16 @@ export type Database = {
         Args: { p_convite_id: string }
         Returns: string
       }
+      registrar_acesso_ultra_admin: {
+        Args: {
+          p_action: string
+          p_empresa_alvo: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_type?: string
+        }
+        Returns: undefined
+      }
       registrar_dispositivo: {
         Args: { p_descricao: string; p_dispositivo_id: string }
         Returns: boolean
