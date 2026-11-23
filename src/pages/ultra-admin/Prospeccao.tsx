@@ -7,6 +7,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { ImportarLeadsDialog } from "./ImportarLeadsDialog";
 import { ProspeccaoHoje } from "./ProspeccaoHoje";
 import { ProspeccaoLeads } from "./ProspeccaoLeads";
+import { ProspeccaoMapeador } from "./ProspeccaoMapeador";
 
 /** Prospecção no Ultra (SPEC 172, fase 0): fila do dia por WhatsApp e a base de leads. */
 export default function Prospeccao() {
@@ -22,6 +23,7 @@ export default function Prospeccao() {
           tabs={[
             { id: "hoje", label: "Hoje" },
             { id: "leads", label: "Leads" },
+            { id: "mapeador", label: "Mapeador" },
           ]}
           value={aba}
           onValueChange={setAba}
@@ -33,7 +35,9 @@ export default function Prospeccao() {
         </Button>
       }
     >
-      {aba === "hoje" ? <ProspeccaoHoje /> : <ProspeccaoLeads />}
+      {aba === "hoje" && <ProspeccaoHoje />}
+      {aba === "leads" && <ProspeccaoLeads />}
+      {aba === "mapeador" && <ProspeccaoMapeador />}
       <ImportarLeadsDialog open={importando} onOpenChange={setImportando} />
     </PilarPage>
   );

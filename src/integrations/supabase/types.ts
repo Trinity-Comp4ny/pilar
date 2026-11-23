@@ -8639,6 +8639,95 @@ export type Database = {
         }
         Relationships: []
       }
+      prospec_buscas: {
+        Row: {
+          celula_id: string | null
+          created_at: string
+          encontrados: number
+          erro: string | null
+          id: string
+          novos: number
+        }
+        Insert: {
+          celula_id?: string | null
+          created_at?: string
+          encontrados?: number
+          erro?: string | null
+          id?: string
+          novos?: number
+        }
+        Update: {
+          celula_id?: string | null
+          created_at?: string
+          encontrados?: number
+          erro?: string | null
+          id?: string
+          novos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospec_buscas_celula_id_fkey"
+            columns: ["celula_id"]
+            isOneToOne: false
+            referencedRelation: "prospec_celulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospec_celulas: {
+        Row: {
+          cidade: string
+          id: string
+          leads_novos: number
+          prioridade: number
+          regiao: string
+          segmento: string
+          uf: string
+          ultima_busca_em: string | null
+        }
+        Insert: {
+          cidade: string
+          id?: string
+          leads_novos?: number
+          prioridade: number
+          regiao: string
+          segmento: string
+          uf: string
+          ultima_busca_em?: string | null
+        }
+        Update: {
+          cidade?: string
+          id?: string
+          leads_novos?: number
+          prioridade?: number
+          regiao?: string
+          segmento?: string
+          uf?: string
+          ultima_busca_em?: string | null
+        }
+        Relationships: []
+      }
+      prospec_config: {
+        Row: {
+          ativo: boolean
+          id: boolean
+          repetir_apos_dias: number
+          teto_semanal_buscas: number
+        }
+        Insert: {
+          ativo?: boolean
+          id?: boolean
+          repetir_apos_dias?: number
+          teto_semanal_buscas?: number
+        }
+        Update: {
+          ativo?: boolean
+          id?: boolean
+          repetir_apos_dias?: number
+          teto_semanal_buscas?: number
+        }
+        Relationships: []
+      }
       prospec_envios: {
         Row: {
           canal: string | null
@@ -8692,8 +8781,10 @@ export type Database = {
           nome: string
           nota_encaixe: number
           origem: string
+          place_id: string | null
           pulado_em: string | null
           qualidade: string | null
+          regiao: string | null
           segmento: string
           segmento_teste: boolean
           site: string | null
@@ -8720,8 +8811,10 @@ export type Database = {
           nome: string
           nota_encaixe?: number
           origem?: string
+          place_id?: string | null
           pulado_em?: string | null
           qualidade?: string | null
+          regiao?: string | null
           segmento: string
           segmento_teste?: boolean
           site?: string | null
@@ -8748,8 +8841,10 @@ export type Database = {
           nome?: string
           nota_encaixe?: number
           origem?: string
+          place_id?: string | null
           pulado_em?: string | null
           qualidade?: string | null
+          regiao?: string | null
           segmento?: string
           segmento_teste?: boolean
           site?: string | null
@@ -12282,6 +12377,11 @@ export type Database = {
         }[]
       }
       proposta_link_digest: { Args: { p_proposta_id: string }; Returns: string }
+      prospec_config_salvar: {
+        Args: { p_ativo: boolean; p_teto: number }
+        Returns: undefined
+      }
+      prospec_fila_pausada: { Args: never; Returns: boolean }
       prospec_montar_fila: {
         Args: { p_canal?: string; p_limite?: number }
         Returns: number
