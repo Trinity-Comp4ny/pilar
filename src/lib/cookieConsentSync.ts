@@ -38,15 +38,16 @@ async function insertConsent(userId: string, analytics: boolean, source: Consent
  * própria: só aplica uma decisão que já existe (no banco ou no cookie). Se
  * falhar, o gate fail-closed do analytics.ts continua valendo.
  */
-export async function syncConsentForUser(userId: string): Promise<void> {
+export async function syncConsentForUser(userId: string, aindaAtual = () => true): Promise<void> {
   try {
     // A sessão pode ter caído entre o login e este disparo (logout rápido, token
     // revogado): sem JWT a requisição vai como anon e o banco nega a tabela
     // (42501, PILAR-G). Sem sessão do mesmo usuário, não há o que sincronizar.
     const { data } = await supabase.auth.getSession();
-    if (data.session?.user.id !== userId) return;
+    if (data.session?.user.id !== userId || !aindaAtual()) return;
 
     const stored = await fetchLatestConsent(userId);
+    if (!aindaAtual()) return;
 
     if (stored !== null) {
       applyCookieConsent(stored);

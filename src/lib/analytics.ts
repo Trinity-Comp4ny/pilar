@@ -43,6 +43,7 @@ interface Analytics {
   init(): void;
   identify(userId: string, traits?: AnalyticsTraits): void;
   track(event: EventoProduto, properties?: Props): void;
+  trackLogin(userId: string, traits: AnalyticsTraits): void;
   reset(): void;
   isFeatureEnabled(key: string): boolean | undefined;
   getAnonId(): string;
@@ -86,6 +87,7 @@ const noopAnalytics: Analytics = {
   track(event, properties) {
     if (DEV) console.debug("[analytics] track", event, scrub(properties));
   },
+  trackLogin() {},
   reset() {
     if (DEV) console.debug("[analytics] reset");
   },
@@ -140,14 +142,19 @@ function ensurePosthogInit(ph: PostHog) {
     bootstrap: { distinctID: ensureAnonId() },
     sanitize_properties: (props) => scrub(props) as Record<string, unknown>,
   });
+  // A escolha da Pilar pode ter mudado desde o último uso deste navegador.
+  if (ph.has_opted_out_capturing()) ph.opt_in_capturing({ captureEventName: false });
   posthogInitialized = true;
 }
 
 /** Roda `fn` no PostHog iniciado, só com consentimento (checado de novo após o download). */
+let posthogGeneration = 0;
+
 function withPosthog(fn: (ph: PostHog) => void) {
   if (!hasAnalyticsConsent()) return;
+  const generation = posthogGeneration;
   const run = (ph: PostHog | null) => {
-    if (!ph || !hasAnalyticsConsent()) return;
+    if (!ph || generation !== posthogGeneration || !hasAnalyticsConsent()) return;
     ensurePosthogInit(ph);
     fn(ph);
   };
@@ -173,7 +180,25 @@ const posthogAnalytics: Analytics = {
   track(event, properties) {
     withPosthog((ph) => ph.capture(event, scrub(properties) as Record<string, unknown> | undefined));
   },
+  trackLogin(userId, traits) {
+    withPosthog((ph) => {
+      const chave = "pilar_login_registrado";
+      try {
+        if (sessionStorage.getItem(chave) === userId) return;
+      } catch {
+        // A captura continua disponível com armazenamento bloqueado.
+      }
+      const evento = ph.capture("login_realizado", { role: traits.role, empresa_id: traits.empresa_id });
+      if (!evento) return;
+      try {
+        sessionStorage.setItem(chave, userId);
+      } catch {
+        // Sem armazenamento não há como deduplicar entre recargas.
+      }
+    });
+  },
   reset() {
+    posthogGeneration++;
     if (posthogInitialized) posthog?.reset();
   },
   isFeatureEnabled(key) {
@@ -201,9 +226,10 @@ export function applyCookieConsent(analyticsAccepted: boolean) {
     return;
   }
   revokeGtm();
+  posthogGeneration++;
   if (posthogInitialized && posthog) {
-    posthog.opt_out_capturing();
     posthog.reset();
+    posthog.opt_out_capturing();
     posthogInitialized = false;
   }
 }

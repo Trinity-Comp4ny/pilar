@@ -8,6 +8,11 @@ const { initMock, captureMock, optOutMock, resetMock, registerMock } = vi.hoiste
   resetMock: vi.fn(),
 }));
 
+let optedOut = false;
+const optInMock = vi.fn(() => {
+  optedOut = false;
+});
+
 vi.mock("posthog-js", () => ({
   default: {
     init: initMock,
@@ -15,6 +20,8 @@ vi.mock("posthog-js", () => ({
     identify: vi.fn(),
     register: registerMock,
     opt_out_capturing: optOutMock,
+    has_opted_out_capturing: () => optedOut,
+    opt_in_capturing: optInMock,
     reset: resetMock,
     isFeatureEnabled: vi.fn(() => true),
   },
@@ -73,6 +80,9 @@ describe("analytics: gate de consentimento (ADR 0022)", () => {
     clearConsentCookie();
     initMock.mockClear();
     captureMock.mockClear();
+    optOutMock.mockImplementation(() => {
+      optedOut = true;
+    });
     optOutMock.mockClear();
     resetMock.mockClear();
   });
@@ -112,6 +122,23 @@ describe("analytics: gate de consentimento (ADR 0022)", () => {
     analytics.track("lead_criado");
     await vi.dynamicImportSettled();
     expect(captureMock).not.toHaveBeenCalled();
+  });
+
+  it("reactiva o SDK e deduplica o login somente após o aceite", async () => {
+    applyCookieConsent(false);
+    sessionStorage.clear();
+    const traits = { empresa_id: "empresa-1", role: "admin" };
+    analytics.trackLogin("user-1", traits);
+    expect(sessionStorage.getItem("pilar_login_registrado")).toBeNull();
+    expect(captureMock).not.toHaveBeenCalled();
+
+    captureMock.mockReturnValueOnce({});
+    applyCookieConsent(true);
+    await vi.dynamicImportSettled();
+    expect(optInMock).toHaveBeenCalledWith({ captureEventName: false });
+    analytics.trackLogin("user-1", traits);
+    analytics.trackLogin("user-1", traits);
+    expect(captureMock).toHaveBeenCalledExactlyOnceWith("login_realizado", traits);
   });
 
   it("revogar durante o download do SDK não envia o que estava na fila", async () => {
