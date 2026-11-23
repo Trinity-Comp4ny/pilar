@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, FileCheck, Clock, ChevronRight } from "lucide-react";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
+import { receitaRecebida } from "./receitaRecebida";
+
 interface PendenciasCardProps {
   baseUrl: string;
   receitas: ClienteReceita[];
@@ -18,7 +20,7 @@ export function PendenciasCard({ baseUrl, receitas }: PendenciasCardProps) {
   const hoje = format(new Date(), "yyyy-MM-dd");
   const em7dias = format(addDays(new Date(), 7), "yyyy-MM-dd");
 
-  const naoRecebidas = receitas.filter((r) => r.status !== "Recebido" && r.data_vencimento);
+  const naoRecebidas = receitas.filter((r) => !receitaRecebida(r.status) && r.data_vencimento);
   const faturasAtrasadasList = naoRecebidas.filter((r) => r.data_vencimento < hoje);
   const faturasAtrasadas = faturasAtrasadasList.length;
   const faturasProximasVencimentoList = naoRecebidas.filter(
