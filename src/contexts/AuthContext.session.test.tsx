@@ -129,6 +129,14 @@ describe("AuthContext: sessão, MFA e saída", () => {
     expect(screen.getByTestId("factor")).toHaveTextContent("true");
   });
 
+  it("sessão sem nenhum fator cadastrado não consulta o MFA no Auth (entrada mais rápida)", async () => {
+    mocks.getSession.mockResolvedValue({ data: { session: { user: { id: "bia", factors: [] } } }, error: null });
+    renderAuth();
+    expect(await screen.findByTestId("mfa")).toHaveTextContent("ok");
+    expect(mocks.getAAL).not.toHaveBeenCalled();
+    expect(mocks.listFactors).not.toHaveBeenCalled();
+  });
+
   it("aal2 já atingido não pede desafio", async () => {
     mocks.getSession.mockResolvedValue({ data: { session: sessao }, error: null });
     mocks.getAAL.mockResolvedValue({ data: { currentLevel: "aal2", nextLevel: "aal2" } });

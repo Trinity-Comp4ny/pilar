@@ -120,7 +120,7 @@ export function PrivateRoute() {
   }, [gateAtivo, empresaId, subStatus]);
 
   // Dados da primeira tela chegam por trás do véu, em paralelo com a checagem de assinatura.
-  const entradaPronta = useEntradaPronta(empresaId ?? undefined, location.pathname);
+  const entradaPronta = useEntradaPronta(empresaId ?? undefined, location.pathname, profile?.id);
 
   // Véu de entrada (SPEC 106): o nome da empresa entra assim que o perfil chega.
   const veilLabel = profile?.empresas?.nome ? `Abrindo ${profile.empresas.nome}` : undefined;

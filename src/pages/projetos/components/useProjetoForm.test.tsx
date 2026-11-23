@@ -262,6 +262,7 @@ describe("useProjetoForm: criação", () => {
 
     expect(from).toHaveBeenCalledWith("projetos");
     expect(deleteEq).toHaveBeenCalledWith("id", "novo-id");
+    expect(track).not.toHaveBeenCalledWith("projeto_criado", expect.anything());
     expect(toast.error).toHaveBeenCalledWith("Erro ao salvar", expect.anything());
     expect(onOpenChange).not.toHaveBeenCalled();
   });

@@ -10,7 +10,25 @@
 | Custo e margem | Faturas de infraestrutura, IA e receita líquida confirmada | Divida custos em BRL pelas empresas ativas. Para margem por plano, atribua custos diretamente quando possível e documente o rateio dos demais |
 
 Nos eventos do PostHog, deduplique por empresa quando o contexto estiver
-disponível. A criação de proposta emite o evento após a gravação, sem título,
-identificadores da proposta ou valores. O PostHog respeita o consentimento.
+disponível. A criação de proposta emite o evento após a gravação, com a empresa do registro. Título,
+identificador da proposta e valores ficam fora do evento. O evento de projeto só é emitido
+quando a criação já passou pela etapa que pode revertê-la por falha nas disciplinas. O PostHog respeita o consentimento.
 Anote a cobertura do consentimento e a data de início do evento ao comparar
 coortes.
+
+## Validar a primeira medição
+
+1. No PostHog, monte um funil de onboarding para primeiro projeto ou proposta. Use
+   `empresa_id` como propriedade constante entre as etapas. Para contar escritórios,
+   deduplique os eventos por empresa e use o primeiro evento de valor posterior ao
+   onboarding. Separe empresas sem atribuição e coortes que ainda não completaram a janela.
+2. Use a interseção de empresas distintas com atividade de produto em duas janelas
+   consecutivas de 28 dias. Divida pela base da janela anterior e registre o intervalo,
+   a definição de atividade e a proporção de eventos com `empresa_id`.
+3. Concilie, em privado, a contagem de novas assinaturas pagas com as cobranças
+   confirmadas. Use [Custo por empresa](./CUSTO_POR_EMPRESA.md) para conciliar
+   eventos de uso com as faturas do mesmo período. Registre separadamente consumo
+   sem custo identificado e custos internos que possam aparecer nas duas fontes.
+
+Publique apenas números agregados com período, ambiente e cobertura. Compare a primeira
+medição com os eventos do escritório de teste no mesmo período antes de usá-la como referência.

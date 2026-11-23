@@ -107,8 +107,8 @@ export const useCreateProposta = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      analytics.track("proposta_criada");
+    onSuccess: (proposta) => {
+      analytics.track("proposta_criada", { empresa_id: proposta.empresa_id });
       queryClient.invalidateQueries({ queryKey: ["propostas"] });
     },
   });

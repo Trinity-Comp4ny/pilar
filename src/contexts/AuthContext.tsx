@@ -140,8 +140,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(CONSENT_CHANGED_EVENT, registrar);
   }, [profile, analyticsUser]);
 
-  const refreshMfaLevel = useCallback(async () => {
+  const refreshMfaLevel = useCallback(async (sessionUser?: User) => {
     const userId = activeUserId.current;
+    // Quem não tem nenhum fator cadastrado (a maioria: MFA não é padrão) não precisa das duas
+    // idas ao Auth, que travavam a entrada. A sessão já traz os fatores do usuário.
+    if (sessionUser?.factors && sessionUser.factors.length === 0) {
+      setMfaCurrentLevel("aal1");
+      setMfaNextLevel("aal1");
+      setHasVerifiedMfaFactor(false);
+      return;
+    }
     // Em paralelo: eram duas idas ao Auth em sequência na entrada.
     const [{ data }, { data: factorsData }] = await Promise.all([
       supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
@@ -209,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted || generation !== currentGeneration) return;
       try {
         // Perfil e nível de MFA não dependem um do outro: saem juntos.
-        await Promise.all([fetchProfile(nextUser.id), refreshMfaLevel()]);
+        await Promise.all([fetchProfile(nextUser.id), refreshMfaLevel(nextUser)]);
         if (!mounted || generation !== currentGeneration) return;
         const aindaAtual = () => mounted && generation === currentGeneration;
         void syncConsentForUser(nextUser.id, aindaAtual).then(() => {

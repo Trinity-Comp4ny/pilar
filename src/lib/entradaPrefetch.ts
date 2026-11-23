@@ -1,5 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+/** Quem está entrando: chaves de cache com dado sob RLS variam por empresa e usuário. */
+export interface ContextoEntrada {
+  empresaId: string;
+  usuarioId: string;
+}
+
 const STALE = 5 * 60 * 1000;
 
 /**
@@ -7,7 +13,7 @@ const STALE = 5 * 60 * 1000;
  * eles chegam, para o app abrir já com tudo por trás (sem esqueleto depois do véu).
  * Cada rota nova entra aqui com os MESMOS queryKey/queryFn do hook que a tela usa.
  */
-const ROTAS: Array<{ prefixo: string; buscar: (qc: QueryClient) => Array<Promise<unknown>> }> = [
+const ROTAS: Array<{ prefixo: string; buscar: (qc: QueryClient, ctx: ContextoEntrada) => Array<Promise<unknown>> }> = [
   {
     prefixo: "/projetos",
     // Import dinâmico: o código da tela não entra no bundle inicial (orçamento de bundle).
@@ -20,9 +26,22 @@ const ROTAS: Array<{ prefixo: string; buscar: (qc: QueryClient) => Array<Promise
       ),
     ],
   },
+  {
+    prefixo: "/inicio",
+    // Mesma chave de usePainelGestao (empresa e usuário).
+    buscar: (qc, { empresaId, usuarioId }) => [
+      import("@/pages/inicio/hooks/usePainelGestao").then(({ fetchPainelGestao }) =>
+        qc.prefetchQuery({
+          queryKey: ["painel-gestao", empresaId, usuarioId],
+          queryFn: fetchPainelGestao,
+          staleTime: STALE,
+        })
+      ),
+    ],
+  },
 ];
 
-export function prefetchDaRota(qc: QueryClient, pathname: string): Array<Promise<unknown>> {
+export function prefetchDaRota(qc: QueryClient, pathname: string, ctx: ContextoEntrada): Array<Promise<unknown>> {
   const rota = ROTAS.find((r) => pathname === r.prefixo || pathname.startsWith(`${r.prefixo}/`));
-  return rota ? rota.buscar(qc) : [];
+  return rota ? rota.buscar(qc, ctx) : [];
 }
