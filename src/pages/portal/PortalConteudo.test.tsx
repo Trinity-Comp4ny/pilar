@@ -62,7 +62,7 @@ describe("FinanceiroContent", () => {
       <FinanceiroContent
         receitas={[
           receita({ id: "a", descricao: "Entrada", status: "Recebido", data_recebimento: "2026-10-05" }),
-          receita({ id: "b", descricao: "Medição", status: "Pago", valor: 500 }),
+          receita({ id: "b", descricao: "Medição", status: "Pago", valor: 500, data_vencimento: "2026-11-01" }),
           receita({ id: "c", descricao: "Atrasada", data_vencimento: "2026-11-09", valor: 1500 }),
           receita({ id: "d", descricao: "Hoje", data_vencimento: "2026-11-10", valor: 1000 }),
         ]}
@@ -71,6 +71,9 @@ describe("FinanceiroContent", () => {
     expect(nb(document.body.textContent)).toContain("R$ 4.000,00");
     expect(screen.getByText("38% pago")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Progresso de pagamento" })).toHaveAttribute("aria-valuenow", "38");
+    const medicao = screen.getByText("Medição").closest("div.border") as HTMLElement;
+    expect(within(medicao).getByText("Pago")).toBeInTheDocument();
+    expect(within(medicao).queryByText("Atrasado")).not.toBeInTheDocument();
     const entrada = screen.getByText("Entrada").closest("div.border") as HTMLElement;
     expect(within(entrada).getByText(/Pago em: 05\/10\/2026/)).toBeInTheDocument();
     expect(within(screen.getByText("Atrasada").closest("div.border") as HTMLElement).getByText("Atrasado"));
@@ -137,10 +140,12 @@ describe("PendenciasCard", () => {
     );
   }
 
-  it("nada pendente: parcela que vence hoje à noite não conta como atraso", () => {
+  it("exclui parcelas recebidas ou pagas das pendências", () => {
     renderCard([
       receita({ data_vencimento: "2026-12-30" }),
       receita({ id: "x", status: "Recebido", data_vencimento: "2026-11-01" }),
+      receita({ id: "p1", status: "Pago", data_vencimento: "2026-11-01" }),
+      receita({ id: "p2", status: "Pago", data_vencimento: "2026-11-15" }),
       receita({ id: "y", data_vencimento: "" }),
     ]);
     expect(screen.getByText("Nada pendente")).toBeInTheDocument();
