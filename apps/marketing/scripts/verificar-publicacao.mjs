@@ -31,11 +31,19 @@ export function validarPublicacao(dist, base, rotas) {
     if (canonicals.length !== 1 || canonicals[0].getAttribute("href") !== url) {
       falhas.push(`Canonical inválido em ${rota}`);
     }
-    if (/\bnoindex\b/i.test(doc.head.querySelector('meta[name="robots"]')?.content ?? "")) {
+    const diretivas = [...doc.head.querySelectorAll('meta[name="robots" i], meta[name="googlebot" i]')];
+    if (diretivas.some((meta) => /(?:^|[\s,])(?:noindex|none)(?=$|[\s,])/i.test(meta.content))) {
       falhas.push(`Rota do sitemap com noindex: ${rota}`);
     }
     if (!doc.title.trim() || !doc.head.querySelector('meta[name="description"]')?.content.trim()) {
       falhas.push(`Título ou descrição ausente em ${rota}`);
+    }
+    const ogUrls = doc.head.querySelectorAll('meta[property="og:url"]');
+    if (ogUrls.length !== 1 || ogUrls[0].getAttribute("content") !== url) {
+      falhas.push(`URL de compartilhamento inválida em ${rota}`);
+    }
+    if (![...doc.querySelectorAll("#root main h1")].some((h1) => h1.textContent.trim())) {
+      falhas.push(`HTML pré-renderizado sem título principal em ${rota}`);
     }
     dom.window.close();
   }
@@ -45,5 +53,5 @@ export function validarPublicacao(dist, base, rotas) {
     falhas.push("robots.txt não referencia o sitemap canônico");
   }
   if (falhas.length) throw new Error(falhas.join("\n"));
-  console.log(`[seo] ${encontradas.size} URLs do sitemap com HTML e canonical validados.`);
+  console.log(`[seo] ${encontradas.size} URLs do sitemap com conteúdo, canonical e URL de compartilhamento validados.`);
 }
