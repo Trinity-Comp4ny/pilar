@@ -12472,8 +12472,8 @@ export type Database = {
           chave: string
           dimensao: string
           enviados: number
-          reunioes: number
           respostas: number
+          reunioes: number
         }[]
       }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
