@@ -37,10 +37,12 @@ jobs:
 
       - name: Guarda (staging configurado, nunca produção)
         run: |
-          if [ -z "$K6_SUPABASE_URL" ] || [ -z "$K6_TEST_EMAIL" ]; then
-            echo "::error::Secrets do Environment Staging ausentes (STAGING_SUPABASE_URL, E2E_TEST_EMAIL)."
-            exit 1
-          fi
+          for nome in K6_SUPABASE_URL K6_SUPABASE_KEY K6_TEST_EMAIL K6_TEST_PASSWORD; do
+            if [[ -z "${!nome}" ]]; then
+              echo "::error::Credencial de staging ausente no runner ($nome)."
+              exit 1
+            fi
+          done
           # Fail closed: recusa qualquer host não explicitamente associado
           # ao projeto staging. Não basta bloquear só o ref de produção.
           case "$K6_SUPABASE_URL" in
@@ -73,7 +75,7 @@ jobs:
           {
             echo "## k6 semanal (staging)"
             echo
-            echo "Commit: ${GITHUB_SHA:0:8}"
+            echo "Commit: ${GITHUB_SHA:0:8} · Tentativa: $GITHUB_RUN_ATTEMPT"
             echo
             echo "| Cenário | p95 (ms) | p99 (ms) | Falhas (%) | Requisições/s | p95 RPC do painel (ms) |"
             echo "|---|---:|---:|---:|---:|---:|"
@@ -98,6 +100,6 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
-          name: k6-semanal-${{ github.run_id }}
+          name: k6-semanal-${{ github.run_id }}-${{ github.run_attempt }}
           path: resumo-*.json
           retention-days: 90

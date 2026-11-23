@@ -17,7 +17,8 @@ Documento define quando rodar a suite k6, como interpretar resultados e onde reg
 
 `.github/workflows/carga-semanal.yml` roda toda segunda às 6h (UTC) contra o staging, com
 `K6_PERFIL=semanal` (até 10 VUs por 5 minutos), os dois cenários de leitura. Falha quando
-passa dos limites de `tests/load/utils/setup.js` (p95 < 500 ms, falha < 1%). O resumo
+passa dos limites de `tests/load/utils/setup.js` (p95 < 500 ms, falha < 1%). O mesmo
+limite de p95 é aplicado separadamente à RPC `get_painel_gestao`. O resumo
 (p95 e taxa de falha) fica no job e o JSON como artifact por 90 dias: é a série histórica
 que preenche a tabela de baseline abaixo. Recusa a URL de produção.
 
@@ -62,17 +63,18 @@ k6 run --tag name=criar_receita tests/load/scenarios/criar-receita.js
 k6 run --out influxdb=http://localhost:8086/k6 ...
 ```
 
-## Baseline (preencher apos primeira run estavel)
+## Baseline de leitura em staging
 
-Documentar aqui apos primeira execucao limpa contra sandbox dedicado.
+A [execução manual de 20/11/2026](https://github.com/Trinity-Comp4ny/pilar/actions/runs/44763287492)
+usou o commit `cd1ba36b`, com até 10 VUs por cenário.
 
-| Cenario            | p95 | p99 | error_rate | iterations | data |
-| ------------------ | --- | --- | ---------- | ---------- | ---- |
-| login              | TBD | TBD | TBD        | TBD        | TBD  |
-| dashboard-read     | TBD | TBD | TBD        | TBD        | TBD  |
-| criar-receita      | TBD | TBD | TBD        | TBD        | TBD  |
-| listar-lancamentos | TBD | TBD | TBD        | TBD        | TBD  |
-| webhook-asaas      | TBD | TBD | TBD        | TBD        | TBD  |
+| Cenário                              | p95 (ms) | p99 (ms) | Falhas    | Iterações |
+| ------------------------------------ | -------: | -------: | --------- | --------: |
+| `dashboard-read`                     |   161,82 |    1.250 | 0 / 3.998 |     1.332 |
+| RPC `get_painel_gestao` no dashboard |   302,98 |    2.200 | —         |         — |
+| `listar-lancamentos`                 |    90,81 |   143,01 | 0 / 3.126 |     3.123 |
+
+Os cenários de login, criação de receita e webhook aguardam uma baseline no ambiente dedicado.
 
 > **Regra:** se nova run regredir >20% em qualquer metrica vs baseline, bloquear release ate investigar.
 
@@ -92,9 +94,8 @@ Documentar aqui apos primeira execucao limpa contra sandbox dedicado.
 
 
 O resumo semanal separa o p95 da RPC `get_painel_gestao` do p95 geral
-do cenário e grava p99, percentual de falhas, throughput e SHA. Preencha a
-tabela de referência a partir de uma execução válida em staging, mantendo o
-artefato bruto. O cenário composto inclui autenticação e outras leituras, por
+do cenário e grava p99, percentual de falhas, throughput e SHA. Preserve o
+artefato bruto para comparar novas rodadas com a referência. O cenário composto inclui autenticação e outras leituras, por
 isso o p95 geral não representa a latência isolada do painel.
 
 
