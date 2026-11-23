@@ -13,6 +13,11 @@ on:
   schedule:
     - cron: "0 6 * * *" # 03:00 BRT, fora do horário de uso
   workflow_dispatch:
+    inputs:
+      exigir_copia_gcs:
+        description: "Exigir cópia externa no GCS (somente main)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -22,7 +27,39 @@ env:
   SUPABASE_CLI_VERSION: "2.109.1"
 
 jobs:
+  preflight-gcs:
+    name: Validar a execução manual da cópia externa
+    if: github.event_name == 'workflow_dispatch' && inputs.exigir_copia_gcs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    env:
+      GCS_BUCKET: ${{ vars.BACKUP_GCS_BUCKET }}
+      GCS_PROVIDER: ${{ vars.BACKUP_GCS_WIF_PROVIDER }}
+      GCS_WRITER: ${{ vars.BACKUP_GCS_SERVICE_ACCOUNT }}
+      GCS_PROJECT: ${{ vars.BACKUP_GCS_PROJECT_ID }}
+    steps:
+      - name: Exigir a branch main e as variáveis da cópia
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+            echo "::error::A cópia externa só pode ser executada pela main."
+            exit 1
+          fi
+          for nome in GCS_BUCKET GCS_PROVIDER GCS_WRITER GCS_PROJECT; do
+            if [[ -z "${!nome}" ]]; then
+              echo "::error::Configure a variável da cópia externa correspondente a $nome."
+              exit 1
+            fi
+          done
+          if [[ ! "$GCS_BUCKET" =~ ^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$ ]]; then
+            echo "::error::BACKUP_GCS_BUCKET deve conter somente o nome do bucket."
+            exit 1
+          fi
+
   backup:
+    needs: preflight-gcs
+    if: ${{ !cancelled() && (needs.preflight-gcs.result == 'skipped' || needs.preflight-gcs.result == 'success') }}
     strategy:
       fail-fast: false
       matrix:

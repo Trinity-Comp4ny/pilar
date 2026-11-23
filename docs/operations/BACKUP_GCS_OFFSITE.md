@@ -71,7 +71,8 @@ noturno, sem aprovação humana que bloquearia a execução agendada.
 ## Validação operacional obrigatória
 
 1. Após a configuração, disparar **manualmente o workflow na branch `main`**
-   e confirmar que `backup` e `gcs-secondary-copy` estão verdes.
+   com `exigir_copia_gcs` marcado e confirmar que `backup` e `gcs-secondary-copy` estão
+   verdes. O preflight falha antes do dump se a branch ou as variáveis estiverem incorretas.
 2. No bucket, conferir os três objetos no mesmo `RUN_ID-RUN_ATTEMPT`, tamanhos e hash dos
    dois arquivos cifrados usando o `SHA256SUMS.txt`. Verificar que o acesso
    público está desabilitado, que há retenção e que ninguém consegue apagar
