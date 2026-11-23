@@ -687,10 +687,6 @@ export function useProjetoForm({
 
         novoProjetoId = (newProjetoId as string) ?? null;
 
-        if (novoProjetoId) {
-          analytics.track("projeto_criado", { projeto_id: novoProjetoId, disciplinas: finalDisciplinas.length });
-        }
-
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
         if (newProjetoId && finalDisciplinas.length > 0) {
@@ -724,6 +720,10 @@ export function useProjetoForm({
             throw discErr;
           }
         }
+        if (novoProjetoId) {
+          analytics.track("projeto_criado", { projeto_id: novoProjetoId, disciplinas: finalDisciplinas.length });
+        }
+
         if (newProjetoId && fluxoAplicadoRef.current && projetosDisciplinas.length > 0)
           await vincularProjetoAoFluxo(newProjetoId as string, fluxoAplicadoRef.current).catch(() => undefined);
         if (newProjetoId && parcelas.geraParcelas) await gerarParcelasDoProjeto(newProjetoId as string, parcelas);
