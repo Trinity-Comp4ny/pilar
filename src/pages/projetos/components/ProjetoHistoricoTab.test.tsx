@@ -41,9 +41,9 @@ describe("ProjetoHistoricoTab", () => {
       evento({ tipo: "status_alterado" }),
     ];
     render(<ProjetoHistoricoTab projetoId="p1" disciplinas={[]} />);
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByText("Entrega aprovada pelo cliente")).toBeInTheDocument();
-    expect(screen.getByText("Status alterado")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Disciplina" })).not.toBeInTheDocument();
+    expect(screen.getByText("Entrega aprovada pelo cliente", { selector: "div" })).toBeInTheDocument();
+    expect(screen.getByText("Status alterado", { selector: "div" })).toBeInTheDocument();
     expect(screen.getByText("Estrutural")).toBeInTheDocument();
     expect(screen.getByText("Prancha 3")).toBeInTheDocument();
     expect(screen.getByText("Ana")).toBeInTheDocument();
@@ -64,17 +64,17 @@ describe("ProjetoHistoricoTab", () => {
         ]}
       />
     );
-    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Disciplina" }), { key: "Enter" });
     fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: "Elétrica" }));
-    expect(screen.getByText("Disciplina pausada")).toBeInTheDocument();
-    expect(screen.queryByText("Disciplina iniciada")).not.toBeInTheDocument();
+    expect(screen.getByText("Disciplina pausada", { selector: "div" })).toBeInTheDocument();
+    expect(screen.queryByText("Disciplina iniciada", { selector: "div" })).not.toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Disciplina" }), { key: "Enter" });
     fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: "Hidráulica" }));
     expect(screen.getByText("Nenhum evento para esta disciplina")).toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Disciplina" }), { key: "Enter" });
     fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: "Todas as disciplinas" }));
-    expect(screen.getByText("Disciplina iniciada")).toBeInTheDocument();
+    expect(screen.getByText("Disciplina iniciada", { selector: "div" })).toBeInTheDocument();
   });
 });

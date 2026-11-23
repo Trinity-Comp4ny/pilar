@@ -18,35 +18,39 @@ export interface ObraResumo extends ObraRow {
 const OBRAS_KEY = ["obras"] as const;
 const SELECT = "*, projeto:projetos(id, nome), responsavel:pessoas(id, nome)";
 
+export async function fetchObras(): Promise<ObraResumo[]> {
+  const { data: obras, error } = await supabase
+    .from("obras")
+    .select(SELECT)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .returns<Array<ObraRow & { projeto: Ref; responsavel: Ref }>>();
+  if (error) throw error;
+
+  const { data: tarefas, error: tErr } = await supabase
+    .from("tarefas")
+    .select("obra_id, status")
+    .not("obra_id", "is", null);
+  if (tErr) throw tErr;
+
+  const porObra = new Map<string, { status: string }[]>();
+  for (const t of tarefas ?? []) {
+    if (!t.obra_id) continue;
+    const arr = porObra.get(t.obra_id) ?? [];
+    arr.push({ status: t.status });
+    porObra.set(t.obra_id, arr);
+  }
+
+  return (obras ?? []).map((o) => ({ ...o, avanco: calcularAvanco(porObra.get(o.id) ?? []) }));
+}
+
+export const KEY_OBRAS_LISTA = [...OBRAS_KEY, "lista"] as const;
+
 /** Lista de obras da empresa com projeto, responsável e avanço. */
 export function useObras() {
   return useQuery({
-    queryKey: [...OBRAS_KEY, "lista"],
-    queryFn: async (): Promise<ObraResumo[]> => {
-      const { data: obras, error } = await supabase
-        .from("obras")
-        .select(SELECT)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .returns<Array<ObraRow & { projeto: Ref; responsavel: Ref }>>();
-      if (error) throw error;
-
-      const { data: tarefas, error: tErr } = await supabase
-        .from("tarefas")
-        .select("obra_id, status")
-        .not("obra_id", "is", null);
-      if (tErr) throw tErr;
-
-      const porObra = new Map<string, { status: string }[]>();
-      for (const t of tarefas ?? []) {
-        if (!t.obra_id) continue;
-        const arr = porObra.get(t.obra_id) ?? [];
-        arr.push({ status: t.status });
-        porObra.set(t.obra_id, arr);
-      }
-
-      return (obras ?? []).map((o) => ({ ...o, avanco: calcularAvanco(porObra.get(o.id) ?? []) }));
-    },
+    queryKey: KEY_OBRAS_LISTA,
+    queryFn: fetchObras,
     staleTime: 1000 * 60 * 3,
   });
 }

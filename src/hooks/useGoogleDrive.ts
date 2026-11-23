@@ -34,7 +34,7 @@ export function usePastaDoProjeto(projetoId: string | undefined, habilitado: boo
     queryKey: ["google-drive-projeto", projetoId],
     queryFn: () => pastaDoProjeto(projetoId!),
     enabled: habilitado && !!projetoId,
-    staleTime: 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     retry: false,
   });
 }
@@ -44,7 +44,7 @@ export function useConteudoDaPasta(pastaId: string | undefined) {
     queryKey: ["google-drive-pasta", pastaId],
     queryFn: () => listarPasta(pastaId!),
     enabled: !!pastaId,
-    staleTime: 30 * 1000,
+    staleTime: 2 * 60 * 1000,
     retry: false,
   });
 }

@@ -85,15 +85,17 @@ function diaExiste(ano: number, mes: number, dia: number): boolean {
   return new Date(Date.UTC(ano, mes - 1, dia)).getUTCDate() === dia;
 }
 
-/** Converte data BR/ISO para ISO yyyy-mm-dd. Retorna null se não reconhecer. */
-export function parseDataBR(raw: unknown): string | null {
+/** Converte data BR/US/ISO para yyyy-mm-dd; na ausência de contexto assume BR. */
+export function parseDataBR(raw: unknown, formato: "br" | "us" = "br"): string | null {
   const s = String(raw ?? "").trim();
   if (!s) return null;
 
   let m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
   if (m) {
-    const d = parseInt(m[1], 10);
-    const mo = parseInt(m[2], 10);
+    const primeiro = parseInt(m[1], 10);
+    const segundo = parseInt(m[2], 10);
+    const d = formato === "us" ? segundo : primeiro;
+    const mo = formato === "us" ? primeiro : segundo;
     const ano = m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10);
     if (mo < 1 || mo > 12 || d < 1 || d > 31 || !diaExiste(ano, mo, d)) return null;
     return `${ano}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -106,6 +108,27 @@ export function parseDataBR(raw: unknown): string | null {
     return `${m[1]}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   return null;
+}
+
+/**
+ * Datas numéricas são ambíguas quando dia e mês são <= 12. Usa apenas datas
+ * inequivocamente BR/US para escolher uma interpretação consistente em todo
+ * o arquivo. Se houver indícios de ambos os formatos, NÃO importa nenhuma
+ * linha: a decisão silenciosa geraria datas incorretas no financeiro.
+ */
+export function inferirFormatoDataCsv(datas: string[]): "br" | "us" | "misto" {
+  let brasileiro = false;
+  let americano = false;
+  for (const valor of datas) {
+    const m = valor.trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-]\d{2,4}$/);
+    if (!m) continue;
+    const primeiro = Number(m[1]);
+    const segundo = Number(m[2]);
+    if (primeiro > 12 && primeiro <= 31 && segundo >= 1 && segundo <= 12) brasileiro = true;
+    if (segundo > 12 && segundo <= 31 && primeiro >= 1 && primeiro <= 12) americano = true;
+  }
+  if (brasileiro && americano) return "misto";
+  return americano ? "us" : "br";
 }
 
 /** Detecta o delimitador mais provável do CSV a partir da primeira linha. */
@@ -156,6 +179,9 @@ export function parseCsv(text: string, delim?: string): string[][] {
       campo += c;
     }
   }
+  if (emAspas) {
+    throw new Error("CSV inválido: campo com aspas não encerradas.");
+  }
   if (campo.length > 0 || linha.length > 0) {
     linha.push(campo);
     rows.push(linha);
@@ -170,11 +196,11 @@ const HEADER_DEBITO = /(d[eé]bito|debit|sa[ií]da)/i;
 const HEADER_CREDITO = /(cr[eé]dito|credit|entrada)/i;
 
 /** Extrai a data e o valor de uma linha sem header, por heurística de conteúdo. */
-function linhaHeuristica(cells: string[]): LinhaExtrato | null {
+function linhaHeuristica(cells: string[], formato: "br" | "us" = "br"): LinhaExtrato | null {
   let data: string | null = null;
   let dataIdx = -1;
   for (let i = 0; i < cells.length; i++) {
-    const d = parseDataBR(cells[i]);
+    const d = parseDataBR(cells[i], formato);
     if (d) {
       data = d;
       dataIdx = i;
@@ -211,7 +237,12 @@ function linhaHeuristica(cells: string[]): LinhaExtrato | null {
  * por linha. Linhas sem data+valor viram avisos, não entram no resultado.
  */
 export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: string[] } {
-  const rows = parseCsv(text);
+  let rows: string[][];
+  try {
+    rows = parseCsv(text);
+  } catch {
+    return { linhas: [], avisos: ["CSV inválido: confira as aspas e exporte novamente a planilha."] };
+  }
   const avisos: string[] = [];
   if (rows.length === 0) return { linhas: [], avisos: ["Arquivo vazio ou ilegível."] };
 
@@ -229,12 +260,29 @@ export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: s
   const temHeaderValor = idx.valor >= 0 || idx.debito >= 0 || idx.credito >= 0;
   const usaHeader = idx.data >= 0 && temHeaderValor;
   const dataRows = usaHeader ? rows.slice(1) : rows;
+  const datas = dataRows.map((cells) => {
+    if (usaHeader) return cells[idx.data] ?? "";
+    return cells.find((cell) => /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/.test(cell.trim())) ?? "";
+  });
+  const formato = inferirFormatoDataCsv(datas);
+  if (formato === "misto") {
+    return {
+      linhas: [],
+      avisos: [
+        "O arquivo mistura datas no padrão brasileiro (DD/MM/AAAA) e americano (MM/DD/AAAA). " +
+          "Padronize a coluna de datas e importe novamente para evitar lançamentos em dias errados.",
+      ],
+    };
+  }
+  if (formato === "us") {
+    avisos.push("Datas reconhecidas como formato americano (MM/DD/AAAA) e convertidas para o padrão brasileiro.");
+  }
   const linhas: LinhaExtrato[] = [];
 
   for (const cells of dataRows) {
     let linha: LinhaExtrato | null = null;
     if (usaHeader) {
-      const data = parseDataBR(cells[idx.data]);
+      const data = parseDataBR(cells[idx.data], formato);
       if (data) {
         let valor: number | null = null;
         if (idx.valor >= 0) {
@@ -250,7 +298,7 @@ export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: s
         }
       }
     } else {
-      linha = linhaHeuristica(cells);
+      linha = linhaHeuristica(cells, formato);
     }
     if (linha) linhas.push(linha);
     else avisos.push(`Linha ignorada (sem data/valor reconhecível): ${cells.join(" | ").slice(0, 80)}`);

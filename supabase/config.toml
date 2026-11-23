@@ -141,6 +141,10 @@ verify_jwt = false
 [functions.ops-agente-run]
 verify_jwt = false
 
+# Cérebro de reuniões (SPEC 169): só ultra admin com MFA.
+[functions.reuniao-analisar]
+verify_jwt = false
+
 # Funil por UTM para a plataforma de marketing (SPEC 128): token próprio, sem JWT.
 [functions.ops-export-funil]
 verify_jwt = false
@@ -201,3 +205,7 @@ policy = "per_worker"
 
 [analytics]
 enabled = false
+
+# Link público de proposta: a função valida token e rate limit próprios.
+[functions.proposta-link]
+verify_jwt = false

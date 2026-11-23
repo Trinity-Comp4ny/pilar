@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 
@@ -15,30 +15,24 @@ export interface ClienteProjeto {
 }
 
 export function useClienteProjetos() {
-  const [projetos, setProjetos] = useState<ClienteProjeto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const token = getPortalToken();
-        if (!token) throw new Error("Não autenticado");
-
-        const { data, error: rpcError } = await supabase.rpc("get_cliente_projetos", {
-          p_token: token,
-        });
-        if (rpcError) throw rpcError;
-        // RPC get_cliente_projetos retorna Json; shape é contrato do backend.
-        setProjetos((data as unknown as ClienteProjeto[] | null) ?? []);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Erro ao carregar projetos");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, []);
-
-  return { projetos, loading, error };
+  const token = getPortalToken();
+  const q = useQuery({
+    queryKey: ["portal-projetos", token],
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    queryFn: async (): Promise<ClienteProjeto[]> => {
+      if (!token) throw new Error("Não autenticado");
+      const { data, error: rpcError } = await supabase.rpc("get_cliente_projetos", { p_token: token });
+      if (rpcError) throw rpcError;
+      // RPC get_cliente_projetos retorna Json; shape é contrato do backend.
+      return (data as unknown as ClienteProjeto[] | null) ?? [];
+    },
+  });
+  return {
+    projetos: q.data ?? [],
+    loading: q.isLoading,
+    tentandoNovamente: q.isFetching && !q.isLoading,
+    refazerConsulta: q.refetch,
+    error: q.error ? (q.error instanceof Error ? q.error.message : "Erro ao carregar projetos") : null,
+  };
 }

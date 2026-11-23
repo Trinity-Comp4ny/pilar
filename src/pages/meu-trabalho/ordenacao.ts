@@ -1,5 +1,5 @@
 import type { KanbanSort, KanbanSortAccessors, KanbanSortKey } from "@/lib/kanbanSort";
-import { PRIORIDADE_ORDER } from "./status";
+import { PRIORIDADE_ORDER } from "@/lib/tarefas/status";
 import type { ItemTrabalho } from "./useItensTrabalho";
 
 /** Chaves de ordenação que o quadro de Tarefas sabe aplicar (sem valor em R$). */

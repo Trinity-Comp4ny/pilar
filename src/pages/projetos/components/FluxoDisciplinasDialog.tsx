@@ -9,9 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/pages/projetos/components/TarefasEditor";
-import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
-import { ExecucaoDisciplinaFields } from "./ExecucaoDisciplinaFields";
-import { AvatarStack } from "@/components/AvatarStack";
+import { DisciplinaResponsaveis } from "./DisciplinaResponsaveis";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoDisciplinaTemplate, FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
@@ -64,7 +62,7 @@ function renumerarOrdens(disciplinas: FluxoDisciplinaForm[]): FluxoDisciplinaFor
 function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineStage[] {
   return colunas(disciplinas).map((ordem) => ({
     key: String(ordem),
-    titulo: String(ordem),
+    titulo: `Etapa ${ordem}`,
     nodes: disciplinas
       .filter((d) => d.ordem === ordem)
       .map((d) => {
@@ -76,7 +74,7 @@ function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineSt
           status: "nao_iniciado" as const,
           responsavelNome:
             d.tipo_execucao === "terceirizada"
-              ? `Terceirizado · ${d.prestador_nome || "Prestador a definir"}`
+              ? "Serviço terceirizado"
               : resp.nomes.length
                 ? resp.nomes.join(", ")
                 : undefined,
@@ -147,10 +145,6 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       return;
     }
 
-    if (form.disciplinas.some((d) => d.tipo_execucao === "terceirizada" && !d.prestador_nome?.trim())) {
-      toast.error("Informe o prestador das disciplinas terceirizadas");
-      return;
-    }
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
@@ -212,9 +206,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     }));
   };
 
-  const updateResponsaveis = (key: string, ids: string[]) => {
+  const updateResponsaveis = (key: string, ids: string[], externa = false) => {
     const nomes = ids.map((id) => pessoas.find((p) => p.id === id)?.nome).filter((n): n is string => !!n);
-    updateDisciplina(key, { responsaveis_ids: ids, responsaveis_nomes: nomes });
+    updateDisciplina(key, {
+      responsaveis_ids: ids,
+      responsaveis_nomes: nomes,
+      tipo_execucao: externa ? "terceirizada" : "interna",
+      prestador_nome: externa ? "Serviço terceirizado" : undefined,
+    });
   };
 
   const updateDuracao = (key: string, raw: string) => {
@@ -469,38 +468,13 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         </button>
                                       </div>
 
-                                      <ExecucaoDisciplinaFields
-                                        tipo={disc.tipo_execucao}
-                                        prestador={disc.prestador_nome}
-                                        onChange={(tipo, prestador) =>
-                                          updateDisciplina(disc._key, {
-                                            tipo_execucao: tipo,
-                                            prestador_nome: prestador,
-                                          })
-                                        }
+                                      <DisciplinaResponsaveis
+                                        value={responsavelTravado ? resp.ids : (disc.responsaveis_ids ?? [])}
+                                        pessoas={pessoas}
+                                        terceirizada={disc.tipo_execucao === "terceirizada"}
+                                        disabledPeople={responsavelTravado}
+                                        onChange={(ids, externa) => updateResponsaveis(disc._key, ids, externa)}
                                       />
-                                      {responsavelTravado ? (
-                                        <div
-                                          className="flex items-center gap-2 text-2xs text-muted-foreground"
-                                          title="Definidos por tarefa"
-                                        >
-                                          <AvatarStack pessoas={resp.nomes} size="xs" />
-                                          <span className="truncate">{resp.nomes.join(", ")}</span>
-                                          <Lock className="h-3 w-3 shrink-0" />
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-1">
-                                          <SeletorResponsaveis
-                                            value={disc.responsaveis_ids ?? []}
-                                            pessoas={pessoas}
-                                            onChange={(ids) => updateResponsaveis(disc._key, ids)}
-                                          />
-                                          <p className="text-3xs text-muted-foreground">
-                                            Usado se nenhuma tarefa tiver responsável
-                                          </p>
-                                        </div>
-                                      )}
-
                                       <div className="border-t pt-2">
                                         <Label className="text-2xs text-muted-foreground mb-1 flex items-center gap-1">
                                           <ListChecks className="h-3 w-3" /> Tarefas (responsável e dias úteis por

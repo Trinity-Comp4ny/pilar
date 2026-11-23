@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ItemTrabalho } from "../useItensTrabalho";
-import type { Etapa } from "../useEtapas";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
 import { QuadroTrabalho, type EtapaControls } from "./QuadroTrabalho";
 
 /**

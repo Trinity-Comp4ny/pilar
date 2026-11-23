@@ -38,7 +38,7 @@ import { revisaoAberta, useDisciplinaRevisoes, useProjetoDisciplinaRevisoesCount
 import { corDaEtapaProjeto, useProjetoEtapaMutations, useProjetoEtapas } from "./useProjetoEtapas";
 import { useProjetoAtividades } from "./useProjetoAtividades";
 import { useReordenarProjetos } from "./useReordenarProjetos";
-import { usePessoasSemConta } from "./usePessoasSemConta";
+import { usePessoasSemConta } from "@/hooks/usePessoasSemConta";
 import { useProjetoTimeline } from "./useProjetoTimeline";
 
 function montar(url = "/projetos") {

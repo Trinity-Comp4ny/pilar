@@ -37,7 +37,7 @@ export function TemplatesManager() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [tipo, setTipo] = useState<TemplateTipo>("proposta");
+  const [tipo, setTipo] = useState<TemplateTipo>("contrato");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<PropostaTemplate | null>(null);
@@ -347,7 +347,6 @@ export function TemplatesManager() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="proposta">Proposta</SelectItem>
                   <SelectItem value="contrato">Contrato</SelectItem>
                 </SelectContent>
               </Select>

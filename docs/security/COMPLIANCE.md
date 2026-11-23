@@ -39,8 +39,12 @@ advogado/DPO antes de fiscalização).
 
 ### DPA (Data Processing Agreement)
 
-✅ Template em [`../templates/DPA_TEMPLATE.md`](../templates/DPA_TEMPLATE.md) (v1, 2026-09-08;
-não assinável de verdade até o CNPJ próprio sair, ver `../legal/README.md`).
+O **Anexo de Tratamento de Dados Pessoais** dos Termos v2.0 publicados em
+`apps/marketing/src/pages/Termos.tsx` é o DPA contratual padrão desde 10/11/2026.
+O arquivo [`DPA_TEMPLATE.md`](../templates/DPA_TEMPLATE.md) é histórico e não
+deve ser oferecido a clientes sem revisão. Identidade da empresa e encarregado
+estão publicados; a **revisão jurídica externa e a validação dos DPAs de
+fornecedores continuam pendentes**.
 
 ### Incidentes e notificação
 
@@ -53,9 +57,22 @@ não assinável de verdade até o CNPJ próprio sair, ver `../legal/README.md`).
 
 ### Transferência internacional
 
-- Supabase hospedado em São Paulo (região sa-east-1 equivalente) — **sem transferência internacional**
-- Vercel: edge functions podem rodar fora do Brasil — revisar com DPO
-- Sentry: dados PII scrubbed antes de enviar — ver `src/lib/monitoring.ts`
+- **Supabase de produção:** região `sa-east-1` (São Paulo, Brasil); isso NÃO
+  permite afirmar que todo o serviço/processamento ocorre exclusivamente no Brasil.
+- **Supabase de staging:** região `us-west-2` (Estados Unidos), confirmada na
+  conexão do projeto em 19/11/2026. Não copiar dados pessoais reais de produção
+  sem avaliação, base jurídica e anonimização adequada.
+- **Demais fornecedores:** Sentry, PostHog, Resend, modelos de IA e eventual
+  gateway podem processar dados fora do Brasil. Minimizá-los e conferir as
+  garantias específicas do art. 33 da LGPD e a Resolução ANPD 19/2024.
+- **Hosting:** Vercel continua operacional durante a migração gradual para
+  Firebase Hosting. Inventariar a região de processamento e atualizar a lista de
+  subprocessadores antes do cutover; a troca de hosting não elimina por si só
+  as transferências internacionais.
+- **Divergência contratual em aberto:** o DPA anexo aos Termos v2 afirma que
+  garantias internacionais são adotadas; a política publicada diz que ainda
+  estão sendo formalizadas. Não declarar conclusão sem evidência contratual.
+  Encaminhar ambos os textos para revisão jurídica antes de alterá-los.
 
 ## SOC2 — gaps
 
@@ -100,11 +117,10 @@ até alguém confirmar contrato/aceite de cada vendor.
 
 ### 2026-Q2
 
-- [ ] DPO nomeado oficial
+- [x] Encarregado identificado publicamente em /privacidade (verificar formalização documental com assessor jurídico)
 - [x] Política de privacidade pública publicada
 - [x] ROPA documentado (`../ROPA.md`, 2026-09-08)
-- [x] Template DPA pra assinar com clientes (`../templates/DPA_TEMPLATE.md`, 2026-09-08 — falta
-      CNPJ próprio pra assinar de verdade)
+- [x] DPA contratual padrão no Anexo dos Termos v2 publicados (revisão jurídica externa pendente)
 - [x] Export JSON de dados pessoais (direito de portabilidade) — self-service em Configurações →
       Privacidade (`request_data_export`)
 

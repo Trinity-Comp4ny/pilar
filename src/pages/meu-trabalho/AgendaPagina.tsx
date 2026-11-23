@@ -6,7 +6,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AbaAgenda } from "./components/AbaAgenda";
-import { useMinhaPessoa, usePessoasEmpresa } from "./hooks";
+import { useMinhaPessoa, usePessoasEmpresa } from "@/hooks/tarefas/useTarefas";
 import { resolverPessoaIds } from "./filtroPessoas";
 
 /** Agenda: calendário pessoal (disciplinas, tarefas com prazo e reuniões). Vive fora de Tarefas. */

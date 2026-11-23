@@ -8,6 +8,7 @@ import {
   CloudRain,
   HardHat,
   LayoutList,
+  FileText,
   MapPin,
   Pencil,
   Scale,
@@ -26,7 +27,6 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useObra, useDeleteObra } from "@/pages/obras/hooks/useObras";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
@@ -44,6 +44,8 @@ import { ObraTarefasTab } from "../components/ObraTarefasTab";
 import { ObraContaTab } from "../components/ObraContaTab";
 import { ObraCotacoesTab } from "../components/ObraCotacoesTab";
 import { ObraEstoqueTab } from "../components/ObraEstoqueTab";
+import { ObraRelatoriosTab } from "../components/ObraRelatoriosTab";
+import { ObraResumoExecutivo } from "../components/ObraResumoExecutivo";
 
 import { PageLoader } from "@/components/motion/PageLoader";
 const BREADCRUMB = [{ label: "Obras", to: "/obras" }];
@@ -52,7 +54,6 @@ export default function ObraDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { can } = usePermissions();
-  const { profile } = useAuth();
   const isMobile = useIsMobile();
   const canEdit = can("obras", "edit");
   const canDelete = can("obras", "delete");
@@ -115,9 +116,8 @@ export default function ObraDetalhePage() {
   };
 
   // Abas de seção (SPEC 124): mesmas regras de visibilidade de antes, agora no slot do header.
-  // Os acessos de campo são da empresa dona da obra. Quem abre obra de outra empresa (ex.: ultra_admin
-  // no suporte) não os vê: a RPC responde "Obra não encontrada" e isso virava erro no Sentry.
-  const mostrarAcessos = canEdit && !!profile?.empresa_id && obra.empresa_id === profile.empresa_id;
+  // Acessos de campo: o ultra_admin gerencia os de qualquer empresa (a RPC libera o ultra_admin com MFA).
+  const mostrarAcessos = canEdit;
 
   const secoes: SectionTab[] = [
     { id: "timeline", label: "Visão geral", icon: LayoutList },
@@ -127,6 +127,7 @@ export default function ObraDetalhePage() {
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Financeiro", icon: Wallet }] : []),
+    ...(showConta || showDiario ? [{ id: "relatorios", label: "Relatórios", icon: FileText }] : []),
     ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
     ...(mostrarAcessos ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
@@ -198,6 +199,15 @@ export default function ObraDetalhePage() {
         </div>
       )}
 
+      {tab === "timeline" && (
+        <ObraResumoExecutivo
+          obraId={obra.id}
+          fimPrevisto={obra.data_fim_prevista}
+          tarefas={tarefasObra}
+          comCusto={showConta}
+        />
+      )}
+
       {alertasClima.length > 0 && (
         <div className="space-y-1.5 rounded-xl border border-warning-soft bg-warning-soft/40 p-3">
           <div className="flex items-center gap-2 text-sm font-medium text-warning-strong">
@@ -262,6 +272,16 @@ export default function ObraDetalhePage() {
             />
           </TabsContent>
         )}
+        {(showConta || showDiario) && (
+          <TabsContent value="relatorios">
+            <ObraRelatoriosTab
+              obraId={obra.id}
+              obraNome={obra.nome}
+              mostrarFinanceiro={showConta}
+              mostrarDiario={showDiario}
+            />
+          </TabsContent>
+        )}
         {obra.modelo_cobranca === "administracao" && (
           <TabsContent value="cliente">
             <SolicitacoesDoCliente obraId={obra.id} />
@@ -269,7 +289,7 @@ export default function ObraDetalhePage() {
         )}
         {mostrarAcessos && (
           <TabsContent value="acessos">
-            <ObraAcessosTab obraId={obra.id} canEdit={canEdit} />
+            <ObraAcessosTab obraId={obra.id} empresaId={obra.empresa_id} canEdit={canEdit} />
           </TabsContent>
         )}
       </Tabs>

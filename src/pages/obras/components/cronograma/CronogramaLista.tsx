@@ -35,7 +35,7 @@ import { estadoTarefaCronograma, SENSIVEL_CLIMA_OPCOES } from "@/lib/obras";
 import { NIVEL_FILHO, NIVEL_LABEL, type NivelCronograma, type NoArvore } from "@/pages/obras/lib/obraArvore";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
-import type { PessoaOpcao } from "@/pages/meu-trabalho/hooks";
+import type { PessoaOpcao } from "@/hooks/tarefas/useTarefas";
 import { EtiquetasCell, ResponsavelCell } from "@/pages/meu-trabalho/components/CelulasLista";
 import { ESTADO_FILL, ESTADO_LABEL, NIVEL_COR } from "./estado";
 import type { CronogramaAcoes } from "./useCronogramaAcoes";

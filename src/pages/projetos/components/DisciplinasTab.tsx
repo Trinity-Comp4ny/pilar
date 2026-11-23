@@ -9,19 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  Search,
-  Layers,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  PauseCircle,
-  ChevronDown,
-  User,
-  LayoutGrid,
-  List,
-  Calendar,
-} from "lucide-react";
+import { Search, Layers, CheckCircle2, Clock, AlertTriangle, ChevronDown, LayoutGrid, List } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
@@ -29,7 +17,6 @@ import {
   type DisciplinaResponsavel,
   type Projeto,
   formatDate,
-  formatDateShort,
   getResponsaveisList,
   getDiscDeadlineStatus,
 } from "@/types/projetos";
@@ -37,38 +24,10 @@ import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
+import { DisciplinaStatusBadge } from "@/pages/projetos/components/DisciplinaStatusBadge";
+import { DisciplinaProjetoLinha } from "@/pages/projetos/components/DisciplinaProjetoLinha";
 import { DisciplinaGrupoAcoes } from "@/pages/projetos/components/DisciplinaGrupoAcoes";
 import type { CatalogoLinha } from "@/pages/projetos/lib/disciplinaEmLote";
-
-const DISCIPLINA_STATUS_CONFIG: Record<
-  string,
-  { label: string; color: string; icon: typeof CheckCircle2; bgColor: string }
-> = {
-  Concluído: {
-    label: "Concluído",
-    color: "text-positive-strong",
-    icon: CheckCircle2,
-    bgColor: "bg-positive/10 border-positive/20",
-  },
-  "Em Andamento": {
-    label: "Em Andamento",
-    color: "text-info-strong",
-    icon: Clock,
-    bgColor: "bg-info-soft border-info-mid-border",
-  },
-  "Não Iniciado": {
-    label: "Não Iniciado",
-    color: "text-ink-muted",
-    icon: PauseCircle,
-    bgColor: "bg-muted border-border",
-  },
-  Pendente: {
-    label: "Pendente",
-    color: "text-warning-strong",
-    icon: AlertTriangle,
-    bgColor: "bg-warning-soft border-warning-mid-border",
-  },
-};
 
 interface DisciplinaAgrupada {
   nome: string;
@@ -81,17 +40,6 @@ interface DisciplinaAgrupada {
   totalPendente: number;
   totalNaoIniciado: number;
   progresso: number;
-}
-
-function getStatusBadge(status: string | undefined) {
-  const config = DISCIPLINA_STATUS_CONFIG[status || "Não Iniciado"] || DISCIPLINA_STATUS_CONFIG["Não Iniciado"];
-  const Icon = config.icon;
-  return (
-    <Badge variant="outline" className={cn("text-2xs gap-1 font-normal", config.bgColor, config.color)}>
-      <Icon className="h-3 w-3" />
-      {config.label}
-    </Badge>
-  );
 }
 
 /** Mini stacked bar showing status distribution */
@@ -336,14 +284,14 @@ export function DisciplinasTab({
     },
     {
       key: "status",
-      header: "Status",
+      header: "Status da disciplina",
       cell: ({ disciplina }) => {
         const dlStatus = getDiscDeadlineStatus(disciplina);
         const atrasada = dlStatus?.status_data === "em_atraso";
         const atencao = dlStatus?.status_data === "atencao";
         return (
           <div className="flex items-center gap-1">
-            {getStatusBadge(disciplina.status)}
+            <DisciplinaStatusBadge status={disciplina.status} />
             {atrasada && dlStatus && (
               <Badge variant="destructive" className="text-3xs gap-0.5">
                 <AlertTriangle className="h-3 w-3" />
@@ -359,6 +307,12 @@ export function DisciplinasTab({
           </div>
         );
       },
+    },
+    {
+      key: "inicio",
+      header: "Início",
+      className: "text-sm text-muted-foreground",
+      cell: ({ disciplina }) => formatDate(disciplina.data_inicio),
     },
     {
       key: "previsao",
@@ -383,7 +337,7 @@ export function DisciplinasTab({
     },
     {
       key: "projeto-status",
-      header: "Projeto Status",
+      header: "Status do projeto",
       cell: ({ projeto }) =>
         PROJECT_STATUS_CONFIG[projeto.status] ? (
           <Badge variant="outline" className={cn("text-2xs", PROJECT_STATUS_CONFIG[projeto.status].color)}>
@@ -532,7 +486,10 @@ export function DisciplinasTab({
                           <div className="flex-1 max-w-[200px]">
                             <Progress value={grupo.progresso} className="h-1.5" indicatorClassName="bg-brand" />
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground">{grupo.progresso}%</span>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {grupo.totalConcluido} de {grupo.projetos.length} concluída
+                            {grupo.totalConcluido !== 1 ? "s" : ""} ({grupo.progresso}%)
+                          </span>
                         </div>
                       </div>
 
@@ -589,83 +546,19 @@ export function DisciplinasTab({
                   )}
                 </div>
 
-                {/* Expanded: project rows */}
+                {/* Expanded: uma linha por projeto, com cabeçalho de colunas para não misturar os dois status */}
                 {isExpanded && (
                   <div className="border-t bg-muted/10">
-                    <div className="divide-y">
-                      {grupo.projetos.map(({ projeto, disciplina }) => {
-                        const dlStatus = getDiscDeadlineStatus(disciplina);
-                        const atrasada = dlStatus?.status_data === "em_atraso";
-                        const atencao = dlStatus?.status_data === "atencao";
-                        const resps = getResponsaveisList(disciplina);
-
-                        return (
-                          <div
-                            key={projeto.id}
-                            className={cn(
-                              "px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 transition-colors hover:bg-muted/20",
-                              atrasada && "bg-danger-soft/30",
-                              atencao && "bg-warning-soft/30"
-                            )}
-                          >
-                            <div className="flex-1 min-w-0 pl-7">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm truncate">{projeto.nome}</span>
-                              </div>
-                              <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-                                <span className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {resps.length > 0 ? resps.map((r) => r.responsavel_nome).join(", ") : "—"}
-                                </span>
-                                {disciplina.data_previsao && (
-                                  <>
-                                    <span className="text-muted-foreground/30">·</span>
-                                    <span
-                                      className={cn(
-                                        "flex items-center gap-1",
-                                        atrasada && "text-danger-mid font-medium"
-                                      )}
-                                    >
-                                      <Calendar className="h-3 w-3" />
-                                      Prev: {formatDateShort(disciplina.data_previsao)}
-                                    </span>
-                                  </>
-                                )}
-                                {projeto.cliente_nome && (
-                                  <>
-                                    <span className="text-muted-foreground/30">·</span>
-                                    <span>{projeto.cliente_nome}</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 pl-7 sm:pl-0 shrink-0">
-                              {getStatusBadge(disciplina.status)}
-                              {atrasada && dlStatus && (
-                                <Badge variant="destructive" className="text-3xs gap-0.5">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  Em Atraso {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
-                                </Badge>
-                              )}
-                              {atencao && dlStatus && (
-                                <Badge className="text-3xs gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  Atenção {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
-                                </Badge>
-                              )}
-                              {PROJECT_STATUS_CONFIG[projeto.status] && (
-                                <Badge
-                                  variant="outline"
-                                  className={cn("text-2xs", PROJECT_STATUS_CONFIG[projeto.status].color)}
-                                >
-                                  {PROJECT_STATUS_CONFIG[projeto.status].label}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="hidden sm:grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)] gap-4 px-4 py-2 pl-11 text-3xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span>Projeto</span>
+                      <span>Responsável</span>
+                      <span>Prazo da disciplina</span>
+                      <span>Status da disciplina</span>
+                    </div>
+                    <div className="divide-y border-t">
+                      {grupo.projetos.map(({ projeto, disciplina }) => (
+                        <DisciplinaProjetoLinha key={projeto.id} projeto={projeto} disciplina={disciplina} />
+                      ))}
                     </div>
                   </div>
                 )}

@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { ComponentType } from "react";
 import type { ProfileWithEmpresa } from "@/contexts/AuthContext";
@@ -58,13 +59,15 @@ async function entrar(role: string, assinatura: unknown, leituraDesde: string | 
   vi.resetModules();
   const { PrivateRoute } = (await import("./PrivateRoute")) as { PrivateRoute: ComponentType };
   return render(
-    <MemoryRouter initialEntries={["/inicio"]}>
-      <Routes>
-        <Route element={<PrivateRoute />}>
-          <Route path="/inicio" element={<div>Início</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={["/inicio"]}>
+        <Routes>
+          <Route element={<PrivateRoute />}>
+            <Route path="/inicio" element={<div>Início</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

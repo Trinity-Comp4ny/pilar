@@ -118,4 +118,36 @@ describe("useFeatureAccess", () => {
     const { result } = renderHook(() => useFeatureAccess("financeiro"));
     expect(result.current).toMatchObject({ canView: false, canEdit: false, level: null, isAdmin: false });
   });
+
+  describe("módulos ocultos (ADR 0066)", () => {
+    it("une a lista da empresa com a do usuário e esconde as features do módulo", () => {
+      perfil({ role: "user", modulos_ocultos: ["gestao"], empresas: { features: {}, modulos_ocultos: ["obras"] } });
+      const { result } = renderHook(() => usePermissions());
+      expect(result.current.modulosOcultos.sort()).toEqual(["gestao", "obras"]);
+      expect(result.current.moduloVisivel("projetos")).toBe(true);
+      expect(result.current.moduloVisivel("obras")).toBe(false);
+      expect(result.current.can("obras")).toBe(false);
+      expect(result.current.can("projetos")).toBe(true);
+    });
+
+    it("lista vazia mantém tudo visível", () => {
+      perfil({ role: "user" });
+      const { result } = renderHook(() => usePermissions());
+      expect(result.current.modulosOcultos).toEqual([]);
+      expect(result.current.moduloVisivel("obras")).toBe(true);
+    });
+
+    it("admin nunca é restringido", () => {
+      perfil({ role: "admin", modulos_ocultos: ["obras"], empresas: { features: {}, modulos_ocultos: ["gestao"] } });
+      const { result } = renderHook(() => usePermissions());
+      expect(result.current.modulosOcultos).toEqual([]);
+      expect(result.current.moduloVisivel("obras")).toBe(true);
+    });
+
+    it("ignora valor desconhecido na lista", () => {
+      perfil({ role: "user", modulos_ocultos: ["foo", "obras"] });
+      const { result } = renderHook(() => usePermissions());
+      expect(result.current.modulosOcultos).toEqual(["obras"]);
+    });
+  });
 });

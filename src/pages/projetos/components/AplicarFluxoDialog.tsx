@@ -83,7 +83,7 @@ export function AplicarFluxoDialog({
     const ordens = Array.from(new Set(nodes.map((n) => n.ordem))).sort((a, b) => a - b);
     return ordens.map((ordem) => ({
       key: String(ordem),
-      titulo: String(ordem),
+      titulo: `Etapa ${ordem}`,
       nodes: nodes.filter((n) => n.ordem === ordem).map((n) => n.node),
     }));
   }, [plano, dbDisciplinas]);

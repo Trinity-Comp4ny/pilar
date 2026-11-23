@@ -26,6 +26,8 @@ import { achatarOrcado, montarOrcadoRealizado } from "@/lib/orcadoRealizado";
 import { useObraConta, useDeleteLancamento, type ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";
 import { useObraOrcamento, useSaveOrcamentoEtapa } from "@/pages/obras/hooks/useObraOrcamento";
 import { calcularSaldoConta, pagoPorLabel, realizadoPorEtapa, SEM_ETAPA, totalAdiantadoEscritorio } from "@/lib/obras";
+import { FILTRO_VAZIO, filtrarExtrato, filtroAtivo, type FiltroExtrato } from "@/pages/obras/lib/filtroExtrato";
+import { ExtratoFiltros } from "./ExtratoFiltros";
 import { LancamentoContaDialog } from "./LancamentoContaDialog";
 import { ObraDesembolsoChart } from "./ObraDesembolsoChart";
 import { RelatorioClienteDialog } from "./RelatorioClienteDialog";
@@ -79,6 +81,7 @@ export function ObraContaTab({
   const [importandoExtrato, setImportandoExtrato] = useState(false);
   const [relatorioAberto, setRelatorioAberto] = useState(false);
   const [confirmDel, setConfirmDel] = useState<ObraLancamentoRow | null>(null);
+  const [filtro, setFiltro] = useState<FiltroExtrato>(FILTRO_VAZIO);
 
   const saldo = useMemo(() => calcularSaldoConta(lancamentos), [lancamentos]);
   const totalAportes = useMemo(
@@ -104,6 +107,15 @@ export function ObraContaTab({
   const caminhoDoNo = useMemo(
     () => new Map(achatarOrcado(orcado.raizes).map((l) => [l.no.id, l.caminho])),
     [orcado.raizes]
+  );
+
+  const extrato = useMemo(() => filtrarExtrato(lancamentos, filtro), [lancamentos, filtro]);
+  const fornecedoresDoExtrato = useMemo(
+    () =>
+      [...new Set(lancamentos.map((l) => l.fornecedor_id).filter((id): id is string => !!id))]
+        .map((id) => ({ id, nome: fornecedorNome.get(id) ?? "Fornecedor" }))
+        .sort((a, b) => a.nome.localeCompare(b.nome)),
+    [lancamentos, fornecedorNome]
   );
 
   const taxaAtiva = obra.modelo_cobranca === "administracao" && Number(obra.taxa_administracao_pct) > 0;
@@ -205,69 +217,85 @@ export function ObraContaTab({
           description="Registre o aporte do cliente e as despesas pagas com esse dinheiro. O saldo e a prestação de contas se montam sozinhos."
         />
       ) : (
-        <Card className="rounded-2xl border border-black/5 bg-white">
-          <CardContent className="divide-y divide-black/5 p-4">
-            {lancamentos.map((l) => {
-              const isAporte = l.tipo === "aporte";
-              const etapa = l.obra_frente_id ? caminhoDoNo.get(l.obra_frente_id) : null;
-              return (
-                <div key={l.id} className="flex items-center gap-3 py-2 text-sm">
-                  {isAporte ? (
-                    <ArrowDownCircle className="h-4 w-4 shrink-0 text-positive" />
-                  ) : (
-                    <ArrowUpCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-ink">
-                      {l.descricao}
-                      {l.quantidade != null && (
-                        <span className="text-muted-foreground">
-                          {` · ${Number(l.quantidade).toLocaleString("pt-BR")}${l.unidade ? ` ${l.unidade}` : ""}`}
-                        </span>
+        <div className="space-y-3">
+          <ExtratoFiltros filtro={filtro} onChange={setFiltro} fornecedores={fornecedoresDoExtrato} />
+          {extrato.length === 0 ? (
+            <EmptyState
+              icon={Wallet}
+              title="Nenhum lançamento com esse filtro"
+              description="Ajuste o tipo, o fornecedor ou a busca para ver o extrato."
+            />
+          ) : (
+            <Card className="rounded-2xl border border-black/5 bg-white">
+              <CardContent className="divide-y divide-black/5 p-4">
+                {extrato.map((l) => {
+                  const isAporte = l.tipo === "aporte";
+                  const etapa = l.obra_frente_id ? caminhoDoNo.get(l.obra_frente_id) : null;
+                  return (
+                    <div key={l.id} className="flex items-center gap-3 py-2 text-sm">
+                      {isAporte ? (
+                        <ArrowDownCircle className="h-4 w-4 shrink-0 text-positive" />
+                      ) : (
+                        <ArrowUpCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
                       )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(l.data)}
-                      {etapa && ` · ${etapa}`}
-                      {l.fornecedor_id &&
-                        fornecedorNome.get(l.fornecedor_id) &&
-                        ` · ${fornecedorNome.get(l.fornecedor_id)}`}
-                      {l.pago_por === "escritorio_reembolsavel" && ` · ${pagoPorLabel(l.pago_por)}`}
-                    </p>
-                  </div>
-                  <span className={isAporte ? "text-positive" : "text-ink"}>
-                    {isAporte ? "+" : "−"}
-                    {formatCurrency(Number(l.valor))}
-                  </span>
-                  {canEdit && (
-                    <div className="flex shrink-0">
-                      {!isAporte && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setDialog({ tipo: "despesa", lancamento: l })}
-                          aria-label={`Editar ${l.descricao}`}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-ink">
+                          {l.descricao}
+                          {l.quantidade != null && (
+                            <span className="text-muted-foreground">
+                              {` · ${Number(l.quantidade).toLocaleString("pt-BR")}${l.unidade ? ` ${l.unidade}` : ""}`}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(l.data)}
+                          {etapa && ` · ${etapa}`}
+                          {l.fornecedor_id &&
+                            fornecedorNome.get(l.fornecedor_id) &&
+                            ` · ${fornecedorNome.get(l.fornecedor_id)}`}
+                          {l.pago_por === "escritorio_reembolsavel" && ` · ${pagoPorLabel(l.pago_por)}`}
+                        </p>
+                      </div>
+                      <span className={isAporte ? "text-positive" : "text-ink"}>
+                        {isAporte ? "+" : "−"}
+                        {formatCurrency(Number(l.valor))}
+                      </span>
+                      {canEdit && (
+                        <div className="flex shrink-0">
+                          {!isAporte && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setDialog({ tipo: "despesa", lancamento: l })}
+                              aria-label={`Editar ${l.descricao}`}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setConfirmDel(l)}
+                            aria-label={`Excluir lançamento ${l.descricao}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setConfirmDel(l)}
-                        aria-label={`Excluir lançamento ${l.descricao}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+          {filtroAtivo(filtro) && (
+            <p className="text-xs text-muted-foreground">
+              {extrato.length} de {lancamentos.length} lançamentos
+            </p>
+          )}
+        </div>
       )}
 
       {dialog && (

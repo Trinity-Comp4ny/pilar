@@ -27,19 +27,29 @@ interface EntregaFormDialogProps {
   projetoId?: string;
   obraId?: string;
   onCreated: () => void;
+  publicarRevisao?: boolean;
+  anterior?: { id: string; titulo: string; projeto_disciplina_id: string | null };
 }
 
-export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCreated }: EntregaFormDialogProps) {
+export function EntregaFormDialog({
+  open,
+  onOpenChange,
+  projetoId,
+  obraId,
+  onCreated,
+  publicarRevisao,
+  anterior,
+}: EntregaFormDialogProps) {
   const { profile } = useAuth();
   const disciplinas = useProjetoDisciplinas(projetoId);
-  const [titulo, setTitulo] = useState("");
-  const [tipo, setTipo] = useState("");
+  const [titulo, setTitulo] = useState(anterior?.titulo ?? "");
+  const [tipo, setTipo] = useState(publicarRevisao ? "aprovacao" : "");
   const [descricao, setDescricao] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
-  const [disciplinaId, setDisciplinaId] = useState<string>("");
+  const [disciplinaId, setDisciplinaId] = useState(anterior?.projeto_disciplina_id ?? "");
   const [saving, setSaving] = useState(false);
 
-  const urlValida = !driveUrl.trim() || DRIVE_URL_PATTERN.test(driveUrl.trim());
+  const urlValida = (!publicarRevisao && !driveUrl.trim()) || DRIVE_URL_PATTERN.test(driveUrl.trim());
 
   const limpar = () => {
     setTitulo("");
@@ -78,6 +88,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
       drive_url: driveUrl.trim() || null,
       projeto_disciplina_id: disciplinaId || null,
       status: "pendente",
+      ...(publicarRevisao ? { numero_revisao: 0, revisao_anterior_id: anterior?.id ?? null } : {}),
     } as never);
     setSaving(false);
     if (error) {
@@ -97,7 +108,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Nova solicitação ao cliente"
+      title={publicarRevisao ? "Publicar revisão" : "Nova solicitação ao cliente"}
       description="Aparece nas Pendências do portal do cliente, onde ele aprova ou pede revisão."
       size="md"
       onSubmit={handleSubmit}
@@ -120,7 +131,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Tipo</Label>
-            <Select value={tipo} onValueChange={setTipo}>
+            <Select value={tipo} onValueChange={setTipo} disabled={publicarRevisao}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -136,7 +147,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
           {projetoId && (
             <div className="space-y-2">
               <Label>Etapa</Label>
-              <Select value={disciplinaId} onValueChange={setDisciplinaId}>
+              <Select value={disciplinaId} onValueChange={setDisciplinaId} disabled={!!anterior}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sem etapa vinculada" />
                 </SelectTrigger>
@@ -171,7 +182,12 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
             onChange={(e) => setDriveUrl(e.target.value)}
             placeholder="https://drive.google.com/..."
           />
-          {!urlValida && (
+          {publicarRevisao && (
+            <p className="text-xs text-muted-foreground">
+              Use um arquivo separado no Drive para cada revisão, com acesso para o cliente.
+            </p>
+          )}
+          {!!driveUrl.trim() && !urlValida && (
             <p className="text-xs text-danger-mid">Precisa ser um link do drive.google.com ou docs.google.com</p>
           )}
         </div>

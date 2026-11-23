@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
@@ -162,6 +163,11 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
               <KPICard
                 label="Pendente"
                 value={formatCurrency(resumo.totalPendente)}
+                valueSlot={
+                  <p className="truncate pl-1 text-base font-bold tabular-nums text-warning-strong @[9rem]:text-lg">
+                    {formatCurrency(resumo.totalPendente)}
+                  </p>
+                }
                 icon={CalendarClock}
                 tone="warning"
                 subtitle={`${resumo.qtdPendentes} pagamento(s)`}
@@ -169,6 +175,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
               <KPICard
                 label="Atrasado"
                 value={formatCurrency(resumo.totalAtrasado)}
+                valueTone={resumo.qtdAtrasados > 0 ? "danger" : undefined}
                 icon={AlertTriangle}
                 tone={resumo.qtdAtrasados > 0 ? "danger" : "neutral"}
                 subtitle={resumo.qtdAtrasados > 0 ? `${resumo.qtdAtrasados} pagamento(s)` : "Nenhum atraso"}
@@ -242,7 +249,20 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold">{formatCurrency(pag.valor)}</p>
+                    <p
+                      className={cn(
+                        "text-sm font-bold tabular-nums",
+                        pag.status === "Recebido" || pag.status === "Pago"
+                          ? "text-positive-strong"
+                          : pag.status === "Atrasado" || getDiasStatus(pag).tipo === "atrasado"
+                            ? "text-negative-strong"
+                            : pag.status === "Pendente"
+                              ? "text-warning-strong"
+                              : undefined
+                      )}
+                    >
+                      {formatCurrency(pag.valor)}
+                    </p>
                     <StatusBadgeAlerta pagamento={pag} />
                   </div>
 

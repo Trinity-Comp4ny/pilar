@@ -1453,6 +1453,47 @@ export type Database = {
           },
         ]
       }
+      compromisso: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          para: string | null
+          prazo: string | null
+          prometido_por: string
+          reuniao_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          para?: string | null
+          prazo?: string | null
+          prometido_por: string
+          reuniao_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          para?: string | null
+          prazo?: string | null
+          prometido_por?: string
+          reuniao_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compromisso_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consentimentos_cobranca: {
         Row: {
           created_at: string
@@ -2240,6 +2281,41 @@ export type Database = {
         }
         Relationships: []
       }
+      empresa_config_comercial: {
+        Row: {
+          aliquota_imposto_pct: number
+          empresa_id: string
+          margem_alvo_pct: number
+          margem_minima_pct: number
+          meios_recebimento: Json
+          updated_at: string
+        }
+        Insert: {
+          aliquota_imposto_pct?: number
+          empresa_id: string
+          margem_alvo_pct?: number
+          margem_minima_pct?: number
+          meios_recebimento?: Json
+          updated_at?: string
+        }
+        Update: {
+          aliquota_imposto_pct?: number
+          empresa_id?: string
+          margem_alvo_pct?: number
+          margem_minima_pct?: number
+          meios_recebimento?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_config_comercial_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresa_owners_pending: {
         Row: {
           company_name: string
@@ -2304,6 +2380,7 @@ export type Database = {
           logo_url: string | null
           max_projetos_override: number | null
           max_usuarios_override: number | null
+          modulos_ocultos: string[]
           nivel_override: string | null
           nivel_override_em: string | null
           nivel_override_motivo: string | null
@@ -2353,6 +2430,7 @@ export type Database = {
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          modulos_ocultos?: string[]
           nivel_override?: string | null
           nivel_override_em?: string | null
           nivel_override_motivo?: string | null
@@ -2402,6 +2480,7 @@ export type Database = {
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          modulos_ocultos?: string[]
           nivel_override?: string | null
           nivel_override_em?: string | null
           nivel_override_motivo?: string | null
@@ -2534,6 +2613,7 @@ export type Database = {
           id: string
           impacto_prazo_dias: number | null
           justificativa: string | null
+          origem_manual: boolean
           projeto_id: string
           status: string | null
           tipo: string
@@ -2555,6 +2635,7 @@ export type Database = {
           id?: string
           impacto_prazo_dias?: number | null
           justificativa?: string | null
+          origem_manual?: boolean
           projeto_id: string
           status?: string | null
           tipo: string
@@ -2576,6 +2657,7 @@ export type Database = {
           id?: string
           impacto_prazo_dias?: number | null
           justificativa?: string | null
+          origem_manual?: boolean
           projeto_id?: string
           status?: string | null
           tipo?: string
@@ -3258,8 +3340,35 @@ export type Database = {
           },
         ]
       }
+      fornecedor_categorias: {
+        Row: {
+          chave: string
+          empresa_id: string
+          nome: string
+        }
+        Insert: {
+          chave: string
+          empresa_id: string
+          nome: string
+        }
+        Update: {
+          chave?: string
+          empresa_id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedor_categorias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
+          categorias: string[]
           cnpj: string | null
           contato: string | null
           created_at: string | null
@@ -3272,6 +3381,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          categorias?: string[]
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
@@ -3284,6 +3394,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          categorias?: string[]
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
@@ -3756,6 +3867,7 @@ export type Database = {
           empresa_id: string
           id: string
           lead_id: string
+          mencionados: string[]
           ocorrido_em: string
           texto: string
         }
@@ -3766,6 +3878,7 @@ export type Database = {
           empresa_id: string
           id?: string
           lead_id: string
+          mencionados?: string[]
           ocorrido_em?: string
           texto: string
         }
@@ -3776,6 +3889,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           lead_id?: string
+          mencionados?: string[]
           ocorrido_em?: string
           texto?: string
         }
@@ -5702,6 +5816,8 @@ export type Database = {
           modelo_cobranca: string
           nome: string
           observacoes: string | null
+          placa_data: string | null
+          placa_status: string
           projeto_id: string | null
           responsavel_id: string | null
           status: string
@@ -5730,6 +5846,8 @@ export type Database = {
           modelo_cobranca?: string
           nome: string
           observacoes?: string | null
+          placa_data?: string | null
+          placa_status?: string
           projeto_id?: string | null
           responsavel_id?: string | null
           status?: string
@@ -5758,6 +5876,8 @@ export type Database = {
           modelo_cobranca?: string
           nome?: string
           observacoes?: string | null
+          placa_data?: string | null
+          placa_status?: string
           projeto_id?: string | null
           responsavel_id?: string | null
           status?: string
@@ -6853,11 +6973,14 @@ export type Database = {
           drive_url: string | null
           empresa_id: string
           id: string
+          numero_revisao: number | null
           obra_id: string | null
           projeto_disciplina_id: string | null
           projeto_id: string | null
+          respondido_cliente_id: string | null
           respondido_em: string | null
           resposta_cliente: string | null
+          revisao_anterior_id: string | null
           status: string | null
           tipo: string | null
           titulo: string
@@ -6872,11 +6995,14 @@ export type Database = {
           drive_url?: string | null
           empresa_id: string
           id?: string
+          numero_revisao?: number | null
           obra_id?: string | null
           projeto_disciplina_id?: string | null
           projeto_id?: string | null
+          respondido_cliente_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
+          revisao_anterior_id?: string | null
           status?: string | null
           tipo?: string | null
           titulo: string
@@ -6891,11 +7017,14 @@ export type Database = {
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          numero_revisao?: number | null
           obra_id?: string | null
           projeto_disciplina_id?: string | null
           projeto_id?: string | null
+          respondido_cliente_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
+          revisao_anterior_id?: string | null
           status?: string | null
           tipo?: string | null
           titulo?: string
@@ -6935,6 +7064,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_revisao_anterior_id_fkey"
+            columns: ["revisao_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
             referencedColumns: ["id"]
           },
         ]
@@ -7143,6 +7279,7 @@ export type Database = {
           last_name: string
           linkedin_url: string | null
           metas_delegado: boolean
+          modulos_ocultos: string[]
           nome: string | null
           onboarding_completed: boolean | null
           onboarding_state: Json
@@ -7167,6 +7304,7 @@ export type Database = {
           last_name?: string
           linkedin_url?: string | null
           metas_delegado?: boolean
+          modulos_ocultos?: string[]
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
@@ -7191,6 +7329,7 @@ export type Database = {
           last_name?: string
           linkedin_url?: string | null
           metas_delegado?: boolean
+          modulos_ocultos?: string[]
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
@@ -7863,6 +8002,77 @@ export type Database = {
           },
         ]
       }
+      projeto_registros: {
+        Row: {
+          autor_nome: string | null
+          dados: Json
+          detalhe: string
+          disciplina_id: string | null
+          empresa_id: string
+          financeiro: boolean
+          id: string
+          ocorrido_em: string
+          origem_id: string | null
+          projeto_id: string
+          tipo: string
+        }
+        Insert: {
+          autor_nome?: string | null
+          dados?: Json
+          detalhe: string
+          disciplina_id?: string | null
+          empresa_id: string
+          financeiro?: boolean
+          id?: string
+          ocorrido_em?: string
+          origem_id?: string | null
+          projeto_id: string
+          tipo: string
+        }
+        Update: {
+          autor_nome?: string | null
+          dados?: Json
+          detalhe?: string
+          disciplina_id?: string | null
+          empresa_id?: string
+          financeiro?: boolean
+          id?: string
+          ocorrido_em?: string
+          origem_id?: string | null
+          projeto_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_registros_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_registros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_registros_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_registros_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_status_historico: {
         Row: {
           de: Database["public"]["Enums"]["status_projeto"] | null
@@ -7953,6 +8163,8 @@ export type Database = {
           observacao: string | null
           ordem_prioridade: number | null
           parcelas: string | null
+          placa_data: string | null
+          placa_status: string
           prioridade: string
           status: Database["public"]["Enums"]["status_projeto"] | null
           status_data: string | null
@@ -7986,6 +8198,8 @@ export type Database = {
           observacao?: string | null
           ordem_prioridade?: number | null
           parcelas?: string | null
+          placa_data?: string | null
+          placa_status?: string
           prioridade?: string
           status?: Database["public"]["Enums"]["status_projeto"] | null
           status_data?: string | null
@@ -8019,6 +8233,8 @@ export type Database = {
           observacao?: string | null
           ordem_prioridade?: number | null
           parcelas?: string | null
+          placa_data?: string | null
+          placa_status?: string
           prioridade?: string
           status?: Database["public"]["Enums"]["status_projeto"] | null
           status_data?: string | null
@@ -8157,6 +8373,7 @@ export type Database = {
       }
       proposta_versoes: {
         Row: {
+          aceita_em: string | null
           arquivo_path: string
           condicoes_pagamento: string
           created_at: string
@@ -8164,15 +8381,20 @@ export type Database = {
           empresa_id: string
           enviado_em: string | null
           id: string
+          link_snapshot: string | null
+          link_token: string | null
           motivo_revisao: string
           nome_arquivo: string
           numero: number
+          primeira_abertura_em: string | null
           proposta_id: string
           tamanho: number
+          ultima_abertura_em: string | null
           validade: string | null
           valor_proposto: number
         }
         Insert: {
+          aceita_em?: string | null
           arquivo_path: string
           condicoes_pagamento?: string
           created_at?: string
@@ -8180,15 +8402,20 @@ export type Database = {
           empresa_id: string
           enviado_em?: string | null
           id?: string
+          link_snapshot?: string | null
+          link_token?: string | null
           motivo_revisao?: string
           nome_arquivo: string
           numero?: number
+          primeira_abertura_em?: string | null
           proposta_id: string
           tamanho: number
+          ultima_abertura_em?: string | null
           validade?: string | null
           valor_proposto: number
         }
         Update: {
+          aceita_em?: string | null
           arquivo_path?: string
           condicoes_pagamento?: string
           created_at?: string
@@ -8196,11 +8423,15 @@ export type Database = {
           empresa_id?: string
           enviado_em?: string | null
           id?: string
+          link_snapshot?: string | null
+          link_token?: string | null
           motivo_revisao?: string
           nome_arquivo?: string
           numero?: number
+          primeira_abertura_em?: string | null
           proposta_id?: string
           tamanho?: number
+          ultima_abertura_em?: string | null
           validade?: string | null
           valor_proposto?: number
         }
@@ -8261,6 +8492,7 @@ export type Database = {
           projeto_id: string | null
           status: string | null
           template_id: string | null
+          tipo: string
           titulo: string
           updated_at: string | null
           updated_by: string | null
@@ -8292,6 +8524,7 @@ export type Database = {
           projeto_id?: string | null
           status?: string | null
           template_id?: string | null
+          tipo?: string
           titulo: string
           updated_at?: string | null
           updated_by?: string | null
@@ -8323,6 +8556,7 @@ export type Database = {
           projeto_id?: string | null
           status?: string | null
           template_id?: string | null
+          tipo?: string
           titulo?: string
           updated_at?: string | null
           updated_by?: string | null
@@ -8380,6 +8614,155 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prospec_bloqueios: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          motivo: string
+          telefone_e164: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          motivo?: string
+          telefone_e164?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          motivo?: string
+          telefone_e164?: string | null
+        }
+        Relationships: []
+      }
+      prospec_envios: {
+        Row: {
+          canal: string | null
+          created_at: string
+          criado_por: string | null
+          id: string
+          lead_id: string
+          resultado: string
+          texto: string | null
+        }
+        Insert: {
+          canal?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          lead_id: string
+          resultado: string
+          texto?: string | null
+        }
+        Update: {
+          canal?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          lead_id?: string
+          resultado?: string
+          texto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospec_envios_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospec_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospec_leads: {
+        Row: {
+          canal: string
+          cidade: string | null
+          confianca_contato: string
+          contato_nome: string | null
+          created_at: string
+          criado_por: string | null
+          email: string | null
+          endereco: string | null
+          fila_em: string | null
+          id: string
+          nome: string
+          nota_encaixe: number
+          origem: string
+          pulado_em: string | null
+          qualidade: string | null
+          segmento: string
+          segmento_teste: boolean
+          site: string | null
+          status: string
+          telefone: string | null
+          telefone_adicional: string | null
+          telefone_e164: string | null
+          tipo_telefone: string
+          uf: string | null
+          ultimo_contato_em: string | null
+          whatsapp_na_fonte: boolean
+        }
+        Insert: {
+          canal?: string
+          cidade?: string | null
+          confianca_contato?: string
+          contato_nome?: string | null
+          created_at?: string
+          criado_por?: string | null
+          email?: string | null
+          endereco?: string | null
+          fila_em?: string | null
+          id?: string
+          nome: string
+          nota_encaixe?: number
+          origem?: string
+          pulado_em?: string | null
+          qualidade?: string | null
+          segmento: string
+          segmento_teste?: boolean
+          site?: string | null
+          status?: string
+          telefone?: string | null
+          telefone_adicional?: string | null
+          telefone_e164?: string | null
+          tipo_telefone?: string
+          uf?: string | null
+          ultimo_contato_em?: string | null
+          whatsapp_na_fonte?: boolean
+        }
+        Update: {
+          canal?: string
+          cidade?: string | null
+          confianca_contato?: string
+          contato_nome?: string | null
+          created_at?: string
+          criado_por?: string | null
+          email?: string | null
+          endereco?: string | null
+          fila_em?: string | null
+          id?: string
+          nome?: string
+          nota_encaixe?: number
+          origem?: string
+          pulado_em?: string | null
+          qualidade?: string | null
+          segmento?: string
+          segmento_teste?: boolean
+          site?: string | null
+          status?: string
+          telefone?: string | null
+          telefone_adicional?: string | null
+          telefone_e164?: string | null
+          tipo_telefone?: string
+          uf?: string | null
+          ultimo_contato_em?: string | null
+          whatsapp_na_fonte?: boolean
+        }
+        Relationships: []
       }
       rate_limit_attempts: {
         Row: {
@@ -8688,6 +9071,145 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_uso_tokens_usuario_ciclo"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      reuniao: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          granola_note_id: string | null
+          id: string
+          ocorreu_em: string
+          origem_contato: string | null
+          origem_nome: string | null
+          proximo_passo: string | null
+          proximo_passo_em: string | null
+          redacoes: Json
+          status: string
+          tipo: string
+          tipo_confianca: number | null
+          tipo_corrigido: string | null
+          titulo: string
+          transcript_redigido: string | null
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          granola_note_id?: string | null
+          id?: string
+          ocorreu_em: string
+          origem_contato?: string | null
+          origem_nome?: string | null
+          proximo_passo?: string | null
+          proximo_passo_em?: string | null
+          redacoes?: Json
+          status?: string
+          tipo?: string
+          tipo_confianca?: number | null
+          tipo_corrigido?: string | null
+          titulo: string
+          transcript_redigido?: string | null
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          granola_note_id?: string | null
+          id?: string
+          ocorreu_em?: string
+          origem_contato?: string | null
+          origem_nome?: string | null
+          proximo_passo?: string | null
+          proximo_passo_em?: string | null
+          redacoes?: Json
+          status?: string
+          tipo?: string
+          tipo_confianca?: number | null
+          tipo_corrigido?: string | null
+          titulo?: string
+          transcript_redigido?: string | null
+        }
+        Relationships: []
+      }
+      reuniao_insight: {
+        Row: {
+          categoria: string
+          citacao: string
+          created_at: string
+          falante: string
+          id: string
+          modulo_pilar: string | null
+          removido: boolean
+          reuniao_id: string
+          texto: string
+          texto_duvidoso: boolean
+        }
+        Insert: {
+          categoria: string
+          citacao: string
+          created_at?: string
+          falante?: string
+          id?: string
+          modulo_pilar?: string | null
+          removido?: boolean
+          reuniao_id: string
+          texto: string
+          texto_duvidoso?: boolean
+        }
+        Update: {
+          categoria?: string
+          citacao?: string
+          created_at?: string
+          falante?: string
+          id?: string
+          modulo_pilar?: string | null
+          removido?: boolean
+          reuniao_id?: string
+          texto?: string
+          texto_duvidoso?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reuniao_insight_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reuniao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reuniao_segmento: {
+        Row: {
+          fim: number
+          id: string
+          inicio: number
+          proporcao_ruido: number | null
+          reuniao_id: string
+          tipo: string
+        }
+        Insert: {
+          fim: number
+          id?: string
+          inicio: number
+          proporcao_ruido?: number | null
+          reuniao_id: string
+          tipo: string
+        }
+        Update: {
+          fim?: number
+          id?: string
+          inicio?: number
+          proporcao_ruido?: number | null
+          reuniao_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reuniao_segmento_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reuniao"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -9021,10 +9543,13 @@ export type Database = {
           numero: number
           obra_frente_id: string | null
           obra_id: string | null
+          portal_entrega_id: string | null
           prazo: string | null
           prioridade: string
+          projeto_disciplina_id: string | null
           projeto_id: string | null
           responsavel_id: string | null
+          retrabalho: boolean
           sensivel_clima: string | null
           sinalizada: boolean
           status: string
@@ -9047,10 +9572,13 @@ export type Database = {
           numero?: number
           obra_frente_id?: string | null
           obra_id?: string | null
+          portal_entrega_id?: string | null
           prazo?: string | null
           prioridade?: string
+          projeto_disciplina_id?: string | null
           projeto_id?: string | null
           responsavel_id?: string | null
+          retrabalho?: boolean
           sensivel_clima?: string | null
           sinalizada?: boolean
           status?: string
@@ -9073,10 +9601,13 @@ export type Database = {
           numero?: number
           obra_frente_id?: string | null
           obra_id?: string | null
+          portal_entrega_id?: string | null
           prazo?: string | null
           prioridade?: string
+          projeto_disciplina_id?: string | null
           projeto_id?: string | null
           responsavel_id?: string | null
+          retrabalho?: boolean
           sensivel_clima?: string | null
           sinalizada?: boolean
           status?: string
@@ -9110,6 +9641,20 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_portal_entrega_id_fkey"
+            columns: ["portal_entrega_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
             referencedColumns: ["id"]
           },
           {
@@ -9883,6 +10428,8 @@ export type Database = {
           observacao: string | null
           ordem_prioridade: number | null
           parcelas: string | null
+          placa_data: string | null
+          placa_status: string | null
           pode_ver_valor: boolean | null
           prioridade: string | null
           status: Database["public"]["Enums"]["status_projeto"] | null
@@ -9915,6 +10462,8 @@ export type Database = {
           observacao?: string | null
           ordem_prioridade?: number | null
           parcelas?: string | null
+          placa_data?: string | null
+          placa_status?: string | null
           pode_ver_valor?: never
           prioridade?: string | null
           status?: Database["public"]["Enums"]["status_projeto"] | null
@@ -9947,6 +10496,8 @@ export type Database = {
           observacao?: string | null
           ordem_prioridade?: number | null
           parcelas?: string | null
+          placa_data?: string | null
+          placa_status?: string | null
           pode_ver_valor?: never
           prioridade?: string | null
           status?: Database["public"]["Enums"]["status_projeto"] | null
@@ -10064,6 +10615,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_projeto_historico: {
+        Row: {
+          autor_nome: string | null
+          chave: string | null
+          dados: Json | null
+          detalhe: string | null
+          disciplina_id: string | null
+          disciplina_nome: string | null
+          ocorrido_em: string | null
+          origem_id: string | null
+          projeto_id: string | null
+          tipo: string | null
+        }
+        Relationships: []
       }
       v_projeto_timeline: {
         Row: {
@@ -10617,6 +11183,10 @@ export type Database = {
       _ultra_admin_mfa_ok: { Args: never; Returns: boolean }
       _universal_features: { Args: never; Returns: string[] }
       aceitar_convite_pendente: { Args: never; Returns: string }
+      acessar_link_proposta: {
+        Args: { p_acao: string; p_token: string }
+        Returns: Json
+      }
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json
@@ -10789,6 +11359,7 @@ export type Database = {
       can_manage_equipe: { Args: never; Returns: boolean }
       can_view_financeiro: { Args: never; Returns: boolean }
       can_view_folha: { Args: never; Returns: boolean }
+      cerebro_resumo: { Args: never; Returns: Json }
       check_convite_rate_limit: {
         Args: { p_empresa_id: string }
         Returns: undefined
@@ -11329,6 +11900,7 @@ export type Database = {
         }[]
       }
       limpar_registros_acesso: { Args: never; Returns: number }
+      limpar_transcricoes_reuniao: { Args: never; Returns: number }
       listar_clientes_paginado: {
         Args: {
           p_com_projeto?: boolean
@@ -11645,13 +12217,16 @@ export type Database = {
           disciplina_nome: string
           drive_url: string
           id: string
+          numero_revisao: number
           obra_id: string
           obra_nome: string
           projeto_disciplina_id: string
           projeto_id: string
           projeto_nome: string
           respondido_em: string
+          respondido_por: string
           resposta_cliente: string
+          revisao_anterior_id: string
           status: string
           tipo: string
           titulo: string
@@ -11683,6 +12258,18 @@ export type Database = {
         Args: { p_dias: number; p_justificativa?: string; p_projeto: string }
         Returns: string
       }
+      projeto_nome_ator: { Args: { p_id: string }; Returns: string }
+      projeto_parcelas_elegiveis: {
+        Args: { p_cliente: string; p_empresa: string; p_projeto: string }
+        Returns: {
+          descricao: string
+          grupo: string
+          grupo_id: string
+          id: string
+          valor: number
+          vencimento: string
+        }[]
+      }
       projeto_prazo_avisar: { Args: { p_projeto: string }; Returns: number }
       projetos_com_escopo_estourado: {
         Args: never
@@ -11694,6 +12281,22 @@ export type Database = {
           projeto_id: string
         }[]
       }
+      proposta_link_digest: { Args: { p_proposta_id: string }; Returns: string }
+      prospec_montar_fila: {
+        Args: { p_canal?: string; p_limite?: number }
+        Returns: number
+      }
+      prospec_registrar: {
+        Args: {
+          p_canal?: string
+          p_contato_nome?: string
+          p_lead: string
+          p_resultado: string
+          p_texto?: string
+        }
+        Returns: undefined
+      }
+      publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }
       rate_limit_cleanup: { Args: never; Returns: undefined }
       rate_limit_cleanup_monitored: { Args: never; Returns: undefined }
@@ -11709,6 +12312,16 @@ export type Database = {
       regenerate_convite_token: {
         Args: { p_convite_id: string }
         Returns: string
+      }
+      registrar_acesso_ultra_admin: {
+        Args: {
+          p_action: string
+          p_empresa_alvo: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_type?: string
+        }
+        Returns: undefined
       }
       registrar_dispositivo: {
         Args: { p_descricao: string; p_dispositivo_id: string }
@@ -11732,6 +12345,7 @@ export type Database = {
       }
       retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       reverificar_documentos_disparar: { Args: never; Returns: undefined }
+      revogar_link_proposta: { Args: { p_versao_id: string }; Returns: boolean }
       rpc_apagar_notificacoes_comentario: {
         Args: {
           p_comentario_id: string
@@ -11783,12 +12397,35 @@ export type Database = {
         Args: { p_concluida_em?: string; p_revisao_id: string }
         Returns: undefined
       }
+      rpc_confirmar_cobranca_aditivo: {
+        Args: {
+          p_aceite?: string
+          p_aditivo: string
+          p_grupo?: string
+          p_parcelas?: number
+          p_previa: Json
+          p_vencimento?: string
+        }
+        Returns: Json
+      }
       rpc_converter_lead_cliente: {
         Args: { p_lead_id: string; p_omit_cnpj?: boolean }
         Returns: string
       }
       rpc_converter_proposta_projeto: {
         Args: { p_proposta_id: string }
+        Returns: string
+      }
+      rpc_criar_aditivo_projeto: {
+        Args: {
+          p_descricao: string
+          p_disciplina_id?: string
+          p_entrega_id?: string
+          p_motivo: string
+          p_projeto_id: string
+          p_registro_id?: string
+          p_valor: number
+        }
         Returns: string
       }
       rpc_criar_convite_cotacao: {
@@ -12010,9 +12647,36 @@ export type Database = {
           tem_conta: boolean
         }[]
       }
+      rpc_prever_cobranca_aditivo: {
+        Args: {
+          p_aditivo: string
+          p_grupo?: string
+          p_parcelas?: number
+          p_vencimento?: string
+        }
+        Returns: Json
+      }
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
         Returns: Json
+      }
+      rpc_registrar_atividade_projeto: {
+        Args: {
+          p_anexo?: string
+          p_avaliar_cobranca?: boolean
+          p_disciplina?: string
+          p_duracao?: number
+          p_fornecedor?: string
+          p_local_canal?: string
+          p_ocorrido: string
+          p_projeto: string
+          p_proximo_passo?: string
+          p_responsavel?: string
+          p_resultado: string
+          p_resumo: string
+          p_tipo: string
+        }
+        Returns: string
       }
       rpc_registrar_revisao: {
         Args: {
@@ -12028,6 +12692,10 @@ export type Database = {
         Returns: undefined
       }
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
+      rpc_resumo_aditivos_projeto: {
+        Args: { p_projeto: string }
+        Returns: Json
+      }
       rpc_retomar_disciplina: {
         Args: { p_disciplina_id: string }
         Returns: undefined
@@ -12088,6 +12756,10 @@ export type Database = {
       }
       set_metas_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      set_modulos_ocultos: {
+        Args: { p_alvo: string; p_modulos: string[]; p_usuario_id: string }
         Returns: undefined
       }
       set_onboarding_state: { Args: { patch: Json }; Returns: Json }

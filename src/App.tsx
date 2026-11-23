@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +41,24 @@ const PullToRefresh = lazy(() =>
 const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );
+
+// O modal só entra na árvore quando alguém abre as configurações: o login e as telas
+// públicas não baixam esse código. Logado, ele é baixado em ocioso para abrir sem espera.
+function SettingsDialogSobDemanda() {
+  const { isOpen } = useSettingsModal();
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setMontado(true);
+  }, [isOpen]);
+
+  if (!montado) return null;
+  return (
+    <Suspense fallback={null}>
+      <SettingsDialog />
+    </Suspense>
+  );
+}
 
 const Checkout = lazy(() => import("./pages/checkout"));
 const Login = lazy(() => import("./pages/Login"));
@@ -88,6 +106,7 @@ const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
+const PropostaPublica = lazy(() => import("./pages/propostas/PropostaPublica"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteConvite = lazy(() => import("./pages/cliente/ClienteConvite"));
 const CotarPage = lazy(() => import("./pages/cotar/CotarPage"));
@@ -117,6 +136,10 @@ const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases
 const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
 const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
 const UltraDoresMercado = lazy(() => ultraAdmin().then((m) => ({ default: m.DoresMercado })));
+const UltraReunioes = lazy(() => ultraAdmin().then((m) => ({ default: m.Reunioes })));
+const UltraReuniaoDetalhe = lazy(() => ultraAdmin().then((m) => ({ default: m.ReuniaoDetalhe })));
+const UltraProspeccao = lazy(() => ultraAdmin().then((m) => ({ default: m.Prospeccao })));
+const UltraCerebro = lazy(() => ultraAdmin().then((m) => ({ default: m.Cerebro })));
 const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
 const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
@@ -277,6 +300,7 @@ const App = () => {
                         <Route path="/termos" element={<ExternalRedirect path="/termos" />} />
                         <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
                         <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/proposta-compartilhada" element={<PropostaPublica />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                           path="/cadastro"
@@ -468,6 +492,10 @@ const App = () => {
                               <Route path="ajuda" element={<UltraAjudaLacunas />} />
                               <Route path="satisfacao" element={<UltraSatisfacao />} />
                               <Route path="dores" element={<UltraDoresMercado />} />
+                              <Route path="reunioes" element={<UltraReunioes />} />
+                              <Route path="reunioes/:id" element={<UltraReuniaoDetalhe />} />
+                              <Route path="prospeccao" element={<UltraProspeccao />} />
+                              <Route path="cerebro" element={<UltraCerebro />} />
                               <Route path="comunicados" element={<UltraComunicados />} />
                               <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />
@@ -518,9 +546,7 @@ const App = () => {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
-                    <Suspense fallback={null}>
-                      <SettingsDialog />
-                    </Suspense>
+                    <SettingsDialogSobDemanda />
                   </ValoresOcultosProvider>
                 </SettingsModalProvider>
               </ImpersonationProvider>

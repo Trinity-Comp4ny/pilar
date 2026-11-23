@@ -41,8 +41,8 @@ for i in $(seq 1 "$TENTATIVAS"); do
 
   if [ "$STATUS" = "200" ] && grep -q '"status"' "$BODY"; then
     echo "health OK na tentativa $i (HTTP $STATUS)"
-    cat "$BODY"
-    echo
+    # Health pode conter detalhes operacionais internos. Não publica corpo
+    # completo em logs de CI, apenas o estado e a versão quando solicitada.
 
     # O campo version vem do secret RELEASE_SHA, que só entra no próximo cold
     # start de cada function. Ficar atrás do commit recém-deployado é normal por
@@ -57,7 +57,7 @@ for i in $(seq 1 "$TENTATIVAS"); do
   fi
 
   echo "tentativa $i/$TENTATIVAS: HTTP ${STATUS:-sem resposta}"
-  [ -s "$BODY" ] && head -c 400 "$BODY" && echo
+  # Não publicar respostas brutas de erro: podem conter dados de infraestrutura.
   [ "$i" -lt "$TENTATIVAS" ] && sleep "$ESPERA"
 done
 

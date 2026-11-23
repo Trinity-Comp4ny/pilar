@@ -1,5 +1,5 @@
 import { Prop } from "./DisciplinaProp";
-import { DisciplinaExecucaoEditor } from "./ExecucaoDisciplinaFields";
+import { DisciplinaResponsaveis } from "./DisciplinaResponsaveis";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,9 +42,8 @@ import { type DisciplinaComentario, type DisciplinaResponsavel, disciplinaStatus
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
-import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import { HorasMinutosField } from "@/components/HorasMinutosField";
-import { AtividadeComposer } from "./AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposerComMencoes";
 import { useDisciplinaChecklist } from "@/pages/projetos/hooks/useProjetoDisciplinaChecklist";
 import { useDisciplinaPausas, totalDiasParados } from "@/pages/projetos/hooks/useDisciplinaPausas";
 import { useDisciplinaRevisoes, revisaoAberta } from "@/pages/projetos/hooks/useDisciplinaRevisoes";
@@ -65,7 +64,7 @@ interface DisciplinaDetailDialogProps {
   pessoas: { id: string; nome: string }[];
   onUpdateField: (field: keyof DisciplinaResponsavel, value: string) => void;
   onUpdateResponsaveis: (ids: string[]) => void;
-  onUpdateExecucao?: (tipo: "interna" | "terceirizada", prestador: string) => void | Promise<void>;
+  onUpdateExecucao?: (tipo: "interna" | "terceirizada", prestador: string, ids?: string[]) => void | Promise<void>;
   /** Opcionais: só a disciplina persistida (detalhe do projeto) edita estes. */
   onUpdateLabels?: (next: string[]) => void;
   onUpdateLinks?: (next: LinkItem[]) => void;
@@ -351,10 +350,19 @@ function DisciplinaDetailBody({
               </Prop>
 
               <Prop icon={User} label="Responsáveis">
-                <SeletorResponsaveis
+                <DisciplinaResponsaveis
                   value={(disciplina.responsaveis ?? []).map((r) => r.responsavel_id).filter(Boolean)}
                   pessoas={pessoas}
-                  onChange={onUpdateResponsaveis}
+                  terceirizada={disciplina.tipo_execucao === "terceirizada"}
+                  onChange={(ids, externa) =>
+                    onUpdateExecucao
+                      ? onUpdateExecucao(
+                          externa ? "terceirizada" : "interna",
+                          disciplina.prestador_nome || "Serviço terceirizado",
+                          ids
+                        )
+                      : onUpdateResponsaveis(ids)
+                  }
                 />
               </Prop>
 
@@ -379,11 +387,6 @@ function DisciplinaDetailBody({
                 </Select>
               </Prop>
 
-              {onUpdateExecucao && (
-                <Prop icon={Layers} label="Execução" className="md:col-span-2">
-                  <DisciplinaExecucaoEditor disciplina={disciplina} onSave={onUpdateExecucao} />
-                </Prop>
-              )}
               <Prop icon={Layers} label="Disciplina">
                 <Select value={disciplina.disciplina} onValueChange={(val) => onUpdateField("disciplina", val)}>
                   <SelectTrigger className="h-9">

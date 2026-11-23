@@ -31,6 +31,8 @@ interface AcessoPortalDialogProps {
   clienteNome: string;
   /** E-mail do cadastro do cliente: vem preenchido no primeiro convite, para o admin conferir. */
   clienteEmail?: string | null;
+  /** Empresa dona do cliente (o ultra_admin age em cliente de outra empresa, auditado no servidor). */
+  empresaId?: string;
 }
 
 /**
@@ -45,6 +47,7 @@ export function AcessoPortalDialog({
   clienteId,
   clienteNome,
   clienteEmail,
+  empresaId,
 }: AcessoPortalDialogProps) {
   const queryClient = useQueryClient();
   const requireAal2 = useRequireAal2();
@@ -93,7 +96,7 @@ export function AcessoPortalDialog({
     if (!EMAIL_RE.test(destino)) return;
     if (!(await requireAal2())) return;
     try {
-      const r = await invitePortal({ clienteId, email: destino, nome: nome.trim() || undefined });
+      const r = await invitePortal({ clienteId, email: destino, nome: nome.trim() || undefined, empresaId });
       // Cliente sem e-mail no cadastro: guarda o primeiro, para a próxima vez.
       if (!clienteEmail && acessos.length === 0) {
         await supabase.from("clientes").update({ email: r.email }).eq("id", clienteId);
@@ -112,7 +115,7 @@ export function AcessoPortalDialog({
     if (!(await requireAal2())) return;
     setReenviando(acesso.id);
     try {
-      const r = await resetPortalPassword({ clienteId, nomeCliente: clienteNome, accountId: acesso.id });
+      const r = await resetPortalPassword({ clienteId, nomeCliente: clienteNome, accountId: acesso.id, empresaId });
       toast.success(acesso.status === "ativo" ? "Novo acesso enviado" : "Convite reenviado", {
         description: `Enviado para ${r.email}.`,
       });

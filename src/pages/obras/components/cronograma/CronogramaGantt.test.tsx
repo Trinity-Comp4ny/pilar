@@ -157,6 +157,17 @@ describe("CronogramaGantt: o filho fica dentro do pai", () => {
 });
 
 describe("CronogramaGantt", () => {
+  it("Exportar baixa o cronograma em CSV", () => {
+    const criar = vi.fn(() => "blob:csv");
+    Object.assign(URL, { createObjectURL: criar, revokeObjectURL: vi.fn() });
+    const clique = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    montar();
+    fireEvent.click(screen.getByRole("button", { name: /Exportar/ }));
+    expect(criar).toHaveBeenCalledTimes(1);
+    expect(clique).toHaveBeenCalledTimes(1);
+    clique.mockRestore();
+  });
+
   it("sem nenhum período mostra o vazio que leva para a lista", () => {
     montar({ fases: [faseSemPeriodo] });
     expect(screen.getByText("Sem datas para a linha do tempo")).toBeInTheDocument();

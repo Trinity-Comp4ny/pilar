@@ -31,14 +31,17 @@ export interface ModuleGroup {
 export function useModuleNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getNavItemProps, isAdmin, role } = usePermissions();
+  const { getNavItemProps, isAdmin, role, moduloVisivel } = usePermissions();
 
   const currentPath = location.pathname;
   const currentView = new URLSearchParams(location.search).get("view");
 
   // Módulo ativo: inferido da rota; rota transversal (/inicio, /agentes...) mantém o último usado.
   const routeModule = routeToModule(currentPath);
-  const activeModule: ModuleId = routeModule ?? readUltimoModulo();
+  const ultimo = readUltimoModulo();
+  // Último módulo salvo pode ter sido ocultado depois: cai no primeiro visível (ADR 0066).
+  const activeModule: ModuleId =
+    routeModule ?? (moduloVisivel(ultimo) ? ultimo : (MODULE_ORDER.find((id) => moduloVisivel(id)) ?? ultimo));
 
   useEffect(() => {
     if (routeModule) saveUltimoModulo(routeModule);
@@ -87,12 +90,13 @@ export function useModuleNav() {
   const visibleModules = useMemo(
     () =>
       MODULE_ORDER.filter((id) => {
+        if (!moduloVisivel(id)) return false;
         const m = MODULES[id];
         if (m.emBreve) return true;
         return withNav(m.items).some(({ nav }) => !nav.disabled);
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getNavItemProps, isAdmin, role]
+    [getNavItemProps, isAdmin, role, moduloVisivel]
   );
 
   const selectModule = (id: ModuleId, onAfterNavigate?: () => void) => {
@@ -102,6 +106,7 @@ export function useModuleNav() {
   };
 
   return {
+    moduloVisivel,
     currentPath,
     currentView,
     routeModule,

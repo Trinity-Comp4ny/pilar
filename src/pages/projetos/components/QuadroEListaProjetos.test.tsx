@@ -1,10 +1,11 @@
 import { type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fake, rpcComEmpresa } from "@/pages/obras/testing/supabaseFake";
+import { formatDateLocal } from "@/lib/businessDays";
 import type { Projeto } from "@/types/projetos";
 import type { ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
 
@@ -36,11 +37,16 @@ import { ProjetosMobileList } from "./ProjetosMobileList";
 import { ProjetosKPIs } from "./ProjetosKPIs";
 import { ProjetosEmptyState } from "./ProjetosEmptyState";
 
-const hoje = new Date();
+const hoje = new Date(2026, 10, 18, 12);
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(hoje);
+});
+afterEach(() => vi.useRealTimers());
 const iso = (dias: number) => {
   const d = new Date(hoje);
   d.setDate(d.getDate() + dias);
-  return d.toISOString().slice(0, 10);
+  return formatDateLocal(d);
 };
 
 const projetos = [
@@ -287,40 +293,90 @@ describe("KanbanBoard", () => {
 });
 
 describe("ListaProjetos", () => {
-  it("tabela com coluna, prioridade, prazo, valor e margem; clique abre", () => {
-    const onCardClick = vi.fn();
-    const onMoverEtapa = vi.fn();
-    render(
-      <ListaProjetos
-        projetos={projetos}
-        etapas={etapas}
-        rentabilidadeMap={{ "p-1": 32.4 }}
-        canEdit
-        onCardClick={onCardClick}
-        onMoverEtapa={onMoverEtapa}
-      />,
-      { wrapper: wrapper() }
-    );
+  function montarLista(over: Partial<Parameters<typeof ListaProjetos>[0]> = {}) {
+    const handlers = {
+      onCardClick: vi.fn(),
+      onEditClick: vi.fn(),
+      onDelete: vi.fn(),
+      onMoverEtapa: vi.fn(),
+    };
+    render(<ListaProjetos projetos={projetos} etapas={etapas} canEdit {...handlers} {...over} />, {
+      wrapper: wrapper(),
+    });
+    return handlers;
+  }
+
+  it("mostra status, prioridade, data prevista, progresso e responsáveis na ordem da lista", () => {
+    const { onCardClick } = montarLista({
+      projetos: [{ ...projetos[0], data_previsao: "2020-04-12" }, projetos[1]],
+    });
     const tabela = screen.getByRole("table");
-    expect(within(tabela).getByText("Residência Silva")).toBeInTheDocument();
-    expect(within(tabela).getByText("32%")).toBeInTheDocument();
-    expect(within(tabela).getAllByText("Alta").length).toBeGreaterThan(0);
+    expect(
+      within(tabela)
+        .getAllByRole("columnheader")
+        .map((celula) => celula.textContent)
+    ).toEqual(["Projeto", "Cliente", "Status", "Prioridade", "Prazo", "Progresso", "Responsáveis", "Ações"]);
+    expect(within(tabela).getByText("Execução")).toBeInTheDocument();
+    expect(within(tabela).getByText("Alta")).toBeInTheDocument();
+    expect(within(tabela).getByText("12 de abril de 2020")).toHaveAttribute("datetime", "2020-04-12");
+    expect(within(tabela).getByRole("progressbar", { name: "Progresso de Residência Silva" })).toHaveAttribute(
+      "aria-valuenow",
+      "100"
+    );
+    expect(within(tabela).getByTitle("Bia")).toHaveTextContent("BI");
     fireEvent.click(within(tabela).getByText("Galpão Norte"));
     expect(onCardClick).toHaveBeenCalledWith(projetos[1]);
   });
 
+  it("oferece abrir, editar e excluir sem acionar o clique da linha", () => {
+    const { onCardClick, onEditClick, onDelete } = montarLista();
+    const botao = screen.getByRole("button", { name: "Ações de Residência Silva" });
+    const abrir = () => fireEvent.keyDown(botao, { key: "Enter" });
+
+    abrir();
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+      "Abrir projeto completo",
+      "Editar",
+      "Excluir projeto",
+    ]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Editar" }));
+    expect(onEditClick).toHaveBeenCalledWith(projetos[0]);
+
+    abrir();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Excluir projeto" }));
+    expect(onDelete).toHaveBeenCalledWith("p-1");
+
+    abrir();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Abrir projeto completo" }));
+    expect(screen.getByText("pagina-projeto")).toBeInTheDocument();
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it("mantém apenas a navegação no menu de quem não pode editar", () => {
+    montarLista({ canEdit: false });
+    abrirMenu(screen.getByRole("button", { name: "Ações de Residência Silva" }));
+    expect(screen.getAllByRole("menuitem")).toHaveLength(1);
+    expect(screen.getByRole("menuitem", { name: "Abrir projeto completo" })).toHaveAttribute("href", "/projetos/p-1");
+  });
+
+  it("mostra progresso, responsáveis, prazo e ações nos cartões da lista em telas pequenas", () => {
+    const largura = window.innerWidth;
+    try {
+      window.innerWidth = 390;
+      montarLista({ projetos: [{ ...projetos[0], data_previsao: "2020-04-12" }] });
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+      expect(screen.getByText("12 de abril de 2020")).toBeInTheDocument();
+      expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+      expect(screen.getByTitle("Bia")).toBeInTheDocument();
+      abrirMenu(screen.getByRole("button", { name: "Ações de Residência Silva" }));
+      expect(screen.getByRole("menuitem", { name: "Editar" })).toBeInTheDocument();
+    } finally {
+      window.innerWidth = largura;
+    }
+  });
+
   it("vazio mostra a mensagem", () => {
-    render(
-      <ListaProjetos
-        projetos={[]}
-        etapas={etapas}
-        rentabilidadeMap={{}}
-        canEdit={false}
-        onCardClick={vi.fn()}
-        onMoverEtapa={vi.fn()}
-      />,
-      { wrapper: wrapper() }
-    );
+    montarLista({ projetos: [], canEdit: false });
     expect(screen.getByText("Nenhum projeto nesta lista.")).toBeInTheDocument();
   });
 });

@@ -1,8 +1,11 @@
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
-import { AtividadeComposer } from "./AtividadeComposer";
+import { AtividadeComposer } from "@/components/atividades/AtividadeComposerComMencoes";
 import { notificarMencao } from "@/lib/notificarMencao";
 import { ComentariosLista } from "@/components/atividades/ComentariosLista";
 import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
+
+import { RegistrosProjeto } from "./RegistrosProjeto";
+import type { DisciplinaAditivo } from "@/components/AditivoProjetoDialogs";
 
 interface ProjetoAtividadesPanelProps {
   projetoId: string;
@@ -10,6 +13,9 @@ interface ProjetoAtividadesPanelProps {
   autorNome: string;
   /** Comentário de destino de um link de notificação (spec 103). */
   comentarioDestacado?: string | null;
+  canEdit?: boolean;
+  podeCriarAditivo?: boolean;
+  disciplinas?: DisciplinaAditivo[];
 }
 
 /** Painel de atividades do projeto (só comentários; os links vivem no conteúdo). */
@@ -18,6 +24,9 @@ export function ProjetoAtividadesPanel({
   pessoas,
   autorNome,
   comentarioDestacado,
+  canEdit = false,
+  podeCriarAditivo = false,
+  disciplinas,
 }: ProjetoAtividadesPanelProps) {
   const { comentarios, salvar } = useProjetoAtividades(projetoId);
   const { autorId } = useComentarioAutoria(autorNome);
@@ -47,12 +56,21 @@ export function ProjetoAtividadesPanel({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex-1 min-h-0 space-y-2 overflow-y-auto">
+        {disciplinas && (
+          <RegistrosProjeto
+            projetoId={projetoId}
+            pessoas={pessoas}
+            disciplinas={disciplinas}
+            canEdit={canEdit}
+            podeCriarAditivo={podeCriarAditivo}
+          />
+        )}
         <ComentariosLista
           comentarios={comentarios}
           pessoas={pessoas}
           autorNome={autorNome}
           destacadoId={comentarioDestacado}
-          vazio="Nenhuma atividade ainda"
+          vazio={disciplinas ? "Nenhum comentário ainda" : "Nenhuma atividade ainda"}
           onExcluir={excluir}
           entidade={{ tipo: "projeto", id: projetoId }}
         />

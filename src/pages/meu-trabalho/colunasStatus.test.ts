@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useColunasLista } from "./colunas";
-import { corDaEtapa, isPrioridade, isStatusBucket, toPrioridade } from "./status";
+import { corDaEtapa, isPrioridade, isStatusBucket, toPrioridade } from "@/lib/tarefas/status";
 
 /**
  * Preferência de colunas da lista (localStorage, tolerante a lixo e a storage

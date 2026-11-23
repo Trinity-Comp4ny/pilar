@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { KanbanCard, KanbanChip, KanbanPriority } from "@/components/kanban/KanbanCard";
 import { cn } from "@/lib/utils";
-import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "../status";
+import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "@/lib/tarefas/status";
 import type { ItemTrabalho } from "../useItensTrabalho";
-import type { Etapa } from "../useEtapas";
+import type { Etapa } from "@/hooks/tarefas/useEtapas";
 
 function prazoInfo(prazo: string | null, concluida: boolean): { texto: string; atrasado: boolean } | null {
   if (!prazo) return null;

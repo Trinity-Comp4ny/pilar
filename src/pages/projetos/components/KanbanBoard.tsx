@@ -6,6 +6,7 @@ import { AddColumnInline } from "@/components/kanban/AddColumnInline";
 import { KANBAN_ADD_COLUMN_CLASSES, KANBAN_BOARD_CLASS } from "@/components/kanban/kanbanLayout";
 import { KanbanColumn as ColunaPadrao } from "@/components/kanban/KanbanColumn";
 import { KanbanColumn } from "@/pages/projetos/components/KanbanColumn";
+import { ProjetoColumnSkeleton } from "@/pages/projetos/components/ProjetoCardSkeleton";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 
 const BUCKETS: ProjectStatus[] = [
@@ -21,6 +22,8 @@ interface KanbanBoardProps {
   etapas: ProjetoEtapa[];
   collapsedColumns: Set<string>;
   loadingProjetos: boolean;
+  /** Etapas ainda carregando: sem colunas para desenhar, mostra colunas-esqueleto. */
+  loadingEtapas?: boolean;
   canEdit: boolean;
   clientes: { id: string; nome: string }[];
   rentabilidadeMap: Record<string, number>;
@@ -45,6 +48,7 @@ export function KanbanBoard({
   etapas,
   collapsedColumns,
   loadingProjetos,
+  loadingEtapas = false,
   canEdit,
   clientes,
   rentabilidadeMap,
@@ -61,6 +65,24 @@ export function KanbanBoard({
   onDelete,
   onQuickAddCreated,
 }: KanbanBoardProps) {
+  if (loadingEtapas && etapas.length === 0) {
+    return (
+      <div className={`hidden md:flex ${KANBAN_BOARD_CLASS}`} role="status" aria-label="Carregando o quadro">
+        {[0, 1, 2, 3].map((i) => (
+          <ColunaPadrao
+            key={i}
+            id={`carregando-${i}`}
+            title="Carregando"
+            color="#94a3b8"
+            count={0}
+            dropDisabled
+            loading={<ProjetoColumnSkeleton count={2 + (i % 2)} />}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className={`hidden md:flex ${KANBAN_BOARD_CLASS}`}>
       {etapas.map((etapa, index) => (

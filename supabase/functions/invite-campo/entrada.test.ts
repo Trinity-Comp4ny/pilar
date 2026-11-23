@@ -21,3 +21,13 @@ Deno.test("nome obrigatório e curto; obra precisa ser uuid", () => {
   assertEquals(lerEntrada({ obra_id: obra, nome: "x".repeat(200) }), { ok: false, error: "Informe o nome" });
   assertEquals(lerEntrada({ obra_id: "1", nome: "José" }), { ok: false, error: "obra_id inválido" });
 });
+
+Deno.test("empresa_id é opcional e tem que ser uuid", () => {
+  const emp = "11111111-2222-4333-8444-555555555555";
+  const r = lerEntrada({ obra_id: obra, nome: "José", empresa_id: emp });
+  assertEquals(r.ok && r.data.empresa_id, emp);
+  assertEquals(lerEntrada({ obra_id: obra, nome: "José", empresa_id: "x" }), {
+    ok: false,
+    error: "empresa_id inválido",
+  });
+});

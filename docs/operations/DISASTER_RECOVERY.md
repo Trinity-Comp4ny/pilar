@@ -15,9 +15,14 @@ melhor que o intervalo do backup manual.
 
 | Métrica                            | Target                                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------ |
-| **RTO** (Recovery Time Objective)  | 4 horas (drill real: dump 2min + restore 1-2s — o gargalo é humano, não técnico)     |
+| **RTO** (Recovery Time Objective)  | 4 horas. O resumo do drill registra o tempo técnico de recuperação     |
 | **RPO** (Recovery Point Objective) | 24 horas (backup noturno via GitHub Actions, ver abaixo — **não é PITR de verdade**) |
 | **Disponibilidade alvo**           | 99.9% (43min downtime/mês)                                                           |
+
+O tempo registrado pelo drill cobre a recuperação do backup até a releitura do Storage
+no runner. Para GCS, começa no job que baixa a cópia e inclui a espera pelo job de
+restauração. O RTO de um incidente também inclui a mobilização da equipe e a volta
+do tráfego, etapas realizadas fora do drill.
 
 ## Backups
 
@@ -41,9 +46,14 @@ melhor que o intervalo do backup manual.
   que exporta apenas o schema. Os artifacts anteriores a essa data não servem para
   recuperar dado de cliente.
 - **Verificação mensal automática:** `.github/workflows/drill-restore-mensal.yml` (dia 1)
-  baixa o último backup de produção, restaura num Supabase vazio no runner (Postgres 17)
-  e compara cada tabela com o manifesto, além de RLS e funções de segurança
-  (`scripts/backup-restore-test.sh`). Falha abre issue.
+  baixa o par de artifacts do **mesmo run** de produção. Restaura o banco num
+  Supabase vazio no runner (Postgres 17), compara cada tabela com o manifesto,
+  RLS e funções de segurança (`scripts/backup-restore-test.sh`). Também
+  descriptografa o archive do Storage em área temporária e verifica sem extrair
+  os dados: manifesto, nomes de objetos, tipos de entrada do tar, tamanho e
+  SHA-256 de cada arquivo (`scripts/backup/verify_storage_archive.py`).
+  Falta de qualquer um dos dois artifacts, corrupção ou inconsistência falha
+  o drill e abre issue. **Ainda não é ensaio de upload real para um bucket novo**.
 
 ### Código
 
@@ -63,6 +73,17 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 - **Credencial:** `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` no environment do
   cron; o script busca a service key na Management API e mascara no log. Sem o par,
   o passo falha e o `notify-cron-failure` abre issue.
+- **Integridade:** backups novos registram `sha256` e `tamanhoBaixado` de
+  cada objeto no `manifest.json`; o job roda
+  `node scripts/storage-backup.mjs verify storage-backup` antes da
+  criptografia e falha se algum arquivo estiver incompleto ou corrompido.
+  O restore também confere os hashes presentes antes de enviar os objetos.
+  Artifacts legados sem hash seguem restauráveis, mas não têm prova
+  criptográfica de integridade por arquivo.
+- **Drill:** o mensal agora valida que os bytes de todas as fotos, templates,
+  áudios e documentos do Storage permanecem recuperáveis dentro do backup
+  criptografado. Isso não comprova API de upload/bucket nem leitura autenticada
+  em um projeto Supabase restaurado; implementar um ensaio separado para isso.
 - **Restore:** ver "Restore do Storage" no runbook abaixo. Repõe só o que sumiu;
   recria bucket apagado com a mesma configuração.
 - **Limitação:** mesmo RPO do banco (até 24h). Arquivo enviado e apagado no mesmo dia

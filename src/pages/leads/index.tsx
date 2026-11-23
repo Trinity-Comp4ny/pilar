@@ -1,3 +1,4 @@
+import { useLeadAtividadeLink } from "./hooks/useLeadAtividadeLink";
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -127,6 +128,7 @@ export default function Leads() {
   const { isAdmin } = useNivelConfianca();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const { onOpenChangeDetalhe, comentarioDestacado } = useLeadAtividadeLink(leads, setSelectedLead, setIsDetailOpen);
   const [isEditOpen, setIsEditOpen] = useState(false);
   // Lead em edição, separado do selectedLead (detalhe): o "Editar" do menu do
   // card abre o formulário sem passar pelo detalhe.
@@ -714,7 +716,8 @@ export default function Leads() {
 
       <LeadDetailDialog
         open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
+        onOpenChange={onOpenChangeDetalhe}
+        comentarioDestacado={comentarioDestacado}
         lead={selectedLead}
         etapaNome={selectedLead ? etapaDoLead(selectedLead, etapas)?.nome : undefined}
         canEdit={canEdit}

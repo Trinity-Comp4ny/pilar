@@ -30,7 +30,7 @@ describe("catálogo de eventos de produto", () => {
   });
 
   it("todo evento do catálogo é disparado por alguma tela", () => {
-    const semUso = eventos.filter((e) => !codigo.includes(`track("${e}"`));
+    const semUso = eventos.filter((e) => !codigo.includes(`track("${e}"`) && !codigo.includes(`ph.capture("${e}"`));
     expect(semUso, "Dispare o evento (analytics.track) ou tire do catálogo").toEqual([]);
   });
 });

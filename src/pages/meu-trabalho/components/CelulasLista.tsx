@@ -20,8 +20,8 @@ import { LabelsEditor } from "@/components/LabelsEditor";
 import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
 import { formatHoras } from "@/lib/format";
-import type { PessoaOpcao } from "../hooks";
-import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "../status";
+import type { PessoaOpcao } from "@/hooks/tarefas/useTarefas";
+import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "@/lib/tarefas/status";
 
 // Impede que o clique na célula editável dispare o "abrir tarefa" da linha.
 function pararClique(e: React.MouseEvent) {

@@ -13,6 +13,8 @@ export interface LancamentosResumo {
   despesas: number;
   saldo: number;
   atrasadosCount: number;
+  atrasadosPagar: number;
+  atrasadosReceber: number;
 }
 
 const EMPTY: LancamentosResumo = {
@@ -25,6 +27,8 @@ const EMPTY: LancamentosResumo = {
   despesas: 0,
   saldo: 0,
   atrasadosCount: 0,
+  atrasadosPagar: 0,
+  atrasadosReceber: 0,
 };
 
 /**
@@ -52,6 +56,8 @@ export function useLancamentosResumo(filters: LancamentosFilters) {
         despesas,
         saldo: receitas - despesas,
         atrasadosCount: Number(r.atrasados_count ?? 0),
+        atrasadosPagar: Number(r.atrasados_pagar ?? 0),
+        atrasadosReceber: Number(r.atrasados_receber ?? 0),
       };
     },
     staleTime: 30 * 1000,

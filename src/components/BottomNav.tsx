@@ -13,7 +13,6 @@ const MoreSheet = lazy(() => carregarMoreSheet().then((m) => ({ default: m.MoreS
 
 /** Ordem dos pilares na barra: Início, Gestão, Projetos, Obra, Menu (pedido do dono, 12/11). */
 const PILAR_ORDER: ModuleId[] = ["gestao", "projetos", "obras"];
-const INDICE_MENU = PILAR_ORDER.length + 1;
 
 const ITEM_CLASS =
   "relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] outline-hidden transition-[color,transform] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none";
@@ -78,7 +77,10 @@ function LenteAtiva({ indice }: { indice: number }) {
  * (`useBarraVisivel`). O vidro e a lente vivem em `src/styles/vidro.css`.
  */
 export function BottomNav() {
-  const { routeModule, selectModule } = useModuleNav();
+  const { routeModule, selectModule, moduloVisivel } = useModuleNav();
+  // ADR 0066: pilar oculto some da barra; os demais mantêm a ordem.
+  const pilares = PILAR_ORDER.filter((id) => moduloVisivel(id));
+  const indiceMenu = pilares.length + 1;
   const { pathname } = useLocation();
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
@@ -88,8 +90,8 @@ export function BottomNav() {
   const visivel = useBarraVisivel();
 
   const inicioAtivo = pathname.startsWith("/inicio");
-  const indicePilar = routeModule ? PILAR_ORDER.indexOf(routeModule) : -1;
-  const indiceAtivo = menuOpen ? INDICE_MENU : inicioAtivo ? 0 : indicePilar >= 0 ? indicePilar + 1 : -1;
+  const indicePilar = routeModule ? pilares.indexOf(routeModule) : -1;
+  const indiceAtivo = menuOpen ? indiceMenu : inicioAtivo ? 0 : indicePilar >= 0 ? indicePilar + 1 : -1;
 
   // Brilho do vidro no ponto do toque.
   const acender = (e: PointerEvent<HTMLElement>) => {
@@ -107,6 +109,7 @@ export function BottomNav() {
           aria-label="Navegação principal"
           data-visivel={visivel}
           data-toque={toque}
+          style={{ "--lente-n": pilares.length + 2 } as CSSProperties}
           onPointerDown={acender}
           onPointerUp={apagar}
           onPointerCancel={apagar}
@@ -128,7 +131,7 @@ export function BottomNav() {
             </BottomNavItem>
           </NavLink>
 
-          {PILAR_ORDER.map((id, i) => {
+          {pilares.map((id, i) => {
             const mod = MODULES[id];
             const Icon = mod.icon;
             const active = routeModule === id;

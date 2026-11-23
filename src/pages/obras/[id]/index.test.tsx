@@ -56,7 +56,9 @@ vi.mock("../components/ObraCronogramaTab", () => ({ ObraCronogramaTab: stub("aba
 vi.mock("../components/ObraTarefasTab", () => ({ ObraTarefasTab: stub("aba-tarefas") }));
 vi.mock("../components/ObraContaTab", () => ({ ObraContaTab: stub("aba-conta") }));
 vi.mock("../components/ObraCotacoesTab", () => ({ ObraCotacoesTab: stub("aba-cotacoes") }));
+vi.mock("../components/ObraResumoExecutivo", () => ({ ObraResumoExecutivo: () => null }));
 vi.mock("../components/ObraEstoqueTab", () => ({ ObraEstoqueTab: stub("aba-estoque") }));
+vi.mock("../components/ObraRelatoriosTab", () => ({ ObraRelatoriosTab: stub("aba-relatorios") }));
 vi.mock("../components/ObraFormDialog", () => ({
   ObraFormDialog: ({ open }: { open: boolean }) => (open ? <div role="dialog">form-obra</div> : null),
 }));
@@ -149,6 +151,7 @@ describe("ObraDetalhePage", () => {
       "Cotações",
       "Estoque",
       "Financeiro",
+      "Relatórios",
       "Acessos",
     ]);
     expect(screen.getByRole("link", { name: "Projeto Silva" })).toHaveAttribute("href", "/projetos/proj-1");
@@ -263,11 +266,11 @@ describe("ObraDetalhePage", () => {
     expect(screen.queryByText("lista-obras")).not.toBeInTheDocument();
   });
 
-  it("esconde a aba Acessos quando a obra é de outra empresa", async () => {
+  it("mantém a aba Acessos quando a obra é de outra empresa (ultra_admin gerencia qualquer empresa)", async () => {
     auth.empresaId = "emp-2";
     comObra();
     montar();
     expect(await screen.findByRole("heading", { name: "Residência Silva" })).toBeInTheDocument();
-    expect(abas()).not.toContain("Acessos");
+    expect(abas()).toContain("Acessos");
   });
 });

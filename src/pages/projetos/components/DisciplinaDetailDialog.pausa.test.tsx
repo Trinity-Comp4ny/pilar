@@ -34,7 +34,7 @@ vi.mock("@/pages/projetos/hooks/useDisciplinaRevisoes", async (importar) => ({
   ...(await importar<typeof import("@/pages/projetos/hooks/useDisciplinaRevisoes")>()),
   useDisciplinaRevisoes: () => ({ data: [], registrar: { mutate: vi.fn() }, concluir: { mutate: vi.fn() } }),
 }));
-vi.mock("./AtividadeComposer", () => ({ AtividadeComposer: () => null }));
+vi.mock("@/components/atividades/AtividadeComposerComMencoes", () => ({ AtividadeComposer: () => null }));
 
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 

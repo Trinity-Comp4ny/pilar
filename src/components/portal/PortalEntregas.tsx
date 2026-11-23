@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,11 @@ import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
-interface Entrega {
+export interface Entrega {
   id: string;
   titulo: string;
+  numero_revisao?: number | null;
+  revisao_anterior_id?: string | null;
   descricao: string | null;
   tipo: string | null;
   status: "pendente" | "aprovado" | "revisao_solicitada";
@@ -27,6 +30,7 @@ interface Entrega {
   projeto_nome?: string | null;
   obra_nome?: string | null;
   resposta_cliente: string | null;
+  respondido_por?: string | null;
   respondido_em: string | null;
   aprovado_ip: string | null;
   aprovado_user_agent: string | null;
@@ -61,6 +65,10 @@ export function EntregasContent({
   mostrarOrigem,
   apenasPendentes,
   vazioTexto,
+  apenasRevisoes,
+  onPublicarRevisao,
+  onCriarTarefa,
+  acoesEntrega,
 }: {
   projetoId?: string;
   obraId?: string;
@@ -70,6 +78,10 @@ export function EntregasContent({
   /** Só o que aguarda resposta (Início e visão geral); sem nada, mostra `vazioTexto` ou não mostra nada. */
   apenasPendentes?: boolean;
   vazioTexto?: string;
+  apenasRevisoes?: boolean;
+  onPublicarRevisao?: (entrega: Entrega) => void;
+  onCriarTarefa?: (entrega: Entrega) => void;
+  acoesEntrega?: (entrega: Entrega) => React.ReactNode;
 }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +108,7 @@ export function EntregasContent({
         let query = supabase
           .from("portal_entregas")
           .select(
-            "id, titulo, descricao, tipo, status, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
+            "id, titulo, descricao, tipo, status, numero_revisao, revisao_anterior_id, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
           );
         if (projetoId) query = query.eq("projeto_id", projetoId);
         if (obraId) query = query.eq("obra_id", obraId);
@@ -135,7 +147,10 @@ export function EntregasContent({
       toast.error("Não foi possível aprovar", {
         description: "Tente novamente em instantes ou fale com o escritório.",
       });
-    else toast.success("Aprovado");
+    else {
+      analytics.track("portal_entrega_aprovada");
+      toast.success("Aprovado");
+    }
     await fetchEntregas();
     setSaving(false);
   };
@@ -154,7 +169,10 @@ export function EntregasContent({
       toast.error("Não foi possível enviar a solicitação", {
         description: "Tente novamente em instantes ou fale com o escritório.",
       });
-    else toast.success("Solicitação de revisão enviada");
+    else {
+      analytics.track("portal_revisao_solicitada");
+      toast.success("Solicitação de revisão enviada");
+    }
     setRespondingId(null);
     setResposta("");
     await fetchEntregas();
@@ -193,18 +211,23 @@ export function EntregasContent({
     );
   }
 
-  if (entregas.length === 0) {
+  const visiveis = apenasRevisoes ? entregas.filter((e) => e.numero_revisao != null) : entregas;
+  if (visiveis.length === 0) {
     return (
       <Card>
         <CardContent className="p-0">
-          <EmptyState icon={FileText} title="Nenhuma solicitação no momento" />
+          <EmptyState
+            icon={FileText}
+            title={apenasRevisoes ? "Nenhuma revisão publicada" : "Nenhuma solicitação no momento"}
+          />
         </CardContent>
       </Card>
     );
   }
 
-  const pendentes = entregas.filter((e) => e.status === "pendente");
-  const concluidos = apenasPendentes ? [] : entregas.filter((e) => e.status !== "pendente");
+  const pendentes = visiveis.filter((e) => e.status === "pendente");
+  const concluidos = apenasPendentes ? [] : visiveis.filter((e) => e.status !== "pendente");
+  const substituidas = new Set(entregas.map((e) => e.revisao_anterior_id).filter(Boolean));
 
   return (
     <div className="space-y-6">
@@ -234,6 +257,7 @@ export function EntregasContent({
                 }}
                 onAprovar={() => handleAprovar(e.id)}
                 onSolicitar={() => handleSolicitarRevisao(e.id)}
+                acoes={acoesEntrega?.(e)}
                 saving={saving}
                 readOnly={readOnly}
                 mostrarOrigem={mostrarOrigem}
@@ -258,6 +282,25 @@ export function EntregasContent({
                 onCancelRevisao={() => undefined}
                 onAprovar={() => undefined}
                 onSolicitar={() => undefined}
+                acoes={
+                  <>
+                    {readOnly && !substituidas.has(e.id) && (
+                      <div className="flex flex-wrap gap-2">
+                        {e.status === "revisao_solicitada" && onCriarTarefa && (
+                          <Button variant="outline" size="sm" onClick={() => onCriarTarefa(e)}>
+                            Criar tarefa de ajuste
+                          </Button>
+                        )}
+                        {onPublicarRevisao && e.numero_revisao != null && (
+                          <Button variant="outline" size="sm" onClick={() => onPublicarRevisao(e)}>
+                            Publicar nova versão
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {acoesEntrega?.(e)}
+                  </>
+                }
                 saving={false}
                 readOnly={readOnly}
                 mostrarOrigem={mostrarOrigem}
@@ -282,8 +325,10 @@ function EntregaCard({
   saving,
   readOnly,
   mostrarOrigem,
+  acoes,
 }: {
   entrega: Entrega;
+  acoes?: React.ReactNode;
   isResponding: boolean;
   resposta: string;
   setResposta: (v: string) => void;
@@ -308,6 +353,9 @@ function EntregaCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-medium">{entrega.titulo}</p>
+              {entrega.numero_revisao != null && (
+                <Badge variant="outline">R{String(entrega.numero_revisao).padStart(2, "0")}</Badge>
+              )}
               {mostrarOrigem && origem && (
                 <Badge variant="outline" className="text-[10px]">
                   {entrega.obra_nome ? "Obra" : "Projeto"}: {origem}
@@ -347,11 +395,19 @@ function EntregaCard({
           </div>
         )}
 
-        {readOnly && entrega.status === "aprovado" && entrega.respondido_em && (
+        {entrega.status !== "pendente" && entrega.respondido_em && (
           <p className="text-3xs text-muted-foreground">
-            Aprovado em {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
-            {entrega.aprovado_ip ? ` · IP ${entrega.aprovado_ip}` : ""}
+            {entrega.status === "aprovado" ? "Aprovado" : "Revisão solicitada"} em{" "}
+            {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
+            {entrega.respondido_por && ` · ${entrega.respondido_por}`}
           </p>
+        )}
+
+        {readOnly && entrega.aprovado_ip && (
+          <details className="text-3xs text-muted-foreground">
+            <summary className="cursor-pointer">Dados técnicos da aprovação</summary>
+            <p>IP {entrega.aprovado_ip}</p>
+          </details>
         )}
 
         {!readOnly && entrega.status === "pendente" && (
@@ -392,6 +448,7 @@ function EntregaCard({
             )}
           </div>
         )}
+        {acoes}
       </CardContent>
     </Card>
   );

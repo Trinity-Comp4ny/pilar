@@ -16,7 +16,15 @@ function statusLabel(acesso: CampoAcesso): string {
   return "Ativo";
 }
 
-export function ObraAcessosTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
+export function ObraAcessosTab({
+  obraId,
+  empresaId,
+  canEdit,
+}: {
+  obraId: string;
+  empresaId?: string;
+  canEdit: boolean;
+}) {
   const { acessos, isLoading, revogar } = useCampoAcessos(obraId);
   const [criarOpen, setCriarOpen] = useState(false);
   const [confirmRevogar, setConfirmRevogar] = useState<CampoAcesso | null>(null);
@@ -90,7 +98,7 @@ export function ObraAcessosTab({ obraId, canEdit }: { obraId: string; canEdit: b
         </div>
       )}
 
-      <CriarAcessoCampoDialog open={criarOpen} onOpenChange={setCriarOpen} obraId={obraId} />
+      <CriarAcessoCampoDialog open={criarOpen} onOpenChange={setCriarOpen} obraId={obraId} empresaId={empresaId} />
 
       <ConfirmDialog
         open={!!confirmRevogar}
