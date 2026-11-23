@@ -1,3 +1,4 @@
+import { origemAtual } from "./origem";
 import { scrubTelemetry } from "@/lib/scrubTelemetry";
 /**
  * Analytics layer: PostHog backed com fallback no-op.
@@ -171,7 +172,9 @@ const posthogAnalytics: Analytics = {
     });
   },
   track(event, properties) {
-    withPosthog((ph) => ph.capture(event, scrub(properties) as Record<string, unknown> | undefined));
+    withPosthog((ph) =>
+      ph.capture(event, { origin: origemAtual(), ...(scrub(properties) as Record<string, unknown> | undefined) })
+    );
   },
   reset() {
     if (posthogInitialized) posthog?.reset();

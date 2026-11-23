@@ -80,8 +80,12 @@ describe("monitoring com Sentry", () => {
       request: { url: "https://app/cotar/[link]?x=1", data: { senha: "***", nome: "Ana" } },
       extra: { cpf: "***", obs: "CPF [CPF]" },
       contexts: { state: { token: "***", ok: 1 } },
+      tags: { origin: "app" },
     });
-    expect(opcoesInit().beforeSend({ message: "sem request" })).toEqual({ message: "sem request" });
+    expect(opcoesInit().beforeSend({ message: "sem request" })).toEqual({
+      message: "sem request",
+      tags: { origin: "app" },
+    });
   });
 
   it("beforeSendTransaction descarta rotas públicas e mascara o resto", () => {
@@ -89,9 +93,9 @@ describe("monitoring com Sentry", () => {
     const fn = opcoesInit().beforeSendTransaction;
     expect(fn({ transaction: "/login" })).toBeNull();
     expect(fn({ transaction: "/cotar/abcdefghijklmnopqrst", request: { url: "/cotar/abcdefghijklmnopqrst" } })).toEqual(
-      { transaction: "/cotar/[link]", request: { url: "/cotar/[link]" } }
+      { transaction: "/cotar/[link]", request: { url: "/cotar/[link]" }, tags: { origin: "app" } }
     );
-    expect(fn({})).toEqual({});
+    expect(fn({})).toEqual({ tags: { origin: "app" } });
   });
 
   it("feedback também passa pelo scrub", () => {
