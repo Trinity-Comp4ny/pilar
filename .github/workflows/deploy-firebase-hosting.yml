@@ -115,6 +115,10 @@ jobs:
         if: env.CANAL == 'preview'
         run: node scripts/verificar-firebase-preview.mjs "$RUNNER_TEMP/firebase-preview.json" "${{ matrix.alvo }}" "$CANAL_NOME"
 
+      - name: Validar a publicação live no domínio padrão do Firebase
+        if: env.CANAL == 'live'
+        run: node scripts/verificar-firebase-preview.mjs --live "${{ matrix.alvo }}" live
+
       - name: Preparar Chromium para o smoke autenticado
         if: env.CANAL == 'preview' && matrix.alvo == 'app'
         uses: ./.github/actions/setup-playwright

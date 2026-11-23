@@ -45,7 +45,7 @@ async function verificarPagina(origem, rota, requisitar) {
   return resposta.text();
 }
 
-export async function verificarPreview({ origem, alvo, release }, requisitar = fetch) {
+export async function verificarHosting({ origem, alvo, release }, requisitar = fetch) {
   const rota = alvo === "app" ? "/login" : "/engenharia";
   const html = await verificarPagina(origem, rota, requisitar);
 
@@ -80,10 +80,18 @@ export async function verificarPreview({ origem, alvo, release }, requisitar = f
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [arquivo, alvo, canal] = process.argv.slice(2);
-  if (!["app", "marketing"].includes(alvo) || !canal) throw new Error("Informe o alvo e o canal do preview.");
-  const origem = obterUrlPreview(JSON.parse(readFileSync(arquivo, "utf8")), process.env.SITE_ID, canal);
-  await verificarPreview({ origem, alvo, release: process.env.SENTRY_RELEASE });
-  const resumo = `Firebase preview (${alvo}) validado: ${origem}`;
+  if (!["app", "marketing"].includes(alvo) || !canal) throw new Error("Informe o alvo e o canal do Hosting.");
+  const site = process.env.SITE_ID;
+  const live = arquivo === "--live";
+  if (!site || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(site)) {
+    throw new Error("SITE_ID do Firebase inválido.");
+  }
+  if (live && canal !== "live") throw new Error("O smoke live exige o canal live.");
+  const origem = live
+    ? `https://${site}.web.app`
+    : obterUrlPreview(JSON.parse(readFileSync(arquivo, "utf8")), site, canal);
+  await verificarHosting({ origem, alvo, release: process.env.SENTRY_RELEASE });
+  const resumo = `Firebase ${live ? "live" : "preview"} (${alvo}) validado: ${origem}`;
   console.log(resumo);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=${origem}\n`);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${resumo}\n`);

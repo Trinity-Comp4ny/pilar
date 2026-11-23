@@ -36,7 +36,10 @@ Feito: projeto `pilarsoft-prod` com faturamento (Blaze), Firebase ativo, sites `
 `pilarsoft-landing`, alerta de orçamento de R$ 50/mês, service account de deploy com federação
 restrita a este repo, e variáveis de infra no GitHub (passos 1 a 3, exceto as `VITE_*`).
 A conta de faturamento tem teto de 5 projetos; `ekoai-staging` saiu para abrir a vaga.
-Falta: `VITE_*` e `SENTRY_*` nos Environments, ensaio em preview (4), domínio de teste (5), cutover (6).
+O app e a landing passaram o smoke em preview e a conta E2E abriu o painel de staging
+[no ensaio autenticado](https://github.com/Trinity-Comp4ny/pilar/actions/runs/44763601504).
+Faltam validar as variáveis de produção no primeiro deploy live, o formulário de login no
+domínio de teste (5) e o cutover (6).
 
 ## Passos
 
@@ -60,7 +63,10 @@ Falta: `VITE_*` e `SENTRY_*` nos Environments, ensaio em preview (4), domínio d
 5. **Domínio em teste.** Conectar um subdomínio de teste (ex. `app-fb.pilarsoft.com.br`) ao site
    do app, validar com um usuário real, sem tocar `app.pilarsoft.com.br`.
 6. **Cutover**, em horário de baixo uso e com a Vercel ainda de pé:
-   1. Publicar `canal=live` nos dois sites.
+   1. Publicar `canal=live` nos dois sites. Conferir o resultado do smoke no endereço
+      `SITE_ID.web.app` de cada site antes de trocar o DNS. No app, o smoke compara
+      `/version.json` com o SHA do build. Na landing, verifica a rota de engenharia,
+      o sitemap e o redirect de checkout com os parâmetros.
    2. Baixar o TTL do DNS para 300 s, com 24 h de antecedência.
    3. Adicionar o domínio de produção no Firebase (ele pede os registros de verificação) e esperar o certificado emitir **antes** de trocar o apontamento.
    4. Trocar o DNS da landing, conferir; depois o do app, conferir.
