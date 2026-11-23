@@ -13,7 +13,10 @@ const painelRpcDuration = new Trend('painel_rpc_duration', true);
 export const options = {
   stages: defaultStages,
   summaryTrendStats,
-  thresholds: defaultThresholds,
+  thresholds: {
+    ...defaultThresholds,
+    painel_rpc_duration: defaultThresholds.http_req_duration,
+  },
 };
 
 function buscarPainel(headers) {
