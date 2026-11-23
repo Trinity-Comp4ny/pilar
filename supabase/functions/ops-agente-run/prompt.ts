@@ -9,9 +9,19 @@
 import { z } from "../_shared/schemas.ts";
 import { primeiroNome, type AgenteDeArea, type Candidato } from "./regras.ts";
 
+function saneaDestaques(v: unknown): unknown {
+  if (!Array.isArray(v)) return v;
+  return v
+    .filter((d): d is { texto: string; refs?: unknown } => !!d && typeof d === "object" && typeof (d as { texto?: unknown }).texto === "string" && (d as { texto: string }).texto.trim() !== "")
+    .map((d) => ({ ...d, refs: Array.isArray(d.refs) ? d.refs.filter((r) => typeof r === "string").slice(0, 5) : d.refs }))
+    .slice(0, 3);
+}
+
 export const respostaSchema = z.object({
   resumo: z.string().min(1).max(400),
-  destaques: z.array(z.object({ texto: z.string().min(1).max(240), refs: z.array(z.string()).min(1).max(5) })).max(3),
+  // O Gemini às vezes devolve destaque sem `texto` ou com mais de 5 refs (Sentry PILAR-58).
+  // Em vez de reprovar a resposta inteira, descarta o destaque sem texto e corta as refs.
+  destaques: z.preprocess(saneaDestaques, z.array(z.object({ texto: z.string().min(1).max(240), refs: z.array(z.string()).min(1).max(5) })).max(3)),
   mensagens: z.array(z.object({ ref: z.string(), texto: z.string().min(1).max(700) })).max(40),
 });
 
