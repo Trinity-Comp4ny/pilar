@@ -81,7 +81,15 @@ function levelFor(status: number): "warning" | "error" {
   return status >= 500 ? "error" : "warning";
 }
 
-type ErrorBody = { code?: string; message?: string; details?: string; detail?: string; hint?: string; error?: string; error_description?: string };
+type ErrorBody = {
+  code?: string;
+  message?: string;
+  details?: string;
+  detail?: string;
+  hint?: string;
+  error?: string;
+  error_description?: string;
+};
 
 async function readErrorBody(res: Response): Promise<ErrorBody> {
   try {
