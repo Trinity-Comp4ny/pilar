@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  issues: write # notify-cron-failure no agendamento
 
 concurrency:
   group: carga-semanal
@@ -103,3 +104,18 @@ jobs:
           name: k6-semanal-${{ github.run_id }}-${{ github.run_attempt }}
           path: resumo-*.json
           retention-days: 90
+
+      - name: Abrir alerta quando a carga semanal falhar
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Carga semanal k6 em staging
+          token: ${{ github.token }}
+
+      - name: Fechar alerta quando a carga voltar a passar
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Carga semanal k6 em staging
+          token: ${{ github.token }}
+          status: success

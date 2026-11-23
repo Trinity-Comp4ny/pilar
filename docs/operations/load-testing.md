@@ -20,7 +20,9 @@ Documento define quando rodar a suite k6, como interpretar resultados e onde reg
 passa dos limites de `tests/load/utils/setup.js` (p95 < 500 ms, falha < 1%). O mesmo
 limite de p95 é aplicado separadamente à RPC `get_painel_gestao`. O resumo
 (p95 e taxa de falha) fica no job e o JSON como artifact por 90 dias: é a série histórica
-que preenche a tabela de baseline abaixo. Recusa a URL de produção.
+que preenche a tabela de baseline abaixo. Recusa a URL de produção. Falhas na rodada
+agendada abrem ou atualizam uma issue, fechada na primeira rodada agendada bem-sucedida.
+Execuções manuais ficam registradas no histórico do workflow.
 
 ## Como rodar (resumo)
 
