@@ -234,7 +234,7 @@ estoura a conta. Cobertura nacional completa é o que mais custa, por isso a cas
 
 ## Fase 1: o que foi construído
 
-- Migration `20261234930000_prospeccao_fase_1.sql`: `prospec_celulas` (semeada: Marília e raio, polos do
+- Migration `20261235000000_prospeccao_fase_1.sql`: `prospec_celulas` (semeada: Marília e raio, polos do
   interior de SP, capitais × 8 segmentos), `prospec_buscas` (log que conta o teto), `prospec_config`
   (**nasce desligado**, teto semanal de buscas), RPCs `prospec_proximas_celulas` e
   `prospec_registrar_busca` (só service role), `prospec_config_salvar` (ultra admin) e cron semanal
