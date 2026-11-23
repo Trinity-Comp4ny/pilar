@@ -20,12 +20,6 @@
         "type": 307
       }
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/spa.html"
-      }
-    ],
     "headers": [
       {
         "source": "**",

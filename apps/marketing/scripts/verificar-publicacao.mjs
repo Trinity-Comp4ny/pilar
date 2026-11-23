@@ -48,6 +48,15 @@ export function validarPublicacao(dist, base, rotas) {
     dom.window.close();
   }
 
+  const erro = ler("404.html");
+  const paginaDeErro = erro.window.document;
+  const robotsDoErro = paginaDeErro.querySelector('meta[name="robots"]')?.content ?? "";
+  if (!paginaDeErro.querySelector("main h1")?.textContent.trim() || !/\bnoindex\b/i.test(robotsDoErro)) {
+    falhas.push("Página 404 sem título principal ou noindex");
+  }
+  if (paginaDeErro.querySelector('link[rel="canonical"]')) falhas.push("Página 404 com canonical");
+  erro.window.close();
+
   const robots = readFileSync(join(dist, "robots.txt"), "utf8");
   if (!robots.split(/\r?\n/).some((linha) => linha.trim() === `Sitemap: ${base}/sitemap.xml`)) {
     falhas.push("robots.txt não referencia o sitemap canônico");

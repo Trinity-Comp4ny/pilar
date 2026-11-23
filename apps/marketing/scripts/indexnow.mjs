@@ -4,8 +4,7 @@
 // vale o sitemap enviado no Search Console.
 //
 // Roda sozinho no GitHub (.github/workflows/indexnow.yml) 5 minutos depois de cada
-// push em main que muda a landing; lê o sitemap que está no ar, então precisa do
-// deploy concluído. À mão: Actions › IndexNow › Run workflow, ou
+// publicação live validada no Firebase; lê o sitemap que está no ar. À mão: Actions › IndexNow › Run workflow, ou
 //   npm run seo:indexnow --workspace=apps/marketing
 //
 // A chave é pública por desenho do protocolo: o arquivo public/<chave>.txt prova
