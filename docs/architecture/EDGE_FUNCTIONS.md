@@ -94,7 +94,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `exportar-dados-titular` | Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115). | cron, trigger notify_data_export_request (pg_net) | própria | `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `proposta-link` | Abre e aceita uma versão de proposta por token, com limite de requisições e URL temporária do PDF. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `resend-webhook` | Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado. | Resend (webhook) | própria | `RESEND_WEBHOOK_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `send-data-deletion-notification` | E-mail de confirmação de exclusão de dados (LGPD), disparado por trigger. | cron | JWT | `APP_URL` `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `send-data-deletion-notification` | E-mail de confirmação de exclusão de dados (LGPD), disparado por trigger. | cron | própria | `APP_URL` `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `send-invoice-reminder` | Lembrete de cobrança por e-mail para cliente da empresa. | **sem chamador conhecido** | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `send-manual-client-email` | E-mail manual da empresa para um cliente dela (nunca endereço livre). | app | JWT |  | sim |
 | `send-proposta-email` | Envia a proposta por e-mail ao cliente. | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
@@ -116,7 +116,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `create-company-owner` | Convite de dono de empresa nova (bootstrap manual com chave de super admin). | manual (curl com chave de super admin) | JWT | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `SUPER_ADMIN_KEY` | sim |
+| `create-company-owner` | Convite de dono de empresa nova (bootstrap manual com chave de super admin). | manual (curl com chave de super admin) | própria | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `SUPER_ADMIN_KEY` | sim |
 | `excluir-dados-titular` | Ultra admin aprova ou recusa pedido de exclusão (LGPD art. 18 VI): aprovar apaga o dado pessoal, anonimiza e bloqueia a conta (SPEC 116). | app, aba Pedidos LGPD do ultra admin | JWT |  | sim |
 | `feedback-sync` | Move o status do feedback (planejado no merge em staging, resolvido no release) a partir da linha Feedback: id do commit, chamado pelo GitHub Actions com token próprio (SPEC 145). | **sem chamador conhecido** | própria | `FEEDBACK_SYNC_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `log-impersonation` | Abre e encerra sessão de impersonation do ultra admin, com registro no servidor. | app | JWT |  | sim |

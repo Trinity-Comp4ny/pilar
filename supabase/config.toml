@@ -209,3 +209,37 @@ enabled = false
 # Link público de proposta: a função valida token e rate limit próprios.
 [functions.proposta-link]
 verify_jwt = false
+
+# verify_jwt explícito das funções que produção tinha com a flag divergente (EDGE_JWT_DRIFT.md).
+# O deploy por --use-api não converge a flag quando a seção não existe; explícito, converge.
+#
+# Autenticação própria, sem JWT de usuário: ficam false de propósito.
+# Bootstrap manual: exige X-Super-Admin-Key, Origin permitida e Content-Type.
+[functions.create-company-owner]
+verify_jwt = false
+
+# Chamada pelo trigger via pg_net com o segredo x-pilar-secret (sem Authorization).
+[functions.send-data-deletion-notification]
+verify_jwt = false
+
+# Autenticam o usuário no handler (authenticateUser ou auth.getUser) e os clientes enviam o JWT.
+[functions.geocode-address]
+verify_jwt = true
+
+[functions.log-impersonation]
+verify_jwt = true
+
+[functions.pilar-subscription-manage]
+verify_jwt = true
+
+[functions.send-invoice-reminder]
+verify_jwt = true
+
+[functions.send-manual-client-email]
+verify_jwt = true
+
+[functions.send-proposta-email]
+verify_jwt = true
+
+[functions.upload-portal-entrega]
+verify_jwt = true

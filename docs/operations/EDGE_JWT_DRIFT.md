@@ -64,3 +64,15 @@ TOTP dos usuários.
 
 Referências: [Supabase Config](https://supabase.com/docs/guides/local-development/cli/config)
 e [Management API de Edge Functions](https://supabase.com/docs/reference/api/v1-list-all-functions).
+
+## Resolução do drift de produção (23/11/2026)
+
+O release de 23/11 deployou sem convergir as nove funções: o `supabase functions deploy --use-api`
+não altera a flag quando a função não tem seção no `config.toml`. Passaram a ter seção explícita:
+
+- `false` de propósito, por terem autenticação própria sem JWT de usuário: `create-company-owner`
+  (X-Super-Admin-Key + Origin) e `send-data-deletion-notification` (trigger via pg_net com
+  `x-pilar-secret`; `true` quebraria o e-mail de exclusão LGPD).
+- `true`, pois autenticam o usuário no handler e os clientes enviam o JWT: `geocode-address`,
+  `log-impersonation`, `pilar-subscription-manage`, `send-invoice-reminder`,
+  `send-manual-client-email`, `send-proposta-email` e `upload-portal-entrega`.
