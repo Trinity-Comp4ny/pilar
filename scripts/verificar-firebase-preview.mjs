@@ -68,10 +68,18 @@ export async function verificarHosting({ origem, alvo, release }, requisitar = f
 
   if (alvo === "app") {
     await verificarPagina(origem, "/inicio", requisitar);
-    const versao = await buscar(origem, "/version.json", /application\/json/i, requisitar);
-    exigir(temDiretiva(versao, "no-store"), "/version.json", "cache deveria ser no-store");
-    exigir(release && (await versao.json()).release === release, "/version.json", "release diferente do build");
-    return;
+    const rotaVersao = "/version.json";
+    exigir(release, rotaVersao, "release esperado não informado");
+    // Um canal republicado pode servir o JSON anterior enquanto a versão se propaga.
+    let publicado;
+    for (let tentativa = 1; tentativa <= 6; tentativa++) {
+      const versao = await buscar(origem, rotaVersao, /application\/json/i, requisitar);
+      exigir(temDiretiva(versao, "no-store"), rotaVersao, "cache deveria ser no-store");
+      publicado = (await versao.json()).release;
+      if (publicado === release) return;
+      if (tentativa < 6) await new Promise((resolver) => setTimeout(resolver, 4_000));
+    }
+    exigir(false, rotaVersao, `release diferente do build: esperado ${release}, recebido ${publicado ?? "ausente"}`);
   }
 
   exigir(/<h1[\s>]/i.test(html), rota, "conteúdo pré-renderizado ausente");
