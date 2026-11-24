@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import { carregarPullToRefresh } from "./carregarPullToRefresh";
 
@@ -8,7 +9,7 @@ describe("carregarPullToRefresh", () => {
   });
 
   it("preserva o componente do módulo carregado", async () => {
-    const PullToRefresh = () => null;
+    const PullToRefresh = () => createElement("div");
     await expect(carregarPullToRefresh(async () => ({ PullToRefresh }))).resolves.toEqual({ default: PullToRefresh });
   });
 
