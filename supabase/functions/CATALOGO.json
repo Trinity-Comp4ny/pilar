@@ -148,6 +148,14 @@
     "dominio": "plataforma",
     "descricao": "Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128)."
   },
+  "prospeccao-enriquecer": {
+    "dominio": "plataforma",
+    "descricao": "Cron diário da prospecção (SPEC 172 fase 2): consulta o CNPJ na BrasilAPI e grava razão social, CNAE e decisor nos leads."
+  },
+  "prospeccao-mapeador": {
+    "dominio": "plataforma",
+    "descricao": "Cron semanal da prospecção (SPEC 172 fase 1): busca estabelecimentos no Google Places por cidade e segmento, dentro do teto semanal, e grava leads novos."
+  },
   "pilar-checkout-create": {
     "dominio": "billing",
     "descricao": "Checkout público da Pilar: cria cliente e cobrança na Asaas da plataforma."

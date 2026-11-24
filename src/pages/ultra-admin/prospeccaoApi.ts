@@ -29,7 +29,13 @@ export interface ProspecLead {
 const COLUNAS =
   "id, nome, segmento, segmento_teste, cidade, telefone_e164, tipo_telefone, email, site, contato_nome, canal, confianca_contato, nota_encaixe, status, fila_em, ultimo_contato_em";
 
-const CHAVES = ["ultra-prospec-leads", "ultra-prospec-fila", "ultra-prospec-resumo"] as const;
+const CHAVES = [
+  "ultra-prospec-leads",
+  "ultra-prospec-fila",
+  "ultra-prospec-resumo",
+  "ultra-prospec-followups",
+  "ultra-prospec-resultados",
+] as const;
 
 /** Início do dia em Brasília, no formato aceito pelo Postgres. */
 function inicioDoDia(): string {
@@ -138,6 +144,7 @@ export interface RegistroEnvio {
   canal?: Canal;
   texto?: string;
   contatoNome?: string;
+  modelo?: string;
 }
 
 export function useRegistrarEnvio() {
@@ -150,6 +157,7 @@ export function useRegistrarEnvio() {
         p_canal: r.canal,
         p_texto: r.texto,
         p_contato_nome: r.contatoNome,
+        p_modelo: r.modelo,
       });
       if (error) throw error;
     },
@@ -240,5 +248,103 @@ export function useImportarLeads() {
       return { inseridos: novos.length, jaExistiam, bloqueados };
     },
     onSuccess: invalidar,
+  });
+}
+
+// ─── Fase 1: mapeador Places e cobertura ─────────────────────────────────────
+
+export interface CoberturaRegiao {
+  regiao: string;
+  total: number;
+  feitas: number;
+  leads: number;
+}
+
+export interface MapeadorEstado {
+  ativo: boolean;
+  tetoSemanal: number;
+  buscasSemana: number;
+  cobertura: CoberturaRegiao[];
+}
+
+export function useMapeador() {
+  return useQuery({
+    queryKey: ["ultra-prospec-mapeador"],
+    queryFn: async (): Promise<MapeadorEstado> => {
+      const inicioSemana = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const [cfg, cel, bus] = await Promise.all([
+        supabase.from("prospec_config").select("ativo, teto_semanal_buscas").maybeSingle(),
+        supabase.from("prospec_celulas").select("regiao, ultima_busca_em, leads_novos"),
+        supabase.from("prospec_buscas").select("id", { count: "exact", head: true }).gte("created_at", inicioSemana),
+      ]);
+      const erro = cfg.error ?? cel.error ?? bus.error;
+      if (erro) throw erro;
+      const porRegiao = new Map<string, CoberturaRegiao>();
+      for (const c of cel.data ?? []) {
+        const r = porRegiao.get(c.regiao) ?? { regiao: c.regiao, total: 0, feitas: 0, leads: 0 };
+        r.total += 1;
+        if (c.ultima_busca_em) r.feitas += 1;
+        r.leads += c.leads_novos;
+        porRegiao.set(c.regiao, r);
+      }
+      return {
+        ativo: cfg.data?.ativo ?? false,
+        tetoSemanal: cfg.data?.teto_semanal_buscas ?? 0,
+        buscasSemana: bus.count ?? 0,
+        cobertura: [...porRegiao.values()],
+      };
+    },
+  });
+}
+
+export function useSalvarMapeador() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { ativo: boolean; teto: number }) => {
+      const { error } = await supabase.rpc("prospec_config_salvar", { p_ativo: v.ativo, p_teto: v.teto });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["ultra-prospec-mapeador"] }),
+  });
+}
+
+// ─── Fase 3: medição e follow-up ─────────────────────────────────────────────
+
+export type Dimensao = "segmento" | "modelo" | "regiao";
+
+export interface LinhaResultado {
+  dimensao: Dimensao;
+  chave: string;
+  enviados: number;
+  respostas: number;
+  reunioes: number;
+}
+
+export function useResultados() {
+  return useQuery({
+    queryKey: ["ultra-prospec-resultados"],
+    queryFn: async (): Promise<LinhaResultado[]> => {
+      const { data, error } = await supabase.rpc("prospec_resultados");
+      if (error) throw error;
+      return (data ?? []).map((l) => ({
+        dimensao: l.dimensao as Dimensao,
+        chave: l.chave,
+        enviados: Number(l.enviados),
+        respostas: Number(l.respostas),
+        reunioes: Number(l.reunioes),
+      }));
+    },
+  });
+}
+
+/** Leads enviados há 4 dias ou mais, sem resposta e sem follow-up. Quem envia é o fundador. */
+export function useFollowups() {
+  return useQuery({
+    queryKey: ["ultra-prospec-followups"],
+    queryFn: async (): Promise<ProspecLead[]> => {
+      const { data, error } = await supabase.rpc("prospec_followups", { p_dias: 4, p_limite: 10 });
+      if (error) throw error;
+      return (data ?? []) as unknown as ProspecLead[];
+    },
   });
 }

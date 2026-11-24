@@ -13,13 +13,14 @@ import { PageLoader } from "@/components/motion/PageLoader";
 import {
   LIMITE_DIARIO,
   useFilaHoje,
+  useFollowups,
   useMontarFila,
   useRegistrarEnvio,
   useResumo,
   type ProspecLead,
   type ResultadoEnvio,
 } from "./prospeccaoApi";
-import { formatarTelefone, linkWhatsapp, montarContato, SEGMENTOS } from "./prospeccaoLib";
+import { formatarTelefone, linkWhatsapp, montarContato, SEGMENTOS, textoFollowup } from "./prospeccaoLib";
 
 /** Card de um lead da fila: texto pronto e editável, link do WhatsApp e o registro do que aconteceu. */
 export function CardEnvio({ lead }: { lead: ProspecLead }) {
@@ -28,16 +29,16 @@ export function CardEnvio({ lead }: { lead: ProspecLead }) {
   const [editado, setEditado] = useState<string | null>(null);
   const [abriu, setAbriu] = useState(false);
 
-  const gerado = useMemo(
+  const contato = useMemo(
     () =>
       montarContato({
         ...lead,
         contato_nome: nome.trim() || null,
         confianca_contato: nome.trim() ? "pessoa" : lead.confianca_contato,
-      }).texto,
+      }),
     [lead, nome]
   );
-  const texto = editado ?? gerado;
+  const texto = editado ?? contato.texto;
   const segmento = SEGMENTOS[lead.segmento];
 
   const abrir = () => {
@@ -54,6 +55,7 @@ export function CardEnvio({ lead }: { lead: ProspecLead }) {
         canal: "whatsapp",
         texto: resultado === "enviei" ? texto : undefined,
         contatoNome: nome.trim() || undefined,
+        modelo: resultado === "enviei" ? contato.modelo : undefined,
       },
       { onSuccess: () => toast.success(aviso), onError: (e: Error) => toast.error(e.message) }
     );
@@ -140,11 +142,81 @@ export function CardEnvio({ lead }: { lead: ProspecLead }) {
   );
 }
 
+/** Follow-up de quem não respondeu: texto único, você aprova abrindo e enviando. Só um por lead. */
+export function CardFollowup({ lead }: { lead: ProspecLead }) {
+  const registrar = useRegistrarEnvio();
+  const texto = useMemo(() => textoFollowup(lead), [lead]);
+  const [abriu, setAbriu] = useState(false);
+
+  const abrir = () => {
+    if (!lead.telefone_e164) return;
+    window.open(linkWhatsapp(lead.telefone_e164, texto), "_blank", "noopener");
+    setAbriu(true);
+  };
+
+  const registrarResultado = (resultado: ResultadoEnvio, aviso: string) =>
+    registrar.mutate(
+      {
+        leadId: lead.id,
+        resultado,
+        canal: "whatsapp",
+        texto: resultado === "enviei" ? texto : undefined,
+        modelo: resultado === "enviei" ? "followup" : undefined,
+      },
+      { onSuccess: () => toast.success(aviso), onError: (e: Error) => toast.error(e.message) }
+    );
+
+  return (
+    <Card className="space-y-3 p-4">
+      <div>
+        <p className="font-medium">{lead.nome}</p>
+        <p className="text-sm text-ink-muted">
+          {lead.cidade ?? "Cidade não informada"} · {formatarTelefone(lead.telefone_e164)}
+        </p>
+      </div>
+      <p className="whitespace-pre-line rounded-md bg-surface-muted p-3 text-sm">{texto}</p>
+      {!abriu ? (
+        <Button variant="brand" onClick={abrir} disabled={!lead.telefone_e164}>
+          <MessageCircle className="mr-2 h-4 w-4" /> Abrir follow-up no WhatsApp
+        </Button>
+      ) : (
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button
+            variant="brand"
+            loading={registrar.isPending}
+            onClick={() => registrarResultado("enviei", "Follow-up registrado.")}
+          >
+            Enviei
+          </Button>
+          <Button
+            variant="outline"
+            disabled={registrar.isPending}
+            onClick={() => registrarResultado("respondeu", "Marcado como respondeu.")}
+          >
+            Respondeu
+          </Button>
+          <Button
+            variant="outline"
+            disabled={registrar.isPending}
+            onClick={() => registrarResultado("parar", "Contato bloqueado para sempre.")}
+          >
+            Pediu para parar
+          </Button>
+          <Button variant="ghost" disabled={registrar.isPending} onClick={() => setAbriu(false)}>
+            Voltar
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 /** Aba Hoje: meta do dia, aviso de risco e a fila de cards. */
 export function ProspeccaoHoje() {
   const fila = useFilaHoje();
   const resumo = useResumo();
   const montar = useMontarFila();
+  const followups = useFollowups();
 
   const r = resumo.data;
   const emRisco = (r?.bloqueiosSemana ?? 0) >= 2;
@@ -178,8 +250,8 @@ export function ProspeccaoHoje() {
         <div role="alert" className="flex items-start gap-2 rounded-md bg-warning-soft p-3 text-sm text-warning-strong">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            {r?.bloqueiosSemana} pedidos para parar ou números errados nos últimos 7 dias. Revise a mensagem e considere
-            pausar antes de continuar: número que recebe denúncia pode ser restringido.
+            {r?.bloqueiosSemana} pedidos para parar ou números errados nos últimos 7 dias. A fila está pausada: não
+            entra lead novo até a semana limpar. Revise a mensagem; número que recebe denúncia pode ser restringido.
           </p>
         </div>
       )}
@@ -202,6 +274,22 @@ export function ProspeccaoHoje() {
           {(fila.data ?? []).map((lead) => (
             <CardEnvio key={lead.id} lead={lead} />
           ))}
+        </div>
+      )}
+
+      {(followups.data ?? []).length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-base font-semibold">Follow-up</h2>
+            <p className="text-sm text-ink-muted">
+              Enviados há 4 dias ou mais, sem resposta. Um follow-up por lead, e só sai se você abrir e enviar.
+            </p>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {(followups.data ?? []).map((lead) => (
+              <CardFollowup key={lead.id} lead={lead} />
+            ))}
+          </div>
         </div>
       )}
     </div>

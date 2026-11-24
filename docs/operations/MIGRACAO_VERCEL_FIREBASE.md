@@ -10,11 +10,11 @@ o sistema se seguido em ordem. Reverter = reapontar o DNS de volta.
 
 ## Arquivos
 
-| Arquivo | Papel |
-|---|---|
-| `firebase.app.json` | Config de hosting do app (headers, CSP, fallback SPA) |
-| `apps/marketing/firebase.marketing.json` | Idem para a landing (+ 3 redirects para o app) |
-| `scripts/gerar-firebase-config.mjs` | Gera os dois acima a partir dos `vercel.json`. Não editar à mão |
+| Arquivo                                         | Papel                                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `firebase.app.json`                             | Config de hosting do app (headers, CSP, fallback SPA)                                                                          |
+| `apps/marketing/firebase.marketing.json`        | Idem para a landing (+ 3 redirects para o app)                                                                                 |
+| `scripts/gerar-firebase-config.mjs`             | Gera os dois acima a partir dos `vercel.json`. Não editar à mão                                                                |
 | `.github/workflows/deploy-firebase-hosting.yml` | Build + deploy. PR que mexe nos arquivos do Firebase publica canal de preview; `live` só por `workflow_dispatch` até o passo 6 |
 
 Diferença deliberada em relação ao `vercel.json`: o Firebase cacheia HTML por 1 h por padrão
@@ -25,7 +25,7 @@ Diferença deliberada em relação ao `vercel.json`: o Firebase cacheia HTML por
 
 - CSP e HSTS idênticos ao `vercel.json` (comparação byte a byte).
 - `/assets/*` imutável; `/`, rotas do SPA e `index.html` revalidam; `sw.js` e `version.json` sem cache.
-- Fallback de SPA para `/index.html` (app) e `/spa.html` (landing).
+- O app mantém o fallback de SPA para `/index.html`. A landing serve HTML pré-renderizado e usa `404.html` para URLs desconhecidas.
 - Landing: `/dashboard` e as rotas do app respondem 307 para `app.pilarsoft.com.br`.
 - O helper de releases usa um nome distinto da página `Releases.tsx`, inclusive no macOS.
 - Verificar o comportamento no Firebase real no passo 4.
@@ -70,7 +70,8 @@ domínio de teste (5) e o cutover (6).
    2. Baixar o TTL do DNS para 300 s, com 24 h de antecedência.
    3. Adicionar o domínio de produção no Firebase (ele pede os registros de verificação) e esperar o certificado emitir **antes** de trocar o apontamento.
    4. Trocar o DNS da landing, conferir; depois o do app, conferir.
-   5. Só então ligar os gatilhos `pull_request` (preview) e `push` (staging/main) no workflow.
+   5. Gatilhos: já ligados (23/11/2026). O CI verde de `staging` publica o site de staging e o de `main`
+      publica `live`, este sujeito à aprovação do Environment `production`. Ver "Automação do deploy".
 7. **Reversão.** Reapontar o DNS para a Vercel (TTL de 300 s). Por isso o projeto Vercel só é
    desligado depois de ~2 semanas sem incidente.
 8. **Limpeza.** Remover `vercel.json`, `scripts/vercel-ignore.sh` e as referências em
@@ -84,3 +85,17 @@ domínio de teste (5) e o cutover (6).
 - **Firewall / Attack Challenge Mode** da Vercel (DEPLOY_CHECKLIST) não existe no Firebase Hosting.
   O Turnstile já protege o login; se quiser WAF, é Cloudflare na frente (decisão à parte).
 - **Preços** citados em conversa (US$ 0,15/GB, cota de ~10 GB) eram de memória: conferir na página do Firebase.
+
+## Automação do deploy (23/11/2026)
+
+- `workflow_run` do `CI`: o de `staging` publica o site de staging (Environment `staging`, sem aprovação);
+  o de `main` publica `live` (Environment `production`, com aprovação). Só roda com o CI em `success`, ou
+  seja, depois das migrations e das edge functions. O guard `verificar-firebase-ambiente.mjs` recusa
+  qualquer outro evento ou branch e confere que o Supabase do build é o do ambiente
+  (teste em `scripts/verificar-firebase-ambiente.test.ts`).
+- Cada Environment do GitHub carrega as suas variáveis: `FIREBASE_PROJECT_ID`, `FIREBASE_SITE_APP`,
+  `FIREBASE_SITE_MARKETING`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT` e as `VITE_*`.
+  A variável de Environment prevalece sobre a de repositório, então o `staging` aponta para o projeto
+  GCP de staging e o `production` para o de produção.
+- Preview por PR: só quando o PR mexe na própria publicação (config do Firebase, scripts e smoke).
+- Rollback: reapontar o DNS para a Vercel (TTL de 300 s) enquanto o projeto Vercel existir.

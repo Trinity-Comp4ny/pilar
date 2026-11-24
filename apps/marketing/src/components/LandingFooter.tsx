@@ -23,6 +23,7 @@ const COLUNAS = [
   {
     titulo: "Conteúdo",
     links: [
+      { label: "Funcionalidades", to: "/funcionalidades" },
       { label: "Blog", to: "/blog" },
       { label: "Ferramentas", to: "/ferramentas" },
       { label: "Para engenharia", to: "/engenharia" },

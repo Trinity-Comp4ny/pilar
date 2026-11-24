@@ -231,3 +231,52 @@ estoura a conta. Cobertura nacional completa é o que mais custa, por isso a cas
    comercial e pelo catálogo de mensagem rápida.
 4. **Segmentos adjacentes**: confirmar que entram só como teste, sem mexer no ICP.
 5. **Mensagem de saída** na segunda mensagem: aprovar o texto.
+
+## Fase 1: o que foi construído
+
+- Migration `20261235000000_prospeccao_fase_1.sql`: `prospec_celulas` (semeada: Marília e raio, polos do
+  interior de SP, capitais × 8 segmentos), `prospec_buscas` (log que conta o teto), `prospec_config`
+  (**nasce desligado**, teto semanal de buscas), RPCs `prospec_proximas_celulas` e
+  `prospec_registrar_busca` (só service role), `prospec_config_salvar` (ultra admin) e cron semanal
+  (domingo 22h BRT).
+- Edge function `prospeccao-mapeador` (cron por segredo): uma busca de texto do Places (New) por célula,
+  dedupe por `place_id`, telefone e bloqueio. Para no teto da semana e no primeiro 403/429.
+- **Pausa automática**: com 2 ou mais "parar" ou "número errado" em 7 dias, `prospec_montar_fila` não
+  completa a fila.
+- Aba **Mapeador**: liga/desliga, teto e cobertura por região.
+- **Pendente do fundador antes de ligar**: criar a chave do Places e gravar o secret
+  `GOOGLE_PLACES_API_KEY` no Supabase; conferir os termos do Google sobre guardar telefone (esta fase
+  guarda o telefone do Places; se os termos proibirem, trocar por Place Details na hora da fila).
+- Fica para a fase 2: enriquecimento por CNPJ e qualificador.
+
+## Fase 2: o que foi construído
+
+- Migration `20261235100000_prospeccao_fase_2.sql`: `cnpj`, `razao_social`, `cnae_principal` e
+  `enriquecido_em` em `prospec_leads`; RPCs `prospec_leads_para_enriquecer` e
+  `prospec_registrar_enriquecimento` (só service role); cron diário 06h BRT.
+- Edge function `prospeccao-enriquecer`: lote de 20 por dia na BrasilAPI (dado público, R$ 0), para no
+  primeiro 429. **Decisor**: titular quando a natureza é empresário individual/MEI, senão o
+  sócio-administrador do quadro societário; vira `contato_nome` e, com celular, o lead passa a `pessoa`.
+  **Segmento por CNAE**: divisão compatível com o segmento soma 10 na nota de encaixe, incompatível
+  tira 25 (o lead não é descartado).
+- O CNPJ entra pela importação (coluna "CNPJ" opcional). **Limite conhecido**: a BrasilAPI só consulta
+  por número, então lead vindo do Places não ganha CNPJ sozinho. Para isso falta uma fonte de busca por
+  nome (dump da Receita ou serviço pago): decisão em aberto.
+- Sem mudança visual (só dados e função de fundo).
+
+## Fase 3: o que foi construído
+
+- **Só custo zero.** Nada pago entra: o enriquecimento segue por CNPJ gratuito (BrasilAPI) e é
+  opcional. Para o primeiro contato o lead precisa de **nome do negócio, WhatsApp** e, se houver,
+  **nome de uma pessoa**, segundo telefone ou e-mail. CNPJ nunca é exigido.
+- Migration `20261235200000_prospeccao_fase_3.sql`: `prospec_envios.modelo`; `prospec_registrar`
+  ganha `p_modelo`; `prospec_resultados()` (enviados, respostas e reuniões por segmento, modelo e
+  região) e `prospec_followups()` (enviado há 4 dias ou mais, sem resposta, um único envio).
+- **Teste A/B**: dois textos de WhatsApp por tipo de contato, escolhidos pela paridade do id do lead
+  (estável). O modelo (`pessoa_a`, `pessoa_b`, `empresa_a`, `empresa_b`) é gravado no envio e
+  contado pelo modelo do **primeiro** envio. Os textos continuam editáveis antes de enviar.
+- **Follow-up com aprovação**: seção na aba Hoje com um texto curto e a saída "é só avisar". Um por
+  lead: o follow-up conta como segundo envio e tira o lead da lista. Nada sai sozinho.
+- Aba **Resultados**: taxas por grupo, com aviso "amostra pequena" abaixo de 30 envios. Segmento
+  adjacente só vira ICP por decisão registrada em DECISOES.md, com número que se sustente.
+- `types.ts` editado à mão (sem Docker): conferir com `gen:types:local` quando possível.

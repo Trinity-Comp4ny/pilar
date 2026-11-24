@@ -108,3 +108,5 @@ Não. Um contrato grande pode consumir tanta hora de equipe e tanta revisão que
 ### O que fazer quando o projeto está dando prejuízo no meio do caminho?
 
 Primeiro, entender a causa: escopo que cresceu, revisões além do contratado, retrabalho interno ou preço baixo desde o início. Escopo extra pede aditivo; retrabalho pede ajuste de processo; preço baixo pede revisão da forma de precificar nos próximos contratos.
+
+Conheça na Pilar: [Rentabilidade de projetos de engenharia](/funcionalidades/rentabilidade).

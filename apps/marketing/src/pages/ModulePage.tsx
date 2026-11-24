@@ -1,3 +1,6 @@
+import { MidiaProduto } from "../components/MidiaProduto";
+import { MIDIAS_PRODUTO } from "../lib/midiasProduto";
+import { PAGINAS_RECURSO, caminhoRecurso } from "../lib/catalogo";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
@@ -67,6 +70,7 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
  */
 export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
+  const midia = MIDIAS_PRODUTO[slug];
 
   usePageMeta({
     titulo: `${modulo.seo.titulo} | Pilar`,
@@ -224,6 +228,44 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         </div>
       </section>
 
+      {slug === "portal" && (
+        <section className="mx-auto max-w-6xl px-5 py-12 md:px-10">
+          <h2 className="text-3xl font-medium text-ink">Financeiro do cliente</h2>
+          <p className="my-4 max-w-2xl">
+            Consulte as parcelas do projeto. Na visão de obra, acompanhe a prestação de contas disponibilizada pelo
+            escritório.
+          </p>
+          <figure className="max-w-3xl overflow-x-auto rounded-2xl bg-frame p-4">
+            <GroupMock mock="parcelas" />
+            <figcaption className="mt-3 text-sm text-ink-muted">
+              Ilustração de parcelas com dados de exemplo.
+            </figcaption>
+          </figure>
+        </section>
+      )}
+      <section className="mx-auto max-w-6xl px-5 py-10 md:px-10">
+        <h2 className="text-2xl font-medium text-ink">Explore os recursos</h2>
+        <ul className="mt-4 flex flex-wrap gap-4">
+          {PAGINAS_RECURSO.filter((pagina) => pagina.area === slug).map((pagina) => (
+            <li key={pagina.slug}>
+              <Link className="underline underline-offset-4" to={caminhoRecurso(pagina.slug)}>
+                {pagina.titulo}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link className="underline underline-offset-4" to="/funcionalidades">
+              Ver catálogo completo
+            </Link>
+          </li>
+        </ul>
+      </section>
+      {midia && (
+        <section className="mx-auto max-w-4xl px-5 pb-12 md:px-10">
+          <h2 className="mb-5 text-2xl font-medium text-ink">Veja {modulo.nome} na Pilar</h2>
+          <MidiaProduto midia={midia} />
+        </section>
+      )}
       <CTASection />
     </>
   );

@@ -120,3 +120,5 @@ Depende do porte e do contrato. Um arranjo comum é medir semanalmente para cont
 ### Como calcular o percentual de avanço da obra?
 
 Defina o avanço de cada frente pelo critério escolhido, atribua a cada frente um peso, normalmente pelo orçamento, e some as contribuições. Mostre sempre as frentes junto com o total.
+
+Conheça na Pilar: [Cronograma e avanço físico de obras](/funcionalidades/cronograma-de-obra).

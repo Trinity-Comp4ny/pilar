@@ -129,3 +129,5 @@ Preveja isso no contrato: um valor mínimo mensal, um formato misto ou uma cláu
 ### Como mostrar a taxa de administração ao cliente?
 
 Como linha própria em cada fechamento, com a base de cálculo à vista, nunca diluída nas despesas. Se o cliente consegue acompanhar as despesas ao longo do mês, a taxa chega sem surpresa.
+
+Veja como funciona: [prestação de contas da obra na Pilar](/funcionalidades/prestacao-de-contas).

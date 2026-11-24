@@ -133,3 +133,7 @@ Sim. Despesa pessoal paga pela conta do escritório embaralha o caixa e impede s
 ### Como enfrentar um mês sem entrada de parcela?
 
 Com as parcelas do contrato cadastradas, o mês fraco aparece com antecedência. Depois, revise a forma de parcelar os contratos novos: parcelas mensais distribuem melhor o caixa do que parcelas concentradas no fim, e uma entrada na assinatura financia o início do trabalho.
+
+Veja como funciona: [financeiro para escritórios de engenharia](/funcionalidades/financeiro).
+
+Conheça na Pilar: [Carteira, contas e cartões do escritório](/funcionalidades/carteira-e-cartoes).

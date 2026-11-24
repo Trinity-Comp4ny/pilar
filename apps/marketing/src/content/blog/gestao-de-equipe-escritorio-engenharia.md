@@ -111,3 +111,5 @@ Use um critério combinado: primeiro o que trava outra disciplina, depois o praz
 ### Como evitar que tudo dependa do sócio?
 
 Dê responsável nominal a cada disciplina, escreva o critério de prioridade e mantenha uma reunião semanal curta. Com isso, a equipe decide a maior parte sozinha e o sócio entra só nos empates e na revisão técnica.
+
+Conheça na Pilar: [Equipe e apontamento de horas](/funcionalidades/equipe-e-horas).
