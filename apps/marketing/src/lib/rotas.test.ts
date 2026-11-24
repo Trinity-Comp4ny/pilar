@@ -89,6 +89,9 @@ describe("rotas da landing", () => {
         "/funcionalidades/cronograma",
         "/funcionalidades/diario-de-obra",
         "/funcionalidades/prestacao-de-contas",
+        "/funcionalidades/crm",
+        "/funcionalidades/escopo-e-aditivos",
+        "/funcionalidades/cotacoes",
       ])
     );
     expect(ler("../App.tsx")).toMatch(/<Route\s+path="\*"\s+element={<NotFound \/>}/);
