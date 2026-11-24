@@ -183,6 +183,11 @@ describe("contrato do pipeline", () => {
     const jobCount = (jobsBlock.match(/^ {2}[\w-]+:$/gm) ?? []).length;
     const timeoutCount = (jobsBlock.match(/^ {4}timeout-minutes:/gm) ?? []).length;
     expect(jobCount).toBeGreaterThan(0);
-    expect(timeoutCount).toBe(jobCount);
+    const reutilizaFirebase = /^ {4}uses: \.\/\.github\/workflows\/deploy-firebase-hosting\.yml$/m.test(jobsBlock);
+    if (reutilizaFirebase) {
+      const firebase = readFileSync(".github/workflows/deploy-firebase-hosting.yml", "utf8");
+      expect(firebase).toMatch(/^ {4}timeout-minutes: \d+$/m);
+    }
+    expect(timeoutCount + Number(reutilizaFirebase)).toBe(jobCount);
   });
 });
