@@ -94,7 +94,6 @@ Antes = `origin/staging` numa worktree separada, nunca de memória. Só dado see
 com `gh pr edit --body-file`. PR visual sem imagem no corpo está incompleto.
 **Passo a passo (SHA, pastas, worktree, label `atualizar-visual`): `docs/design/ANTES_DEPOIS_PR.md`.**
 
-
 ## O dono trabalha pelo celular (REGRA DO DONO)
 
 O Matheus acompanha as sessões pelo app do Claude no celular. Nunca dar como próximo
@@ -131,9 +130,11 @@ e-mail, deck, anúncio — consultar `brand/BRAND.md` (índice) e o arquivo espe
 voz/tom → `brand/voice-tone.md`, visual → `brand/visual.md`, mensagens → `brand/messaging.md`,
 público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css`.
 
-- Tagline: "Gestão com agentes de IA para escritórios de engenharia e arquitetura." (DECISOES.md, 2026-11-07). "Do contrato à execução, num fluxo só." saiu: não usar como frase de marca. Agentes são o primeiro pilar ("A IA prepara. O sistema confere. Você aprova."). Lucro e prazo são prova, não promessa-mãe (DECISOES.md, 2026-10-28).
-- ICP: escritórios de projeto técnico — engenharia multidisciplinar (civil/estrutural/MEP) e
-  arquitetura (desde 2026-09-01, ver DECISOES.md) — NÃO construtora/incorporadora.
+- Tagline: "Gestão de projetos e obras, com agentes de IA." (DECISOES.md, 2026-11-24; superou a de 2026-11-07). "Do contrato à execução, num fluxo só." saiu: não usar como frase de marca. Agentes são o primeiro pilar ("A IA prepara. O sistema confere. Você aprova."). Lucro e prazo são prova, não promessa-mãe (DECISOES.md, 2026-10-28).
+- ICP: quem vende projeto e executa, em três tipos de negócio (DECISOES.md, 2026-11-24): escritórios
+  de projeto (engenharia multidisciplinar e arquitetura), gestão e execução de obra (gerenciadora,
+  obra por administração) e projeto e fabricação sob medida (marcenaria, planejados, marmoraria).
+  NÃO ERP de construtora/incorporadora.
 - Voz: direta, técnica na medida, confiante, sem hype. Ver palavras banidas em voice-tone.md.
 
 ## DB
@@ -148,6 +149,7 @@ migrations. Esquecer de rodar o `gen:types` reprova o PR, não vaza para runtime
 ## Git, branches e release (REGRA INQUEBRÁVEL)
 
 Aplicar sempre, sem perguntar. Repo permite squash e rebase, BLOQUEIA merge commit.
+
 - Feature/fix nasce de `origin/staging`, PR SEMPRE para `staging`; zero commit direto em `staging`/`main`.
 - Merge de feature: `gh pr merge <n> --rebase --delete-branch` (curar commits antes).
 - NUNCA PR direto `staging`→`main`. Release: branch `release/staging-AAAA-MM-DD[-slug]` de `origin/main`,
@@ -156,7 +158,7 @@ Aplicar sempre, sem perguntar. Repo permite squash e rebase, BLOQUEIA merge comm
 - Commit de feedback do Ultra leva `Feedback: <id>`; issue resolvida leva `Closes #N`.
 - Após cada merge: deletar branch local e remota, `staging` + `git pull --ff-only`. Só `main` e `staging` sobrevivem.
 - Após release: `git diff --stat origin/main origin/staging` vazio.
-**Detalhe e motivos: `docs/operations/GIT_E_RELEASE.md`.**
+  **Detalhe e motivos: `docs/operations/GIT_E_RELEASE.md`.**
 
 ## Economia de tokens (sessões longas são o maior custo)
 

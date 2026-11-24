@@ -11,6 +11,31 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-24 · Nova tagline, três tipos de negócio e landing reorganizada para planos e demonstração
+
+**Decisão:** a frase principal passa a ser **"Gestão de projetos e obras, com agentes de IA."**, sem citar nicho. O
+público deixa de ser só engenharia e arquitetura: o "Para quem" vira três tipos de negócio, escritórios de projeto
+(engenharia e arquitetura), gestão e execução de obra, e projeto e fabricação sob medida (marcenaria, móveis
+planejados, marmoraria). Na landing:
+
+- O botão de acesso é sempre **"Entrar"** ("Abrir Pilar" sai); fica só no header e no rodapé.
+- **"Agendar demonstração" volta a ser botão**, ao lado de "Ver planos", no header, na hero, nas páginas de módulo,
+  recurso e comparativo e no fecho. Leva à página `/demonstracao`, com a agenda do Google embutida.
+- O header fica com Funcionalidades, Para quem e Planos. Blog, ferramentas, FAQ e segurança vão para o rodapé; as
+  comparações "Pilar vs X" saem do rodapé (seguem no sitemap e nos links internos).
+- Vídeo de produto roda sozinho, mudo e em loop, sem controle; cada lugar mostra vídeo ou print, não os dois.
+- A página de Segurança fala por princípio: sem nome de fornecedor, sem link do repositório e sem a frase de
+  certificação. A lista de subprocessadores segue na Política de Privacidade.
+
+Contexto: a Pilar fechou cliente de marmoraria e móveis planejados, e o módulo Obra já atende quem só gerencia obra.
+A tagline antiga excluía esses públicos. No uso, "Abrir Pilar" confundia e a demonstração escondida numa linha
+discreta perdia quem queria conversar antes de assinar.
+
+**Supera:** a tagline de 2026-11-07, o ICP restrito de 2026-09-01 (o "não é ERP de construtora" continua) e a parte
+"demonstração como linha discreta" de 2026-11-08. Assinatura direta pelos planos continua valendo.
+
+---
+
 ## 2026-11-19 · Prospecção outbound no Ultra: agentes mapeiam, o fundador dispara pelo WhatsApp
 
 **Decisão:** o Ultra ganha o agente `prospeccao`, que mapeia leads toda semana (Google Places e base de CNPJ,
