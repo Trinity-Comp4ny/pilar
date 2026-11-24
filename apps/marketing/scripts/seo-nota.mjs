@@ -48,6 +48,7 @@ const ALVOS = {
   "/vs/whatsapp": "whatsapp projeto obra",
   "/vs/notion": "notion escritório engenharia arquitetura",
   "/vs/erp-construtora": "erp construtora escritório projeto",
+  "/vs/omie-conta-azul": "omie conta azul escritório engenharia",
   "/ferramentas": "ferramentas escritório engenharia arquitetura",
   "/ferramentas/calculadora-de-honorarios": "calculadora honorários",
   "/ferramentas/modelo-de-proposta": "modelo proposta projeto",

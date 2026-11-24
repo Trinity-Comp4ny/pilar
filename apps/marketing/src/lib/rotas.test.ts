@@ -69,6 +69,7 @@ describe("rotas da landing", () => {
         "/vs/whatsapp",
         "/vs/notion",
         "/vs/erp-construtora",
+        "/vs/omie-conta-azul",
         "/ferramentas",
         "/ferramentas/calculadora-de-honorarios",
         "/ferramentas/modelo-de-proposta",

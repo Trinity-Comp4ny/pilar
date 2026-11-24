@@ -83,7 +83,14 @@ describe("MODULOS", () => {
 
 describe("COMPARATIVOS", () => {
   it("tem os cinco comparativos, indexados por slug", () => {
-    expect(COMPARATIVOS.map((c) => c.slug)).toEqual(["planilha", "trello", "whatsapp", "notion", "erp-construtora"]);
+    expect(COMPARATIVOS.map((c) => c.slug)).toEqual([
+      "planilha",
+      "trello",
+      "whatsapp",
+      "notion",
+      "erp-construtora",
+      "omie-conta-azul",
+    ]);
     for (const c of COMPARATIVOS) expect(COMPARATIVOS_POR_SLUG[c.slug]).toBe(c);
   });
 

@@ -71,6 +71,8 @@ Quase todo escritório começa pela planilha, e faz sentido: é flexível e todo
 
 Ferramentas de quadro organizam tarefa, mas não conhecem contrato, parcela ou disciplina. Viram mais um lugar para alimentar. Veja [Pilar vs Trello](/vs/trello).
 
+Sistemas financeiros como Omie e Conta Azul resolvem nota fiscal, boleto e conciliação, mas tratam o projeto como centro de custo, sem disciplina nem prazo. Veja [Pilar vs Omie e Conta Azul](/vs/omie-conta-azul).
+
 No outro extremo, o ERP de construtora resolve outro problema: compra, almoxarifado e medição de obra como negócio principal. Para escritório de projeto, costuma ser pesado e não entende proposta por disciplina. O meio-termo certo é um sistema feito para escritório de projeto técnico, que não tenta substituir o CAD, o BIM ou o software de cálculo.
 
 ## Vale a pena ter inteligência artificial no software de gestão?

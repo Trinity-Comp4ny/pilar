@@ -26,6 +26,7 @@
 - [Pilar vs WhatsApp](https://www.pilarsoft.com.br/vs/whatsapp): para quem acompanha projeto e obra por grupo de WhatsApp
 - [Pilar vs Notion](https://www.pilarsoft.com.br/vs/notion): para quem montou o escritório numa ferramenta genérica de documentos
 - [Pilar vs ERP de construtora](https://www.pilarsoft.com.br/vs/erp-construtora): por que escritório de projeto precisa de outro tipo de sistema
+- [Pilar vs Omie e Conta Azul](https://www.pilarsoft.com.br/vs/omie-conta-azul): sistema financeiro generalista ou sistema feito para escritório de projeto; a Pilar não emite nota fiscal nem faz contabilidade
 
 ## Ferramentas
 

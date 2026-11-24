@@ -9,7 +9,7 @@
  * o tom é factual, não zoeira de concorrente.
  */
 
-export type ComparativoSlug = "planilha" | "trello" | "whatsapp" | "notion" | "erp-construtora";
+export type ComparativoSlug = "planilha" | "trello" | "whatsapp" | "notion" | "erp-construtora" | "omie-conta-azul";
 
 export interface LinhaComparacao {
   criterio: string;
@@ -352,6 +352,83 @@ export const COMPARATIVOS: Comparativo[] = [
       {
         pergunta: "A Pilar emite nota fiscal ou faz contabilidade?",
         resposta: "Não é um sistema contábil. Ele organiza o financeiro do escritório e gera os relatórios do mês.",
+      },
+    ],
+  },
+  {
+    slug: "omie-conta-azul",
+    adversario: "Omie e Conta Azul",
+    headline: "Omie e Conta Azul fecham o financeiro.",
+    headlineFim: "A Pilar liga o financeiro ao projeto.",
+    lede: "Omie, Conta Azul e Bling são bons sistemas financeiros para qualquer empresa de serviço: nota fiscal, boleto, conciliação e contabilidade. O escritório de engenharia tem outro problema: saber se cada projeto, com suas disciplinas, está dando lucro antes de ele acabar.",
+    seo: {
+      titulo: "Omie ou Conta Azul para escritório de engenharia? Compare",
+      descricao:
+        "Omie, Conta Azul ou um sistema feito para escritório de engenharia? Compare financeiro, margem por projeto, proposta por disciplina, obra e preço.",
+      h1: "Pilar vs Omie e Conta Azul para escritório de engenharia",
+    },
+    linhas: [
+      {
+        criterio: "Unidade de trabalho",
+        pilar: "Projeto com disciplinas, responsáveis, prazo e entregas.",
+        alternativa: "Lançamento financeiro, com o projeto como centro de custo ou rótulo.",
+      },
+      {
+        criterio: "Margem do projeto",
+        pilar: "Orçado contra executado, recalculada a cada lançamento.",
+        alternativa: "Relatório por centro de custo, montado a partir dos lançamentos.",
+      },
+      {
+        criterio: "Proposta de projeto",
+        pilar: "Por disciplina, no template do escritório, em DOCX.",
+        alternativa: "Orçamento ou pedido de venda genérico, sem escopo por disciplina.",
+      },
+      {
+        criterio: "Parcelas do cliente",
+        pilar: "A parcela nasce junto com o projeto aprovado.",
+        alternativa: "Cobrança criada no financeiro, separada do andamento do projeto.",
+      },
+      {
+        criterio: "Diário e conta da obra",
+        pilar: "Campo registra o dia e a conta da obra presta contas ao cliente.",
+        alternativa: false,
+      },
+      {
+        criterio: "Portal do cliente",
+        pilar: "Link só de leitura com andamento, parcelas e prestação de contas.",
+        alternativa: "Boleto e link de cobrança, sem visão do andamento do projeto.",
+      },
+      {
+        criterio: "Nota fiscal e contabilidade",
+        pilar: "Não emite nota nem faz contabilidade.",
+        alternativa: "É o ponto forte: NFS-e, impostos e integração com o contador.",
+      },
+      {
+        criterio: "Preço",
+        pilar: "Por escritório, sem cobrança por usuário, a partir de R$ 299 por mês.",
+        alternativa: "Plano por faixa de uso, com módulos e usuários variando o valor.",
+      },
+    ],
+    quandoMigrar: [
+      "Quando você só descobre a margem de um projeto olhando relatório de centro de custo no fim do mês.",
+      "Quando a proposta e o andamento do projeto vivem em outro lugar e o financeiro é redigitado.",
+      "Quando o cliente pergunta como anda o projeto e a única resposta do sistema é o boleto.",
+    ],
+    faq: [
+      {
+        pergunta: "A Pilar substitui o Omie ou o Conta Azul?",
+        resposta:
+          "Depende do que você usa hoje. A Pilar não emite nota fiscal nem faz contabilidade. Muitos escritórios mantêm o sistema contábil e usam a Pilar para proposta, projeto, obra e a margem de cada projeto.",
+      },
+      {
+        pergunta: "Dá para usar os dois ao mesmo tempo?",
+        resposta:
+          "Dá. O Omie ou o Conta Azul seguem cuidando de nota e contador. A Pilar organiza o que é específico de escritório de projeto: disciplina, prazo, proposta e obra.",
+      },
+      {
+        pergunta: "Qual o melhor sistema para escritório de engenharia pequeno?",
+        resposta:
+          "Se o seu problema é nota, imposto e conciliação, um sistema financeiro resolve. Se é saber o resultado de cada projeto e manter proposta, prazo e financeiro juntos, um sistema feito para escritório de projeto faz mais sentido.",
       },
     ],
   },
