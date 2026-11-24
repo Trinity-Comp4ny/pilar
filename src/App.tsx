@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { carregarPullToRefresh } from "@/components/mobile/carregarPullToRefresh";
 import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,9 +36,7 @@ import { useNovaVersao } from "./hooks/useNovaVersao";
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
 // Lazy: puxar para atualizar só serve em tela de toque; fora do bundle de entrada (teto apertado).
-const PullToRefresh = lazy(() =>
-  import("@/components/mobile/PullToRefresh").then((m) => ({ default: m.PullToRefresh }))
-);
+const PullToRefresh = lazy(carregarPullToRefresh);
 const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );

@@ -53,6 +53,10 @@ function confereDestinos(raiz: HTMLElement) {
       expect(existsSync(join(dirname(fileURLToPath(import.meta.url)), "../../public", href))).toBe(true);
       continue;
     }
+    if (href.startsWith("#")) {
+      expect(raiz.querySelector(`[id="${href.slice(1)}"]`), `âncora ${href} sem alvo`).not.toBeNull();
+      continue;
+    }
     if (href.startsWith("/")) {
       const caminho = href.split("#")[0] || "/";
       expect(
@@ -95,7 +99,8 @@ describe("LandingHeader", () => {
   it("lista os cinco módulos (desktop e celular) e Planos", () => {
     const { container } = renderNaRota(<LandingHeader />);
     for (const m of MODULOS) {
-      expect(container.querySelectorAll(`a[href="/${m.slug}"]`)).toHaveLength(2);
+      // Título da coluna no desktop e linha no celular (Campo tem ainda o link do recurso).
+      expect(container.querySelectorAll(`a[href="/${m.slug}"]`).length).toBeGreaterThanOrEqual(2);
     }
     // Link "Planos" e botão "Ver planos", no desktop e no celular.
     expect(container.querySelectorAll('a[href="/planos"]')).toHaveLength(4);
@@ -158,7 +163,7 @@ describe("LandingHeader", () => {
     try {
       renderNaRota(<LandingHeader />);
       const produto = screen.getByRole("button", { name: /Funcionalidades/ });
-      const area = produto.parentElement!;
+      const area = produto;
 
       act(() => {
         area.dispatchEvent(new MouseEvent("mouseover", { bubbles: true, relatedTarget: document.body }));

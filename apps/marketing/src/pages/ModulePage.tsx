@@ -68,6 +68,9 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
  * Sem breadcrumb: quem chega aqui veio do bento ou do menu, e o logo do
  * header já volta pra home.
  */
+const h2 =
+  "text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]";
+
 export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
   const midia = MIDIAS_PRODUTO[slug];
@@ -89,30 +92,106 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
   });
 
   const outras = MODULOS.filter((m) => m.slug !== slug);
+  const primeiro = modulo.grupos[0];
+  const recursos = PAGINAS_RECURSO.filter((pagina) => pagina.area === slug);
 
   return (
     <>
       <section className="relative isolate overflow-hidden px-5 pb-14 pt-24 md:px-10 md:pb-20 md:pt-32">
         <HeroBackdrop />
         <div className="relative z-10 mx-auto max-w-6xl">
-          <Reveal variant="up" className="max-w-3xl">
-            {/* A headline grande é frase de marca, num <p> com desenho de título. O H1
-                (a frase com a palavra-chave que se busca no Google) abre o parágrafo
-                de apoio, como na home. Antes ele era uma etiqueta em caixa-alta acima
-                da headline, que repetia o título e empurrava tudo pra baixo. */}
-            <p className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
-              {modulo.headline} <span className="italic text-ink/45">{modulo.headlineFim}</span>
-            </p>
-            <div className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">
-              <h1 className="inline font-normal">{modulo.seo.h1}.</h1> {modulo.lede}
-            </div>
+          {/* Troca de módulo sem voltar ao menu: o produto são cinco frentes ligadas, e
+              quem está numa quer ver a do lado. */}
+          <Reveal variant="up" className="mb-8 md:mb-10">
+            <nav aria-label="Módulos" className="flex flex-wrap items-center gap-2">
+              {MODULOS.map((m) => {
+                const atual = m.slug === slug;
+                return (
+                  <Link
+                    key={m.slug}
+                    to={`/${m.slug}`}
+                    aria-current={atual ? "page" : undefined}
+                    className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] transition-colors ${
+                      atual
+                        ? "border-ink bg-ink text-white"
+                        : "border-ink/15 bg-white/70 text-ink-soft hover:border-ink/40 hover:text-ink"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${m.cor.strong}`} />
+                    {m.nome}
+                  </Link>
+                );
+              })}
+              <Link
+                to="/funcionalidades"
+                className="ml-1 flex items-center gap-1 text-[13px] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+              >
+                Todas as funcionalidades
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
+              </Link>
+            </nav>
+          </Reveal>
 
-            <div className="flex flex-wrap gap-3">
-              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `modulo_${slug}`)}>
-                Ver planos
-              </SplitButton>
-            </div>
-            <LinkDemo local={`modulo_${slug}`} className="mt-3" />
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
+            <Reveal variant="up" className="min-w-0">
+              {/* A headline grande é frase de marca, num <p> com desenho de título. O H1
+                  (a frase com a palavra-chave que se busca no Google) abre o parágrafo
+                  de apoio, como na home. */}
+              <p className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
+                {modulo.headline} <span className="italic text-ink/45">{modulo.headlineFim}</span>
+              </p>
+              <div className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">
+                <h1 className="inline font-normal">{modulo.seo.h1}.</h1> {modulo.lede}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `modulo_${slug}`)}>
+                  Ver planos
+                </SplitButton>
+              </div>
+              <LinkDemo local={`modulo_${slug}`} className="mt-3" />
+            </Reveal>
+
+            {/* Abertura visual: o print real do módulo quando existe; senão a tela do primeiro grupo. */}
+            <Reveal variant="right" delay={0.1} className="min-w-0">
+              {midia?.print ? (
+                <BrowserFrame url={modulo.url}>
+                  <img
+                    src={`/screens/${midia.print.arquivo}.${midia.print.formato ?? "png"}`}
+                    alt={midia.print.descricao}
+                    width={midia.print.largura ?? 1440}
+                    height={midia.print.altura ?? 900}
+                    className="block w-full"
+                  />
+                </BrowserFrame>
+              ) : (
+                <PrintReal img={primeiro.img} alt={primeiro.titulo} mock={primeiro.mock} modulo={modulo} />
+              )}
+            </Reveal>
+          </div>
+
+          {/* Índice do módulo: cada grupo vira um atalho para a seção abaixo. */}
+          <Reveal variant="up" delay={0.15} className="mt-10 md:mt-14">
+            <p className="mb-3 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">Neste módulo</p>
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {modulo.grupos.map((g, gi) => (
+                <li key={g.id}>
+                  <a
+                    href={`#${g.id}`}
+                    className="group flex h-full items-center gap-3 rounded-[16px] border border-ink/10 bg-white/70 px-4 py-3 transition-colors hover:border-ink/30 hover:bg-white"
+                  >
+                    <span className="text-[12px] font-medium tabular-nums text-ink/50">
+                      {String(gi + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex-1 text-[14px] leading-snug text-ink">{g.titulo}</span>
+                    <ArrowRight
+                      className="h-4 w-4 shrink-0 rotate-90 text-ink/40 transition-colors group-hover:text-ink"
+                      strokeWidth={1.9}
+                    />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </Reveal>
         </div>
       </section>
@@ -133,11 +212,18 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
               // `grid-cols-1` + `min-w-0`: sem isso a coluna única do celular crescia até
               // a largura mínima da tela simulada (a fileira de abas do Obra) e a
               // página inteira passava de 390px, escondendo o botão de menu.
-              <div key={g.titulo} className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-14">
+              <div
+                key={g.id}
+                id={g.id}
+                className="grid scroll-mt-28 grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-14"
+              >
                 <Reveal
                   variant={gi % 2 === 0 ? "left" : "right"}
                   className={`min-w-0 ${gi % 2 === 0 ? "" : "lg:order-2"}`}
                 >
+                  <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-muted">
+                    {String(gi + 1).padStart(2, "0")} / {String(modulo.grupos.length).padStart(2, "0")}
+                  </p>
                   <h3 className="mb-2.5 text-[26px] font-medium leading-[1.15] tracking-[-0.03em] text-ink md:text-[30px]">
                     {g.titulo}
                   </h3>
@@ -229,43 +315,78 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
       </section>
 
       {slug === "portal" && (
-        <section className="mx-auto max-w-6xl px-5 py-12 md:px-10">
-          <h2 className="text-3xl font-medium text-ink">Financeiro do cliente</h2>
-          <p className="my-4 max-w-2xl">
-            Consulte as parcelas do projeto. Na visão de obra, acompanhe a prestação de contas disponibilizada pelo
-            escritório.
-          </p>
-          <figure className="max-w-3xl overflow-x-auto rounded-2xl bg-frame p-4">
-            <GroupMock mock="parcelas" />
-            <figcaption className="mt-3 text-sm text-ink-muted">
-              Ilustração de parcelas com dados de exemplo.
-            </figcaption>
-          </figure>
+        <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
+          <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-2 lg:gap-14">
+            <Reveal variant="up" className="min-w-0">
+              <h2 className={h2}>
+                Financeiro <span className="italic text-ink/45">do cliente.</span>
+              </h2>
+              <p className="mt-5 max-w-md text-[14.5px] leading-relaxed text-ink-soft">
+                Consulte as parcelas do projeto. Na visão de obra, acompanhe a prestação de contas disponibilizada pelo
+                escritório.
+              </p>
+            </Reveal>
+            <Reveal variant="up" delay={0.1} className="min-w-0">
+              <figure className="min-w-0 overflow-x-auto rounded-[22px] border border-paper-border bg-white p-4">
+                <GroupMock mock="parcelas" />
+                <figcaption className="mt-3 text-sm text-ink-muted">
+                  Ilustração de parcelas com dados de exemplo.
+                </figcaption>
+              </figure>
+            </Reveal>
+          </div>
         </section>
       )}
-      <section className="mx-auto max-w-6xl px-5 py-10 md:px-10">
-        <h2 className="text-2xl font-medium text-ink">Explore os recursos</h2>
-        <ul className="mt-4 flex flex-wrap gap-4">
-          {PAGINAS_RECURSO.filter((pagina) => pagina.area === slug).map((pagina) => (
-            <li key={pagina.slug}>
-              <Link className="underline underline-offset-4" to={caminhoRecurso(pagina.slug)}>
-                {pagina.titulo}
-              </Link>
-            </li>
-          ))}
-          <li>
-            <Link className="underline underline-offset-4" to="/funcionalidades">
-              Ver catálogo completo
-            </Link>
-          </li>
-        </ul>
-      </section>
+
       {midia && (
-        <section className="mx-auto max-w-4xl px-5 pb-12 md:px-10">
-          <h2 className="mb-5 text-2xl font-medium text-ink">Veja {modulo.nome} na Pilar</h2>
-          <MidiaProduto midia={midia} />
+        <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
+          <div className="mx-auto max-w-4xl">
+            <Reveal variant="up" className="mb-8 max-w-2xl">
+              <h2 className={h2}>
+                Veja {modulo.nome} <span className="italic text-ink/45">na Pilar.</span>
+              </h2>
+            </Reveal>
+            <MidiaProduto midia={midia} />
+          </div>
         </section>
       )}
+
+      <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal variant="up" className="mb-8 max-w-2xl">
+            <h2 className={h2}>
+              Explore <span className="italic text-ink/45">os recursos.</span>
+            </h2>
+          </Reveal>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {recursos.map((pagina) => (
+              <Link
+                key={pagina.slug}
+                to={caminhoRecurso(pagina.slug)}
+                className="group flex items-start justify-between gap-4 rounded-[20px] border border-paper-border bg-white p-5 transition-colors hover:border-ink/30"
+              >
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-medium text-ink">{pagina.titulo}</span>
+                  <span className="mt-1 line-clamp-2 block text-[12.5px] leading-snug text-ink-muted">
+                    {pagina.descricao}
+                  </span>
+                </span>
+                <ArrowRight
+                  className="mt-0.5 h-4 w-4 shrink-0 text-ink/40 transition-all group-hover:translate-x-0.5 group-hover:text-ink"
+                  strokeWidth={1.9}
+                />
+              </Link>
+            ))}
+            <Link
+              to="/funcionalidades"
+              className="group flex items-center justify-between gap-4 rounded-[20px] bg-ink p-5 text-[15px] font-medium text-white"
+            >
+              Ver catálogo completo
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.9} />
+            </Link>
+          </div>
+        </div>
+      </section>
       <CTASection />
     </>
   );

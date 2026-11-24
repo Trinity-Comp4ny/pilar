@@ -3,11 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { trackCta } from "../analytics";
 import { useAcesso } from "../loginHint";
-import { MODULOS_NAV } from "../lib/navegacao";
+import { COLUNAS_MENU, PUBLICOS_NAV, RECURSOS_NAV } from "../lib/navegacao";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
 
-type MenuNome = "produto";
+type MenuNome = "produto" | "publico" | "recursos";
 
 /** Atraso no fechar, pra dar tempo do mouse atravessar o vão até o painel. */
 const FECHAR_MS = 160;
@@ -81,10 +81,6 @@ export function LandingHeader() {
   const navLink =
     "flex items-center gap-1 text-[14px] text-ink-soft px-3 py-2 rounded-full hover:text-ink transition-colors";
 
-  /** Os três módulos de escritório levam o prefixo; Portal e Campo são nomes próprios. */
-  const rotuloDe = (slug: string, nome: string) =>
-    slug === "gestao" || slug === "projetos" || slug === "obra" ? `Módulo ${nome}` : nome;
-
   return (
     <>
       {/* Véu do menu do celular: escurece a página e fecha ao tocar fora. */}
@@ -122,75 +118,141 @@ export function LandingHeader() {
               <Logo size="sm" className="text-ink" />
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1 mx-auto">
-              <div className="relative" onMouseEnter={() => abrir("produto")} onMouseLeave={() => fechar(FECHAR_MS)}>
-                <button
-                  type="button"
-                  className={navLink}
-                  aria-expanded={menuAberto === "produto"}
-                  onClick={() => (menuAberto === "produto" ? fechar() : abrir("produto"))}
-                >
-                  Funcionalidades
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "produto" ? "rotate-180" : ""}`}
-                  />
-                </button>
+            <nav aria-label="Principal" className="hidden md:flex items-center gap-0.5 mx-auto">
+              <button
+                type="button"
+                className={navLink}
+                aria-expanded={menuAberto === "produto"}
+                aria-controls="menu-funcionalidades"
+                onMouseEnter={() => abrir("produto")}
+                onMouseLeave={() => fechar(FECHAR_MS)}
+                onClick={() => (menuAberto === "produto" ? fechar() : abrir("produto"))}
+              >
+                Funcionalidades
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "produto" ? "rotate-180" : ""}`}
+                />
+              </button>
 
-                {/* Painel do Produto: uma linha por módulo, com resumo e a seta
-                  redonda da casa aparecendo no hover. O grid de 3 colunas
-                  anterior espremia "Portal do cliente" e "Pilar Campo" e
-                  deixava tudo com o mesmo peso de miniatura. */}
+              {(
+                [
+                  ["publico", "Para quem", PUBLICOS_NAV],
+                  ["recursos", "Recursos", RECURSOS_NAV],
+                ] as const
+              ).map(([nome, rotulo, links]) => (
                 <div
-                  className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[420px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
-                    menuAberto === "produto"
-                      ? "opacity-100 visible translate-y-0"
-                      : "opacity-0 invisible -translate-y-1"
-                  }`}
+                  key={nome}
+                  className="relative"
+                  onMouseEnter={() => abrir(nome)}
+                  onMouseLeave={() => fechar(FECHAR_MS)}
                 >
-                  <Link
-                    to="/funcionalidades"
-                    onClick={() => fechar()}
-                    className="block rounded-xl px-4 py-3 font-medium text-ink hover:bg-card-brand-soft"
+                  <button
+                    type="button"
+                    className={navLink}
+                    aria-expanded={menuAberto === nome}
+                    onClick={() => (menuAberto === nome ? fechar() : abrir(nome))}
                   >
-                    Ver todas as funcionalidades
-                  </Link>
-                  {MODULOS_NAV.map((mo, indice) => (
-                    <div key={mo.slug}>
-                      {(indice === 0 || indice === 3) && (
-                        <p className="px-4 pt-2 text-xs font-medium text-ink-muted">
-                          {indice === 0 ? "Módulos" : "Experiências conectadas"}
-                        </p>
-                      )}
+                    {rotulo}
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === nome ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  <div
+                    className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[330px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                      menuAberto === nome ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+                    }`}
+                  >
+                    {links.map((l) => (
                       <Link
-                        to={`/${mo.slug}`}
+                        key={l.to}
+                        to={l.to}
                         onClick={() => fechar()}
-                        className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
+                        className="group flex items-center gap-3 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
                       >
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
-                          <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
+                          <span className="block text-[13.5px] font-medium text-ink">{l.rotulo}</span>
+                          <span className="block text-[12px] leading-snug text-ink-muted">{l.resumo}</span>
                         </span>
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
-                          <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
-                        </span>
+                        <ArrowRight
+                          className="h-4 w-4 shrink-0 text-ink opacity-0 transition-opacity group-hover:opacity-100"
+                          strokeWidth={1.9}
+                        />
                       </Link>
-                    </div>
-                  ))}
-                  <Link
-                    to="/funcionalidades/agentes"
-                    onClick={() => fechar()}
-                    className="block rounded-xl px-4 py-3 font-medium text-ink hover:bg-card-brand-soft"
-                  >
-                    Agentes de IA
-                  </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ))}
 
               <Link to="/planos" className={navLink}>
                 Planos
               </Link>
             </nav>
+
+            {/* Mega-menu de Funcionalidades: ancorado à pílula (não ao botão), com a
+              largura que precisa. Seis colunas espelham o catálogo (três módulos, Portal,
+              Campo e Agentes) e já listam os recursos de cada uma, então o visitante chega
+              direto na página que procura, sem passar pelo índice. Vobi e Mais Controle
+              agrupam do mesmo jeito. */}
+            <div
+              id="menu-funcionalidades"
+              onMouseEnter={() => abrir("produto")}
+              onMouseLeave={() => fechar(FECHAR_MS)}
+              className={`hidden md:block absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[min(920px,calc(100vw-48px))] rounded-[24px] border border-paper-border bg-frame p-3 shadow-[0_28px_70px_-26px_rgba(0,0,0,0.38)] transition-all duration-200 ${
+                menuAberto === "produto" ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+              }`}
+            >
+              <div className="grid grid-cols-3 gap-x-2 gap-y-1">
+                {COLUNAS_MENU.map((c) => (
+                  <div key={c.id} className="rounded-[18px] p-3">
+                    <Link to={c.href} onClick={() => fechar()} className="group mb-2 block">
+                      <span className="flex items-center gap-2 text-[14px] font-medium text-ink">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${c.corStrong}`} />
+                        {c.titulo}
+                        <ArrowRight
+                          className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100"
+                          strokeWidth={1.9}
+                        />
+                      </span>
+                      <span className="mt-0.5 block text-[12px] leading-snug text-ink-muted">{c.resumo}</span>
+                    </Link>
+                    <ul className="flex flex-col">
+                      {c.links.map((l) => (
+                        <li key={l.to}>
+                          <Link
+                            to={l.to}
+                            onClick={() => fechar()}
+                            className="flex items-center justify-between gap-2 rounded-[10px] px-2 py-[6px] text-[13px] text-ink-soft transition-colors hover:bg-card-brand-soft hover:text-ink"
+                          >
+                            <span>{l.rotulo}</span>
+                            {l.selo ? (
+                              <span
+                                className={`shrink-0 rounded-full px-1.5 py-[1px] text-[9.5px] font-medium uppercase tracking-[0.08em] ${
+                                  l.selo === "IA" ? "bg-brand text-ink" : "border border-ink/20 text-ink/70"
+                                }`}
+                              >
+                                {l.selo}
+                              </span>
+                            ) : null}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                to="/funcionalidades"
+                onClick={() => {
+                  fechar();
+                  trackCta("ver_funcionalidades", "header");
+                }}
+                className="group mt-2 flex items-center justify-between rounded-[18px] bg-ink px-5 py-3 text-[13.5px] font-medium text-white"
+              >
+                Ver todas as funcionalidades
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.9} />
+              </Link>
+            </div>
 
             <div className="hidden md:flex items-center gap-4 shrink-0">
               <a
@@ -237,48 +299,66 @@ export function LandingHeader() {
             <p className="px-3.5 pt-2.5 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
               Funcionalidades
             </p>
-            <Link
-              to="/funcionalidades"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block rounded-xl px-4 py-3 font-medium text-ink"
-            >
-              Ver todas as funcionalidades
-            </Link>
-            {MODULOS_NAV.map((mo, indice) => {
-              const atual = pathname === `/${mo.slug}`;
+            {COLUNAS_MENU.map((c) => {
+              const atual = pathname === c.href;
               return (
-                <div key={mo.slug}>
-                  {(indice === 0 || indice === 3) && (
-                    <p className="px-4 pt-2 text-xs font-medium text-ink-muted">
-                      {indice === 0 ? "Módulos" : "Experiências conectadas"}
-                    </p>
-                  )}
-                  <Link
-                    to={`/${mo.slug}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    aria-current={atual ? "page" : undefined}
-                    className={`flex items-center gap-3 rounded-[16px] px-3.5 py-2.5 transition-colors active:bg-card-brand-soft ${
-                      atual ? "bg-card-brand-soft" : ""
-                    }`}
-                  >
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[14.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
-                      <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
-                    </span>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
-                  </Link>
-                </div>
+                <Link
+                  key={c.id}
+                  to={c.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-current={atual ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-[16px] px-3.5 py-2.5 transition-colors active:bg-card-brand-soft ${
+                    atual ? "bg-card-brand-soft" : ""
+                  }`}
+                >
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${c.corStrong}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-medium text-ink">{c.titulo}</span>
+                    <span className="block truncate text-[12px] leading-snug text-ink-muted">{c.resumo}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
+                </Link>
               );
             })}
-
             <Link
-              to="/funcionalidades/agentes"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block rounded-xl px-4 py-3 font-medium text-ink"
+              to="/funcionalidades"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                trackCta("ver_funcionalidades", "header_mobile");
+              }}
+              className="mt-1 flex items-center justify-between rounded-[16px] bg-ink px-3.5 py-3 text-[14px] font-medium text-white"
             >
-              Agentes de IA
+              Ver todas as funcionalidades
+              <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={1.9} />
             </Link>
+
+            {(
+              [
+                ["Para quem", PUBLICOS_NAV],
+                ["Recursos", RECURSOS_NAV],
+              ] as const
+            ).map(([titulo, links]) => (
+              <div key={titulo}>
+                <p className="px-3.5 pt-4 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
+                  {titulo}
+                </p>
+                {links.map((l) => (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-current={pathname === l.to ? "page" : undefined}
+                    className={`flex items-center justify-between rounded-[16px] px-3.5 py-2.5 text-[14.5px] font-medium text-ink transition-colors active:bg-card-brand-soft ${
+                      pathname === l.to ? "bg-card-brand-soft" : ""
+                    }`}
+                  >
+                    {l.rotulo}
+                    <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
+                  </Link>
+                ))}
+              </div>
+            ))}
+
             <span className="mx-3.5 my-2 block h-px bg-paper-border" />
 
             <Link
