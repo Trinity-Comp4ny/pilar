@@ -130,7 +130,7 @@ export function LandingHeader() {
                   aria-expanded={menuAberto === "produto"}
                   onClick={() => (menuAberto === "produto" ? fechar() : abrir("produto"))}
                 >
-                  Produto
+                  Funcionalidades
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "produto" ? "rotate-180" : ""}`}
                   />
@@ -147,23 +147,43 @@ export function LandingHeader() {
                       : "opacity-0 invisible -translate-y-1"
                   }`}
                 >
-                  {MODULOS_NAV.map((mo) => (
-                    <Link
-                      key={mo.slug}
-                      to={`/${mo.slug}`}
-                      onClick={() => fechar()}
-                      className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
-                    >
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
-                        <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
-                      </span>
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
-                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
-                      </span>
-                    </Link>
+                  <Link
+                    to="/funcionalidades"
+                    onClick={() => fechar()}
+                    className="block rounded-xl px-4 py-3 font-medium text-ink hover:bg-card-brand-soft"
+                  >
+                    Ver todas as funcionalidades
+                  </Link>
+                  {MODULOS_NAV.map((mo, indice) => (
+                    <div key={mo.slug}>
+                      {(indice === 0 || indice === 3) && (
+                        <p className="px-4 pt-2 text-xs font-medium text-ink-muted">
+                          {indice === 0 ? "Módulos" : "Experiências conectadas"}
+                        </p>
+                      )}
+                      <Link
+                        to={`/${mo.slug}`}
+                        onClick={() => fechar()}
+                        className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
+                      >
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
+                          <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
+                        </span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                          <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
+                        </span>
+                      </Link>
+                    </div>
                   ))}
+                  <Link
+                    to="/funcionalidades/agentes"
+                    onClick={() => fechar()}
+                    className="block rounded-xl px-4 py-3 font-medium text-ink hover:bg-card-brand-soft"
+                  >
+                    Agentes de IA
+                  </Link>
                 </div>
               </div>
 
@@ -215,30 +235,50 @@ export function LandingHeader() {
             }`}
           >
             <p className="px-3.5 pt-2.5 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
-              Produto
+              Funcionalidades
             </p>
-            {MODULOS_NAV.map((mo) => {
+            <Link
+              to="/funcionalidades"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block rounded-xl px-4 py-3 font-medium text-ink"
+            >
+              Ver todas as funcionalidades
+            </Link>
+            {MODULOS_NAV.map((mo, indice) => {
               const atual = pathname === `/${mo.slug}`;
               return (
-                <Link
-                  key={mo.slug}
-                  to={`/${mo.slug}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                  aria-current={atual ? "page" : undefined}
-                  className={`flex items-center gap-3 rounded-[16px] px-3.5 py-2.5 transition-colors active:bg-card-brand-soft ${
-                    atual ? "bg-card-brand-soft" : ""
-                  }`}
-                >
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[14.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
-                    <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
-                </Link>
+                <div key={mo.slug}>
+                  {(indice === 0 || indice === 3) && (
+                    <p className="px-4 pt-2 text-xs font-medium text-ink-muted">
+                      {indice === 0 ? "Módulos" : "Experiências conectadas"}
+                    </p>
+                  )}
+                  <Link
+                    to={`/${mo.slug}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-current={atual ? "page" : undefined}
+                    className={`flex items-center gap-3 rounded-[16px] px-3.5 py-2.5 transition-colors active:bg-card-brand-soft ${
+                      atual ? "bg-card-brand-soft" : ""
+                    }`}
+                  >
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${mo.corStrong}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
+                      <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
+                    </span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
+                  </Link>
+                </div>
               );
             })}
 
+            <Link
+              to="/funcionalidades/agentes"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block rounded-xl px-4 py-3 font-medium text-ink"
+            >
+              Agentes de IA
+            </Link>
             <span className="mx-3.5 my-2 block h-px bg-paper-border" />
 
             <Link

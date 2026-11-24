@@ -1,3 +1,4 @@
+import { FluxoDemonstrativo } from "../components/FluxoDemonstrativo";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, X } from "lucide-react";
 import { trackCta } from "../analytics";
@@ -243,6 +244,11 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
         </div>
       </section>
 
+      {slug === "engenharia" && (
+        <div className="px-5">
+          <FluxoDemonstrativo />
+        </div>
+      )}
       <CTASection />
     </>
   );

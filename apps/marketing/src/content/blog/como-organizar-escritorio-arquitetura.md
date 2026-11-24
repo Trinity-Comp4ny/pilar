@@ -94,7 +94,7 @@ A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetu
 - **Do contato ao contrato:** funil de leads com motivo de perda, proposta gerada em DOCX no seu template e proposta aprovada virando projeto com as parcelas no financeiro.
 - **Etapas e complementares:** [Projetos](/projetos) com quadro nas suas colunas, fluxo padrão de etapas, vários responsáveis por disciplina, Gantt da carteira e mudança de prazo com justificativa.
 - **Obra:** diário que chega do celular, cotação de material comparada e conta da obra com aporte, despesa e taxa de administração ([Obra](/obra)).
-- **Cliente informado:** [portal do cliente](/portal) só de leitura, sem conta e sem aplicativo, com etapas, entregas e parcelas, ou a prestação de contas da obra.
+- **Cliente informado:** [portal do cliente](/portal) no navegador, com etapas, entregas e parcelas, ou a prestação de contas da obra.
 
 Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [arquitetura](/arquitetura).
 

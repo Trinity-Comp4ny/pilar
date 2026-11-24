@@ -394,7 +394,7 @@ function CartaoPortal() {
         <CabecalhoCartao
           rotulo="Portal do cliente"
           titulo="Seu cliente acompanha por um link"
-          legenda="Andamento e parcelas, sem conta e sem app."
+          legenda="Andamento, entregas e parcelas pelo navegador."
           href="/portal"
         />
 

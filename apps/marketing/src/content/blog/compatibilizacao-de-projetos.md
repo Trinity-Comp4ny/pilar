@@ -125,3 +125,5 @@ Ela deve estar no escopo e no preço de quem coordena, prevista no contrato com 
 ### Quantas rodadas de compatibilização são suficientes?
 
 Não há número fixo. Depende do porte, do número de disciplinas e da estabilidade da arquitetura. Preveja as rodadas no cronograma e no contrato e acompanhe quantos itens cada rodada deixa em aberto: quando sobram poucos e menores, a compatibilização está convergindo.
+
+Veja como funciona: [gestão de projetos por disciplina](/funcionalidades/disciplinas).

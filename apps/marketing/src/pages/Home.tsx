@@ -1,3 +1,4 @@
+import { FluxoDemonstrativo } from "../components/FluxoDemonstrativo";
 import { usePageMeta } from "../lib/seo";
 import { HeroSection } from "../components/HeroSection";
 import { StatementSection } from "../components/StatementSection";
@@ -31,6 +32,9 @@ export function Home() {
     <>
       <HeroSection />
       <StatementSection />
+      <div className="px-5">
+        <FluxoDemonstrativo />
+      </div>
       <BentoSection />
       <AgentsSection />
       <PricingSection />

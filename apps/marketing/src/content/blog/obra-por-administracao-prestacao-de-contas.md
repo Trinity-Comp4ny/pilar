@@ -90,7 +90,7 @@ A alternativa é dar ao cliente um acesso de leitura ao que está registrado: ap
 No [módulo Obra](/obra), cada obra tem a sua conta: aporte do cliente, despesa com comprovante, saldo e a sua taxa de administração calculada a cada lançamento. O cliente acompanha pelo portal.
 
 - Conta da obra com aporte, despesa, saldo e taxa, sem planilha paralela.
-- [Portal do cliente](/portal) por link só de leitura, sem conta nem aplicativo: quem contratou obra vê aporte, despesa com comprovante e saldo.
+- [Portal do cliente](/portal) pelo navegador: quem contratou obra vê aporte, despesa com comprovante e saldo.
 - Orçamento do fornecedor lido por agente de IA a partir da foto ou do PDF, e cotações comparadas lado a lado, com a vencedora registrada. A IA prepara, você aprova.
 - Estoque do canteiro com entrada, saída e saldo valorizado.
 

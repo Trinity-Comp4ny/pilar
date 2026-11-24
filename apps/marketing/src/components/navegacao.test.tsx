@@ -138,7 +138,7 @@ describe("LandingHeader", () => {
 
   it("o menu Produto abre pelo teclado e fecha com Esc", async () => {
     renderNaRota(<LandingHeader />);
-    const produto = screen.getByRole("button", { name: /Produto/ });
+    const produto = screen.getByRole("button", { name: /Funcionalidades/ });
     expect(produto).toHaveAttribute("aria-expanded", "false");
 
     produto.focus();
@@ -153,7 +153,7 @@ describe("LandingHeader", () => {
     vi.useFakeTimers();
     try {
       renderNaRota(<LandingHeader />);
-      const produto = screen.getByRole("button", { name: /Produto/ });
+      const produto = screen.getByRole("button", { name: /Funcionalidades/ });
       const area = produto.parentElement!;
 
       act(() => {

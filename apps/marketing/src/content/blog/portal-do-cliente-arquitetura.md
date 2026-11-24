@@ -92,7 +92,7 @@ O portal funciona melhor quando entra na relação desde o começo:
 
 ## Como a Pilar ajuda
 
-O [portal do cliente da Pilar](/portal) é um link só de leitura, sem conta, sem aplicativo e sem senha. O cliente abre e vê; não altera nada.
+O [portal do cliente da Pilar](/portal) abre no navegador e reúne as informações que o escritório disponibiliza.
 
 - Quem contratou projeto vê disciplina, entrega e parcela.
 - Quem contratou obra vê aporte, despesa com comprovante e saldo.
@@ -104,7 +104,7 @@ Veja como a Pilar atende [escritórios de arquitetura](/arquitetura). Os planos 
 
 ### O cliente precisa criar conta para usar o portal?
 
-Não deveria. Quanto mais passos para entrar, menos o cliente usa. Na Pilar, o portal é um link só de leitura: sem conta, sem senha e sem aplicativo.
+Não deveria. Quanto mais passos para entrar, menos o cliente usa. Na Pilar, o portal é acessado pelo navegador, conforme o acesso disponibilizado pelo escritório.
 
 ### Devo mostrar as parcelas no portal do cliente?
 
