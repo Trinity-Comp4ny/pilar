@@ -28,11 +28,14 @@ const tituloDaPagina = () => screen.findByRole("heading", { level: 1 }, { timeou
 
 describe("roteamento da landing", () => {
   const rotas: [string, RegExp][] = [
-    ["/", /Gestão com agentes de IA para escritórios de engenharia e arquitetura/],
+    ["/", /Gestão de projetos e obras, com agentes de IA/],
     ...MODULOS.map((m): [string, RegExp] => [`/${m.slug}`, new RegExp(m.seo.h1)]),
     ...COMPARATIVOS.map((c): [string, RegExp] => [`/vs/${c.slug}`, new RegExp(c.seo.h1)]),
     ["/engenharia", /Software de gestão para escritório de engenharia/],
     ["/arquitetura", /Sistema de gestão para escritório de arquitetura/],
+    ["/gestao-de-obra", /Gestão de obra/],
+    ["/sob-medida", /Gestão para quem projeta e fabrica sob medida/],
+    ["/demonstracao", /Veja a Pilar/],
     ["/blog", /Blog de gestão para escritórios/],
     ["/blog/diario-de-obra-rdo", /Diário de obra/],
     ["/ferramentas", /Ferramentas para escritório/],
@@ -42,7 +45,7 @@ describe("roteamento da landing", () => {
     ["/planos", /Preço do software de gestão/],
     ["/termos", /Termos de Uso/],
     ["/privacidade", /Política de Privacidade/],
-    ["/seguranca", /Segurança e confiança/],
+    ["/seguranca", /Segurança dos seus dados/],
   ];
 
   it.each(rotas)("%s abre a própria página, com header, footer e banner de cookies", async (rota, titulo) => {

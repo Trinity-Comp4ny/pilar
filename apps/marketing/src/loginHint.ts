@@ -15,21 +15,24 @@ export function useLoginHint(): boolean {
 
 export interface Acesso {
   logado: boolean;
-  rotulo: "Entrar" | "Abrir Pilar";
+  rotulo: "Entrar";
   href: string;
   /** Nome do evento de CTA no analytics. */
-  evento: "entrar" | "abrir_pilar";
+  evento: "entrar";
 }
 
 /**
- * O botão de acesso ao app, o mesmo em toda a landing (header, menu do celular,
- * hero e fecho). Deslogado é "Entrar", que leva ao login; com o hint de sessão
- * vira "Abrir Pilar", direto para o início. Antes a hero dizia "Entrar" e o
- * header "Abrir Pilar" para a mesma pessoa, e o fecho mostrava os dois juntos.
+ * O botão de acesso ao app (header, menu do celular e rodapé). O rótulo é sempre
+ * "Entrar": "Abrir Pilar" confundia quem chegava pela primeira vez, e quem já tem
+ * conta reconhece o Entrar (DECISOES.md, 2026-11-24). Com o hint de sessão o
+ * destino pula o login e vai direto ao início.
  */
 export function useAcesso(): Acesso {
   const logado = useLoginHint();
-  return logado
-    ? { logado, rotulo: "Abrir Pilar", href: `${APP_URL}/inicio`, evento: "abrir_pilar" }
-    : { logado, rotulo: "Entrar", href: `${APP_URL}/login`, evento: "entrar" };
+  return {
+    logado,
+    rotulo: "Entrar",
+    href: logado ? `${APP_URL}/inicio` : `${APP_URL}/login`,
+    evento: "entrar",
+  };
 }

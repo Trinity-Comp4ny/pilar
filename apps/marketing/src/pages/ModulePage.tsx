@@ -4,17 +4,15 @@ import { PAGINAS_RECURSO, caminhoRecurso } from "../lib/catalogo";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
-import { trackCta } from "../analytics";
 import { BrowserFrame } from "../components/BrowserFrame";
 import { CTASection } from "../components/CTASection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
 import { Celular, GroupMock } from "../components/mock/ModuleScreens";
 import { Reveal } from "../components/Reveal";
-import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
 
-import { LinkDemo } from "../components/LinkDemo";
+import { BotoesCta } from "../components/BotoesCta";
 
 /**
  * Print real da tela, com rede de segurança: enquanto o PNG não existe em
@@ -144,12 +142,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
                 <h1 className="inline font-normal">{modulo.seo.h1}.</h1> {modulo.lede}
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `modulo_${slug}`)}>
-                  Ver planos
-                </SplitButton>
-              </div>
-              <LinkDemo local={`modulo_${slug}`} className="mt-3" />
+              <BotoesCta local={`modulo_${slug}`} />
             </Reveal>
 
             {/* Abertura visual: o print real do módulo quando existe; senão a tela do primeiro grupo. */}
@@ -338,7 +331,8 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         </section>
       )}
 
-      {midia && (
+      {/* O print já abre a página; aqui entra só o vídeo, em loop. */}
+      {midia?.video && (
         <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
           <div className="mx-auto max-w-4xl">
             <Reveal variant="up" className="mb-8 max-w-2xl">

@@ -102,6 +102,15 @@ describe("rotas da landing", () => {
         "/funcionalidades/portal-de-projetos",
         "/funcionalidades/portal-de-obras",
         "/funcionalidades/portal-financeiro",
+        "/funcionalidades/campo-registro-do-dia",
+        "/funcionalidades/campo-offline",
+        "/funcionalidades/campo-acesso-da-equipe",
+        "/funcionalidades/agente-extratos",
+        "/funcionalidades/agente-orcamentos",
+        "/funcionalidades/agente-estimativas",
+        "/demonstracao",
+        "/gestao-de-obra",
+        "/sob-medida",
       ])
     );
     expect(ler("../App.tsx")).toMatch(/<Route\s+path="\*"\s+element={<NotFound \/>}/);

@@ -1,13 +1,11 @@
 import { Check, X } from "lucide-react";
-import { trackCta } from "../analytics";
 import { COMPARATIVOS_POR_SLUG, type ComparativoSlug } from "../lib/comparativos";
 import { useJsonLd, usePageMeta } from "../lib/seo";
 import { CTASection } from "../components/CTASection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
 import { Reveal } from "../components/Reveal";
-import { SplitButton } from "../components/ui/SplitButton";
 
-import { LinkDemo } from "../components/LinkDemo";
+import { BotoesCta } from "../components/BotoesCta";
 
 /**
  * Página "Pilar vs X". Mesmo esqueleto das páginas de módulo (hero com a
@@ -49,12 +47,7 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
               <h1 className="inline font-normal">{c.seo.h1}.</h1> {c.lede}
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `vs_${slug}`)}>
-                Ver planos
-              </SplitButton>
-            </div>
-            <LinkDemo local={`vs_${slug}`} className="mt-3" />
+            <BotoesCta local={`vs_${slug}`} />
           </Reveal>
         </div>
       </section>

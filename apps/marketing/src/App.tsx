@@ -31,6 +31,7 @@ const CalculadoraHonorarios = lazy(() =>
 );
 const ModeloProposta = lazy(() => import("./pages/Ferramentas").then((m) => ({ default: m.ModeloProposta })));
 const Seguranca = lazy(() => import("./pages/Seguranca").then((m) => ({ default: m.Seguranca })));
+const Demonstracao = lazy(() => import("./pages/Demonstracao").then((m) => ({ default: m.Demonstracao })));
 const Catalogo = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.Catalogo })));
 const RecursoPage = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.RecursoPage })));
 const AgentesPage = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.AgentesPage })));
@@ -133,7 +134,22 @@ export default function App() {
               <Route path="/termos" element={<Termos />} />
               <Route path="/privacidade" element={<Privacidade />} />
               <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/demonstracao" element={<Demonstracao />} />
+              <Route path="/gestao-de-obra" element={<PublicoPage slug="gestao-de-obra" />} />
+              <Route path="/sob-medida" element={<PublicoPage slug="sob-medida" />} />
               <Route path="/funcionalidades" element={<Catalogo />} />
+              <Route
+                path="/funcionalidades/campo-registro-do-dia"
+                element={<RecursoPage slug="campo-registro-do-dia" />}
+              />
+              <Route path="/funcionalidades/campo-offline" element={<RecursoPage slug="campo-offline" />} />
+              <Route
+                path="/funcionalidades/campo-acesso-da-equipe"
+                element={<RecursoPage slug="campo-acesso-da-equipe" />}
+              />
+              <Route path="/funcionalidades/agente-extratos" element={<RecursoPage slug="agente-extratos" />} />
+              <Route path="/funcionalidades/agente-orcamentos" element={<RecursoPage slug="agente-orcamentos" />} />
+              <Route path="/funcionalidades/agente-estimativas" element={<RecursoPage slug="agente-estimativas" />} />
               <Route path="/funcionalidades/agentes" element={<AgentesPage />} />
               <Route path="/funcionalidades/propostas" element={<RecursoPage slug="propostas" />} />
               <Route path="/funcionalidades/financeiro" element={<RecursoPage slug="financeiro" />} />

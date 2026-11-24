@@ -70,6 +70,21 @@ export const MIDIAS_PRODUTO: Readonly<Partial<Record<string, Midia>>> = {
       descricao: "O vídeo abre o diário no escritório e localiza um registro de concretagem.",
     },
   },
+  "campo-offline": {
+    video: {
+      arquivo: "campo-sincronizacao",
+      descricao: "Demonstração do diário salvo sem conexão e sincronizado quando a rede volta.",
+    },
+  },
+  "agente-estimativas": {
+    print: {
+      arquivo: "estimativas",
+      formato: "jpg",
+      largura: 1440,
+      altura: 2800,
+      descricao: "Aba de custos de uma estimativa de exemplo com composição por etapa.",
+    },
+  },
   campo: {
     video: {
       arquivo: "campo-sincronizacao",

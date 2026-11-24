@@ -1,10 +1,11 @@
+import { Link } from "react-router-dom";
 import { trackCta } from "../analytics";
-import { DEMO_URL } from "../lib/contato";
+import { DEMO_PATH } from "../lib/contato";
 
 /**
- * Caminho secundário para quem quer ver a Pilar antes de assinar (decisão de
- * 2026-11-08): os botões principais levam aos planos; a demonstração fica numa
- * linha discreta embaixo, em nova aba (Google Agenda) e sem dar `window.opener`.
+ * Linha discreta de demonstração, para os lugares onde o par de botões
+ * (`BotoesCta`) não cabe: cartões de plano, artigos e ferramentas. Leva à página
+ * `/demonstracao`, que tem a agenda embutida (decisão de 2026-11-24).
  */
 export function LinkDemo({
   local,
@@ -20,15 +21,13 @@ export function LinkDemo({
   return (
     <p className={`text-[12.5px] text-ink-muted ${className ?? ""}`}>
       {texto ? `${texto} ` : null}
-      <a
-        href={DEMO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        to={DEMO_PATH}
         onClick={() => trackCta("agende_demo", local)}
         className="text-ink underline underline-offset-2 hover:text-ink/70"
       >
         {rotulo}
-      </a>
+      </Link>
     </p>
   );
 }

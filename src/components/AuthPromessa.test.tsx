@@ -29,9 +29,7 @@ describe("AuthPromessa", () => {
   it("mostra a tagline, a assinatura dos agentes e os três pontos, nas palavras da marca", () => {
     render(<AuthPromessa />);
 
-    expect(
-      screen.getByText("Gestão com agentes de IA para escritórios de engenharia e arquitetura.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Gestão de projetos e obras, com agentes de IA.")).toBeInTheDocument();
     expect(screen.getByText("A IA prepara. O sistema confere. Você aprova.")).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
   });

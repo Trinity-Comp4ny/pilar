@@ -382,7 +382,7 @@ export default function CompanySetup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
+              "Gestão de projetos e obras, com agentes de IA."
             </blockquote>
 
             <p className="text-sm text-white/70">Gestão, projetos e obras no mesmo lugar. Comece por onde dói mais.</p>
