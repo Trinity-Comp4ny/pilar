@@ -31,6 +31,9 @@ const CalculadoraHonorarios = lazy(() =>
 );
 const ModeloProposta = lazy(() => import("./pages/Ferramentas").then((m) => ({ default: m.ModeloProposta })));
 const Seguranca = lazy(() => import("./pages/Seguranca").then((m) => ({ default: m.Seguranca })));
+const Catalogo = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.Catalogo })));
+const RecursoPage = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.RecursoPage })));
+const AgentesPage = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.AgentesPage })));
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 /**
@@ -130,6 +133,30 @@ export default function App() {
               <Route path="/termos" element={<Termos />} />
               <Route path="/privacidade" element={<Privacidade />} />
               <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/funcionalidades" element={<Catalogo />} />
+              <Route path="/funcionalidades/agentes" element={<AgentesPage />} />
+              <Route path="/funcionalidades/propostas" element={<RecursoPage slug="propostas" />} />
+              <Route path="/funcionalidades/financeiro" element={<RecursoPage slug="financeiro" />} />
+              <Route path="/funcionalidades/disciplinas" element={<RecursoPage slug="disciplinas" />} />
+              <Route path="/funcionalidades/cronograma" element={<RecursoPage slug="cronograma" />} />
+              <Route path="/funcionalidades/diario-de-obra" element={<RecursoPage slug="diario-de-obra" />} />
+              <Route path="/funcionalidades/prestacao-de-contas" element={<RecursoPage slug="prestacao-de-contas" />} />
+              <Route path="/funcionalidades/crm" element={<RecursoPage slug="crm" />} />
+              <Route path="/funcionalidades/escopo-e-aditivos" element={<RecursoPage slug="escopo-e-aditivos" />} />
+              <Route path="/funcionalidades/cotacoes" element={<RecursoPage slug="cotacoes" />} />
+              <Route path="/funcionalidades/equipe-e-horas" element={<RecursoPage slug="equipe-e-horas" />} />
+              <Route
+                path="/funcionalidades/importacao-financeira"
+                element={<RecursoPage slug="importacao-financeira" />}
+              />
+              <Route path="/funcionalidades/carteira-e-cartoes" element={<RecursoPage slug="carteira-e-cartoes" />} />
+              <Route path="/funcionalidades/rentabilidade" element={<RecursoPage slug="rentabilidade" />} />
+              <Route path="/funcionalidades/cronograma-de-obra" element={<RecursoPage slug="cronograma-de-obra" />} />
+              <Route path="/funcionalidades/estoque-de-obra" element={<RecursoPage slug="estoque-de-obra" />} />
+              <Route path="/funcionalidades/estimativas-de-obra" element={<RecursoPage slug="estimativas-de-obra" />} />
+              <Route path="/funcionalidades/portal-de-projetos" element={<RecursoPage slug="portal-de-projetos" />} />
+              <Route path="/funcionalidades/portal-de-obras" element={<RecursoPage slug="portal-de-obras" />} />
+              <Route path="/funcionalidades/portal-financeiro" element={<RecursoPage slug="portal-financeiro" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

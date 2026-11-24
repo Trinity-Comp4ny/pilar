@@ -2,15 +2,17 @@ name: Deploy Firebase Hosting
 
 # Migração Vercel -> Firebase Hosting (ver docs/operations/MIGRACAO_VERCEL_FIREBASE.md).
 #
-# Enquanto a Vercel serve produção, este workflow só publica em CANAL DE PREVIEW (expira
-# em 7 dias) automaticamente, e só em PR que mexe nos arquivos do Firebase. Publicar `live`
-# exige disparo manual (workflow_dispatch). Os gatilhos amplos (todo PR, push em
-# staging/main) entram DEPOIS do cutover, no passo 6 do runbook.
+# O CI de staging chama este workflow diretamente; o CI verde de main aciona `live`,
+# sujeito à aprovação do Environment `production`; PR que mexe na própria publicação gera preview
+# (canal de 7 dias com smoke); o disparo manual (workflow_dispatch) republica ou ensaia.
+# Cada Environment (staging, production) tem as suas variáveis FIREBASE_*, GCP_* e VITE_*. `live` publica no endereço
+# `SITE_ID.web.app`; o que os clientes veem depende de para onde o DNS aponta (passo 6 do runbook).
 #
 # Dois sites no mesmo projeto GCP: o app (raiz) e a landing (apps/marketing). Cada um
 # tem o seu firebase.*.json, gerado a partir do vercel.json (CSP e headers idênticos).
 
 on:
+  workflow_call:
   workflow_dispatch:
     inputs:
       alvo:
@@ -19,11 +21,19 @@ on:
         options: [app, marketing]
         required: true
       canal:
-        description: "preview = canal temporário (7 dias), live = produção do site"
+        description: "preview = canal temporário (7 dias), staging = site de staging, live = produção do site"
         type: choice
-        options: [preview, live]
+        options: [preview, staging, live]
         default: preview
         required: true
+  # Publicação live automática: só depois que o CI de main terminar verde (o CI já aplicou as
+  # migrations e fez o deploy das edge functions, então o front nunca sobe antes do backend).
+  # O Environment `production` segue exigindo aprovação, que é a trava humana.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  # Preview de PR só quando o PR mexe na própria publicação (config do Firebase, scripts e smoke).
   pull_request:
     branches: [staging]
     paths:
@@ -42,26 +52,34 @@ permissions:
   id-token: write
 
 concurrency:
-  group: firebase-hosting-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', inputs.alvo, inputs.canal) || format('pr-{0}', github.event.number) }}
+  group: firebase-hosting-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', inputs.alvo, inputs.canal) || github.event_name == 'workflow_run' && 'live-main' || github.event_name == 'push' && 'deploy-staging-hosting' || format('pr-{0}', github.event.number) }}
   cancel-in-progress: false
 
 jobs:
   deploy:
+    # CI reprovado não publica. PR de fork ou do Dependabot não recebe secrets nem a federação do GCP.
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/staging')
+      || github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        # PR publica os dois sites; o disparo manual publica só o escolhido.
+        # PR e CI de main publicam os dois sites; o disparo manual publica só o escolhido.
         alvo: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.alvo)) || fromJSON('["app","marketing"]') }}
     # Variáveis e segredos de build ficam em Environments (staging x produção usam
     # Supabase diferentes). `live` usa `production`; preview usa `staging`.
-    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && 'production' || 'staging' }}
+    environment: ${{ ((github.event_name == 'workflow_dispatch' && inputs.canal == 'live') || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main')) && 'production' || 'staging' }}
     env:
       CANAL_NOME: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || format('manual-{0}', github.run_number) }}
-      CANAL: ${{ github.event_name == 'workflow_dispatch' && inputs.canal || 'preview' }}
-      SENTRY_RELEASE: ${{ github.sha }}
-      SENTRY_ENV: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && 'production' || 'preview' }}
+      CANAL: ${{ github.event_name == 'workflow_dispatch' && inputs.canal || github.event_name == 'workflow_run' && (github.event.workflow_run.head_branch == 'main' && 'live' || 'staging') || (github.event_name == 'push' && 'staging') || 'preview' }}
+      # No workflow_run o código a publicar é o do commit que o CI testou, não o topo de main.
+      SENTRY_RELEASE: ${{ github.event.workflow_run.head_sha || github.sha }}
+      SENTRY_ENV: ${{ ((github.event_name == 'workflow_dispatch' && inputs.canal == 'live') || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main')) && 'production' || ((github.event_name == 'workflow_dispatch' && inputs.canal == 'staging') || (github.event_name == 'workflow_run' || github.event_name == 'push')) && 'staging' || 'preview' }}
+      CI_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
@@ -75,13 +93,15 @@ jobs:
       VITE_STATUS_URL: ${{ vars.VITE_STATUS_URL }}
       VITE_MARKETING_APP_URL: ${{ vars.VITE_MARKETING_APP_URL }}
       # Upload de sourcemap só em produção (igual à Vercel). Sem token o plugin pula.
-      SENTRY_AUTH_TOKEN: ${{ (github.event_name == 'workflow_dispatch' && inputs.canal == 'live') && secrets.SENTRY_AUTH_TOKEN || '' }}
+      SENTRY_AUTH_TOKEN: ${{ ((github.event_name == 'workflow_dispatch' && inputs.canal == 'live') || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main')) && secrets.SENTRY_AUTH_TOKEN || '' }}
       SENTRY_ORG: ${{ vars.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ matrix.alvo == 'app' && vars.SENTRY_PROJECT || '' }}
       FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT_ID }}
       SITE_ID: ${{ matrix.alvo == 'app' && vars.FIREBASE_SITE_APP || vars.FIREBASE_SITE_MARKETING }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: ./.github/actions/setup-deps
 
@@ -103,7 +123,7 @@ jobs:
           cd "$DIR"
           # O id do site entra aqui para o repo não carregar o id do projeto.
           jq --arg s "$SITE_ID" '.hosting.site = $s' "$CFG" > firebase.json
-          if [ "$CANAL" = "live" ]; then
+          if [ "$CANAL" != "preview" ]; then
             npx --yes firebase-tools@14 deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
           else
             npx --yes firebase-tools@14 hosting:channel:deploy "$CANAL_NOME" \
@@ -116,9 +136,18 @@ jobs:
         if: env.CANAL == 'preview'
         run: node scripts/verificar-firebase-preview.mjs "$RUNNER_TEMP/firebase-preview.json" "${{ matrix.alvo }}" "$CANAL_NOME"
 
-      - name: Validar a publicação live no domínio padrão do Firebase
-        if: env.CANAL == 'live'
-        run: node scripts/verificar-firebase-preview.mjs --live "${{ matrix.alvo }}" live
+      - name: Validar a publicação no domínio padrão do Firebase
+        if: env.CANAL != 'preview'
+        run: node scripts/verificar-firebase-preview.mjs --live "${{ matrix.alvo }}" "$CANAL"
+
+      - name: Validar a publicação no domínio público da landing
+        if: env.CANAL == 'live' && matrix.alvo == 'marketing'
+        run: node scripts/verificar-firebase-preview.mjs --public marketing live
+
+      - name: Avisar buscadores do IndexNow após validar a landing
+        if: env.CANAL == 'live' && matrix.alvo == 'marketing'
+        continue-on-error: true
+        run: node apps/marketing/scripts/indexnow.mjs
 
       - name: Preparar Chromium para o smoke autenticado
         if: env.CANAL == 'preview' && matrix.alvo == 'app'

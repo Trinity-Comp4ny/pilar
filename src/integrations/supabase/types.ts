@@ -8639,6 +8639,95 @@ export type Database = {
         }
         Relationships: []
       }
+      prospec_buscas: {
+        Row: {
+          celula_id: string | null
+          created_at: string
+          encontrados: number
+          erro: string | null
+          id: string
+          novos: number
+        }
+        Insert: {
+          celula_id?: string | null
+          created_at?: string
+          encontrados?: number
+          erro?: string | null
+          id?: string
+          novos?: number
+        }
+        Update: {
+          celula_id?: string | null
+          created_at?: string
+          encontrados?: number
+          erro?: string | null
+          id?: string
+          novos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospec_buscas_celula_id_fkey"
+            columns: ["celula_id"]
+            isOneToOne: false
+            referencedRelation: "prospec_celulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospec_celulas: {
+        Row: {
+          cidade: string
+          id: string
+          leads_novos: number
+          prioridade: number
+          regiao: string
+          segmento: string
+          uf: string
+          ultima_busca_em: string | null
+        }
+        Insert: {
+          cidade: string
+          id?: string
+          leads_novos?: number
+          prioridade: number
+          regiao: string
+          segmento: string
+          uf: string
+          ultima_busca_em?: string | null
+        }
+        Update: {
+          cidade?: string
+          id?: string
+          leads_novos?: number
+          prioridade?: number
+          regiao?: string
+          segmento?: string
+          uf?: string
+          ultima_busca_em?: string | null
+        }
+        Relationships: []
+      }
+      prospec_config: {
+        Row: {
+          ativo: boolean
+          id: boolean
+          repetir_apos_dias: number
+          teto_semanal_buscas: number
+        }
+        Insert: {
+          ativo?: boolean
+          id?: boolean
+          repetir_apos_dias?: number
+          teto_semanal_buscas?: number
+        }
+        Update: {
+          ativo?: boolean
+          id?: boolean
+          repetir_apos_dias?: number
+          teto_semanal_buscas?: number
+        }
+        Relationships: []
+      }
       prospec_envios: {
         Row: {
           canal: string | null
@@ -8646,6 +8735,7 @@ export type Database = {
           criado_por: string | null
           id: string
           lead_id: string
+          modelo: string | null
           resultado: string
           texto: string | null
         }
@@ -8655,6 +8745,7 @@ export type Database = {
           criado_por?: string | null
           id?: string
           lead_id: string
+          modelo?: string | null
           resultado: string
           texto?: string | null
         }
@@ -8664,6 +8755,7 @@ export type Database = {
           criado_por?: string | null
           id?: string
           lead_id?: string
+          modelo?: string | null
           resultado?: string
           texto?: string | null
         }
@@ -8681,19 +8773,25 @@ export type Database = {
         Row: {
           canal: string
           cidade: string | null
+          cnae_principal: string | null
+          cnpj: string | null
           confianca_contato: string
           contato_nome: string | null
           created_at: string
           criado_por: string | null
           email: string | null
           endereco: string | null
+          enriquecido_em: string | null
           fila_em: string | null
           id: string
           nome: string
           nota_encaixe: number
           origem: string
+          place_id: string | null
           pulado_em: string | null
           qualidade: string | null
+          razao_social: string | null
+          regiao: string | null
           segmento: string
           segmento_teste: boolean
           site: string | null
@@ -8709,19 +8807,25 @@ export type Database = {
         Insert: {
           canal?: string
           cidade?: string | null
+          cnae_principal?: string | null
+          cnpj?: string | null
           confianca_contato?: string
           contato_nome?: string | null
           created_at?: string
           criado_por?: string | null
           email?: string | null
           endereco?: string | null
+          enriquecido_em?: string | null
           fila_em?: string | null
           id?: string
           nome: string
           nota_encaixe?: number
           origem?: string
+          place_id?: string | null
           pulado_em?: string | null
           qualidade?: string | null
+          razao_social?: string | null
+          regiao?: string | null
           segmento: string
           segmento_teste?: boolean
           site?: string | null
@@ -8737,19 +8841,25 @@ export type Database = {
         Update: {
           canal?: string
           cidade?: string | null
+          cnae_principal?: string | null
+          cnpj?: string | null
           confianca_contato?: string
           contato_nome?: string | null
           created_at?: string
           criado_por?: string | null
           email?: string | null
           endereco?: string | null
+          enriquecido_em?: string | null
           fila_em?: string | null
           id?: string
           nome?: string
           nota_encaixe?: number
           origem?: string
+          place_id?: string | null
           pulado_em?: string | null
           qualidade?: string | null
+          razao_social?: string | null
+          regiao?: string | null
           segmento?: string
           segmento_teste?: boolean
           site?: string | null
@@ -12282,19 +12392,89 @@ export type Database = {
         }[]
       }
       proposta_link_digest: { Args: { p_proposta_id: string }; Returns: string }
+      prospec_config_salvar: {
+        Args: { p_ativo: boolean; p_teto: number }
+        Returns: undefined
+      }
+      prospec_enriquecedor_disparar: { Args: never; Returns: undefined }
+      prospec_fila_pausada: { Args: never; Returns: boolean }
+      prospec_followups: {
+        Args: { p_dias?: number; p_limite?: number }
+        Returns: {
+          canal: string
+          cidade: string
+          confianca_contato: string
+          contato_nome: string
+          email: string
+          fila_em: string
+          id: string
+          nome: string
+          nota_encaixe: number
+          segmento: string
+          segmento_teste: boolean
+          site: string
+          status: string
+          telefone_e164: string
+          tipo_telefone: string
+          ultimo_contato_em: string
+        }[]
+      }
+      prospec_leads_para_enriquecer: {
+        Args: { p_limite?: number }
+        Returns: {
+          cnpj: string
+          id: string
+        }[]
+      }
+      prospec_mapeador_disparar: { Args: never; Returns: undefined }
       prospec_montar_fila: {
         Args: { p_canal?: string; p_limite?: number }
         Returns: number
+      }
+      prospec_proximas_celulas: {
+        Args: never
+        Returns: {
+          cidade: string
+          id: string
+          regiao: string
+          segmento: string
+          uf: string
+        }[]
       }
       prospec_registrar: {
         Args: {
           p_canal?: string
           p_contato_nome?: string
           p_lead: string
+          p_modelo?: string
           p_resultado: string
           p_texto?: string
         }
         Returns: undefined
+      }
+      prospec_registrar_busca: {
+        Args: { p_celula: string; p_erro?: string; p_leads: Json }
+        Returns: number
+      }
+      prospec_registrar_enriquecimento: {
+        Args: {
+          p_ajuste_nota?: number
+          p_cnae: string
+          p_decisor: string
+          p_lead: string
+          p_razao_social: string
+        }
+        Returns: undefined
+      }
+      prospec_resultados: {
+        Args: never
+        Returns: {
+          chave: string
+          dimensao: string
+          enviados: number
+          respostas: number
+          reunioes: number
+        }[]
       }
       publicar_link_proposta: { Args: { p_versao_id: string }; Returns: string }
       publicar_release: { Args: { p_release_id: string }; Returns: number }

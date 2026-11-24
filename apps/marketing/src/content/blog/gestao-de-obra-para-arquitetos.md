@@ -85,7 +85,7 @@ O [módulo Obra](/obra) da Pilar foi feita para escritório de projeto que tamb�
 - Cronograma de obra em dois níveis, com frentes de serviço e passos marcados pelo campo como avançou, concluiu ou parou.
 - Para administração: conta da obra com aporte, despesa com comprovante, saldo e a taxa de administração calculada a cada lançamento.
 - Orçamento de fornecedor lido por agente de IA e cotação comparada lado a lado, com a vencedora registrada.
-- O cliente acompanha pelo [portal do cliente](/portal), num link só de leitura, sem conta e sem aplicativo.
+- O cliente acompanha pelo [portal do cliente](/portal), pelo navegador.
 
 Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [escritórios de arquitetura](/arquitetura).
 
@@ -106,3 +106,5 @@ Os modelos mais usados são valor fixo pelo período da obra ou valor por visita
 ### Gerenciamento de obra exige presença diária?
 
 Não necessariamente. Depende do porte da obra e do que o contrato define. O que o gerenciamento exige é informação atualizada: cronograma, avanço e custo conferidos com frequência, o que pode vir de quem está no canteiro todo dia.
+
+Conheça na Pilar: [Estimativas de custos de obra](/funcionalidades/estimativas-de-obra).

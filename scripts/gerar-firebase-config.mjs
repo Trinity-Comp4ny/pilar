@@ -33,8 +33,10 @@ for (const [dir, out] of [[".", "firebase.app.json"], ["apps/marketing", "fireba
     if (rota) return { regex: `^/(${rota[1]})$`, destination: r.destination.replace(":rota", ":1"), type: 307 };
     return { source: r.source, destination: r.destination, type: 307 };
   });
-  const rewrites = v.rewrites.filter((r) => r.source === "/(.*)").map((r) => ({ source: "**", destination: r.destination }));
-  const cfg = { hosting: { public: "dist", cleanUrls: false, trailingSlash: false, ...(redirects.length ? { redirects } : {}), rewrites, headers } };
+  // A landing é pré-renderizada. Sem rewrite genérico, o Hosting devolve 404
+  // para rotas e arquivos inexistentes. O app ainda depende do fallback da SPA.
+  const rewrites = dir === "." ? v.rewrites.filter((r) => r.source === "/(.*)").map((r) => ({ source: "**", destination: r.destination })) : [];
+  const cfg = { hosting: { public: "dist", cleanUrls: false, trailingSlash: false, ...(redirects.length ? { redirects } : {}), ...(rewrites.length ? { rewrites } : {}), headers } };
   gerados.push({ path: `${root}/${dir}/${out}`, data: JSON.stringify(cfg, null, 2) + "\n" });
 }
 for (const item of gerados) writeFileSync(item.path, item.data);

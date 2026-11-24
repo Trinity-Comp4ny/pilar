@@ -96,3 +96,8 @@ A Pilar atende escritórios de projeto técnico, de engenharia multidisciplinar 
 
 - [Termos de Uso](https://www.pilarsoft.com.br/termos)
 - [Política de Privacidade](https://www.pilarsoft.com.br/privacidade)
+
+## Funcionalidades
+
+- [Catálogo da Pilar](https://www.pilarsoft.com.br/funcionalidades)
+- [Agentes de IA](https://www.pilarsoft.com.br/funcionalidades/agentes)

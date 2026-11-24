@@ -74,7 +74,7 @@ export const COMPARATIVOS: Comparativo[] = [
       },
       {
         criterio: "Cliente acompanhando",
-        pilar: "Um link de leitura, sempre com o dado do sistema.",
+        pilar: "Uma área com os dados que o escritório compartilha.",
         alternativa: "Print exportado e mandado por WhatsApp.",
       },
     ],
@@ -135,7 +135,7 @@ export const COMPARATIVOS: Comparativo[] = [
       },
       {
         criterio: "Cliente acompanhando",
-        pilar: "Portal só leitura, sem dar acesso ao quadro inteiro.",
+        pilar: "Área do cliente com as informações compartilhadas pelo escritório.",
         alternativa: "Ou o cliente entra no board todo, ou você exporta manualmente.",
       },
     ],
@@ -262,7 +262,7 @@ export const COMPARATIVOS: Comparativo[] = [
       },
       {
         criterio: "Portal do cliente",
-        pilar: "Link só de leitura, sem conta e sem senha.",
+        pilar: "Acesso do cliente pelo navegador.",
         alternativa: "Página pública compartilhada, montada e atualizada à mão.",
       },
       {

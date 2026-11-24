@@ -15,7 +15,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 // Dados sintéticos: nenhum lead real entra no repositório (público).
 const lead: ProspecLead = {
-  id: "11111111-1111-1111-1111-111111111111",
+  id: "11111111-1111-1111-1111-111111111112",
   nome: "Estúdio Exemplo",
   segmento: "arquitetura",
   segmento_teste: false,
@@ -62,7 +62,7 @@ describe("CardEnvio", () => {
     await waitFor(() => expect(h.rpc).toHaveBeenCalledTimes(1));
     expect(h.rpc).toHaveBeenCalledWith(
       "prospec_registrar",
-      expect.objectContaining({ p_lead: lead.id, p_resultado: "enviei", p_canal: "whatsapp" })
+      expect.objectContaining({ p_lead: lead.id, p_resultado: "enviei", p_canal: "whatsapp", p_modelo: "empresa_a" })
     );
   });
 

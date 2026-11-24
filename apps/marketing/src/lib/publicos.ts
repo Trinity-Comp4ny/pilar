@@ -76,7 +76,7 @@ export const PUBLICOS: Publico[] = [
       {
         slug: "portal",
         titulo: "O cliente acompanha sozinho",
-        texto: "Um link só de leitura com disciplinas, entregas e parcelas. A pergunta de sexta à tarde some.",
+        texto: "Uma área do cliente com disciplinas, entregas e parcelas. A pergunta de sexta à tarde some.",
       },
     ],
     paraQuem: [
@@ -158,7 +158,7 @@ export const PUBLICOS: Publico[] = [
       },
       {
         slug: "portal",
-        titulo: "Portal do cliente só de leitura",
+        titulo: "Portal do cliente com acesso próprio",
         texto:
           "O cliente abre um link e vê etapa, entrega e parcela. Se contratou obra, vê aporte, despesa com comprovante e a sua taxa.",
       },
@@ -188,7 +188,7 @@ export const PUBLICOS: Publico[] = [
       },
       {
         pergunta: "Meu cliente precisa criar conta para acompanhar o projeto?",
-        resposta: "Não. O portal do cliente é um link só de leitura, sem conta, sem aplicativo e sem senha.",
+        resposta: "Não. O portal do cliente abre no navegador com o acesso disponibilizado pelo escritório.",
       },
       {
         pergunta: "Consigo usar as etapas do meu escritório?",

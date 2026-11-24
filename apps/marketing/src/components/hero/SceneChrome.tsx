@@ -216,7 +216,7 @@ export function PageHeader({
 }) {
   return (
     <div className="h-14 shrink-0 flex items-center gap-3 px-6">
-      <h3 className="flex items-center gap-1.5 text-[15px] font-medium tracking-tight text-ink shrink-0">
+      <p className="flex items-center gap-1.5 text-[15px] font-medium tracking-tight text-ink shrink-0">
         {trilha && (
           <>
             <span className="text-ink-muted font-normal">{trilha}</span>
@@ -224,7 +224,7 @@ export function PageHeader({
           </>
         )}
         {titulo}
-      </h3>
+      </p>
 
       {busca && (
         <div className="ml-auto flex items-center gap-2 h-9 w-[290px] rounded-full border border-black/10 bg-white px-3">

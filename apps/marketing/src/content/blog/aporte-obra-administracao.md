@@ -104,7 +104,7 @@ Combine em contrato o destino do saldo final: devolução ao cliente, abatimento
 No [módulo Obra](/obra), cada obra tem a sua conta.
 
 - Aporte do cliente, despesa com comprovante, saldo e a sua taxa de administração calculada a cada lançamento.
-- [Portal do cliente](/portal) por link só de leitura, sem conta nem aplicativo: quem contratou obra vê aporte, despesa com comprovante e saldo.
+- [Portal do cliente](/portal) pelo navegador: quem contratou obra vê aporte, despesa com comprovante e saldo.
 - Cotações de fornecedores comparadas lado a lado, com orçamento lido por agente de IA a partir da foto ou do PDF. A IA prepara, você aprova.
 - Estoque do canteiro com entrada, saída e saldo valorizado, para ver o dinheiro do cliente parado em material.
 

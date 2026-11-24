@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-70 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+72 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -122,6 +122,8 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `log-impersonation` | Abre e encerra sessão de impersonation do ultra admin, com registro no servidor. | app | JWT |  | sim |
 | `ops-agente-run` | Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126). | app, cron | própria | `APP_URL` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ops-export-funil` | Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128). | **sem chamador conhecido** | própria | `OPS_EXPORT_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `prospeccao-enriquecer` | Cron diário da prospecção (SPEC 172 fase 2): consulta o CNPJ na BrasilAPI e grava razão social, CNAE e decisor nos leads. | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `prospeccao-mapeador` | Cron semanal da prospecção (SPEC 172 fase 1): busca estabelecimentos no Google Places por cidade e segmento, dentro do teto semanal, e grava leads novos. | cron | própria | `CRON_SECRET` `GOOGLE_PLACES_API_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `release-rascunho` | Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152). | **sem chamador conhecido** | própria | `RELEASE_NOTAS_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `reuniao-analisar` | Analisa uma reunião colada no Ultra: redige dado pessoal, extrai dores, ideias e objeções com citação literal e grava só o texto redigido (SPEC 169). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |

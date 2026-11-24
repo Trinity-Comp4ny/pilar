@@ -1025,6 +1025,18 @@ jobs:
           status: success
           token: ${{ github.token }}
 
+  # Executa a definição que está em staging, inclusive antes de o workflow
+  # de publicação chegar à branch padrão.
+  firebase-hosting-staging:
+    name: Firebase Hosting de staging
+    needs: [staging-ready]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-firebase-hosting.yml
+    secrets: inherit
+
   # Deploy do backend em PRODUÇÃO. DORMENTE até este ci.yml chegar no branch main:
   # só dispara em push no main (github.ref) E o job precisa existir no arquivo do
   # branch onde o push ocorre. Em staging nunca roda (o if barra). Espelha o

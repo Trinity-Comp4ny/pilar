@@ -88,7 +88,7 @@ O [módulo Projetos](/projetos) da Pilar trata o projeto como conjunto de discip
 - O Gantt mostra a carteira inteira na linha do tempo; arraste a borda da barra e a data de início e a previsão gravam direto.
 - Ao concluir uma disciplina, o responsável da etapa seguinte é avisado.
 - Mudou a data, o sistema exige o motivo, e o histórico do projeto fica completo.
-- O [portal do cliente](/portal) mostra disciplina e entrega num link só de leitura, sem conta e sem aplicativo.
+- O [portal do cliente](/portal) mostra disciplina e entrega pelo navegador.
 
 Veja como a Pilar atende [escritórios de arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 
