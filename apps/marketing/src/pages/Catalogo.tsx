@@ -148,6 +148,12 @@ export function AgentesPage() {
       </p>
       <FluxoDemonstrativo tipo="agente" />
       {MIDIAS_PRODUTO.agentes && <MidiaProduto midia={MIDIAS_PRODUTO.agentes} />}
+      {MIDIAS_PRODUTO["agente-confirmacao"] && (
+        <section className="mt-8">
+          <h2 className="mb-4 text-2xl font-medium text-ink">Veja a revisão e confirmação de uma receita</h2>
+          <MidiaProduto midia={MIDIAS_PRODUTO["agente-confirmacao"]} />
+        </section>
+      )}
       <LinkDemo local="pagina_agentes" className="mt-8" />
     </article>
   );

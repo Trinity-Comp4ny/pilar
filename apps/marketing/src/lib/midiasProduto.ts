@@ -70,7 +70,23 @@ export const MIDIAS_PRODUTO: Readonly<Partial<Record<string, Midia>>> = {
       descricao: "O vídeo abre o diário no escritório e localiza um registro de concretagem.",
     },
   },
+  campo: {
+    video: {
+      arquivo: "campo-sincronizacao",
+      descricao: "Demonstração local do diário salvo sem conexão e sincronizado após a volta da rede.",
+    },
+  },
+  "agente-confirmacao": {
+    video: {
+      arquivo: "agente-confirmacao",
+      descricao: "Demonstração local da revisão do rascunho e confirmação de uma receita de teste.",
+    },
+  },
   portal: {
+    video: {
+      arquivo: "portal-demonstracao",
+      descricao: "Demonstração local da visão do cliente, do painel aos projetos, parcelas e obras.",
+    },
     print: {
       arquivo: "portal-projetos",
       formato: "jpg",
