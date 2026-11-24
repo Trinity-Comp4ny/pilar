@@ -48,6 +48,7 @@ export const COMPARATIVOS_NAV: ComparativoNav[] = [
   { slug: "whatsapp", adversario: "WhatsApp" },
   { slug: "notion", adversario: "Notion" },
   { slug: "erp-construtora", adversario: "ERP de construtora" },
+  { slug: "omie-conta-azul", adversario: "Omie e Conta Azul" },
 ];
 
 /**

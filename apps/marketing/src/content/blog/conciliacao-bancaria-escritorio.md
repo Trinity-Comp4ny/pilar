@@ -87,7 +87,7 @@ No [módulo Gestão](/gestao), o extrato deixa de ser digitado e passa a ser rev
 - Na aba de cada projeto, valor contratado, recebido, pendente e atrasado.
 - Relatórios com prévia e export em CSV, Excel ou PDF para o contador.
 
-A leitura do extrato consome créditos de IA do plano. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou compare com o controle em [planilha](/vs/planilha).
+A leitura do extrato consome créditos de IA do plano. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou compare com o controle em [planilha](/vs/planilha) e com sistemas financeiros como [Omie e Conta Azul](/vs/omie-conta-azul).
 
 ## Perguntas frequentes
 

@@ -69,6 +69,7 @@ describe("artigos publicados", () => {
       "/vs/whatsapp",
       "/vs/notion",
       "/vs/erp-construtora",
+      "/vs/omie-conta-azul",
       "/engenharia",
       "/arquitetura",
       "/ferramentas",

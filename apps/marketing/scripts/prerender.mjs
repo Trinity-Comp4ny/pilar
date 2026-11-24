@@ -88,6 +88,7 @@ const ROTAS = [
   "/vs/whatsapp",
   "/vs/notion",
   "/vs/erp-construtora",
+  "/vs/omie-conta-azul",
   "/faq",
   "/termos",
   "/privacidade",

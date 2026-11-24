@@ -122,6 +122,7 @@ export default function App() {
               <Route path="/vs/whatsapp" element={<ComparativoPage slug="whatsapp" />} />
               <Route path="/vs/notion" element={<ComparativoPage slug="notion" />} />
               <Route path="/vs/erp-construtora" element={<ComparativoPage slug="erp-construtora" />} />
+              <Route path="/vs/omie-conta-azul" element={<ComparativoPage slug="omie-conta-azul" />} />
               <Route path="/engenharia" element={<PublicoPage slug="engenharia" />} />
               <Route path="/arquitetura" element={<PublicoPage slug="arquitetura" />} />
               <Route path="/blog" element={<Blog />} />
