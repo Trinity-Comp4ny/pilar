@@ -416,14 +416,13 @@ export const MODULOS: Modulo[] = [
     resumo: "Seu cliente acompanha sozinho.",
     headline: "Seu cliente acompanha sozinho.",
     headlineFim: "Seu WhatsApp descansa.",
-    lede: "Um link só de leitura, sem conta e sem aplicativo. Quem contratou projeto vê disciplina e entrega; quem contratou obra vê aporte, despesa com comprovante e a sua taxa.",
+    lede: "O cliente acompanha projetos, obras e financeiro em um espaço próprio. O escritório define o que compartilhar.",
     seo: {
       titulo: "Portal do cliente para acompanhar projeto e obra",
-      descricao:
-        "Link só de leitura para o cliente acompanhar disciplinas, entregas, parcelas e a prestação de contas da obra, sem conta, sem aplicativo e sem senha.",
+      descricao: "Portal do cliente para acompanhar disciplinas, entregas, parcelas e prestação de contas da obra.",
       h1: "Portal do cliente para acompanhar projeto e obra",
     },
-    url: "app.pilarsoft.com.br/portal/santa-rita",
+    url: "app.pilarsoft.com.br/cliente/dashboard",
     cor: {
       fill: "bg-modulo-gestao",
       strong: "bg-modulo-gestao-strong",
@@ -433,19 +432,18 @@ export const MODULOS: Modulo[] = [
     },
     grupos: [
       {
-        titulo: "Um link resolve",
-        frase: "Sem conta, sem app e sem senha: o cliente abre e vê, e não muda nada.",
+        titulo: "Um espaço para seus clientes",
+        frase: "O cliente consulta as informações que o escritório disponibiliza.",
         img: "/screens/portal-link.png",
         mock: "portal-projeto",
         features: [
           {
-            titulo: "Um link, sem cadastro",
-            texto: "O cliente abre e vê. Não cria conta, não instala nada, não pede senha para ninguém.",
+            titulo: "Acesso do cliente",
+            texto: "O portal abre no navegador e reúne o que foi compartilhado com o cliente.",
           },
           {
-            titulo: "Só leitura, sempre",
-            texto:
-              "Ele acompanha o andamento, mas não altera nada. O que ele vê é o que está no sistema, sem você exportar.",
+            titulo: "Informações compartilhadas",
+            texto: "O cliente consulta o andamento e os arquivos disponibilizados no portal.",
           },
         ],
       },
@@ -474,11 +472,12 @@ export const MODULOS: Modulo[] = [
     faq: [
       {
         pergunta: "Meu cliente vai precisar de mais um login?",
-        resposta: "Não. É um link só de leitura, sem conta, sem app e sem senha.",
+        resposta: "O escritório orienta o cliente sobre como acessar o portal, que abre no navegador.",
       },
       {
         pergunta: "Ele pode mexer em alguma coisa?",
-        resposta: "Não. O portal é sempre só leitura, e o que ele vê é o que está no sistema, sem você exportar nada.",
+        resposta:
+          "O portal exibe as informações disponibilizadas pelo escritório. As ações exibidas dependem do acesso e da situação do projeto.",
       },
       {
         pergunta: "O que ele vê se contratou obra?",

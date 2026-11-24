@@ -81,6 +81,14 @@ describe("rotas da landing", () => {
         "/termos",
         "/privacidade",
         "/seguranca",
+        "/funcionalidades",
+        "/funcionalidades/agentes",
+        "/funcionalidades/propostas",
+        "/funcionalidades/financeiro",
+        "/funcionalidades/disciplinas",
+        "/funcionalidades/cronograma",
+        "/funcionalidades/diario-de-obra",
+        "/funcionalidades/prestacao-de-contas",
       ])
     );
     expect(ler("../App.tsx")).toMatch(/<Route\s+path="\*"\s+element={<NotFound \/>}/);

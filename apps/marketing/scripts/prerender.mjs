@@ -92,6 +92,14 @@ const ROTAS = [
   "/termos",
   "/privacidade",
   "/seguranca",
+  "/funcionalidades",
+  "/funcionalidades/agentes",
+  "/funcionalidades/propostas",
+  "/funcionalidades/financeiro",
+  "/funcionalidades/disciplinas",
+  "/funcionalidades/cronograma",
+  "/funcionalidades/diario-de-obra",
+  "/funcionalidades/prestacao-de-contas",
 ];
 
 /** Escapa texto para XML (título e descrição dos artigos no feed). */

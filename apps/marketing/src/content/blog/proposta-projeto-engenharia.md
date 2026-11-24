@@ -111,3 +111,5 @@ Não existe número certo. O importante é escrever um número por etapa e dizer
 ### A proposta precisa citar a ART?
 
 É boa prática informar o responsável técnico de cada disciplina e dizer que a ART, ou a RRT no caso de arquitetura, será registrada após a contratação. Deixe claro também quem paga a taxa de registro.
+
+Veja como funciona: [propostas por disciplina na Pilar](/funcionalidades/propostas).

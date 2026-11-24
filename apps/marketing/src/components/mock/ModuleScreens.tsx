@@ -241,7 +241,7 @@ export function DiarioScreen() {
   );
 }
 
-/* ── Portal: o que o cliente vê pelo link, só leitura ─────────────────── */
+/* ── Portal: visão demonstrativa do cliente ─────────────────── */
 
 const DISCIPLINAS_PORTAL = [
   { nome: "Estrutural", pct: 100 },
@@ -260,11 +260,7 @@ export function PortalScreen() {
 
   return (
     <div>
-      <ScreenHead
-        crumb="Portal do cliente · Só leitura"
-        title="Centro cirúrgico, Santa Rita"
-        chip="Link compartilhado"
-      />
+      <ScreenHead crumb="Portal do cliente · Projeto" title="Centro cirúrgico, Santa Rita" chip="Link compartilhado" />
       <div className="grid md:grid-cols-2 gap-3">
         <div className="bg-white border border-black/5 rounded-2xl p-3">
           <p className="text-[8px] uppercase tracking-wider text-ink-muted mb-2.5">Andamento por disciplina</p>
@@ -697,7 +693,7 @@ export function PortalObraScreen() {
   ];
   return (
     <div>
-      <ScreenHead crumb="Portal do cliente · Obra" title="Prestação de contas" chip="Só leitura" />
+      <ScreenHead crumb="Portal do cliente · Obra" title="Prestação de contas" chip="Visão do cliente" />
       <div className="bg-white border border-black/5 rounded-2xl p-3">
         {linhas.map((l) => (
           <div

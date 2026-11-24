@@ -108,3 +108,5 @@ Registre a data em que a aprovação foi pedida e a data em que veio, e reprogra
 ### Atraso por mudança de escopo deve ser cobrado?
 
 Mudança de escopo muda prazo e honorário. Registre o pedido, estime o impacto nas disciplinas afetadas e formalize antes de executar.
+
+Veja como funciona: [cronograma de projetos da Pilar](/funcionalidades/cronograma).

@@ -82,7 +82,7 @@ A Pilar junta, no mesmo lugar, a matéria-prima do relatório de obra e dá ao c
 - **Diário que chega do canteiro.** Pelo [Pilar Campo](/campo), o encarregado registra clima, efetivo, atividade, ocorrência, pendência, foto e medição no celular, mesmo sem sinal. O registro aparece no [módulo Obra](/obra) sem ninguém redigitar.
 - **Cronograma em dois níveis.** Frentes de serviço com passos dentro, e o campo marca cada tarefa como avançou, concluiu ou parou.
 - **Conta da obra.** Aporte do cliente, despesa com comprovante, saldo e a taxa de administração calculada a cada lançamento.
-- **[Portal do cliente](/portal).** Um link só de leitura, sem conta e sem aplicativo, em que o cliente de obra vê aporte, despesa com comprovante e saldo, e acompanha o andamento quando quiser.
+- **[Portal do cliente](/portal).** Uma área no navegador em que o cliente de obra vê aporte, despesa com comprovante e saldo, e acompanha o andamento quando quiser.
 
 O relatório mensal continua sendo seu, com a análise que só o responsável técnico faz. O que muda é que os números e o andamento já estão à vista. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 

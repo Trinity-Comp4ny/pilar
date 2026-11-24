@@ -31,6 +31,9 @@ const CalculadoraHonorarios = lazy(() =>
 );
 const ModeloProposta = lazy(() => import("./pages/Ferramentas").then((m) => ({ default: m.ModeloProposta })));
 const Seguranca = lazy(() => import("./pages/Seguranca").then((m) => ({ default: m.Seguranca })));
+const Catalogo = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.Catalogo })));
+const RecursoPage = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.RecursoPage })));
+const AgentesPage = lazy(() => import("./pages/Catalogo").then((m) => ({ default: m.AgentesPage })));
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 /**
@@ -130,6 +133,14 @@ export default function App() {
               <Route path="/termos" element={<Termos />} />
               <Route path="/privacidade" element={<Privacidade />} />
               <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/funcionalidades" element={<Catalogo />} />
+              <Route path="/funcionalidades/agentes" element={<AgentesPage />} />
+              <Route path="/funcionalidades/propostas" element={<RecursoPage slug="propostas" />} />
+              <Route path="/funcionalidades/financeiro" element={<RecursoPage slug="financeiro" />} />
+              <Route path="/funcionalidades/disciplinas" element={<RecursoPage slug="disciplinas" />} />
+              <Route path="/funcionalidades/cronograma" element={<RecursoPage slug="cronograma" />} />
+              <Route path="/funcionalidades/diario-de-obra" element={<RecursoPage slug="diario-de-obra" />} />
+              <Route path="/funcionalidades/prestacao-de-contas" element={<RecursoPage slug="prestacao-de-contas" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

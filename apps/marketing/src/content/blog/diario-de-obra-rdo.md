@@ -118,3 +118,5 @@ Serve como apoio, mas se perde fácil e não carrega contexto. O ideal é a foto
 ### Diário de obra digital tem validade?
 
 Como registro de gestão e prova do que aconteceu, sim, desde que feito no dia, sem apagar histórico e com responsável identificado. Para exigências formais do conselho ou de contrato público, confira as regras com o CREA, o CAU ou o contratante.
+
+Veja como funciona: [diário de obra digital](/funcionalidades/diario-de-obra).

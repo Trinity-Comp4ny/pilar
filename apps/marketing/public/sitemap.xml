@@ -372,4 +372,36 @@
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/agentes</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/propostas</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/financeiro</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/disciplinas</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/cronograma</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/diario-de-obra</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/funcionalidades/prestacao-de-contas</loc>
+    <lastmod>2026-11-23</lastmod>
+  </url>
 </urlset>
