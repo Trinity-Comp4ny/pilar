@@ -128,6 +128,20 @@ export async function verificarHosting({ origem, alvo, release }, requisitar = f
   );
 }
 
+// A CDN do Hosting propaga HTML e assets em momentos diferentes: logo após publicar,
+// o HTML novo pode estar no ar e o bundle ainda dar 404. Repete a verificação inteira.
+export async function comRetentativas(operacao, { tentativas = 5, esperaMs = 6_000 } = {}) {
+  for (let tentativa = 1; ; tentativa++) {
+    try {
+      return await operacao();
+    } catch (erro) {
+      if (tentativa >= tentativas) throw erro;
+      console.warn(`Tentativa ${tentativa}/${tentativas} falhou (${erro.message}); repetindo.`);
+      await new Promise((resolver) => setTimeout(resolver, esperaMs));
+    }
+  }
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [arquivo, alvo, canal] = process.argv.slice(2);
   if (!["app", "marketing"].includes(alvo) || !canal) throw new Error("Informe o alvo e o canal do Hosting.");
@@ -147,7 +161,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     : live
       ? `https://${site}.web.app`
       : obterUrlPreview(JSON.parse(readFileSync(arquivo, "utf8")), site, canal);
-  await verificarHosting({ origem, alvo, release: process.env.SENTRY_RELEASE });
+  await comRetentativas(() => verificarHosting({ origem, alvo, release: process.env.SENTRY_RELEASE }));
   const resumo = `Firebase ${publico ? "domínio público" : canal} (${alvo}) validado: ${origem}`;
   console.log(resumo);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=${origem}\n`);
