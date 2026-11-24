@@ -114,3 +114,5 @@ Combine a data com o cliente no momento do envio, em geral alguns dias úteis de
 ### Por que registrar o motivo de perda?
 
 Porque é a única forma de aprender com o funil. Sem motivo, toda perda parece ser preço. Com motivo registrado, o escritório descobre se perde por valor, por prazo, por escopo mal explicado ou por falta de retorno, e cada um pede uma correção diferente.
+
+Conheça o fluxo de [CRM para escritórios de engenharia](/funcionalidades/crm).

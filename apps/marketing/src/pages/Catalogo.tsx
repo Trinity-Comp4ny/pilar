@@ -66,6 +66,8 @@ function RecursosDaArea({ area }: { area: string }) {
 export function RecursoPage({ slug }: { slug: (typeof PAGINAS_RECURSO)[number]["slug"] }) {
   const pagina = PAGINAS_RECURSO.find((item) => item.slug === slug)!;
   const area = AREAS.find((item) => item.id === pagina.area)!;
+  const relacionado =
+    "relacionado" in pagina ? PAGINAS_RECURSO.find((item) => item.slug === pagina.relacionado) : undefined;
   usePageMeta({ titulo: pagina.titulo, descricao: pagina.descricao, caminho: caminhoRecurso(slug) });
   return (
     <article className={largura}>
@@ -97,6 +99,13 @@ export function RecursoPage({ slug }: { slug: (typeof PAGINAS_RECURSO)[number]["
             <p className="mt-3">
               <Link className={link} to={pagina.ferramenta}>
                 Use o modelo de proposta
+              </Link>
+            </p>
+          )}
+          {relacionado && (
+            <p className="mt-3">
+              <Link className={link} to={caminhoRecurso(relacionado.slug)}>
+                {relacionado.titulo}
               </Link>
             </p>
           )}

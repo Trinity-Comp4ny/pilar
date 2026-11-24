@@ -104,3 +104,5 @@ Depende do que muda. Alteração de objeto ou de valor do serviço técnico pode
 ### Vale a pena cobrar um aditivo pequeno?
 
 Vale registrar sempre, mesmo quando você decide não cobrar. Um pedido pequeno concedido por escrito como cortesia é relacionamento; dez pedidos pequenos sem registro são prejuízo que ninguém vê.
+
+Conheça o fluxo de [controle de escopo e aditivos na Pilar](/funcionalidades/escopo-e-aditivos).
