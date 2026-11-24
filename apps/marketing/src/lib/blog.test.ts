@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ARTIGOS, lerArtigo, relacionados } from "./blog";
+import { PAGINAS_RECURSO, caminhoRecurso } from "./catalogo";
 import { ancora, analisarMarkdown, perguntasFrequentes } from "./markdown";
 
 const FM = `---
@@ -60,6 +61,9 @@ describe("artigos publicados", () => {
     const slugs = new Set(ARTIGOS.map((a) => a.slug));
     const fixas = new Set(["/", "/gestao", "/projetos", "/obra", "/portal", "/campo", "/planos", "/faq", "/blog"]);
     for (const extra of [
+      "/funcionalidades",
+      "/funcionalidades/agentes",
+      ...PAGINAS_RECURSO.map(({ slug }) => caminhoRecurso(slug)),
       "/vs/planilha",
       "/vs/trello",
       "/vs/whatsapp",
