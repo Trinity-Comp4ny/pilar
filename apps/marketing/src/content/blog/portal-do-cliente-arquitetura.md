@@ -117,3 +117,5 @@ Não. O portal mantém o cliente informado no dia a dia; o relatório, ou a reun
 ### O que nunca deve aparecer no portal do cliente?
 
 Custo interno, margem, horas da equipe, discussão interna e versões ainda em revisão. Se você não mostraria aquilo numa reunião com o cliente, não mostre no portal.
+
+Conheça na Pilar: [Portal do cliente para projetos de engenharia](/funcionalidades/portal-de-projetos).

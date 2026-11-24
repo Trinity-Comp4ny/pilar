@@ -144,6 +144,19 @@ export default function App() {
               <Route path="/funcionalidades/crm" element={<RecursoPage slug="crm" />} />
               <Route path="/funcionalidades/escopo-e-aditivos" element={<RecursoPage slug="escopo-e-aditivos" />} />
               <Route path="/funcionalidades/cotacoes" element={<RecursoPage slug="cotacoes" />} />
+              <Route path="/funcionalidades/equipe-e-horas" element={<RecursoPage slug="equipe-e-horas" />} />
+              <Route
+                path="/funcionalidades/importacao-financeira"
+                element={<RecursoPage slug="importacao-financeira" />}
+              />
+              <Route path="/funcionalidades/carteira-e-cartoes" element={<RecursoPage slug="carteira-e-cartoes" />} />
+              <Route path="/funcionalidades/rentabilidade" element={<RecursoPage slug="rentabilidade" />} />
+              <Route path="/funcionalidades/cronograma-de-obra" element={<RecursoPage slug="cronograma-de-obra" />} />
+              <Route path="/funcionalidades/estoque-de-obra" element={<RecursoPage slug="estoque-de-obra" />} />
+              <Route path="/funcionalidades/estimativas-de-obra" element={<RecursoPage slug="estimativas-de-obra" />} />
+              <Route path="/funcionalidades/portal-de-projetos" element={<RecursoPage slug="portal-de-projetos" />} />
+              <Route path="/funcionalidades/portal-de-obras" element={<RecursoPage slug="portal-de-obras" />} />
+              <Route path="/funcionalidades/portal-financeiro" element={<RecursoPage slug="portal-financeiro" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -1,3 +1,5 @@
+import { MidiaProduto } from "../components/MidiaProduto";
+import { MIDIAS_PRODUTO } from "../lib/midiasProduto";
 import { PAGINAS_RECURSO, caminhoRecurso } from "../lib/catalogo";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -68,6 +70,7 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
  */
 export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
+  const midia = MIDIAS_PRODUTO[slug];
 
   usePageMeta({
     titulo: `${modulo.seo.titulo} | Pilar`,
@@ -257,6 +260,12 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
           </li>
         </ul>
       </section>
+      {midia && (
+        <section className="mx-auto max-w-4xl px-5 pb-12 md:px-10">
+          <h2 className="mb-5 text-2xl font-medium text-ink">Veja {modulo.nome} na Pilar</h2>
+          <MidiaProduto midia={midia} />
+        </section>
+      )}
       <CTASection />
     </>
   );

@@ -106,3 +106,5 @@ Os modelos mais usados são valor fixo pelo período da obra ou valor por visita
 ### Gerenciamento de obra exige presença diária?
 
 Não necessariamente. Depende do porte da obra e do que o contrato define. O que o gerenciamento exige é informação atualizada: cronograma, avanço e custo conferidos com frequência, o que pode vir de quem está no canteiro todo dia.
+
+Conheça na Pilar: [Estimativas de custos de obra](/funcionalidades/estimativas-de-obra).

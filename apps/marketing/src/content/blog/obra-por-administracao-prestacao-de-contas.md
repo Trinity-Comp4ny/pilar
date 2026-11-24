@@ -113,3 +113,5 @@ O que vale é o contrato. O mais comum e mais fácil de defender é a taxa sobre
 ### Com que frequência prestar contas ao cliente?
 
 Mensalmente é o mínimo, com data fixa combinada em contrato. Se o cliente puder consultar aportes, despesas e saldo a qualquer momento, o fechamento mensal fica mais rápido e com menos perguntas.
+
+Conheça na Pilar: [Parcelas e prestação de contas no Portal do Cliente](/funcionalidades/portal-financeiro).

@@ -1,3 +1,5 @@
+import { MidiaProduto } from "../components/MidiaProduto";
+import { MIDIAS_PRODUTO } from "../lib/midiasProduto";
 import { Link } from "react-router-dom";
 import { GroupMock } from "../components/mock/ModuleScreens";
 import { LinkDemo } from "../components/LinkDemo";
@@ -66,6 +68,7 @@ function RecursosDaArea({ area }: { area: string }) {
 export function RecursoPage({ slug }: { slug: (typeof PAGINAS_RECURSO)[number]["slug"] }) {
   const pagina = PAGINAS_RECURSO.find((item) => item.slug === slug)!;
   const area = AREAS.find((item) => item.id === pagina.area)!;
+  const midia = MIDIAS_PRODUTO[slug];
   const relacionado =
     "relacionado" in pagina ? PAGINAS_RECURSO.find((item) => item.slug === pagina.relacionado) : undefined;
   usePageMeta({ titulo: pagina.titulo, descricao: pagina.descricao, caminho: caminhoRecurso(slug) });
@@ -82,7 +85,7 @@ export function RecursoPage({ slug }: { slug: (typeof PAGINAS_RECURSO)[number]["
       </nav>
       <h1 className="max-w-3xl text-4xl font-medium text-ink md:text-6xl">{pagina.titulo}</h1>
       <p className="mt-4 max-w-2xl text-lg">{pagina.descricao}</p>
-      <div className="mt-9 grid items-start gap-7 lg:grid-cols-2">
+      <div className={`mt-9 grid items-start gap-7 ${midia || "mock" in pagina ? "lg:grid-cols-2" : "max-w-3xl"}`}>
         <section>
           <h2 className="text-2xl font-medium text-ink">Como funciona</h2>
           <ol className="mt-4 list-decimal space-y-4 ps-6">
@@ -111,10 +114,16 @@ export function RecursoPage({ slug }: { slug: (typeof PAGINAS_RECURSO)[number]["
           )}
           <LinkDemo local={`recurso_${slug}`} className="mt-6" />
         </section>
-        <figure className="min-w-0 overflow-x-auto rounded-2xl border border-paper-border bg-frame p-4">
-          <GroupMock mock={pagina.mock} />
-          <figcaption className="mt-3 text-sm text-ink-muted">Ilustração com dados de exemplo.</figcaption>
-        </figure>
+        {midia ? (
+          <MidiaProduto midia={midia} />
+        ) : (
+          "mock" in pagina && (
+            <figure className="min-w-0 overflow-x-auto rounded-2xl border border-paper-border bg-frame p-4">
+              <GroupMock mock={pagina.mock} />
+              <figcaption className="mt-3 text-sm text-ink-muted">Ilustração com dados de exemplo.</figcaption>
+            </figure>
+          )
+        )}
       </div>
     </article>
   );
@@ -138,6 +147,7 @@ export function AgentesPage() {
         Descreva o que aconteceu, confira o rascunho e confirme o lançamento quando estiver certo.
       </p>
       <FluxoDemonstrativo tipo="agente" />
+      {MIDIAS_PRODUTO.agentes && <MidiaProduto midia={MIDIAS_PRODUTO.agentes} />}
       <LinkDemo local="pagina_agentes" className="mt-8" />
     </article>
   );

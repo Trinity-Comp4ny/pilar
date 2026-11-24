@@ -121,3 +121,5 @@ Vale como resposta do fornecedor se tiver item, quantidade, preço, prazo e iden
 Depende do contrato. Em obra por administração, normalmente o escritório cota, compra com o dinheiro do cliente e presta contas. Em acompanhamento ou fiscalização, o escritório pode só conferir a especificação e deixar a compra com o cliente ou com a construtora.
 
 Conheça o fluxo de [cotação de materiais na Pilar](/funcionalidades/cotacoes).
+
+Conheça na Pilar: [Controle de estoque de materiais de obra](/funcionalidades/estoque-de-obra).
