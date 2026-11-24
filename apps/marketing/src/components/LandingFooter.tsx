@@ -3,7 +3,7 @@ import { APP_URL } from "../config";
 import { requestCookieConsentReview } from "../cookieConsent";
 import { MODULOS_NAV, PUBLICOS_LINKS, RECURSOS_NAV } from "../lib/navegacao";
 import { Logo } from "./Logo";
-import { DEMO_PATH } from "../lib/contato";
+import { DEMO_PATH, REDES_SOCIAIS } from "../lib/contato";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -43,6 +43,42 @@ const COLUNAS: { titulo: string; links: { label: string; to: string }[] }[] = [
   },
 ];
 
+/**
+ * Marcas de Instagram e LinkedIn desenhadas à mão: o lucide 1.x tirou os ícones
+ * de marca. Traço no mesmo peso do lucide (2 px, ponta redonda), em tinta.
+ */
+function IconeRede({ nome }: { nome: (typeof REDES_SOCIAIS)[number]["nome"] }) {
+  const comum = {
+    width: 18,
+    height: 18,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  if (nome === "Instagram") {
+    return (
+      <svg {...comum}>
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...comum}>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M8 10.5v6" />
+      <path d="M8 7.5v.01" />
+      <path d="M12 16.5v-6" />
+      <path d="M12 13.2c0-1.6 1-2.7 2.4-2.7s2.1 1 2.1 2.6v3.4" />
+    </svg>
+  );
+}
+
 export function LandingFooter() {
   return (
     <footer className="w-full bg-card-brand px-5 md:px-10 pt-12 md:pt-20 pb-8 md:pb-10">
@@ -53,6 +89,22 @@ export function LandingFooter() {
             <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">
               Gestão de projetos e obras, com agentes de IA. A IA prepara o trabalho, você confere e aprova.
             </p>
+            <ul className="flex items-center gap-2 mt-5">
+              {REDES_SOCIAIS.map((rede) => (
+                <li key={rede.nome}>
+                  <a
+                    href={rede.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={rede.rotulo}
+                    title={rede.rotulo}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/15 text-ink/75 transition-colors hover:border-ink/40 hover:text-ink"
+                  >
+                    <IconeRede nome={rede.nome} />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {COLUNAS.map((coluna) => (
