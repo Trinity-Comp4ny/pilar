@@ -26,9 +26,9 @@
     "nota": "Relatório Core Web Vitals do Search Console sem URL ruim (ou PageSpeed mobile >= 90). Em 11/11: PageSpeed 94 no celular e 99 no desktop (home)."
   },
   "perfisOficiais": {
-    "feito": false,
-    "em": null,
-    "nota": "LinkedIn da empresa e Instagram @pilarsoft.app com link para o site, e no sameAs do index.html."
+    "feito": true,
+    "em": "2026-11-24",
+    "nota": "LinkedIn (linkedin.com/company/pilarsoft) e Instagram @pilarsoft.app com link para o site; os dois no sameAs do index.html e no rodapé da landing (PR #1084)."
   },
   "diretorios": {
     "quantidade": 0,
