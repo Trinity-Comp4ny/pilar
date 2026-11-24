@@ -65,9 +65,10 @@ export const AREAS = [
     href: "/funcionalidades/agentes",
     resumo: "Prepare ações em linguagem natural e confira antes de confirmar.",
     recursos: [
-      "Registro de receitas e despesas",
-      "Apoio à classificação de extratos e faturas",
-      "Revisão dos dados antes da confirmação",
+      "Lançamentos de receitas e despesas em linguagem natural",
+      "Leitura de extratos, faturas e orçamentos de fornecedor",
+      "Itens de estimativa a partir da descrição da obra",
+      "Nada é gravado sem a sua confirmação",
     ],
   },
 ] as const;
@@ -331,6 +332,93 @@ export const PAGINAS_RECURSO = [
     guia: "/blog/obra-por-administracao-prestacao-de-contas",
     relacionado: "prestacao-de-contas",
     mock: "parcelas",
+  },
+  {
+    slug: "campo-registro-do-dia",
+    area: "campo",
+    titulo: "Registro do dia da obra no celular",
+    descricao:
+      "O encarregado registra clima, efetivo, atividades, fotos e quantidades pelo navegador do celular, e o escritório recebe sem redigitar.",
+    passos: [
+      "O encarregado abre a obra no celular, com o acesso que o gestor entregou.",
+      "Registra clima, efetivo, atividade, foto do serviço e quantidade executada, e marca a tarefa concluída.",
+      "O registro aparece no diário da obra no escritório, pronto para o relatório.",
+    ],
+    guia: "/blog/diario-de-obra-rdo",
+    relacionado: "diario-de-obra",
+    mock: "campo-diario",
+  },
+  {
+    slug: "campo-offline",
+    area: "campo",
+    titulo: "Diário de obra que funciona sem sinal",
+    descricao:
+      "No subsolo ou longe da antena, o registro fica guardado no aparelho e sobe sozinho quando a rede volta.",
+    passos: [
+      "Registre o dia normalmente, mesmo sem conexão.",
+      "O Pilar Campo guarda o registro e as fotos numa fila no aparelho.",
+      "Quando o sinal volta, a fila sobe sozinha, foto por foto, sem duplicar.",
+    ],
+    guia: "/blog/diario-de-obra-rdo",
+    relacionado: "campo-registro-do-dia",
+  },
+  {
+    slug: "campo-acesso-da-equipe",
+    area: "campo",
+    titulo: "Acesso da equipe de campo por obra",
+    descricao:
+      "Quem trabalha em obra costuma não ter e-mail corporativo: o gestor gera usuário e senha, com acesso limitado a uma obra.",
+    passos: [
+      "Na obra, o gestor cria o acesso do encarregado com usuário e senha.",
+      "O encarregado entra pelo navegador do celular e só enxerga a obra liberada.",
+      "Quando a pessoa sai da obra, o gestor encerra o acesso.",
+    ],
+    guia: "/blog/efetivo-de-obra",
+    relacionado: "campo-registro-do-dia",
+  },
+  {
+    slug: "agente-extratos",
+    area: "agentes",
+    titulo: "Agente de extratos e faturas",
+    descricao:
+      "Envie o extrato ou a fatura em PDF: o agente propõe os lançamentos e a categoria de cada um, e nada é gravado sem a sua confirmação.",
+    passos: [
+      "Selecione o PDF. O texto é extraído no seu navegador; a imagem do documento não sai do aparelho.",
+      "O agente monta a lista de lançamentos com data, valor, descrição e categoria sugerida.",
+      "Confira, ajuste o que precisar e confirme a gravação.",
+    ],
+    guia: "/blog/conciliacao-bancaria-escritorio",
+    relacionado: "importacao-financeira",
+    mock: "financeiro",
+  },
+  {
+    slug: "agente-orcamentos",
+    area: "agentes",
+    titulo: "Agente de orçamentos de fornecedor",
+    descricao:
+      "Mande o PDF ou a foto do orçamento: o agente identifica o tipo de documento e transforma itens e preços em cotação da obra.",
+    passos: [
+      "Envie o orçamento do fornecedor ou a planilha que compara lojas.",
+      "O agente reconhece o formato e extrai materiais, quantidades e preços.",
+      "Revise a lista e leve os valores para a cotação da obra.",
+    ],
+    guia: "/blog/cotacao-material-obra",
+    relacionado: "cotacoes",
+    mock: "cotacao",
+  },
+  {
+    slug: "agente-estimativas",
+    area: "agentes",
+    titulo: "Agente de estimativa de obra",
+    descricao:
+      "Descreva a obra em texto livre: o agente devolve os itens do catálogo com quantidade, o que ficou de fora e o que faltou saber.",
+    passos: [
+      "Descreva a obra como explicaria a um colega.",
+      "O agente sugere os itens do catálogo da estimativa, com quantidades e as dúvidas em aberto.",
+      "Você confirma a lista; preço e prazo vêm do catálogo, nunca da IA.",
+    ],
+    guia: "/blog/ia-escritorio-engenharia",
+    relacionado: "estimativas-de-obra",
   },
 ] as const;
 

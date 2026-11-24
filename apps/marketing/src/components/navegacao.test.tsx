@@ -8,9 +8,10 @@ import { matchPath } from "react-router-dom";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { limparCookies, prepararAmbiente, renderNaRota } from "../test/ambiente";
 import { APP_URL } from "../config";
-import { DEMO_URL, WHATSAPP_COMERCIAL_URL } from "../lib/contato";
+import { DEMO_PATH, DEMO_URL, WHATSAPP_COMERCIAL_URL } from "../lib/contato";
 import { MODULOS } from "../lib/modules";
 import { COMPARATIVOS } from "../lib/comparativos";
+import { PUBLICOS_LINKS } from "../lib/navegacao";
 import { CONSENT_REVIEW_REQUESTED_EVENT } from "../cookieConsent";
 import { tituloParaBusca } from "../lib/seo";
 import { LandingHeader } from "./LandingHeader";
@@ -70,19 +71,21 @@ function confereDestinos(raiz: HTMLElement) {
   }
 }
 
-/** Todo link para a demonstração sai em nova aba e sem dar `window.opener` ao Google Agenda. */
+/**
+ * Todo pedido de demonstração leva à página /demonstracao, na mesma aba (a agenda do
+ * Google vem embutida lá desde 2026-11-24). Nenhum CTA aponta mais direto para o Google.
+ */
 function confereDemos(raiz: HTMLElement, minimo = 1) {
-  const demos = links(raiz).filter((a) => a.getAttribute("href") === DEMO_URL);
+  const demos = links(raiz).filter((a) => a.getAttribute("href") === DEMO_PATH);
   expect(demos.length).toBeGreaterThanOrEqual(minimo);
-  for (const a of demos) {
-    expect(a, `"${a.textContent}"`).toHaveAttribute("target", "_blank");
-    expect(a.getAttribute("rel") ?? "", `"${a.textContent}"`).toMatch(/\bnoopener\b/);
-  }
+  for (const a of demos) expect(a, `"${a.textContent}"`).not.toHaveAttribute("target");
+  expect(links(raiz).filter((a) => a.getAttribute("href") === DEMO_URL)).toHaveLength(0);
 }
 
 describe("contato e config", () => {
-  it("DEMO_URL é a página de agendamento em HTTPS", () => {
+  it("DEMO_URL é a página de agendamento em HTTPS e DEMO_PATH é rota do site", () => {
     expect(DEMO_URL).toMatch(/^https:\/\/calendar\.app\.google\/\w+$/);
+    expect(ROTAS).toContain(DEMO_PATH);
   });
 
   it("APP_URL é o app em HTTPS, sem barra no fim (os links somam o caminho)", () => {
@@ -114,35 +117,28 @@ describe("LandingHeader", () => {
     const verPlanos = screen.getAllByRole("link", { name: /Ver planos/ });
     expect(verPlanos).toHaveLength(2);
     for (const a of verPlanos) expect(a).toHaveAttribute("href", "/planos");
-    // A demonstração saiu do topo (2026-11-08): fica na hero, nos planos, no fecho e no rodapé.
-    expect(links(container).filter((a) => a.getAttribute("href") === DEMO_URL)).toHaveLength(0);
+    // A demonstração voltou ao topo (2026-11-24): botão no desktop e no menu do celular.
+    confereDemos(container, 2);
   });
 
-  it("com o hint de login, troca o Entrar por 'Abrir Pilar' e mantém o Ver planos", () => {
+  it("com o hint de login, o rótulo continua Entrar e o destino pula o login", () => {
     document.cookie = "pilar_logged_hint=1; path=/";
     renderNaRota(<LandingHeader />);
-    expect(screen.queryByRole("link", { name: /Entrar/ })).not.toBeInTheDocument();
-    const abrir = screen.getAllByRole("link", { name: /Abrir Pilar/ });
-    expect(abrir).toHaveLength(2);
-    for (const a of abrir) expect(a).toHaveAttribute("href", `${APP_URL}/inicio`);
+    expect(screen.queryByRole("link", { name: /Abrir Pilar/ })).not.toBeInTheDocument();
+    const entrar = screen.getAllByRole("link", { name: "Entrar" });
+    expect(entrar).toHaveLength(2);
+    for (const a of entrar) expect(a).toHaveAttribute("href", `${APP_URL}/inicio`);
     expect(screen.getAllByRole("link", { name: /Ver planos/ })).toHaveLength(2);
   });
 
-  it("hero e fecho usam o mesmo botão de acesso do header", () => {
-    renderNaRota(<HeroSection />);
-    expect(screen.getByRole("link", { name: /Entrar/ })).toHaveAttribute("href", `${APP_URL}/login`);
-    cleanup();
-
-    document.cookie = "pilar_logged_hint=1; path=/";
-    renderNaRota(<HeroSection />);
-    expect(screen.queryByRole("link", { name: /Entrar/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Abrir Pilar/ })).toHaveAttribute("href", `${APP_URL}/inicio`);
-    cleanup();
-
-    renderNaRota(<CTASection />);
-    expect(screen.queryByRole("link", { name: /Entrar/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Abrir Pilar/ })).toHaveAttribute("href", `${APP_URL}/inicio`);
-    expect(screen.getByRole("link", { name: /Ver planos/ })).toHaveAttribute("href", "/planos");
+  it("hero e fecho usam o mesmo par de botões: Ver planos e Agendar demonstração", () => {
+    for (const ui of [<HeroSection />, <CTASection />]) {
+      renderNaRota(ui);
+      expect(screen.queryByRole("link", { name: /Entrar|Abrir Pilar/ })).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Ver planos/ })).toHaveAttribute("href", "/planos");
+      expect(screen.getByRole("link", { name: /Agendar demonstração/ })).toHaveAttribute("href", DEMO_PATH);
+      cleanup();
+    }
   });
 
   it("o menu Produto abre pelo teclado e fecha com Esc", async () => {
@@ -204,13 +200,12 @@ describe("LandingFooter", () => {
     confereDemos(container, 1);
   });
 
-  it("tem módulos, comparações e as páginas da empresa", () => {
+  it("tem módulos, públicos e as páginas de conteúdo e da empresa, sem as comparações", () => {
     const { container } = renderNaRota(<LandingFooter />);
     for (const m of MODULOS) expect(container.querySelector(`a[href="/${m.slug}"]`)).not.toBeNull();
-    for (const c of COMPARATIVOS) {
-      expect(screen.getByRole("link", { name: `Pilar vs ${c.adversario}` })).toHaveAttribute("href", `/vs/${c.slug}`);
-    }
-    for (const rota of ["/planos", "/faq", "/termos", "/privacidade"]) {
+    for (const p of PUBLICOS_LINKS) expect(container.querySelector(`a[href="${p.to}"]`)).not.toBeNull();
+    for (const c of COMPARATIVOS) expect(container.querySelector(`a[href="/vs/${c.slug}"]`)).toBeNull();
+    for (const rota of ["/planos", "/blog", "/ferramentas", "/faq", "/seguranca", "/termos", "/privacidade"]) {
       expect(container.querySelector(`a[href="${rota}"]`)).not.toBeNull();
     }
   });
@@ -226,9 +221,7 @@ describe("LandingFooter", () => {
 
   it("assina com a tagline da marca", () => {
     renderNaRota(<LandingFooter />);
-    expect(
-      screen.getByText(/Gestão com agentes de IA para escritórios de engenharia e arquitetura\./)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Gestão de projetos e obras, com agentes de IA\./)).toBeInTheDocument();
   });
 });
 
@@ -240,6 +233,8 @@ describe("CTAs para a demonstração em toda página", () => {
     ["/planos", <Planos />, "/planos"],
     ["/engenharia", <PublicoPage slug="engenharia" />, "/engenharia"],
     ["/arquitetura", <PublicoPage slug="arquitetura" />, "/arquitetura"],
+    ["/gestao-de-obra", <PublicoPage slug="gestao-de-obra" />, "/gestao-de-obra"],
+    ["/sob-medida", <PublicoPage slug="sob-medida" />, "/sob-medida"],
     ...MODULOS.map((m): [string, ReactElement, string] => [`/${m.slug}`, <ModulePage slug={m.slug} />, `/${m.slug}`]),
     ...COMPARATIVOS.map((c): [string, ReactElement, string] => [
       `/vs/${c.slug}`,
@@ -248,13 +243,13 @@ describe("CTAs para a demonstração em toda página", () => {
     ]),
   ];
 
-  it.each(paginas)("%s: links válidos e demonstração em nova aba com noopener", (_nome, ui, rota) => {
+  it.each(paginas)("%s: links válidos e demonstração pela página /demonstracao", (_nome, ui, rota) => {
     const { container } = renderNaRota(ui, rota);
     confereDestinos(container);
     confereDemos(container, 1);
   });
 
-  it("na hero, o botão principal leva aos planos e a demonstração fica como link secundário", async () => {
+  it("na hero, o botão principal leva aos planos e o secundário à demonstração", async () => {
     renderNaRota(<HeroSection />);
     const verPlanos = screen.getByRole("link", { name: /Ver planos/ });
     expect(verPlanos).toHaveAttribute("href", "/planos");
@@ -262,15 +257,15 @@ describe("CTAs para a demonstração em toda página", () => {
     await userEvent.click(verPlanos);
     expect(trackCta).toHaveBeenCalledWith("ver_planos", "hero");
 
-    const demo = screen.getByRole("link", { name: "Agende uma demonstração" });
+    const demo = screen.getByRole("link", { name: /Agendar demonstração/ });
     demo.addEventListener("click", (e) => e.preventDefault());
     await userEvent.click(demo);
     expect(trackCta).toHaveBeenCalledWith("agende_demo", "hero");
   });
 
-  it("os links para o app (Entrar, Abrir Pilar) continuam na mesma aba", () => {
+  it("os links para o app (Entrar) continuam na mesma aba", () => {
     document.cookie = "pilar_logged_hint=1; path=/";
-    const { container } = renderNaRota(<CTASection />);
+    const { container } = renderNaRota(<LandingHeader />);
     const doApp = links(container).filter((a) => a.getAttribute("href")!.startsWith(APP_URL));
     expect(doApp.length).toBeGreaterThan(0);
     for (const a of doApp) expect(a).not.toHaveAttribute("target");
@@ -280,11 +275,12 @@ describe("CTAs para a demonstração em toda página", () => {
     "/%s oferece demonstração, preserva o acesso aos preços e distingue o pedido de implantação",
     async (slug) => {
       renderNaRota(<PublicoPage slug={slug} />, `/${slug}`);
-      // Dois pedidos de demonstração: o da hero e o ao lado da comparação com planilha e ERP.
-      const demonstracoes = screen.getAllByRole("link", { name: "Agendar demonstração" });
-      expect(demonstracoes).toHaveLength(2);
+      // Três pedidos de demonstração: o da hero, o ao lado da comparação com planilha e
+      // ERP e o do fecho.
+      const demonstracoes = screen.getAllByRole("link", { name: /Agendar demonstração/ });
+      expect(demonstracoes).toHaveLength(3);
       for (const demonstracao of demonstracoes) {
-        expect(demonstracao).toHaveAttribute("href", DEMO_URL);
+        expect(demonstracao).toHaveAttribute("href", DEMO_PATH);
         demonstracao.addEventListener("click", (e) => e.preventDefault());
         await userEvent.click(demonstracao);
       }

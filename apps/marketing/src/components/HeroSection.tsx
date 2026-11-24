@@ -1,12 +1,9 @@
 import { m, useReducedMotion } from "framer-motion";
-import { trackCta } from "../analytics";
-import { useAcesso } from "../loginHint";
 import { HeroScene } from "./hero/HeroScene";
 import { HeroBackdrop } from "./hero/HeroBackdrop";
-import { SplitButton } from "./ui/SplitButton";
 import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
-import { LinkDemo } from "./LinkDemo";
+import { BotoesCta } from "./BotoesCta";
 
 /**
  * Hero.
@@ -50,7 +47,6 @@ function Palavras({ texto, atraso = 0, className }: { texto: string; atraso?: nu
 
 export function HeroSection() {
   const reducedMotion = useReducedMotion();
-  const acesso = useAcesso();
 
   return (
     <section className="relative isolate overflow-hidden pt-20 md:pt-36 pb-10 md:pb-20">
@@ -65,7 +61,7 @@ export function HeroSection() {
               mais larga caber. */}
           {/* A frase grande é marca, não busca: vai num <p> com o desenho de título. O
               H1 é a tagline logo abaixo, que tem as palavras que o Google procura
-              ("gestão", "escritórios de engenharia e arquitetura"). */}
+              ("gestão de projetos e obras"). */}
           <p className="text-[62px] max-[1100px]:text-[50px] max-[850px]:text-[34px] max-[420px]:text-[27px] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
             {/* Acima de 850px as duas linhas não quebram, então trocar o verbo
                 nunca vira uma terceira linha. Abaixo disso o `nowrap` faria o
@@ -89,8 +85,8 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
             className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
-            <h1 className="inline">Gestão com agentes de IA para escritórios de engenharia e arquitetura.</h1> Prazos,
-            entregas e governança do projeto: a IA prepara, você aprova.
+            <h1 className="inline">Gestão de projetos e obras, com agentes de IA.</h1> Proposta, cronograma, canteiro e
+            financeiro no mesmo sistema: a IA prepara, você aprova.
           </m.div>
 
           <m.div
@@ -101,15 +97,7 @@ export function HeroSection() {
           >
             {/* Lado a lado também no celular: empilhados, os dois botões comiam
                 quase um terço da primeira tela. */}
-            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", "hero")}>
-                Ver planos
-              </SplitButton>
-              <SplitButton href={acesso.href} onClick={() => trackCta(acesso.evento, "hero")} fantasma>
-                {acesso.rotulo}
-              </SplitButton>
-            </div>
-            <LinkDemo local="hero" />
+            <BotoesCta local="hero" className="justify-center" />
           </m.div>
         </div>
       </div>

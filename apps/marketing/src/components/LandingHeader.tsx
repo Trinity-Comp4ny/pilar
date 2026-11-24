@@ -3,11 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { trackCta } from "../analytics";
 import { useAcesso } from "../loginHint";
-import { COLUNAS_MENU, PUBLICOS_NAV, RECURSOS_NAV } from "../lib/navegacao";
+import { COLUNAS_MENU, PUBLICOS_NAV } from "../lib/navegacao";
+import { DEMO_PATH } from "../lib/contato";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
 
-type MenuNome = "produto" | "publico" | "recursos";
+type MenuNome = "produto" | "publico";
 
 /** Atraso no fechar, pra dar tempo do mouse atravessar o vão até o painel. */
 const FECHAR_MS = 160;
@@ -24,8 +25,9 @@ const FECHAR_MS = 160;
  * por cima, e o conteúdo aparecia passando ali. A tampa (`TampaDoTopo`) pinta
  * essa faixa com a cor da moldura, de ponta a ponta, e sobe além da borda.
  *
- * Os dois CTAs são os mesmos da hero e do fecho, na mesma ordem: o acesso
- * (Entrar ou Abrir Pilar, ver `useAcesso`) e "Ver planos".
+ * O menu fica com o que decide a compra: Funcionalidades, Para quem e Planos. Blog,
+ * ferramentas, FAQ e segurança moram no rodapé. À direita, "Entrar" em texto e os
+ * dois botões da hero: demonstração (contorno, a partir de `lg`) e "Ver planos".
  */
 export function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -134,54 +136,51 @@ export function LandingHeader() {
                 />
               </button>
 
-              {(
-                [
-                  ["publico", "Para quem", PUBLICOS_NAV],
-                  ["recursos", "Recursos", RECURSOS_NAV],
-                ] as const
-              ).map(([nome, rotulo, links]) => (
-                <div
-                  key={nome}
-                  className="relative"
-                  onMouseEnter={() => abrir(nome)}
-                  onMouseLeave={() => fechar(FECHAR_MS)}
+              <div className="relative" onMouseEnter={() => abrir("publico")} onMouseLeave={() => fechar(FECHAR_MS)}>
+                <button
+                  type="button"
+                  className={navLink}
+                  aria-expanded={menuAberto === "publico"}
+                  onClick={() => (menuAberto === "publico" ? fechar() : abrir("publico"))}
                 >
-                  <button
-                    type="button"
-                    className={navLink}
-                    aria-expanded={menuAberto === nome}
-                    onClick={() => (menuAberto === nome ? fechar() : abrir(nome))}
-                  >
-                    {rotulo}
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === nome ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  <div
-                    className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[330px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
-                      menuAberto === nome ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
-                    }`}
-                  >
-                    {links.map((l) => (
-                      <Link
-                        key={l.to}
-                        to={l.to}
-                        onClick={() => fechar()}
-                        className="group flex items-center gap-3 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[13.5px] font-medium text-ink">{l.rotulo}</span>
-                          <span className="block text-[12px] leading-snug text-ink-muted">{l.resumo}</span>
-                        </span>
-                        <ArrowRight
-                          className="h-4 w-4 shrink-0 text-ink opacity-0 transition-opacity group-hover:opacity-100"
-                          strokeWidth={1.9}
-                        />
-                      </Link>
-                    ))}
-                  </div>
+                  Para quem
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "publico" ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <div
+                  className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[340px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                    menuAberto === "publico"
+                      ? "opacity-100 visible translate-y-0"
+                      : "opacity-0 invisible -translate-y-1"
+                  }`}
+                >
+                  {PUBLICOS_NAV.map((g) => (
+                    <div key={g.grupo}>
+                      <p className="px-3.5 pt-2.5 pb-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
+                        {g.grupo}
+                      </p>
+                      {g.links.map((l) => (
+                        <Link
+                          key={l.to}
+                          to={l.to}
+                          onClick={() => fechar()}
+                          className="group flex items-center gap-3 rounded-[16px] px-3.5 py-2.5 hover:bg-card-brand-soft transition-colors"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13.5px] font-medium text-ink">{l.rotulo}</span>
+                            <span className="block text-[12px] leading-snug text-ink-muted">{l.resumo}</span>
+                          </span>
+                          <ArrowRight
+                            className="h-4 w-4 shrink-0 text-ink opacity-0 transition-opacity group-hover:opacity-100"
+                            strokeWidth={1.9}
+                          />
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
 
               <Link to="/planos" className={navLink}>
                 Planos
@@ -247,21 +246,33 @@ export function LandingHeader() {
                   fechar();
                   trackCta("ver_funcionalidades", "header");
                 }}
-                className="group mt-2 flex items-center justify-between rounded-[18px] bg-ink px-5 py-3 text-[13.5px] font-medium text-white"
+                className="group mt-1 flex items-center justify-center gap-1.5 rounded-[14px] border-t border-paper-border px-5 pt-3 pb-1.5 text-[13px] text-ink-soft transition-colors hover:text-ink"
               >
                 Ver todas as funcionalidades
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.9} />
+                <ArrowRight
+                  className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                  strokeWidth={1.9}
+                />
               </Link>
             </div>
 
-            <div className="hidden md:flex items-center gap-4 shrink-0">
+            <div className="hidden md:flex items-center gap-3 shrink-0">
               <a
                 href={acesso.href}
                 onClick={() => trackCta(acesso.evento, "header")}
-                className="text-[14px] text-ink-soft hover:text-ink transition-colors"
+                className="px-1 text-[14px] text-ink-soft hover:text-ink transition-colors"
               >
                 {acesso.rotulo}
               </a>
+              <SplitButton
+                tamanho="sm"
+                fantasma
+                to={DEMO_PATH}
+                onClick={() => trackCta("agende_demo", "header")}
+                className="hidden lg:inline-flex"
+              >
+                Agendar demonstração
+              </SplitButton>
               <SplitButton tamanho="sm" to="/planos" onClick={() => trackCta("ver_planos", "header")}>
                 Ver planos
               </SplitButton>
@@ -326,37 +337,28 @@ export function LandingHeader() {
                 setMobileMenuOpen(false);
                 trackCta("ver_funcionalidades", "header_mobile");
               }}
-              className="mt-1 flex items-center justify-between rounded-[16px] bg-ink px-3.5 py-3 text-[14px] font-medium text-white"
+              className="flex items-center justify-between rounded-[16px] px-3.5 py-2.5 text-[13.5px] text-ink-soft transition-colors active:bg-card-brand-soft"
             >
               Ver todas as funcionalidades
-              <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={1.9} />
+              <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
             </Link>
 
-            {(
-              [
-                ["Para quem", PUBLICOS_NAV],
-                ["Recursos", RECURSOS_NAV],
-              ] as const
-            ).map(([titulo, links]) => (
-              <div key={titulo}>
-                <p className="px-3.5 pt-4 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
-                  {titulo}
-                </p>
-                {links.map((l) => (
-                  <Link
-                    key={l.to}
-                    to={l.to}
-                    onClick={() => setMobileMenuOpen(false)}
-                    aria-current={pathname === l.to ? "page" : undefined}
-                    className={`flex items-center justify-between rounded-[16px] px-3.5 py-2.5 text-[14.5px] font-medium text-ink transition-colors active:bg-card-brand-soft ${
-                      pathname === l.to ? "bg-card-brand-soft" : ""
-                    }`}
-                  >
-                    {l.rotulo}
-                    <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
-                  </Link>
-                ))}
-              </div>
+            <p className="px-3.5 pt-4 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] text-ink-muted">
+              Para quem
+            </p>
+            {PUBLICOS_NAV.flatMap((g) => g.links).map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                onClick={() => setMobileMenuOpen(false)}
+                aria-current={pathname === l.to ? "page" : undefined}
+                className={`flex items-center justify-between rounded-[16px] px-3.5 py-2.5 text-[14.5px] font-medium text-ink transition-colors active:bg-card-brand-soft ${
+                  pathname === l.to ? "bg-card-brand-soft" : ""
+                }`}
+              >
+                {l.rotulo}
+                <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
+              </Link>
             ))}
 
             <span className="mx-3.5 my-2 block h-px bg-paper-border" />
@@ -373,14 +375,26 @@ export function LandingHeader() {
               <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
             </Link>
 
+            <a
+              href={acesso.href}
+              onClick={() => trackCta(acesso.evento, "header_mobile")}
+              className="flex items-center justify-between rounded-[16px] px-3.5 py-3 text-[14.5px] font-medium text-ink transition-colors active:bg-card-brand-soft"
+            >
+              {acesso.rotulo}
+              <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
+            </a>
+
             <div className="mt-2 grid grid-cols-2 gap-2 p-1.5">
               <SplitButton
                 fantasma
                 className="w-full"
-                href={acesso.href}
-                onClick={() => trackCta(acesso.evento, "header_mobile")}
+                to={DEMO_PATH}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  trackCta("agende_demo", "header_mobile");
+                }}
               >
-                {acesso.rotulo}
+                Demonstração
               </SplitButton>
               <SplitButton
                 className="w-full"

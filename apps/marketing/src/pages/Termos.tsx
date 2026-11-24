@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, FileText } from "lucide-react";
 import { usePageMeta } from "../lib/seo";
 import { EMPRESA } from "../lib/empresa";
 
@@ -426,24 +425,16 @@ export function Termos() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-6 py-6 flex items-center gap-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-ink-soft hover:bg-paper-alt transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Link>
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-foreground" />
-            <h1 className="text-lg font-medium tracking-tight">Termos de Uso</h1>
-          </div>
-        </div>
+    <div className="min-h-screen bg-paper pt-28 md:pt-36">
+      {/* O header do site é fixo: o respiro do topo deixa o título abaixo dele (antes um
+          segundo header, com "Voltar", ficava escondido atrás da pílula). */}
+      <header className="container mx-auto max-w-3xl px-6">
+        <h1 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[850px]:text-[30px]">
+          Termos de Uso
+        </h1>
       </header>
 
-      <main className="container mx-auto px-6 py-12 max-w-3xl space-y-12">
+      <main className="container mx-auto px-6 pt-10 pb-16 max-w-3xl space-y-12">
         <section className="rounded-lg border bg-muted/30 p-6 space-y-2">
           <p className="text-sm text-muted-foreground leading-relaxed">
             {forte("Finalidade deste documento:")} estabelecer as condições de uso da plataforma Pilar, oferecida por{" "}

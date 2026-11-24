@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Cookie, ShieldCheck } from "lucide-react";
+import { Cookie } from "lucide-react";
 import { APP_URL } from "../config";
 import { getCookieConsent, CONSENT_CHANGED_EVENT, requestCookieConsentReview } from "../cookieConsent";
 import { usePageMeta } from "../lib/seo";
@@ -202,24 +202,16 @@ export function Privacidade() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-6 py-6 flex items-center gap-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-ink-soft hover:bg-paper-alt transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Link>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-foreground" />
-            <h1 className="text-lg font-medium tracking-tight">Política de Privacidade</h1>
-          </div>
-        </div>
+    <div className="min-h-screen bg-paper pt-28 md:pt-36">
+      {/* O header do site é fixo: o respiro do topo deixa o título abaixo dele (antes um
+          segundo header, com "Voltar", ficava escondido atrás da pílula). */}
+      <header className="container mx-auto max-w-3xl px-6">
+        <h1 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[850px]:text-[30px]">
+          Política de Privacidade
+        </h1>
       </header>
 
-      <main className="container mx-auto px-6 py-12 max-w-3xl space-y-12">
+      <main className="container mx-auto px-6 pt-10 pb-16 max-w-3xl space-y-12">
         <section>
           <h2 className="text-2xl font-medium tracking-tight mb-3">Resumo</h2>
           <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
@@ -362,7 +354,7 @@ export function Privacidade() {
             da Resolução CD/ANPD nº 15/2024.
           </p>
           <p>
-            Onde cada fornecedor processa os dados, backup, controle de acesso e como reportar uma vulnerabilidade:{" "}
+            Backup, controle de acesso e como reportar uma vulnerabilidade:{" "}
             <Link to="/seguranca" className="text-ink underline">
               Segurança e confiança
             </Link>

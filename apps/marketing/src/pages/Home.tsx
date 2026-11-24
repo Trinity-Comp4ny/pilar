@@ -1,4 +1,3 @@
-import { FluxoDemonstrativo } from "../components/FluxoDemonstrativo";
 import { usePageMeta } from "../lib/seo";
 import { HeroSection } from "../components/HeroSection";
 import { StatementSection } from "../components/StatementSection";
@@ -19,11 +18,11 @@ export function Home() {
   // Restaura as metas do index.html ao voltar de outra rota (SPA: a última
   // página visitada teria deixado as dela penduradas no head).
   usePageMeta({
-    titulo: "Pilar: gestão para escritório de engenharia e arquitetura",
+    titulo: "Pilar: gestão de projetos e obras com agentes de IA",
     descricao:
-      "Gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, com a aprovação da equipe.",
+      "Gestão de projetos e obras com agentes de IA: proposta, projeto, obra e financeiro conectados, com a aprovação da equipe.",
     caminho: "/",
-    ogTitulo: "Pilar | Gestão com agentes de IA para engenharia e arquitetura",
+    ogTitulo: "Pilar | Gestão de projetos e obras, com agentes de IA",
     ogDescricao:
       "Proposta, projeto, obra e financeiro conectados, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe.",
   });
@@ -32,9 +31,6 @@ export function Home() {
     <>
       <HeroSection />
       <StatementSection />
-      <div className="px-5">
-        <FluxoDemonstrativo />
-      </div>
       <BentoSection />
       <AgentsSection />
       <PricingSection />

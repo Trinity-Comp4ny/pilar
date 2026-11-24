@@ -116,7 +116,11 @@ export const COLUNAS_MENU: ColunaMenu[] = [
     href: "/campo",
     resumo: "O canteiro registra, sem sinal.",
     corStrong: "bg-modulo-obra-strong",
-    links: [{ rotulo: "Registro do dia no celular", to: "/campo", selo: "Offline" }],
+    links: [
+      { rotulo: "Registro do dia no celular", to: "/funcionalidades/campo-registro-do-dia" },
+      { rotulo: "Funciona sem sinal", to: "/funcionalidades/campo-offline", selo: "Offline" },
+      { rotulo: "Acesso da equipe por obra", to: "/funcionalidades/campo-acesso-da-equipe" },
+    ],
   },
   {
     id: "portal",
@@ -136,7 +140,12 @@ export const COLUNAS_MENU: ColunaMenu[] = [
     href: "/funcionalidades/agentes",
     resumo: "A IA prepara, você confere e aprova.",
     corStrong: "bg-brand",
-    links: [{ rotulo: "Lançamentos em linguagem natural", to: "/funcionalidades/agentes", selo: "IA" }],
+    links: [
+      { rotulo: "Lançamentos em linguagem natural", to: "/funcionalidades/agentes", selo: "IA" },
+      { rotulo: "Extratos e faturas", to: "/funcionalidades/agente-extratos", selo: "IA" },
+      { rotulo: "Orçamentos de fornecedor", to: "/funcionalidades/agente-orcamentos", selo: "IA" },
+      { rotulo: "Estimativa de obra", to: "/funcionalidades/agente-estimativas", selo: "IA" },
+    ],
   },
 ];
 
@@ -146,16 +155,55 @@ export interface LinkNav {
   to: string;
 }
 
-/** "Para quem": as páginas de público (engenharia e arquitetura). */
-export const PUBLICOS_NAV: LinkNav[] = [
-  { rotulo: "Engenharia", resumo: "Civil, estrutural e MEP, com prazo por disciplina.", to: "/engenharia" },
-  { rotulo: "Arquitetura", resumo: "Do briefing à obra, com o cliente por dentro.", to: "/arquitetura" },
+export interface GrupoPublico {
+  grupo: string;
+  links: LinkNav[];
+}
+
+/**
+ * "Para quem": três tipos de negócio, não profissões (DECISOES.md, 2026-11-24). O
+ * escritório de projeto mantém as duas páginas que já ranqueiam (engenharia e
+ * arquitetura); obra e sob medida são as frentes novas.
+ */
+export const PUBLICOS_NAV: GrupoPublico[] = [
+  {
+    grupo: "Escritórios de projeto",
+    links: [
+      { rotulo: "Engenharia", resumo: "Civil, estrutural e MEP, com prazo por disciplina.", to: "/engenharia" },
+      { rotulo: "Arquitetura", resumo: "Do briefing à obra, com o cliente por dentro.", to: "/arquitetura" },
+    ],
+  },
+  {
+    grupo: "Obra",
+    links: [
+      {
+        rotulo: "Gestão e execução de obra",
+        resumo: "Diário, compras, aportes e prestação de contas.",
+        to: "/gestao-de-obra",
+      },
+    ],
+  },
+  {
+    grupo: "Sob medida",
+    links: [
+      {
+        rotulo: "Marcenaria, planejados e marmoraria",
+        resumo: "Do orçamento à instalação, com parcela e prazo.",
+        to: "/sob-medida",
+      },
+    ],
+  },
 ];
 
-/** "Recursos": o que ajuda a decidir antes de assinar. */
+/** Todos os links de público, sem o agrupamento (rodapé e testes). */
+export const PUBLICOS_LINKS: LinkNav[] = PUBLICOS_NAV.flatMap((g) => g.links);
+
+/**
+ * Conteúdo de apoio. Saiu do header (que fica com Funcionalidades, Para quem e
+ * Planos) e mora no rodapé.
+ */
 export const RECURSOS_NAV: LinkNav[] = [
   { rotulo: "Blog", resumo: "Gestão de escritório e de obra, sem enrolação.", to: "/blog" },
   { rotulo: "Ferramentas", resumo: "Calculadora de honorários e modelo de proposta.", to: "/ferramentas" },
   { rotulo: "Perguntas frequentes", resumo: "Implantação, dados, segurança e preço.", to: "/faq" },
-  { rotulo: "Segurança", resumo: "Onde ficam os dados e quem enxerga o quê.", to: "/seguranca" },
 ];

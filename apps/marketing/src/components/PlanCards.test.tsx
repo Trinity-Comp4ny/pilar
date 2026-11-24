@@ -2,7 +2,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prepararAmbiente, renderNaRota } from "../test/ambiente";
-import { DEMO_URL } from "../lib/contato";
+import { DEMO_PATH } from "../lib/contato";
 import { APP_URL } from "../config";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
 import { IncluidoEmTodos, PlanCards } from "./PlanCards";
@@ -60,14 +60,13 @@ describe("PlanCards", () => {
     }
   });
 
-  it("cada plano oferece a demonstração como caminho secundário, em nova aba com noopener", () => {
+  it("cada plano oferece a demonstração como caminho secundário, pela página do site", () => {
     renderNaRota(<PlanCards contexto="home" />);
     const demos = screen.getAllByRole("link", { name: "ou agende uma demonstração" });
     expect(demos).toHaveLength(3);
     for (const d of demos) {
-      expect(d).toHaveAttribute("href", DEMO_URL);
-      expect(d).toHaveAttribute("target", "_blank");
-      expect(d.getAttribute("rel")).toMatch(/noopener/);
+      expect(d).toHaveAttribute("href", DEMO_PATH);
+      expect(d).not.toHaveAttribute("target");
     }
   });
 

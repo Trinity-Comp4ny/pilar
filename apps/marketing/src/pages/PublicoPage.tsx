@@ -1,4 +1,3 @@
-import { FluxoDemonstrativo } from "../components/FluxoDemonstrativo";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, X } from "lucide-react";
 import { trackCta } from "../analytics";
@@ -9,7 +8,7 @@ import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { ARTIGOS_POR_SLUG } from "../lib/blog";
 import { COMPARATIVOS_POR_SLUG, type ComparativoSlug } from "../lib/comparativos";
-import { DEMO_URL } from "../lib/contato";
+import { DEMO_PATH } from "../lib/contato";
 import { MODULOS_POR_SLUG } from "../lib/modules";
 import { PUBLICOS_POR_SLUG, type PublicoSlug } from "../lib/publicos";
 import { useJsonLd, usePageMeta } from "../lib/seo";
@@ -50,7 +49,7 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
             </h1>
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{p.lede}</p>
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `publico_${slug}`)}>
+              <SplitButton to={DEMO_PATH} onClick={() => trackCta("agende_demo", `publico_${slug}`)}>
                 Agendar demonstração
               </SplitButton>
               <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `publico_${slug}`)} fantasma>
@@ -58,7 +57,7 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
               </SplitButton>
             </div>
             <p className="mt-3 text-[12.5px] text-ink-muted">
-              Conheça o fluxo do seu escritório. Se já decidiu, a contratação está nos planos.
+              Veja a Pilar aplicada ao seu caso. Se já decidiu, a contratação está nos planos.
             </p>
           </Reveal>
         </div>
@@ -68,7 +67,10 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
         <div className="mx-auto max-w-6xl">
           <Reveal variant="up" className="mb-8 max-w-2xl">
             <h2 className="text-[36px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[30px] max-[850px]:text-[25px]">
-              O que trava <span className="italic text-ink/45">o escritório hoje</span>
+              O que trava{" "}
+              <span className="italic text-ink/45">
+                {p.slug === "engenharia" || p.slug === "arquitetura" ? "o escritório hoje" : "a operação hoje"}
+              </span>
             </h2>
           </Reveal>
           <div className="grid gap-4 md:grid-cols-3">
@@ -183,10 +185,10 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
             })}
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `publico_${slug}_comparacao`)}>
+            <SplitButton to={DEMO_PATH} onClick={() => trackCta("agende_demo", `publico_${slug}_comparacao`)}>
               Agendar demonstração
             </SplitButton>
-            <span className="text-[12.5px] text-ink-muted">Veja o fluxo com os dados do seu escritório.</span>
+            <span className="text-[12.5px] text-ink-muted">Veja o fluxo com os dados do seu negócio.</span>
           </div>
         </div>
       </section>
@@ -244,11 +246,6 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
         </div>
       </section>
 
-      {slug === "engenharia" && (
-        <div className="px-5">
-          <FluxoDemonstrativo />
-        </div>
-      )}
       <CTASection />
     </>
   );

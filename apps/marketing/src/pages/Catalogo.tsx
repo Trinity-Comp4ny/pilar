@@ -1,16 +1,14 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ArrowRight, Check } from "lucide-react";
-import { trackCta } from "../analytics";
 import { CTASection } from "../components/CTASection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
 import { Reveal } from "../components/Reveal";
-import { SplitButton } from "../components/ui/SplitButton";
 import { COLUNAS_MENU } from "../lib/navegacao";
 import { MidiaProduto } from "../components/MidiaProduto";
 import { MIDIAS_PRODUTO } from "../lib/midiasProduto";
 import { Link } from "react-router-dom";
 import { GroupMock } from "../components/mock/ModuleScreens";
-import { LinkDemo } from "../components/LinkDemo";
+import { BotoesCta } from "../components/BotoesCta";
 import { FluxoDemonstrativo } from "../components/FluxoDemonstrativo";
 import { AREAS, PAGINAS_RECURSO, caminhoRecurso } from "../lib/catalogo";
 import { usePageMeta } from "../lib/seo";
@@ -33,14 +31,13 @@ function Abertura({ children }: { children: ReactNode }) {
 }
 
 export function Catalogo() {
-  const [filtro, setFiltro] = useState<string>("todas");
   usePageMeta({
     titulo: "Funcionalidades do software de gestão Pilar",
     descricao:
       "Explore propostas, financeiro, projetos por disciplina, diário de obra, Portal do Cliente, Pilar Campo e agentes de IA.",
     caminho: "/funcionalidades",
   });
-  const areas = AREAS.filter((a) => filtro === "todas" || a.id === filtro);
+  const areas = AREAS;
   const total = PAGINAS_RECURSO.length;
   return (
     <>
@@ -53,33 +50,12 @@ export function Catalogo() {
             Explore as ferramentas do escritório, do canteiro e do cliente. São {AREAS.length} áreas e {total} páginas
             de recurso, cada uma com passo a passo e captura da tela.
           </p>
-          <LinkDemo local="catalogo" texto="Prefere ver antes de assinar?" />
+          <BotoesCta local="catalogo" />
         </Reveal>
       </Abertura>
 
       <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
         <div className="mx-auto max-w-6xl">
-          <div role="group" aria-label="Filtrar por área" className="mb-8 flex flex-wrap gap-2 md:mb-10">
-            {[{ id: "todas", titulo: "Todas" }, ...AREAS].map((a) => {
-              const ativo = filtro === a.id;
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  aria-pressed={ativo}
-                  onClick={() => setFiltro(a.id)}
-                  className={`rounded-full border px-4 py-2 text-[13.5px] transition-colors ${
-                    ativo
-                      ? "border-ink bg-ink text-white"
-                      : "border-ink/15 bg-white text-ink-soft hover:border-ink/40 hover:text-ink"
-                  }`}
-                >
-                  {a.titulo}
-                </button>
-              );
-            })}
-          </div>
-
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {areas.map((area) => (
               <article key={area.id} className="flex flex-col rounded-[22px] border border-paper-border bg-white p-6">
@@ -176,12 +152,7 @@ export function RecursoPage({ slug }: { slug: (typeof PAGINAS_RECURSO)[number]["
           <Reveal variant="up" className="min-w-0">
             <h1 className={`mb-5 ${h1Grande}`}>{pagina.titulo}</h1>
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{pagina.descricao}</p>
-            <div className="flex flex-wrap gap-3">
-              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `recurso_${slug}`)}>
-                Ver planos
-              </SplitButton>
-            </div>
-            <LinkDemo local={`recurso_${slug}`} className="mt-3" />
+            <BotoesCta local={`recurso_${slug}`} />
           </Reveal>
           {temMidia ? (
             <Reveal variant="right" delay={0.1} className="min-w-0">
@@ -301,7 +272,7 @@ export function AgentesPage() {
               <MidiaProduto midia={MIDIAS_PRODUTO["agente-confirmacao"]} />
             </section>
           )}
-          <LinkDemo local="pagina_agentes" className="mt-8" />
+          <BotoesCta local="pagina_agentes" className="mt-8" />
         </div>
       </div>
       <CTASection />
