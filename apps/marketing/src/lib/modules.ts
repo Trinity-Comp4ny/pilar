@@ -63,6 +63,8 @@ export interface Modulo {
    * existe, a página cai no desenho vetorial do módulo.
    */
   grupos: {
+    /** Âncora do grupo na página (`/gestao#proposta`). */
+    id: string;
     titulo: string;
     frase: string;
     img: string;
@@ -101,6 +103,7 @@ export const MODULOS: Modulo[] = [
     },
     grupos: [
       {
+        id: "proposta",
         titulo: "Do lead à proposta assinada",
         frase: "O comercial inteiro numa tela: quem entrou, em que etapa está e por que saiu.",
         img: "/screens/gestao-comercial.png",
@@ -123,6 +126,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "projeto-e-receita",
         titulo: "Aprovou, virou projeto e receita",
         frase: "O aceite do cliente dispara o resto: projeto criado, parcelas no financeiro, nada redigitado.",
         img: "/screens/gestao-financeiro.png",
@@ -146,6 +150,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "fechamento",
         titulo: "O mês fecha sem planilha",
         frase: "Folha, comprovante e relatório saem do mesmo lugar em que o dinheiro entrou.",
         img: "/screens/gestao-fechamento.png",
@@ -212,6 +217,7 @@ export const MODULOS: Modulo[] = [
     },
     grupos: [
       {
+        id: "quadro",
         titulo: "O quadro do jeito do escritório",
         frase: "Colunas, fluxo e responsáveis definidos por quem trabalha, não pelo software.",
         img: "/screens/projetos-quadro.png",
@@ -235,6 +241,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "prazo",
         titulo: "Prazo que se defende sozinho",
         frase: "A carteira inteira na linha do tempo, e cada mudança de data com nome e motivo.",
         img: "/screens/projetos-cronograma.png",
@@ -258,6 +265,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "contrato",
         titulo: "O contrato mora junto do projeto",
         frase: "Quanto entrou, quanto falta e onde cada contrato está no mapa.",
         img: "/screens/projetos-contrato.png",
@@ -324,6 +332,7 @@ export const MODULOS: Modulo[] = [
     },
     grupos: [
       {
+        id: "diario",
         titulo: "O dia chega pronto do canteiro",
         frase: "O encarregado registra no celular e o escritório recebe sem digitar nada de novo.",
         img: "/screens/obra-diario.png",
@@ -347,6 +356,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "compras",
         titulo: "Material comprado sem rasteira",
         frase: "O orçamento do fornecedor entra por foto e sai numa tabela comparável.",
         img: "/screens/obra-cotacao.png",
@@ -369,6 +379,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "execucao",
         titulo: "Execução e dinheiro na mesma conta",
         frase: "Cada frente com seu avanço, cada real do cliente prestando contas.",
         img: "/screens/obra-conta.png",
@@ -432,6 +443,7 @@ export const MODULOS: Modulo[] = [
     },
     grupos: [
       {
+        id: "link",
         titulo: "Um espaço para seus clientes",
         frase: "O cliente consulta as informações que o escritório disponibiliza.",
         img: "/screens/portal-link.png",
@@ -448,6 +460,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "visoes",
         titulo: "Cada contrato, sua visão",
         frase: "Projeto mostra andamento e parcela; obra mostra o dinheiro prestando contas.",
         img: "/screens/portal-visoes.png",
@@ -510,6 +523,7 @@ export const MODULOS: Modulo[] = [
     },
     grupos: [
       {
+        id: "canteiro",
         titulo: "Feito pro canteiro de verdade",
         frase: "Sem rede e sem e-mail corporativo: as duas realidades da obra, resolvidas.",
         img: "/screens/campo-offline.png",
@@ -528,6 +542,7 @@ export const MODULOS: Modulo[] = [
         ],
       },
       {
+        id: "registro",
         titulo: "Registrar o dia leva minutos",
         frase: "Uma tela só pro que importa, e o escritório recebe sem redigitar.",
         img: "/screens/campo-registro.png",
