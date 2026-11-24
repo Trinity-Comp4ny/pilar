@@ -103,3 +103,5 @@ Precisa, e com legenda: frente de serviço, local e data. Uma foto de antes e ou
 ### Dá para substituir o relatório mensal por um portal do cliente?
 
 Em parte. O portal resolve a consulta do dia a dia: o cliente vê andamento, aportes e despesas sem precisar perguntar. O relatório mensal continua útil para a análise do escritório, os riscos e as decisões que dependem do cliente. Os dois juntos dão menos trabalho que o relatório sozinho feito do zero.
+
+Conheça na Pilar: [Acompanhamento de obras pelo cliente](/funcionalidades/portal-de-obras).

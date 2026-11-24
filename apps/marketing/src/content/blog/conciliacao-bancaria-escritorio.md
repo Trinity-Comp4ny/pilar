@@ -106,3 +106,5 @@ Não é recomendável. O agente de IA acelera a leitura e a classificação, mas
 ### O contador não faz a conciliação?
 
 Muitos contadores conciliam para fins contábeis, normalmente depois do fechamento do mês. A conciliação de gestão é outra: semanal, ligada a projeto e parcela, para o escritório saber hoje quem pagou e quanto tem em caixa.
+
+Conheça na Pilar: [Importação de extratos, faturas e planilhas](/funcionalidades/importacao-financeira).

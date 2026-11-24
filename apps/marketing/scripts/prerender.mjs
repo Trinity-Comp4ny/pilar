@@ -103,6 +103,16 @@ const ROTAS = [
   "/funcionalidades/crm",
   "/funcionalidades/escopo-e-aditivos",
   "/funcionalidades/cotacoes",
+  "/funcionalidades/equipe-e-horas",
+  "/funcionalidades/importacao-financeira",
+  "/funcionalidades/carteira-e-cartoes",
+  "/funcionalidades/rentabilidade",
+  "/funcionalidades/cronograma-de-obra",
+  "/funcionalidades/estoque-de-obra",
+  "/funcionalidades/estimativas-de-obra",
+  "/funcionalidades/portal-de-projetos",
+  "/funcionalidades/portal-de-obras",
+  "/funcionalidades/portal-financeiro",
 ];
 
 /** Escapa texto para XML (título e descrição dos artigos no feed). */

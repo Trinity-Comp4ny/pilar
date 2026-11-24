@@ -29,3 +29,11 @@ A referência é o código do produto. A disponibilidade de cada fluxo depende d
 - Priorizar gravações curtas para Portal, Campo offline e confirmação dos Agentes. Capturar sem nomes, anexos ou documentos de clientes. Anotar nos prints as ações que o público deve observar.
 - As novas páginas comerciais ficam em /funcionalidades para conviver com os redirects de links antigos do app em /gestao, /projetos e /agentes.
 - Após publicar, verificar HTML e canonicals no domínio público, rodar inspeção no Search Console e comparar impressões sem marca e cliques por página em janelas de 28 dias. Cruzar cliques de demonstração com reuniões confirmadas no CRM.
+
+
+### Expansão do catálogo e mídia
+
+- Gestão ganha equipe e horas, importação financeira e carteira e cartões. Projetos ganha rentabilidade. Obra ganha cronograma, estoque e estimativas. Horas e estimativas dependem da habilitação da conta.
+- O Portal ganha páginas de projetos, obras e financeiro. As capturas dessas páginas são comparativos do app com dados de teste, descritos em docs/design/antes-depois. A captura de estimativas foi feita com dados de teste e mostra a aba de custos.
+- Os demais prints e os oito clipes vêm da interface da Pilar gravada com a empresa fictícia Atrium Engenharia, descrita em docs/marketing/video/README.md. Os vídeos são carregados sob demanda.
+- Faltam gravações da navegação do cliente no Portal, da fila offline e sincronização do Campo, e da confirmação de uma ação por um agente. O trecho de Agentes publicado aqui mostra a aba de pendências.

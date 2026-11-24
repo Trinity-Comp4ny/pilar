@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { act, cleanup, screen, within } from "@testing-library/react";
@@ -49,6 +49,10 @@ const links = (raiz: HTMLElement) => [...raiz.querySelectorAll<HTMLAnchorElement
 function confereDestinos(raiz: HTMLElement) {
   for (const a of links(raiz)) {
     const href = a.getAttribute("href")!;
+    if (/^\/screens\/[a-z0-9-]+\.(png|jpg|mp4)$/.test(href)) {
+      expect(existsSync(join(dirname(fileURLToPath(import.meta.url)), "../../public", href))).toBe(true);
+      continue;
+    }
     if (href.startsWith("/")) {
       const caminho = href.split("#")[0] || "/";
       expect(
@@ -321,16 +325,14 @@ describe("páginas de módulo e comparação", () => {
   it("print que não existe cai no desenho vetorial do grupo, sem imagem quebrada", () => {
     const m = MODULOS[0];
     const { container } = renderNaRota(<ModulePage slug={m.slug} />, `/${m.slug}`);
-    const imagens = [...container.querySelectorAll("img")].filter((i) =>
-      i.getAttribute("src")?.startsWith("/screens/")
-    );
+    const imagensDoGrupo = () =>
+      [...container.querySelectorAll("img")].filter((i) => m.grupos.some((g) => g.img === i.getAttribute("src")));
+    const imagens = imagensDoGrupo();
     expect(imagens.length).toBe(m.grupos.length);
     act(() => {
       for (const img of imagens) img.dispatchEvent(new Event("error"));
     });
-    expect(
-      [...container.querySelectorAll("img")].filter((i) => i.getAttribute("src")?.startsWith("/screens/"))
-    ).toEqual([]);
+    expect(imagensDoGrupo()).toEqual([]);
   });
 
   it.each(COMPARATIVOS.map((c) => [c.slug, c] as const))("/vs/%s mostra a tabela e o FAQ", (_s, c) => {
