@@ -28,13 +28,13 @@
 
 ## 1. Essência
 
-**O que é a Pilar:** sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Proposta, projeto, obra, cliente e financeiro conectados: o dado do contrato chega à execução sem redigitar.
+**O que é a Pilar:** sistema de gestão de projetos e obras com agentes de IA, para três tipos de negócio: escritórios de projeto (engenharia e arquitetura), gestão e execução de obra, e projeto e fabricação sob medida (marcenaria, móveis planejados, marmoraria) (DECISOES.md, 2026-11-24). Proposta, projeto, obra, cliente e financeiro conectados: o dado do contrato chega à execução sem redigitar.
 
 **Categoria:** SaaS vertical de gestão para AEC (Arquitetura, Engenharia e Construção), AI-native: os agentes preparam o trabalho, o sistema confere os números, uma pessoa aprova.
 
 **Tagline oficial:**
 
-> **Gestão com agentes de IA para escritórios de engenharia e arquitetura.**
+> **Gestão de projetos e obras, com agentes de IA.**
 
 **Assinatura dos agentes:**
 
@@ -43,11 +43,11 @@
 **Hero em produção** (landing):
 
 > Onde times e agentes _organizam_ gestão, projetos e obras.
-> Gestão com agentes de IA para escritórios de engenharia e arquitetura. Prazos, entregas e governança do projeto: a IA prepara, você aprova.
+> Gestão de projetos e obras, com agentes de IA. Proposta, cronograma, canteiro e financeiro no mesmo sistema: a IA prepara, você aprova.
 
 ## 2. Posicionamento
 
-**Para** donos e sócios de escritórios de **engenharia e arquitetura**
+**Para** donos e sócios de negócios que **vendem projeto e executam**: escritórios de engenharia e arquitetura, gestão de obra e sob medida
 **que** tocam contrato, projeto, obra e caixa em ferramentas que não conversam,
 **a Pilar é** o sistema de gestão que conecta proposta, projeto, obra e financeiro, com agentes de IA que preparam o trabalho operacional
 **diferente de** planilhas dispersas, ferramentas genéricas de tarefa e ERPs de construtora,

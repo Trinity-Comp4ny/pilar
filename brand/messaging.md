@@ -6,13 +6,13 @@
 
 ## One-liner (elevator)
 
-> A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, e os agentes preparam o trabalho para você revisar e aprovar.
+> A Pilar é gestão de projetos e obras com agentes de IA: proposta, projeto, obra e financeiro conectados, e os agentes preparam o trabalho para você revisar e aprovar.
 
 ## Tagline
 
-> **Gestão com agentes de IA para escritórios de engenharia e arquitetura.**
+> **Gestão de projetos e obras, com agentes de IA.**
 
-Com o nome antes: "Pilar, gestão com agentes de IA para escritórios de engenharia e arquitetura."
+Com o nome antes: "Pilar, gestão de projetos e obras com agentes de IA." Os nichos (escritórios de projeto, obra, sob medida) ficam no "Para quem", não na frase (DECISOES.md, 2026-11-24).
 
 Desde 2026-11-07 (DECISOES.md) "Do contrato à execução, num fluxo só." não é mais frase de marca: não use
 em título, meta, imagem nem venda. "Do contrato à execução" segue só como termo do glossário em texto corrido.
