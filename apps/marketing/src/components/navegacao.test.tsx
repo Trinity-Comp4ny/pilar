@@ -8,7 +8,7 @@ import { matchPath } from "react-router-dom";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { limparCookies, prepararAmbiente, renderNaRota } from "../test/ambiente";
 import { APP_URL } from "../config";
-import { DEMO_PATH, DEMO_URL, WHATSAPP_COMERCIAL_URL } from "../lib/contato";
+import { DEMO_PATH, DEMO_URL, WHATSAPP_COMERCIAL_URL, REDES_SOCIAIS } from "../lib/contato";
 import { MODULOS } from "../lib/modules";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { PUBLICOS_LINKS } from "../lib/navegacao";
@@ -66,7 +66,11 @@ function confereDestinos(raiz: HTMLElement) {
       ).toBe(true);
       continue;
     }
-    const conhecido = href === DEMO_URL || href.startsWith(`${APP_URL}/`) || href.startsWith("https://wa.me/");
+    const conhecido =
+      href === DEMO_URL ||
+      href.startsWith(`${APP_URL}/`) ||
+      href.startsWith("https://wa.me/") ||
+      REDES_SOCIAIS.some((r) => r.url === href);
     expect(conhecido, `link "${a.textContent}" para destino desconhecido ${href}`).toBe(true);
   }
 }
@@ -199,6 +203,23 @@ describe("LandingFooter", () => {
     const { container } = renderNaRota(<LandingFooter />);
     confereDestinos(container);
     confereDemos(container, 1);
+  });
+
+  it("liga aos perfis oficiais em nova aba, com nome acessível", () => {
+    const { container } = renderNaRota(<LandingFooter />);
+    for (const rede of REDES_SOCIAIS) {
+      const a = container.querySelector<HTMLAnchorElement>(`a[href="${rede.url}"]`);
+      expect(a, rede.nome).not.toBeNull();
+      expect(a!.getAttribute("aria-label")).toBe(rede.rotulo);
+      expect(a!.target).toBe("_blank");
+      expect(a!.rel).toContain("noopener");
+    }
+  });
+
+  it("os perfis do rodapé são os mesmos do sameAs do JSON-LD", () => {
+    const html = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../index.html"), "utf8");
+    const sameAs = JSON.parse(html.match(/"sameAs":\s*(\[[^\]]*\])/)![1]) as string[];
+    expect(sameAs).toEqual(REDES_SOCIAIS.map((r) => r.url));
   });
 
   it("tem módulos, públicos e as páginas de conteúdo e da empresa, sem as comparações", () => {

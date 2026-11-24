@@ -16,3 +16,12 @@ export const DEMO_EMBED_URL =
   "https://calendar.google.com/calendar/appointments/schedules/AcZssZ01YQzEtGslbNt73mFm68wrSvD-KTBhdHzJMpw70Bgxnh9sNxWFO9IttDU5iMssIVFn3bb-8m26?gv=true";
 
 export const WHATSAPP_COMERCIAL_URL = "https://wa.me/5514998721100";
+
+/**
+ * Perfis oficiais da Pilar. Os mesmos endereços entram no `sameAs` do JSON-LD
+ * (apps/marketing/index.html): é por eles que o Google liga o site aos perfis.
+ */
+export const REDES_SOCIAIS = [
+  { nome: "Instagram", rotulo: "Pilar no Instagram (@pilarsoft.app)", url: "https://www.instagram.com/pilarsoft.app/" },
+  { nome: "LinkedIn", rotulo: "Pilar no LinkedIn", url: "https://www.linkedin.com/company/pilarsoft/" },
+] as const;
