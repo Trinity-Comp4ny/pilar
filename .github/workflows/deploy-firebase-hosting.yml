@@ -2,7 +2,7 @@ name: Deploy Firebase Hosting
 
 # Migração Vercel -> Firebase Hosting (ver docs/operations/MIGRACAO_VERCEL_FIREBASE.md).
 #
-# Gatilhos: o CI verde de `staging` publica o site de staging; o CI verde de `main` publica `live`,
+# O CI de staging chama este workflow diretamente; o CI verde de main aciona `live`,
 # sujeito à aprovação do Environment `production`; PR que mexe na própria publicação gera preview
 # (canal de 7 dias com smoke); o disparo manual (workflow_dispatch) republica ou ensaia.
 # Cada Environment (staging, production) tem as suas variáveis FIREBASE_*, GCP_* e VITE_*. `live` publica no endereço
@@ -12,6 +12,7 @@ name: Deploy Firebase Hosting
 # tem o seu firebase.*.json, gerado a partir do vercel.json (CSP e headers idênticos).
 
 on:
+  workflow_call:
   workflow_dispatch:
     inputs:
       alvo:
@@ -31,7 +32,7 @@ on:
   workflow_run:
     workflows: ["CI"]
     types: [completed]
-    branches: [main, staging]
+    branches: [main]
   # Preview de PR só quando o PR mexe na própria publicação (config do Firebase, scripts e smoke).
   pull_request:
     branches: [staging]
@@ -51,7 +52,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: firebase-hosting-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', inputs.alvo, inputs.canal) || github.event_name == 'workflow_run' && format('live-{0}', github.event.workflow_run.head_branch) || format('pr-{0}', github.event.number) }}
+  group: firebase-hosting-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', inputs.alvo, inputs.canal) || github.event_name == 'workflow_run' && 'live-main' || github.event_name == 'push' && 'deploy-staging-hosting' || format('pr-{0}', github.event.number) }}
   cancel-in-progress: false
 
 jobs:
@@ -59,6 +60,7 @@ jobs:
     # CI reprovado não publica. PR de fork ou do Dependabot não recebe secrets nem a federação do GCP.
     if: >-
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/staging')
       || github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
@@ -73,10 +75,10 @@ jobs:
     environment: ${{ ((github.event_name == 'workflow_dispatch' && inputs.canal == 'live') || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main')) && 'production' || 'staging' }}
     env:
       CANAL_NOME: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || format('manual-{0}', github.run_number) }}
-      CANAL: ${{ github.event_name == 'workflow_dispatch' && inputs.canal || github.event_name == 'workflow_run' && (github.event.workflow_run.head_branch == 'main' && 'live' || 'staging') || 'preview' }}
+      CANAL: ${{ github.event_name == 'workflow_dispatch' && inputs.canal || github.event_name == 'workflow_run' && (github.event.workflow_run.head_branch == 'main' && 'live' || 'staging') || (github.event_name == 'push' && 'staging') || 'preview' }}
       # No workflow_run o código a publicar é o do commit que o CI testou, não o topo de main.
       SENTRY_RELEASE: ${{ github.event.workflow_run.head_sha || github.sha }}
-      SENTRY_ENV: ${{ ((github.event_name == 'workflow_dispatch' && inputs.canal == 'live') || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main')) && 'production' || ((github.event_name == 'workflow_dispatch' && inputs.canal == 'staging') || github.event_name == 'workflow_run') && 'staging' || 'preview' }}
+      SENTRY_ENV: ${{ ((github.event_name == 'workflow_dispatch' && inputs.canal == 'live') || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main')) && 'production' || ((github.event_name == 'workflow_dispatch' && inputs.canal == 'staging') || (github.event_name == 'workflow_run' || github.event_name == 'push')) && 'staging' || 'preview' }}
       CI_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
