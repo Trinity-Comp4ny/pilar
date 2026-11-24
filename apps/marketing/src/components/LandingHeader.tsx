@@ -4,7 +4,6 @@ import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { trackCta } from "../analytics";
 import { useAcesso } from "../loginHint";
 import { COLUNAS_MENU, PUBLICOS_NAV } from "../lib/navegacao";
-import { DEMO_PATH } from "../lib/contato";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
 
@@ -26,8 +25,8 @@ const FECHAR_MS = 160;
  * essa faixa com a cor da moldura, de ponta a ponta, e sobe além da borda.
  *
  * O menu fica com o que decide a compra: Funcionalidades, Para quem e Planos. Blog,
- * ferramentas, FAQ e segurança moram no rodapé. À direita, "Entrar" em texto e os
- * dois botões da hero: demonstração (contorno, a partir de `lg`) e "Ver planos".
+ * ferramentas, FAQ e segurança moram no rodapé. À direita, "Entrar" em texto e "Ver planos". A
+ * demonstração fica na hero e nas chamadas da página, não no header (pedido do dono, 24/11).
  */
 export function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -264,15 +263,6 @@ export function LandingHeader() {
               >
                 {acesso.rotulo}
               </a>
-              <SplitButton
-                tamanho="sm"
-                fantasma
-                to={DEMO_PATH}
-                onClick={() => trackCta("agende_demo", "header")}
-                className="hidden lg:inline-flex"
-              >
-                Agendar demonstração
-              </SplitButton>
               <SplitButton tamanho="sm" to="/planos" onClick={() => trackCta("ver_planos", "header")}>
                 Ver planos
               </SplitButton>
@@ -384,18 +374,7 @@ export function LandingHeader() {
               <ArrowRight className="h-4 w-4 shrink-0 text-ink/35" strokeWidth={1.9} />
             </a>
 
-            <div className="mt-2 grid grid-cols-2 gap-2 p-1.5">
-              <SplitButton
-                fantasma
-                className="w-full"
-                to={DEMO_PATH}
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  trackCta("agende_demo", "header_mobile");
-                }}
-              >
-                Demonstração
-              </SplitButton>
+            <div className="mt-2 p-1.5">
               <SplitButton
                 className="w-full"
                 to="/planos"

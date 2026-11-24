@@ -117,8 +117,9 @@ describe("LandingHeader", () => {
     const verPlanos = screen.getAllByRole("link", { name: /Ver planos/ });
     expect(verPlanos).toHaveLength(2);
     for (const a of verPlanos) expect(a).toHaveAttribute("href", "/planos");
-    // A demonstração voltou ao topo (2026-11-24): botão no desktop e no menu do celular.
-    confereDemos(container, 2);
+    // O header fica só com Entrar e Ver planos (2026-11-24): a demonstração mora na hero e nas chamadas.
+    expect(links(container).filter((a) => a.getAttribute("href") === DEMO_PATH)).toHaveLength(0);
+    expect(screen.queryByRole("link", { name: /demonstração/i })).not.toBeInTheDocument();
   });
 
   it("com o hint de login, o rótulo continua Entrar e o destino pula o login", () => {
