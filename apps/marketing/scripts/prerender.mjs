@@ -100,6 +100,9 @@ const ROTAS = [
   "/funcionalidades/cronograma",
   "/funcionalidades/diario-de-obra",
   "/funcionalidades/prestacao-de-contas",
+  "/funcionalidades/crm",
+  "/funcionalidades/escopo-e-aditivos",
+  "/funcionalidades/cotacoes",
 ];
 
 /** Escapa texto para XML (título e descrição dos artigos no feed). */

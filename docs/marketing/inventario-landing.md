@@ -5,15 +5,15 @@ A referência é o código do produto. A disponibilidade de cada fluxo depende d
 | Subárea | O que demonstrar | Evidência no repositório | Destino |
 |---|---|---|---|
 | Operação do escritório | Início, tarefas, agenda e notificações | src/App.tsx, src/pages/inicio, src/pages/meu-trabalho | Gestão |
-| CRM | Funil, cadastro e detalhe de cliente, atividades do lead | src/pages/leads/components/LeadAtividadesPanel.tsx, src/pages/clientes | Gestão. Candidata /funcionalidades/crm após gravação |
+| CRM | Funil, cadastro e detalhe de cliente, atividades do lead | src/pages/leads/components/LeadAtividadesPanel.tsx, src/pages/clientes | Gestão e /funcionalidades/crm |
 | Propostas | Escopo por disciplina, documento, link compartilhado e aceite quando disponível | src/pages/propostas, src/App.tsx, src/pages/cliente/ClienteProjetoDetail.tsx | /funcionalidades/propostas. Validar regras de conversão, versões e assinatura |
 | Financeiro | Visão geral, lançamentos, carteira, faturas, importação por planilha, folha e relatórios | src/pages/Financeiro.tsx, src/pages/financeiro | /funcionalidades/financeiro |
 | Equipe | Cadastro, metas, horas e comprovantes de folha | src/pages/pessoas, src/pages/metas, src/pages/Timesheet.tsx, src/pages/financeiro/tabs/FolhaPagamento.tsx | Gestão |
 | Carteira | Lista, quadro, calendário, mapa e cronograma | src/App.tsx, src/pages/projetos/components | Projetos e /funcionalidades/cronograma |
 | Disciplinas | Responsáveis, etapas, revisões e dependências | src/pages/projetos/components/DisciplinasTab.tsx e src/pages/projetos/hooks | /funcionalidades/disciplinas |
-| Detalhe de projeto | Escopo, histórico, revisões, arquivos, tarefas, pagamentos e rentabilidade | src/pages/projetos/components/ProjetoDetailTabs.tsx e src/pages/projetos/hooks/useRentabilidade.ts | Projetos. Candidata /funcionalidades/escopo-e-aditivos |
+| Detalhe de projeto | Escopo, histórico, revisões, arquivos, tarefas, pagamentos e rentabilidade | src/pages/projetos/components/ProjetoDetailTabs.tsx e src/pages/projetos/hooks/useRentabilidade.ts | Projetos e /funcionalidades/escopo-e-aditivos |
 | RDO | Registro diário, fotos, efetivo, medições e relatório | src/pages/obras/components/ObraDiarioTab.tsx e RelatorioDiarioDialog.tsx | /funcionalidades/diario-de-obra |
-| Suprimentos | Fornecedores, cotação, link do fornecedor e estoque | src/pages/fornecedores, src/pages/cotar, src/pages/obras/components/ObraCotacoesTab.tsx e ObraEstoqueTab.tsx | Obra. Candidata /funcionalidades/cotacoes |
+| Suprimentos | Fornecedores, cotação, link do fornecedor e estoque | src/pages/fornecedores, src/pages/cotar, src/pages/obras/components/ObraCotacoesTab.tsx e ObraEstoqueTab.tsx | Obra e /funcionalidades/cotacoes |
 | Execução | Cronograma, importação, tarefas, relatórios e histórico de obra | src/pages/obras/components e src/pages/obras/lib/importarCronograma.ts | Obra |
 | Conta de obra | Aportes, despesas, comprovantes, saldo e importação de extrato OFX | src/pages/obras/components/ObraContaTab.tsx e src/pages/obras/lib/importarOfx.ts | /funcionalidades/prestacao-de-contas |
 | Estimativa e clima | Custos, preços, cenários, cronograma e consulta de clima | src/App.tsx e src/pages/obras/estimativa | Validar flags estimativa_obra e obras_clima antes de divulgar |

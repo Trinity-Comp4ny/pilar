@@ -141,6 +141,9 @@ export default function App() {
               <Route path="/funcionalidades/cronograma" element={<RecursoPage slug="cronograma" />} />
               <Route path="/funcionalidades/diario-de-obra" element={<RecursoPage slug="diario-de-obra" />} />
               <Route path="/funcionalidades/prestacao-de-contas" element={<RecursoPage slug="prestacao-de-contas" />} />
+              <Route path="/funcionalidades/crm" element={<RecursoPage slug="crm" />} />
+              <Route path="/funcionalidades/escopo-e-aditivos" element={<RecursoPage slug="escopo-e-aditivos" />} />
+              <Route path="/funcionalidades/cotacoes" element={<RecursoPage slug="cotacoes" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

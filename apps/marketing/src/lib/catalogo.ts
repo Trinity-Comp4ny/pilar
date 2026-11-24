@@ -152,6 +152,50 @@ export const PAGINAS_RECURSO = [
     guia: "/blog/taxa-de-administracao-de-obra",
     mock: "conta-obra",
   },
+  {
+    slug: "crm",
+    area: "gestao",
+    titulo: "CRM para escritórios de engenharia",
+    descricao:
+      "Acompanhe oportunidades, registre conversas com o cliente e organize a passagem do lead para proposta e projeto.",
+    passos: [
+      "Cadastre a oportunidade e acompanhe sua etapa no funil comercial.",
+      "Registre o que aconteceu nas atividades do lead e mencione quem precisa acompanhar.",
+      "Abra a proposta vinculada ao lead. Quando a oportunidade for ganha, use a conversão disponível para aproveitar o cadastro e as disciplinas da proposta.",
+    ],
+    guia: "/blog/crm-escritorio-arquitetura",
+    relacionado: "propostas",
+    mock: "kanban",
+  },
+  {
+    slug: "escopo-e-aditivos",
+    area: "projetos",
+    titulo: "Escopo e aditivos de projetos de engenharia",
+    descricao:
+      "Registre mudanças cobráveis, vincule o aditivo à revisão quando aplicável e confira a cobrança antes de aprovar.",
+    passos: [
+      "Registre a revisão para documentar o que mudou na entrega.",
+      "Se a mudança for cobrável, crie um aditivo no escopo ou a partir da revisão.",
+      "Na aprovação, confira a cobrança e, quando houver parcelas elegíveis, revise a prévia da distribuição antes de confirmar.",
+    ],
+    guia: "/blog/aditivo-de-projeto",
+    relacionado: "financeiro",
+    mock: "parcelas",
+  },
+  {
+    slug: "cotacoes",
+    area: "obra",
+    titulo: "Cotação de materiais para obras",
+    descricao: "Solicite preços aos fornecedores e compare as condições das respostas no contexto da obra.",
+    passos: [
+      "Registre o material que precisa cotar na obra.",
+      "Em uma cotação aberta por item, gere um link para o fornecedor informar os valores.",
+      "Acompanhe as respostas e compare as condições antes de decidir a compra.",
+    ],
+    guia: "/blog/cotacao-material-obra",
+    relacionado: "prestacao-de-contas",
+    mock: "cotacao",
+  },
 ] as const;
 
 export const caminhoRecurso = (slug: string) => `/funcionalidades/${slug}`;
