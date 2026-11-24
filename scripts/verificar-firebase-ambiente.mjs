@@ -18,7 +18,7 @@ const permitido = {
     (manual && env.GITHUB_REF === "refs/heads/main") || (evento === "workflow_run" && env.CI_HEAD_BRANCH === "main"),
   staging:
     (manual && ["refs/heads/main", "refs/heads/staging"].includes(env.GITHUB_REF)) ||
-    (evento === "workflow_run" && env.CI_HEAD_BRANCH === "staging"),
+    (evento === "push" && env.GITHUB_REF === "refs/heads/staging"),
   preview: true,
 };
 if (!permitido[canal]) {
