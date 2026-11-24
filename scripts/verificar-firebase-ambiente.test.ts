@@ -49,9 +49,12 @@ describe("verificar-firebase-ambiente: quem pode publicar live", () => {
 
   it("staging sai do CI de staging, nunca de produção", () => {
     const staging = { CANAL: "staging", VITE_SUPABASE_URL: "https://rizaklgstyfrwgmdsldf.supabase.co" };
-    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "workflow_run", CI_HEAD_BRANCH: "staging" }).status).toBe(0);
-    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "workflow_run", CI_HEAD_BRANCH: "feat/x" }).status).not.toBe(0);
+    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/heads/staging" }).status).toBe(0);
+    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/heads/main" }).status).not.toBe(0);
+    expect(rodar({ ...staging, GITHUB_EVENT_NAME: "pull_request", GITHUB_REF: "refs/pull/1/merge" }).status).not.toBe(
+      0
+    );
     const comProd = { ...staging, VITE_SUPABASE_URL: "https://vepnsonbnsimqcsfcagm.supabase.co" };
-    expect(rodar({ ...comProd, GITHUB_EVENT_NAME: "workflow_run", CI_HEAD_BRANCH: "staging" }).status).not.toBe(0);
+    expect(rodar({ ...comProd, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/heads/staging" }).status).not.toBe(0);
   });
 });
