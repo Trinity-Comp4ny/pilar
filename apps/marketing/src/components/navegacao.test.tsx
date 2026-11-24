@@ -53,6 +53,10 @@ function confereDestinos(raiz: HTMLElement) {
       expect(existsSync(join(dirname(fileURLToPath(import.meta.url)), "../../public", href))).toBe(true);
       continue;
     }
+    if (href.startsWith("#")) {
+      expect(raiz.querySelector(`[id="${href.slice(1)}"]`), `âncora ${href} sem alvo`).not.toBeNull();
+      continue;
+    }
     if (href.startsWith("/")) {
       const caminho = href.split("#")[0] || "/";
       expect(
