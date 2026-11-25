@@ -11703,6 +11703,7 @@ export type Database = {
         Args: { p_empresa_id: string }
         Returns: boolean
       }
+      empresas_origem_do_canal: { Args: { p_canal: string }; Returns: string }
       excluir_empresa_retencao: {
         Args: { p_empresa_id: string; p_motivo: string }
         Returns: undefined
