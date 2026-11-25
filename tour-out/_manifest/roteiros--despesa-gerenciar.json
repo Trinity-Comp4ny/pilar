@@ -1,0 +1,60 @@
+[
+ {
+  "arquivo": "roteiros/despesa-gerenciar/001-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "despesa-gerenciar",
+  "rota": "/gestao/financeiro?tab=lancamentos&fp=tudo",
+  "efeito": "dialog",
+  "cadeia": [
+   "Novo lançamento",
+   "Despesa",
+   "gerenciar (categoria)"
+  ],
+  "titulo": "Categorias de despesa (modal sobre o modal)",
+  "url": "/gestao/financeiro?tab=lancamentos&fp=tudo&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "roteiros/despesa-gerenciar/002-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "despesa-gerenciar",
+  "rota": "/gestao/financeiro?tab=lancamentos&fp=tudo",
+  "efeito": "dialog",
+  "cadeia": [
+   "Novo lançamento",
+   "Despesa",
+   "gerenciar (categoria)",
+   "digitar Marketing"
+  ],
+  "titulo": "Categorias: nova sendo digitada",
+  "url": "/gestao/financeiro?tab=lancamentos&fp=tudo&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "roteiros/despesa-gerenciar/003-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "despesa-gerenciar",
+  "rota": "/gestao/financeiro?tab=lancamentos&fp=tudo",
+  "efeito": "dialog",
+  "cadeia": [
+   "Novo lançamento",
+   "Despesa",
+   "Mais opções"
+  ],
+  "titulo": "Despesa: mais opções abertas",
+  "url": "/gestao/financeiro?tab=lancamentos&fp=tudo&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "roteiros/despesa-gerenciar/004-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "despesa-gerenciar",
+  "rota": "/gestao/financeiro?tab=lancamentos&fp=tudo",
+  "efeito": "dialog",
+  "cadeia": [
+   "Novo lançamento",
+   "Despesa",
+   "Mais opções",
+   "gerenciar (centro de custo)"
+  ],
+  "titulo": "Centros de custo (modal sobre o modal)",
+  "url": "/gestao/financeiro?tab=lancamentos&fp=tudo&from=2026-11-01&to=2026-11-30"
+ }
+]

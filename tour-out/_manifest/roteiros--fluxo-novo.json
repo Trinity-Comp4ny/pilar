@@ -1,0 +1,27 @@
+[
+ {
+  "arquivo": "roteiros/fluxo-novo/001-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "fluxo-novo",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Fluxos"
+  ],
+  "titulo": "Fluxos de disciplinas",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "roteiros/fluxo-novo/002-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "fluxo-novo",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Fluxos",
+   "Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/projetos"
+ }
+]
