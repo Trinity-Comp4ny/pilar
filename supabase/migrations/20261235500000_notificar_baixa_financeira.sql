@@ -35,7 +35,7 @@ BEGIN
     CASE WHEN v_receita THEN 'Recebido: ' ELSE 'Pago: ' END || COALESCE(NEW.descricao, '(sem descrição)'),
     'R$ ' || to_char(NEW.valor, 'FM999999990.00')
       || CASE WHEN v_receita THEN ' entrou' ELSE ' saiu' END
-      || COALESCE(' em ' || to_char(NEW.data_pagamento, 'DD/MM/YYYY'), ''),
+      || COALESCE(' em ' || to_char((to_jsonb(NEW) ->> CASE WHEN v_receita THEN 'data_recebimento' ELSE 'data_pagamento' END)::date, 'DD/MM/YYYY'), ''),
     CASE WHEN v_receita THEN 'receita' ELSE 'despesa' END, NEW.id, '/gestao/financeiro');
   RETURN NEW;
 END;
