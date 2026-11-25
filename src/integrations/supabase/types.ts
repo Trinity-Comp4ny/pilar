@@ -6500,6 +6500,7 @@ export type Database = {
           asaas_subscription_id: string | null
           billing_cycle: string
           billing_type: string
+          canal: string | null
           checkout_session_token: string
           company_name: string
           cpf_cnpj: string
@@ -6509,6 +6510,7 @@ export type Database = {
           id: string
           invite_dispatched_at: string | null
           nome: string
+          origem: Json | null
           paid_at: string | null
           payment_metadata: Json | null
           payment_status: string
@@ -6524,6 +6526,7 @@ export type Database = {
           asaas_subscription_id?: string | null
           billing_cycle?: string
           billing_type: string
+          canal?: string | null
           checkout_session_token?: string
           company_name: string
           cpf_cnpj: string
@@ -6533,6 +6536,7 @@ export type Database = {
           id?: string
           invite_dispatched_at?: string | null
           nome: string
+          origem?: Json | null
           paid_at?: string | null
           payment_metadata?: Json | null
           payment_status?: string
@@ -6548,6 +6552,7 @@ export type Database = {
           asaas_subscription_id?: string | null
           billing_cycle?: string
           billing_type?: string
+          canal?: string | null
           checkout_session_token?: string
           company_name?: string
           cpf_cnpj?: string
@@ -6557,6 +6562,7 @@ export type Database = {
           id?: string
           invite_dispatched_at?: string | null
           nome?: string
+          origem?: Json | null
           paid_at?: string | null
           payment_metadata?: Json | null
           payment_status?: string

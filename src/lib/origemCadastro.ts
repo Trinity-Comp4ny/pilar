@@ -5,7 +5,17 @@
 // consentimento de cookies, ao contrário do PostHog.
 
 const CHAVE = "pilar_origem_cadastro";
-const PARAMS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid", "ref"];
+const PARAMS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "gclid",
+  "fbclid",
+  "ref",
+  "canal",
+];
 
 export type OrigemCadastro = Record<string, string>;
 
@@ -45,4 +55,13 @@ export function lerOrigemCadastro(): OrigemCadastro | null {
   } catch {
     return null;
   }
+}
+
+/** Pedaço do payload do checkout com canal e UTMs guardados (vazio se não houver). */
+export function origemDoPayload(): { canal?: string; origem?: OrigemCadastro } {
+  const { canal, ...origem } = lerOrigemCadastro() ?? {};
+  return {
+    ...(canal ? { canal } : {}),
+    ...(Object.keys(origem).length > 0 ? { origem } : {}),
+  };
 }

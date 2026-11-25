@@ -24,7 +24,7 @@ import {
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
-import { cartaoRecusado, type CheckoutPayload, checkoutSchema } from "./entrada.ts";
+import { cartaoRecusado, type CheckoutPayload, checkoutSchema, origemDoCheckout } from "./entrada.ts";
 import {
   contratoDoSignup,
   frequenciaPixAutomatico,
@@ -139,6 +139,7 @@ serve(
         billing_cycle: body.billing_cycle,
         billing_type: body.billing_type,
         payment_status: "pending",
+        ...origemDoCheckout(body),
       })
       .select("id, checkout_session_token")
       .single();

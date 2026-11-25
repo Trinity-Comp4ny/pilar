@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { classificarCanal, extrairOrigem, registrarOrigem } from "./origem";
+import { classificarCanal, extrairOrigem, linkComOrigem, registrarOrigem } from "./origem";
 
 describe("extrairOrigem", () => {
   it("pega UTMs e o host de quem mandou o visitante", () => {
@@ -83,5 +83,27 @@ describe("classificarCanal (SPEC 149)", () => {
 
   it("sem nada é acesso direto", () => {
     expect(classificarCanal({})).toBe("direto");
+  });
+});
+
+describe("linkComOrigem", () => {
+  afterEach(() => sessionStorage.clear());
+
+  it("anexa canal e UTMs ao link do app", () => {
+    sessionStorage.setItem("pilar_origem", JSON.stringify({ utm_source: "linkedin", utm_medium: "social" }));
+    const url = new URL(linkComOrigem("https://app.pilarsoft.com.br/checkout?plano=pro"));
+    expect(url.searchParams.get("plano")).toBe("pro");
+    expect(url.searchParams.get("utm_source")).toBe("linkedin");
+    expect(url.searchParams.get("canal")).toBe("linkedin");
+  });
+
+  it("sem origem guardada marca como direto e preserva o link", () => {
+    const url = new URL(linkComOrigem("https://app.pilarsoft.com.br/checkout?plano=pro"));
+    expect(url.searchParams.get("canal")).toBe("direto");
+    expect(url.searchParams.get("plano")).toBe("pro");
+  });
+
+  it("link inválido volta como veio", () => {
+    expect(linkComOrigem("nao e url")).toBe("nao e url");
   });
 });
