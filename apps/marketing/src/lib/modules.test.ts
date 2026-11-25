@@ -82,7 +82,7 @@ describe("MODULOS", () => {
 });
 
 describe("COMPARATIVOS", () => {
-  it("tem os cinco comparativos, indexados por slug", () => {
+  it("tem os nove comparativos, indexados por slug", () => {
     expect(COMPARATIVOS.map((c) => c.slug)).toEqual([
       "planilha",
       "trello",
@@ -90,6 +90,9 @@ describe("COMPARATIVOS", () => {
       "notion",
       "erp-construtora",
       "omie-conta-azul",
+      "software-de-arquitetura",
+      "sistema-simples",
+      "plataforma-por-usuario",
     ]);
     for (const c of COMPARATIVOS) expect(COMPARATIVOS_POR_SLUG[c.slug]).toBe(c);
   });

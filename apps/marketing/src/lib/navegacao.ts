@@ -49,6 +49,9 @@ export const COMPARATIVOS_NAV: ComparativoNav[] = [
   { slug: "notion", adversario: "Notion" },
   { slug: "erp-construtora", adversario: "ERP de construtora" },
   { slug: "omie-conta-azul", adversario: "Omie e Conta Azul" },
+  { slug: "software-de-arquitetura", adversario: "Software só de arquitetura" },
+  { slug: "sistema-simples", adversario: "Sistema simples e barato" },
+  { slug: "plataforma-por-usuario", adversario: "Plataforma que cobra por usuário" },
 ];
 
 /**

@@ -9,7 +9,16 @@
  * o tom é factual, não zoeira de concorrente.
  */
 
-export type ComparativoSlug = "planilha" | "trello" | "whatsapp" | "notion" | "erp-construtora" | "omie-conta-azul";
+export type ComparativoSlug =
+  | "planilha"
+  | "trello"
+  | "whatsapp"
+  | "notion"
+  | "erp-construtora"
+  | "omie-conta-azul"
+  | "software-de-arquitetura"
+  | "sistema-simples"
+  | "plataforma-por-usuario";
 
 export interface LinhaComparacao {
   criterio: string;
@@ -429,6 +438,220 @@ export const COMPARATIVOS: Comparativo[] = [
         pergunta: "Qual o melhor sistema para escritório de engenharia pequeno?",
         resposta:
           "Se o seu problema é nota, imposto e conciliação, um sistema financeiro resolve. Se é saber o resultado de cada projeto e manter proposta, prazo e financeiro juntos, um sistema feito para escritório de projeto faz mais sentido.",
+      },
+    ],
+  },
+  {
+    slug: "software-de-arquitetura",
+    adversario: "Software só de arquitetura",
+    headline: "Software feito só para arquitetura cobre o seu escritório.",
+    headlineFim: "Até a primeira disciplina de engenharia entrar.",
+    lede: "Há bons sistemas de gestão pensados para o escritório de arquitetura: briefing, proposta, etapas de projeto e financeiro. O escritório de engenharia multidisciplinar tem outra conta: estrutural, hidráulica e elétrica no mesmo contrato, cada uma com seu custo, prazo e aditivo.",
+    seo: {
+      titulo: "Software de gestão para arquitetura ou para engenharia multidisciplinar?",
+      descricao:
+        "Sistema pensado só para arquitetura ou feito para escritório de engenharia multidisciplinar? Compare disciplinas, aditivo, margem por projeto e obra.",
+      h1: "Pilar vs software de gestão só para arquitetura",
+    },
+    linhas: [
+      {
+        criterio: "Disciplinas no mesmo contrato",
+        pilar: "Cada disciplina com escopo, responsável, prazo e custo próprios dentro do projeto.",
+        alternativa: "Costuma tratar o projeto como uma sequência de etapas, sem separar as disciplinas.",
+      },
+      {
+        criterio: "Aditivo de escopo",
+        pilar: "O aditivo é um registro do projeto, com valor e parcela, e entra na margem.",
+        alternativa: "Costuma ficar como anotação ou documento anexado ao contrato.",
+      },
+      {
+        criterio: "Margem do projeto",
+        pilar: "Orçado contra executado, recalculada a cada lançamento, com aviso quando o custo passa do orçado.",
+        alternativa: "Costuma mostrar o financeiro do projeto, sem aviso automático.",
+      },
+      {
+        criterio: "Obra e prestação de contas",
+        pilar: "Diário de obra, app de campo e conta da obra que presta contas ao cliente.",
+        alternativa: "Varia muito: em geral há diário simples, sem conta da obra.",
+      },
+      {
+        criterio: "Portal do cliente",
+        pilar: "Link só de leitura com andamento, parcelas e prestação de contas.",
+        alternativa: "Costuma existir, às vezes só em plano mais caro.",
+      },
+      {
+        criterio: "Briefing por tipo de projeto",
+        pilar: "Ainda não tem modelos de briefing prontos.",
+        alternativa: "Costuma trazer modelos de briefing por tipo de projeto, e é um ponto forte.",
+      },
+      {
+        criterio: "Preço",
+        pilar: "Por escritório, sem cobrança por usuário.",
+        alternativa: "Costuma ser por faixa de usuários, com recursos que mudam de plano.",
+      },
+    ],
+    quandoMigrar: [
+      "Quando o contrato tem mais de uma disciplina e você não sabe a margem de cada uma.",
+      "Quando o aditivo é combinado por mensagem e só vira cobrança depois.",
+      "Quando o escritório também acompanha a obra e precisa prestar contas ao cliente.",
+    ],
+    faq: [
+      {
+        pergunta: "A Pilar serve para escritório de arquitetura?",
+        resposta:
+          "Serve. A Pilar atende projeto técnico de arquitetura e de engenharia. A diferença está em tratar cada disciplina, aditivo e obra como parte do mesmo projeto.",
+      },
+      {
+        pergunta: "Quando um sistema só de arquitetura é suficiente?",
+        resposta:
+          "Quando o escritório é pequeno, trabalha com uma disciplina e o que mais pesa é o briefing e a proposta. Se há várias disciplinas, aditivos e obra, vale olhar um sistema feito para isso.",
+      },
+      {
+        pergunta: "Posso migrar os projetos que já estão em andamento?",
+        resposta:
+          "Pode. Você cadastra os projetos em andamento com o que já foi orçado e executado, e a margem passa a ser calculada a partir dali.",
+      },
+    ],
+  },
+  {
+    slug: "sistema-simples",
+    adversario: "Sistema simples e barato",
+    headline: "O sistema simples organiza o escritório.",
+    headlineFim: "A Pilar mostra quanto cada projeto rende.",
+    lede: "Sistemas simples, de preço baixo, resolvem bem o começo: cliente, proposta, tarefa e cobrança no mesmo lugar. O limite aparece quando o escritório cresce e a pergunta deixa de ser o que fazer hoje, e passa a ser se o projeto está dando lucro.",
+    seo: {
+      titulo: "Sistema simples e barato ou sistema completo para escritório de projeto?",
+      descricao:
+        "Sistema de gestão simples de preço baixo ou um feito para escritório de projeto? Compare margem por projeto, aditivo, obra, alertas e preço.",
+      h1: "Pilar vs sistema simples e barato de gestão de projetos",
+    },
+    linhas: [
+      {
+        criterio: "O que resolve primeiro",
+        pilar: "Proposta, projeto, obra e financeiro ligados, com a margem de cada projeto.",
+        alternativa: "Organização: cadastro, tarefa, cronograma e cobrança.",
+      },
+      {
+        criterio: "Margem do projeto",
+        pilar: "Orçado contra executado, recalculada a cada lançamento.",
+        alternativa: "Costuma mostrar o que entrou e saiu, sem comparar com o orçado por disciplina.",
+      },
+      {
+        criterio: "Aviso antes do prejuízo",
+        pilar: "O projeto avisa quando o custo passa do orçado e quando há pendência parada.",
+        alternativa: "Costuma não ter: quem olha o número é você.",
+      },
+      {
+        criterio: "Aditivo de escopo",
+        pilar: "Registro do projeto, com valor e parcela.",
+        alternativa: "Costuma não ter: o combinado fica fora do sistema.",
+      },
+      {
+        criterio: "Obra",
+        pilar: "Diário, cronograma e conta da obra, com app de campo.",
+        alternativa: "Costuma ter só um diário simples, quando tem.",
+      },
+      {
+        criterio: "Assistente com IA",
+        pilar: "Agente que consulta e prepara dados do escritório, e você aprova antes de gravar.",
+        alternativa: "Costuma não ter, ou ter só um chat de ajuda.",
+      },
+      {
+        criterio: "Preço",
+        pilar: "Mais alto que o de entrada do mercado, sem cobrança por usuário e sem módulo à parte.",
+        alternativa: "É o ponto forte: preço de entrada baixo e adesão rápida.",
+      },
+    ],
+    quandoMigrar: [
+      "Quando você tem os dados, mas descobre a margem do projeto só depois que ele acaba.",
+      "Quando o escritório passa de poucos projetos para vários ao mesmo tempo.",
+      "Quando o sistema organiza as tarefas e você continua usando planilha para o lucro.",
+    ],
+    faq: [
+      {
+        pergunta: "Vale pagar mais por um sistema completo?",
+        resposta:
+          "Depende do tamanho do problema. Se o escritório precisa de organização, um sistema simples resolve. Se uma margem errada custa mais do que a diferença de preço, o sistema que calcula isso paga a si mesmo.",
+      },
+      {
+        pergunta: "A Pilar é difícil de usar?",
+        resposta:
+          "Você pode começar só com projetos e proposta e ligar financeiro e obra depois. Nada obriga a usar tudo no primeiro dia.",
+      },
+      {
+        pergunta: "Posso testar antes?",
+        resposta: "Pode. Veja a página de planos para as condições de teste e de cancelamento.",
+      },
+    ],
+  },
+  {
+    slug: "plataforma-por-usuario",
+    adversario: "Plataforma que cobra por usuário",
+    headline: "Plataforma que cobra por usuário cresce com o seu custo.",
+    headlineFim: "A Pilar cresce com o seu escritório.",
+    lede: "Muitas plataformas de gestão cobram por faixa de usuários: quanto mais gente do escritório entra no sistema, mais o plano sobe. Isso desestimula o que dá resultado, que é colocar todo mundo para lançar, aprovar e consultar no mesmo lugar.",
+    seo: {
+      titulo: "Plataforma que cobra por usuário ou sistema sem limite de usuários?",
+      descricao:
+        "Plataforma de gestão com plano por faixa de usuários ou sistema sem limite para escritório de projeto? Compare preço, margem, alertas, IA e obra.",
+      h1: "Pilar vs plataforma de gestão que cobra por usuário",
+    },
+    linhas: [
+      {
+        criterio: "Cobrança",
+        pilar: "Por escritório, sem cobrança por usuário.",
+        alternativa: "Por faixa de usuários: o plano sobe quando a equipe cresce.",
+      },
+      {
+        criterio: "Quem entra no sistema",
+        pilar: "Sócios, projetistas, financeiro e campo, sem pensar em licença.",
+        alternativa: "Tende a limitar a quem lança e aprova, para caber na faixa.",
+      },
+      {
+        criterio: "Margem do projeto",
+        pilar: "Orçado contra executado, recalculada a cada lançamento, com aviso quando passa do orçado.",
+        alternativa: "Costuma ter painel de rentabilidade, que depende de as horas estarem lançadas.",
+      },
+      {
+        criterio: "Aditivo e escopo por disciplina",
+        pilar: "Aditivo é registro do projeto, com valor e parcela, e cada disciplina tem seu escopo.",
+        alternativa: "Costuma não ter: o escopo fica em documento ou no contrato.",
+      },
+      {
+        criterio: "Captura de horas",
+        pilar: "Ainda não captura horas sozinha a partir dos programas de projeto.",
+        alternativa: "Algumas registram o tempo automaticamente, e é um ponto forte.",
+      },
+      {
+        criterio: "Assistente com IA",
+        pilar: "Agente que prepara e consulta, com aprovação antes de gravar, e conector para ChatGPT e Claude.",
+        alternativa: "Costuma ter copiloto de perguntas e respostas sobre os dados.",
+      },
+      {
+        criterio: "Obra",
+        pilar: "Diário, cronograma, cotações e conta da obra, com app de campo.",
+        alternativa: "Varia: muitas têm diário e compras, poucas têm conta da obra.",
+      },
+    ],
+    quandoMigrar: [
+      "Quando a equipe cresceu e o plano subiu de faixa só por causa de mais acessos.",
+      "Quando parte do escritório fica de fora do sistema para não pagar mais uma licença.",
+      "Quando o painel de rentabilidade depende de horas que ninguém lança direito.",
+    ],
+    faq: [
+      {
+        pergunta: "A Pilar cobra por usuário?",
+        resposta: "Não. O plano é por escritório. Veja a página de planos para os valores atuais.",
+      },
+      {
+        pergunta: "A Pilar registra as horas sozinha?",
+        resposta:
+          "Hoje não. Ela não lê o arquivo aberto nos programas de projeto. Algumas plataformas fazem isso, e é um bom motivo para escolhê-las se esse for o seu maior problema.",
+      },
+      {
+        pergunta: "Como a margem é calculada sem as horas?",
+        resposta:
+          "Pelo orçado contra o que foi lançado de custo no projeto, a cada lançamento, com aviso quando o custo passa do orçado.",
       },
     ],
   },
