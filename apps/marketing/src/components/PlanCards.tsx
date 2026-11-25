@@ -4,6 +4,12 @@ import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
 import { APP_URL } from "../config";
 import { LinkDemo } from "./LinkDemo";
+import { linkComOrigem } from "../lib/origem";
+
+// Só no clique: no prerender não há sessionStorage, e o href estático evita divergência na hidratação.
+function anexarOrigem(e: React.MouseEvent<HTMLAnchorElement>) {
+  e.currentTarget.href = linkComOrigem(e.currentTarget.href);
+}
 
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
@@ -48,7 +54,11 @@ export function PlanCards({ contexto }: { contexto: string }) {
 
             <a
               href={`${APP_URL}/checkout?plano=${p.slug}`}
-              onClick={() => trackCta("assinar", `${contexto}_${p.slug}`)}
+              onClick={(e) => {
+                anexarOrigem(e);
+                trackCta("assinar", `${contexto}_${p.slug}`);
+              }}
+              onAuxClick={anexarOrigem}
               aria-label={`Assinar o plano ${p.nome}`}
               className={`flex h-11 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
                 p.destaque ? "bg-brand text-ink hover:bg-brand/85" : "bg-paper-alt text-ink hover:bg-paper-border/60"

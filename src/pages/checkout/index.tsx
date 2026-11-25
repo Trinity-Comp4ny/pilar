@@ -4,6 +4,7 @@ import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { monitoring } from "@/lib/monitoring";
 import { analytics } from "@/lib/analytics";
+import { guardarOrigemCadastro } from "@/lib/origemCadastro";
 import { usePlans, capacidadeDoPlano } from "@/hooks/usePlans";
 import type { BillingCycle } from "@/components/CycleToggle";
 import { CheckoutShell } from "./components/CheckoutShell";
@@ -31,6 +32,11 @@ export default function Checkout() {
   usePageTitle("Checkout");
   const [params] = useSearchParams();
   const planSlug = params.get("plano") ?? "";
+
+  // O link da landing traz canal e UTMs; guarda antes de o formulário ser enviado.
+  useEffect(() => {
+    guardarOrigemCadastro();
+  }, []);
   const cycle: BillingCycle = params.get("ciclo") === "yearly" ? "yearly" : "monthly";
 
   const { data: plans, isLoading: loadingPlans } = usePlans();

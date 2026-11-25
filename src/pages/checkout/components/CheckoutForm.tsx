@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { lookupCEP } from "@/lib/brasilApi";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
+import { origemDoPayload } from "@/lib/origemCadastro";
 import type { BillingType, CheckoutPayload, CreditCardData, CreditCardHolderInfo } from "../hooks/useCheckoutCreate";
 import type { BillingCycle } from "@/components/CycleToggle";
 
@@ -153,6 +154,7 @@ export function CheckoutForm({
       plan_slug: planSlug,
       billing_cycle: cycle,
       billing_type: billingType,
+      ...origemDoPayload(),
     };
 
     if (billingType === "CREDIT_CARD") {

@@ -33,6 +33,9 @@ export interface CheckoutPayload {
   billing_type: BillingType;
   credit_card?: CreditCardData;
   credit_card_holder_info?: CreditCardHolderInfo;
+  /** Canal e UTMs do primeiro toque, vindos da landing. Informativo. */
+  canal?: string;
+  origem?: Record<string, string>;
 }
 
 export interface CheckoutResponse {

@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { cartaoRecusado, checkoutSchema } from "./entrada.ts";
+import { cartaoRecusado, checkoutSchema, origemDoCheckout } from "./entrada.ts";
 
 const base = {
   email: "dono@escritorio.com",
@@ -151,4 +151,22 @@ Deno.test("cartaoRecusado tolera a mensagem sem acento e em caixa diferente; men
 
 Deno.test("Pix Automático não pede cartão", () => {
   assertEquals(checkoutSchema.safeParse({ ...base, billing_type: "PIX_AUTOMATICO" }).success, true);
+});
+
+Deno.test("origemDoCheckout: guarda canal e só as chaves conhecidas", () => {
+  const r = origemDoCheckout({
+    canal: " ChatGPT ",
+    origem: { utm_source: "chatgpt.com", ref: "x.com", intruso: "1", utm_medium: 5 },
+  });
+  assertEquals(r, { canal: "chatgpt", origem: { utm_source: "chatgpt.com", ref: "x.com" } });
+});
+
+Deno.test("origemDoCheckout: sem origem ou canal inválido vira nulo, nunca erro", () => {
+  assertEquals(origemDoCheckout({}), { canal: null, origem: null });
+  assertEquals(origemDoCheckout({ canal: "tem espaço; drop", origem: {} }), { canal: null, origem: null });
+});
+
+Deno.test("checkoutSchema: aceita payload com canal e origem", () => {
+  const r = checkoutSchema.safeParse({ ...base, canal: "google", origem: { utm_source: "google" } });
+  assertEquals(r.success, true);
 });

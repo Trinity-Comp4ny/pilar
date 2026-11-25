@@ -127,3 +127,19 @@ export function registrarInteresseDemo(local: string): void {
     // Registro de origem nunca atrapalha o clique.
   }
 }
+
+/**
+ * Link para o app com o canal e os UTMs do primeiro toque, para a origem
+ * chegar ao checkout (e à empresa) em vez de se perder na troca de domínio.
+ */
+export function linkComOrigem(url: string): string {
+  try {
+    const origem = lerOrigem();
+    const destino = new URL(url);
+    for (const [chave, valor] of Object.entries(origem)) destino.searchParams.set(chave, valor);
+    destino.searchParams.set("canal", classificarCanal(origem));
+    return destino.toString();
+  } catch {
+    return url;
+  }
+}
