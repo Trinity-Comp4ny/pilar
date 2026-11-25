@@ -23,7 +23,7 @@ import {
   TIPO_PORTAL_LABEL,
   iconeCategoria,
   rotuloCategoria,
-  toneSeveridade,
+  toneNotificacao,
   resolveLink,
   formatTimeAgo,
   type CategoriaFiltro,
@@ -253,7 +253,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                       )}
                       onClick={() => abrir(n)}
                     >
-                      <div className={cn("mt-0.5 rounded-full p-1.5", toneSeveridade(n.severidade))}>
+                      <div className={cn("mt-0.5 rounded-full p-1.5", toneNotificacao(n))}>
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">

@@ -136,6 +136,19 @@ export function toneSeveridade(severidade: string): string {
   return SEVERIDADE_TONE[severidade] ?? SEVERIDADE_TONE.medium;
 }
 
+/**
+ * Cor do marcador de uma notificação. No financeiro a cor diz o que é: receita em
+ * verde, despesa em vermelho (vale para baixa, vencimento e atraso). O resto segue a
+ * severidade.
+ */
+export function toneNotificacao(n: { categoria: string; severidade: string; referencia_tipo?: string | null }): string {
+  if (n.categoria === "financeiro") {
+    if (n.referencia_tipo === "receita") return "bg-success-soft text-success-strong";
+    if (n.referencia_tipo === "despesa") return "bg-danger-soft text-chart-danger";
+  }
+  return toneSeveridade(n.severidade);
+}
+
 /** Rota interna para abrir o item referenciado. Usa `link`; sem ele, não navega. */
 export function resolveLink(n: { link?: string | null }): string | null {
   const link = n.link?.trim();
