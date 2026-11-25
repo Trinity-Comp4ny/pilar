@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   tour:
-    name: Tour (roteiros)
+    name: Tour (medidas)
     runs-on: ubuntu-latest
     timeout-minutes: 80
     strategy:
@@ -62,13 +62,13 @@ jobs:
           bash scripts/seed-demo.sh
           REF="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml)"
           docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d postgres -q < e2e/tour/seed-tour.sql || true
-      - name: Tour (roteiros)
+      - name: Tour (medidas)
         continue-on-error: true
-        run: bash scripts/e2e-local.sh --config=e2e/tour/playwright.tour.config.ts e2e/tour/roteiros.tour.ts
+        run: bash scripts/e2e-local.sh --config=e2e/tour/playwright.tour.config.ts e2e/tour/medidas.tour.ts
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
-          name: tour-prints-roteiros
+          name: tour-prints-medidas
           path: tour-prints/
           retention-days: 3
           if-no-files-found: warn
