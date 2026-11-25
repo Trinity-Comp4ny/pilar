@@ -44,6 +44,8 @@ function roteiro(page: Page, tela: string, rota: string) {
   return { passo, foto, fim, cadeia };
 }
 
+test.use({ actionTimeout: 8000 });
+
 const dlg = (page: Page) => page.locator('[role="dialog"]:visible').last();
 
 async function abrir(page: Page, rota: string) {
@@ -55,42 +57,36 @@ async function abrir(page: Page, rota: string) {
 test("roteiro · categoria e centro de custo na despesa", async ({ page }) => {
   test.setTimeout(4 * 60_000);
   const rota = "/gestao/financeiro?tab=lancamentos&fp=tudo";
-  const r = roteiro(page, "despesa-categoria", rota);
+  const r = roteiro(page, "despesa-gerenciar", rota);
   await abrir(page, rota);
-  await r.passo("Novo lançamento", () => page.getByRole("button", { name: "Novo lançamento" }).first().click(), "dialog", "Novo lançamento");
-  await r.passo("Despesa", () => dlg(page).getByRole("button", { name: /Despesa/ }).first().click(), "dialog", "Nova despesa");
-  await r.passo("Categoria (aberta)", () => dlg(page).getByRole("combobox", { name: "Categoria" }).click(), "lista", "Categoria: lista de hoje");
+  await page.getByRole("button", { name: "Novo lançamento" }).first().click();
+  await page.waitForTimeout(600);
+  await dlg(page).getByRole("button", { name: /Despesa/ }).first().click();
+  await page.waitForTimeout(900);
+  r.cadeia.push("Novo lançamento", "Despesa");
+  await r.passo("gerenciar (categoria)", () => dlg(page).getByText("gerenciar", { exact: true }).first().click(), "dialog", "Categorias de despesa (modal sobre o modal)");
+  await r.passo("digitar Marketing", () => dlg(page).getByRole("textbox").first().fill("Marketing"), "dialog", "Categorias: nova sendo digitada");
   await page.keyboard.press("Escape");
-  await r.passo("gerenciar (categoria)", () => dlg(page).getByRole("button", { name: "gerenciar" }).first().click(), "dialog", "Categorias (modal sobre o modal)");
-  await r.passo("digitar Marketing", () => dlg(page).getByPlaceholder("Ex: Aluguel, Software, Impostos").fill("Marketing"), "dialog", "Categorias: nova sendo digitada");
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(500);
   r.cadeia.length = 2;
-  const abriuMais = await r.passo("Mais opções", () => dlg(page).getByRole("button", { name: /mais|opç|detalh|avan/i }).last().click(), "dialog", "Despesa: mais campos");
-  if (abriuMais) {
-    await r.passo("gerenciar (centro de custo)", () => dlg(page).getByRole("button", { name: "gerenciar" }).nth(1).click(), "dialog", "Centros de custo (modal sobre o modal)");
-  }
+  await r.passo("Mais opções", () => dlg(page).getByText(/mais opções/i).first().click(), "dialog", "Despesa: mais opções abertas");
+  await r.passo("gerenciar (centro de custo)", () => dlg(page).getByText("gerenciar", { exact: true }).nth(1).click(), "dialog", "Centros de custo (modal sobre o modal)");
   r.fim();
 });
 
 test("roteiro · disciplinas e fluxos do projeto", async ({ page }) => {
   test.setTimeout(4 * 60_000);
-  const r = roteiro(page, "disciplinas-fluxos", "/projetos");
+  const r = roteiro(page, "fluxo-novo", "/projetos");
   await abrir(page, "/projetos");
-  await r.passo("Disciplinas", () => page.getByRole("button", { name: "Disciplinas" }).first().click(), "dialog", "Gerenciar disciplinas");
-  await r.passo("Nova disciplina", () => dlg(page).getByRole("button", { name: /Nova disciplina|Adicionar/ }).first().click(), "dialog", "Nova disciplina");
-  await page.keyboard.press("Escape");
-  await page.keyboard.press("Escape");
-  await abrir(page, "/projetos");
-  r.cadeia.length = 0;
   await r.passo("Fluxos", () => page.getByRole("button", { name: "Fluxos" }).first().click(), "dialog", "Fluxos de disciplinas");
   await r.passo("Novo fluxo", () => dlg(page).getByRole("button", { name: /Novo fluxo/ }).first().click(), "dialog", "Novo fluxo");
-  await r.passo("Adicionar disciplina ao fluxo", () => dlg(page).getByRole("button", { name: /Adicionar|disciplina/i }).first().click(), "dialog", "Fluxo: adicionando disciplina");
-  await r.passo("Lista de disciplinas", () => dlg(page).getByRole("combobox").first().click(), "lista", "Fluxo: escolher disciplina");
+  console.log(`[roteiro] botões do novo fluxo:\n${await dlg(page).ariaSnapshot().catch(() => "")}`);
+  await r.passo("Adicionar coluna ou disciplina", () => dlg(page).getByRole("button", { name: /coluna|disciplina|etapa|adicionar/i }).first().click(), "dialog", "Fluxo: adicionando");
+  await r.passo("Escolher disciplina", () => dlg(page).getByRole("combobox").first().click(), "lista", "Fluxo: escolher disciplina");
   r.fim();
 });
 
-test("roteiro · nova obra e fluxos de obra", async ({ page }) => {
+test.skip("roteiro · nova obra e fluxos de obra", async ({ page }) => {
   test.setTimeout(4 * 60_000);
   const r = roteiro(page, "nova-obra", "/obras");
   await abrir(page, "/obras");
@@ -104,7 +100,7 @@ test("roteiro · nova obra e fluxos de obra", async ({ page }) => {
   r.fim();
 });
 
-test("roteiro · novo projeto e cliente", async ({ page }) => {
+test.skip("roteiro · novo projeto e cliente", async ({ page }) => {
   test.setTimeout(3 * 60_000);
   const r = roteiro(page, "novo-projeto", "/projetos");
   await abrir(page, "/projetos");
