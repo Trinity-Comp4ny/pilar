@@ -119,3 +119,21 @@ describe("rotuloCategoria do portal", () => {
     expect(rotuloCategoria("sistema")).toBe("Portal");
   });
 });
+
+describe("toneNotificacao", () => {
+  it("financeiro: receita verde e despesa vermelha, independente da severidade", async () => {
+    const { toneNotificacao } = await import("./notificacoes");
+    expect(toneNotificacao({ categoria: "financeiro", severidade: "low", referencia_tipo: "receita" })).toContain(
+      "success"
+    );
+    expect(toneNotificacao({ categoria: "financeiro", severidade: "low", referencia_tipo: "despesa" })).toContain(
+      "danger"
+    );
+  });
+  it("fora do financeiro, cai na severidade", async () => {
+    const { toneNotificacao, SEVERIDADE_TONE } = await import("./notificacoes");
+    expect(toneNotificacao({ categoria: "tarefa", severidade: "high", referencia_tipo: "receita" })).toBe(
+      SEVERIDADE_TONE.high
+    );
+  });
+});
