@@ -1,0 +1,76 @@
+# Tour de telas para a prototipação (descartável). Roda só no push desta branch, sobe o
+# Supabase local com o seed, passa por todas as rotas e modais e guarda os prints como
+# artifact. Não faz parte do CI e a branch é apagada depois da coleta.
+name: Tour de telas (prints)
+
+on:
+  push:
+    branches: [chore/ux-tour-prints]
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_CLI_VERSION: "2.109.1"
+
+concurrency:
+  group: tour-prints
+  cancel-in-progress: true
+
+jobs:
+  tour:
+    name: Tour (${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Preparar o stack local para CI
+        run: bash scripts/ci-configurar-supabase.sh
+      - name: Subir o stack local em segundo plano
+        run: |
+          ( rc=0
+            supabase start -x studio > "$RUNNER_TEMP/supabase-start.log" 2>&1 || rc=$?
+            echo "$rc" > "$RUNNER_TEMP/supabase-start.rc" ) > /dev/null 2>&1 &
+      - uses: ./.github/actions/setup-deps
+      - uses: ./.github/actions/setup-playwright
+      - name: Esperar o stack local
+        run: scripts/ci-wait-supabase.sh
+      - name: Seed do tour (conta do Campo)
+        run: |
+          bash scripts/seed-local.sh
+          bash scripts/seed-demo.sh
+          REF="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml)"
+          docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d postgres -q < e2e/tour/seed-tour.sql || true
+      - name: Tour (shard ${{ matrix.shard }}/4)
+        continue-on-error: true
+        run: bash scripts/e2e-local.sh --config=e2e/tour/playwright.tour.config.ts
+        env:
+          E2E_SHARD: ${{ matrix.shard }}/4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: tour-prints-${{ matrix.shard }}
+          path: tour-prints/
+          retention-days: 3
+          if-no-files-found: warn
