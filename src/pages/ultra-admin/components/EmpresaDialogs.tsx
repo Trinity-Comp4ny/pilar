@@ -110,7 +110,12 @@ export function CriarEmpresaDialog({
   onOpenChange,
   isPending,
   onConfirm,
-}: DialogBase & { onConfirm: (input: NovaEmpresa) => void }) {
+  demosRecentes = [],
+}: DialogBase & {
+  onConfirm: (input: NovaEmpresa) => void;
+  /** Cliques de demonstração dos últimos dias por canal: pista de onde o dono veio. */
+  demosRecentes?: Array<{ canal: string; rotulo: string; total: number }>;
+}) {
   const [form, setForm] = useState<NovaEmpresa>(NOVA_VAZIA);
   const [perfilAberto, setPerfilAberto] = useState(true);
   useEffect(() => {
@@ -171,6 +176,20 @@ export function CriarEmpresaDialog({
         </div>
       </div>
 
+      <div className="space-y-1.5">
+        <Label>Origem</Label>
+        <EscolhaChips ariaLabel="Origem" opcoes={CANAIS} value={form.origem} onChange={(v) => set("origem", v)} />
+        {demosRecentes.length > 0 && (
+          <p className="text-xs text-ink-muted">
+            Pedidos de demonstração recentes:{" "}
+            {demosRecentes
+              .slice(0, 4)
+              .map((d) => `${d.rotulo} ${d.total}`)
+              .join(" · ")}
+          </p>
+        )}
+      </div>
+
       <Collapsible open={perfilAberto} onOpenChange={setPerfilAberto}>
         <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md py-1 text-sm font-medium text-ink">
           Perfil do escritório (da demonstração)
@@ -220,10 +239,6 @@ export function CriarEmpresaDialog({
           <div className="space-y-1.5">
             <Label>Porte</Label>
             <EscolhaChips ariaLabel="Porte" opcoes={PORTES} value={form.porte} onChange={(v) => set("porte", v)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Origem</Label>
-            <EscolhaChips ariaLabel="Origem" opcoes={CANAIS} value={form.origem} onChange={(v) => set("origem", v)} />
           </div>
         </CollapsibleContent>
       </Collapsible>

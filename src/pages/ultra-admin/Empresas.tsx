@@ -14,6 +14,7 @@ import { useAcaoEmpresa, useEmpresas } from "./hooks";
 import { SITUACOES, prazoTeste, quandoRelativo, situacaoEmpresa, type Situacao } from "./lib";
 import { FiltroChips, type OpcaoChip } from "./components/FiltroChips";
 import { CriarEmpresaDialog, type NovaEmpresa } from "./components/EmpresaDialogs";
+import { useOrigemDemos } from "./components/demosPorCanal";
 
 type Linha = EmpresaRow & { situacao: Situacao };
 type Filtro = "ativas" | Situacao;
@@ -24,6 +25,7 @@ export default function Empresas() {
   const [params, setParams] = useSearchParams();
   const [busca, setBusca] = useState("");
   const [criarAberto, setCriarAberto] = useState(false);
+  const demosRecentes = useOrigemDemos(14, criarAberto);
   const query = useEmpresas();
 
   const pedido = params.get("situacao");
@@ -157,6 +159,7 @@ export default function Empresas() {
       />
 
       <CriarEmpresaDialog
+        demosRecentes={demosRecentes.data}
         open={criarAberto}
         onOpenChange={setCriarAberto}
         isPending={criar.isPending}

@@ -45,6 +45,31 @@ describe("CriarEmpresaDialog", () => {
     expect(screen.getByRole("button", { name: "Criar e convidar dono" })).toBeDisabled();
   });
 
+  it("mostra a dica dos pedidos de demonstração recentes ao lado da origem", () => {
+    render(
+      <CriarEmpresaDialog
+        {...base}
+        onConfirm={vi.fn()}
+        demosRecentes={[
+          { canal: "chatgpt", rotulo: "ChatGPT", total: 2 },
+          { canal: "meta_ads", rotulo: "Meta Ads", total: 1 },
+        ]}
+      />
+    );
+    expect(screen.getByText(/ChatGPT 2 · Meta Ads 1/)).toBeInTheDocument();
+  });
+
+  it("sem cliques recentes não mostra dica, e a origem escolhida vai no envio", () => {
+    const onConfirm = vi.fn();
+    render(<CriarEmpresaDialog {...base} onConfirm={onConfirm} />);
+    expect(screen.queryByText(/Pedidos de demonstração recentes/)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Nome da empresa"), { target: { value: "Alfa" } });
+    fireEvent.change(screen.getByLabelText("E-mail do dono"), { target: { value: "a@alfa.com.br" } });
+    fireEvent.click(screen.getByRole("radio", { name: /Google/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Criar e convidar dono" }));
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ origem: "google" }));
+  });
+
   it("fechar e reabrir limpa o formulário", () => {
     const { rerender } = render(<CriarEmpresaDialog {...base} onConfirm={vi.fn()} />);
     fireEvent.change(screen.getByLabelText("Nome da empresa"), { target: { value: "Alfa" } });
