@@ -27,6 +27,9 @@
 - [Pilar vs Notion](https://www.pilarsoft.com.br/vs/notion): para quem montou o escritório numa ferramenta genérica de documentos
 - [Pilar vs ERP de construtora](https://www.pilarsoft.com.br/vs/erp-construtora): por que escritório de projeto precisa de outro tipo de sistema
 - [Pilar vs Omie e Conta Azul](https://www.pilarsoft.com.br/vs/omie-conta-azul): sistema financeiro generalista ou sistema feito para escritório de projeto; a Pilar não emite nota fiscal nem faz contabilidade
+- [Pilar vs software só de arquitetura](https://www.pilarsoft.com.br/vs/software-de-arquitetura): sistema só de arquitetura ou feito para engenharia multidisciplinar, com disciplinas, aditivo e obra
+- [Pilar vs sistema simples e barato](https://www.pilarsoft.com.br/vs/sistema-simples): sistema simples de preço baixo ou sistema que mostra a margem de cada projeto
+- [Pilar vs plataforma que cobra por usuário](https://www.pilarsoft.com.br/vs/plataforma-por-usuario): plano por faixa de usuários ou preço por escritório, sem limite de acessos
 
 ## Ferramentas
 
