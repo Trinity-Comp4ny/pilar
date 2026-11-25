@@ -143,7 +143,7 @@ export function toneSeveridade(severidade: string): string {
  */
 export function toneNotificacao(n: { categoria: string; severidade: string; referencia_tipo?: string | null }): string {
   if (n.categoria === "financeiro") {
-    if (n.referencia_tipo === "receita") return "bg-success-soft text-success-strong";
+    if (n.referencia_tipo === "receita") return "bg-success/20 text-success-strong";
     if (n.referencia_tipo === "despesa") return "bg-danger-soft text-chart-danger";
   }
   return toneSeveridade(n.severidade);
