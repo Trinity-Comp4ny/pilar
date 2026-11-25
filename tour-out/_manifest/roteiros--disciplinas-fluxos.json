@@ -1,0 +1,52 @@
+[
+ {
+  "arquivo": "roteiros/disciplinas-fluxos/001-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "disciplinas-fluxos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Disciplinas"
+  ],
+  "titulo": "Gerenciar disciplinas",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "roteiros/disciplinas-fluxos/002-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "disciplinas-fluxos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Disciplinas",
+   "Nova disciplina"
+  ],
+  "titulo": "Nova disciplina",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "roteiros/disciplinas-fluxos/003-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "disciplinas-fluxos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Fluxos"
+  ],
+  "titulo": "Fluxos de disciplinas",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "roteiros/disciplinas-fluxos/004-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "disciplinas-fluxos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Fluxos",
+   "Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/projetos"
+ }
+]

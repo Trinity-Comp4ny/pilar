@@ -1,0 +1,52 @@
+[
+ {
+  "arquivo": "roteiros/nova-obra/001-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "nova-obra",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "Nova obra"
+  ],
+  "titulo": "Como quer começar a obra?",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "roteiros/nova-obra/002-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "nova-obra",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "Nova obra",
+   "Começar em branco"
+  ],
+  "titulo": "Nova obra (formulário)",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "roteiros/nova-obra/003-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "nova-obra",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "Fluxos"
+  ],
+  "titulo": "Fluxos de obra",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "roteiros/nova-obra/004-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "nova-obra",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "Fluxos",
+   "Novo fluxo"
+  ],
+  "titulo": "Novo fluxo de obra",
+  "url": "/obras"
+ }
+]

@@ -1,0 +1,27 @@
+[
+ {
+  "arquivo": "roteiros/novo-projeto/001-dialog.jpg",
+  "modulo": "roteiros",
+  "tela": "novo-projeto",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "Novo projeto"
+  ],
+  "titulo": "Novo projeto",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "roteiros/novo-projeto/002-lista.jpg",
+  "modulo": "roteiros",
+  "tela": "novo-projeto",
+  "rota": "/projetos",
+  "efeito": "lista",
+  "cadeia": [
+   "Novo projeto",
+   "Cliente"
+  ],
+  "titulo": "Novo projeto: escolher cliente",
+  "url": "/projetos"
+ }
+]
