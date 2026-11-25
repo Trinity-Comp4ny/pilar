@@ -4,7 +4,7 @@ import { Tour, type Passo } from "./explorar";
 // Tour do app logado (admin do seed). Uma rota por teste, para o shard dividir.
 const ID = "00000000-0000-0000-0000-000000000";
 
-type Tela = { modulo: string; tela: string; rota: string; detalhes?: string[]; orcamentoMs?: number };
+type Tela = { modulo: string; tela: string; rota: string; detalhes?: string[]; orcamentoMs?: number; dialogoBase?: boolean };
 
 const TELAS: Tela[] = [
   // Geral
@@ -60,10 +60,10 @@ const TELAS: Tela[] = [
   // Empresa e conta
   { modulo: "empresa", tela: "equipe", rota: "/gestao/equipe", detalhes: ["Juliana Costa"] },
   { modulo: "empresa", tela: "admin", rota: "/admin" },
-  { modulo: "empresa", tela: "company", rota: "/company", orcamentoMs: 150_000 },
-  { modulo: "empresa", tela: "billing", rota: "/billing", orcamentoMs: 150_000 },
-  { modulo: "empresa", tela: "profile", rota: "/profile", orcamentoMs: 120_000 },
-  { modulo: "empresa", tela: "seguranca", rota: "/seguranca", orcamentoMs: 120_000 },
+  { modulo: "empresa", tela: "config-empresa", rota: "/company", orcamentoMs: 150_000, dialogoBase: true },
+  { modulo: "empresa", tela: "config-pagamento", rota: "/billing", orcamentoMs: 150_000, dialogoBase: true },
+  { modulo: "empresa", tela: "config-conta", rota: "/profile", orcamentoMs: 120_000, dialogoBase: true },
+  { modulo: "empresa", tela: "config-seguranca", rota: "/seguranca", orcamentoMs: 120_000, dialogoBase: true },
   { modulo: "empresa", tela: "comprar-tokens", rota: "/comprar-tokens", orcamentoMs: 90_000 },
   { modulo: "empresa", tela: "checkout", rota: "/checkout", orcamentoMs: 90_000 },
 
@@ -78,7 +78,7 @@ for (const t of TELAS) {
   test(`${t.modulo} · ${t.tela}`, async ({ page }) => {
     const orcamento = t.orcamentoMs ?? 4 * 60_000;
     test.setTimeout(orcamento + 3 * 60_000);
-    await new Tour(page, t.modulo, t.tela, t.rota, { detalhes: t.detalhes, orcamentoMs: orcamento }).rodar();
+    await new Tour(page, t.modulo, t.tela, t.rota, { detalhes: t.detalhes, orcamentoMs: orcamento, dialogoBase: t.dialogoBase }).rodar();
   });
 }
 

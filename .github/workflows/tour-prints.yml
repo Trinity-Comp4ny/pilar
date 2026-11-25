@@ -74,3 +74,42 @@ jobs:
           path: tour-prints/
           retention-days: 3
           if-no-files-found: warn
+
+  # O artifact do Actions não abre de fora do GitHub nesta sessão; os prints (JPEG) vão para
+  # a própria branch descartável, como o docs/design/antes-depois faz com as imagens de PR.
+  publicar:
+    name: Guardar os prints na branch
+    needs: tour
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: chore/ux-tour-prints
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: tour-prints-*
+          path: tour-out
+          merge-multiple: true
+      - name: Commitar os prints
+        run: |
+          set -euo pipefail
+          find tour-out -type f ! -name '*.jpg' ! -name '*.json' -delete
+          du -sh tour-out
+          find tour-out -name '*.jpg' | wc -l
+          git add -f tour-out
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "chore(e2e): store screen tour prints" -m "Run ${GITHUB_RUN_ID}."
+          git push origin HEAD:chore/ux-tour-prints

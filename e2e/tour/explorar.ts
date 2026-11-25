@@ -34,7 +34,7 @@ type Registro = {
 
 // Nunca, em nível nenhum: sessão, troca de empresa, operações de plataforma e o que só baixa ou imprime.
 const NUNCA =
-  /^sair$|sair da conta|encerrar sess|desconectar|log ?out|impersona|entrar como|acessar como|acessar (a |esta )?empresa|ver como|trocar (de )?empresa|alternar empresa|pular para|imprimir|baixar|download|exportar|copiar|^\d+$|^(anterior|próxim[oa]|voltar)$|tema|modo escuro|modo claro|^(fechar|close|dispensar|entendi|ok)$|cancelar assinatura|(excluir|apagar|encerrar) (minha )?conta|bloquear|desbloquear|suspender|banir|resetar|zerar|forçar|disparar|executar|rodar|reprocessar|limpar cache|migrar|^ativar|^desativar|habilitar|desabilitar|promover|rebaixar|conceder|revogar/i;
+  /^sair$|sair da conta|encerrar sess|desconectar|log ?out|impersona|entrar como|acessar como|acessar (a |esta )?empresa|ver como|trocar (de )?empresa|alternar empresa|pular para|imprimir|baixar|download|exportar|copiar|^\d+$|^(anterior|próxim[oa]|voltar)$|\btema\b|modo escuro|modo claro|recolher|expandir menu|^(fechar|close|dispensar|entendi|ok)$|cancelar assinatura|(excluir|apagar|encerrar) (minha )?conta|bloquear|desbloquear|suspender|banir|resetar|zerar|forçar|disparar|executar|rodar|reprocessar|limpar cache|migrar|^ativar|^desativar|habilitar|desabilitar|promover|rebaixar|conceder|revogar/i;
 
 // Na página, pula o que muda dado direto, sem abrir nada.
 const MUTA_NA_PAGINA =
@@ -116,6 +116,8 @@ type Opcoes = {
   escopo?: "main" | "chrome";
   maxProf?: number;
   extras?: Passo[];
+  /** A tela é um modal que abre sozinho (Configurações): explora dentro dele. */
+  dialogoBase?: boolean;
 };
 
 export class Tour {
@@ -128,6 +130,7 @@ export class Tour {
   private forcar = false;
   private seletorMain = "#main-content";
   private seletorChrome = '[data-sidebar="sidebar"]';
+  private avisos = 0;
 
   constructor(
     private page: Page,
@@ -270,14 +273,34 @@ export class Tour {
     }
     this.forcar = false;
     await this.abrirBase();
-    await this.fecharAutomaticos();
+    if (!this.opts.dialogoBase) await this.fecharAutomaticos();
     for (const passo of cadeia) {
-      if (!(await this.executar(passo))) return false;
+      if (!(await this.executar(passo))) {
+        this.avisar(`não achou ${rotulo(passo)} ao refazer ${cadeia.map(rotulo).join(" › ")}`);
+        return false;
+      }
       await this.depoisDoClique();
     }
-    const ok = this.igual(await this.estado(), esp);
+    const e = await this.estado();
+    let ok = this.igual(e, esp);
+    if (!ok && cadeia.length === 0) {
+      // A tela base mudou (dado novo, aviso que some): segue com o estado de agora.
+      this.avisar(`base mudou ${this.resumo(esp)} → ${this.resumo(e)}`);
+      this.esperados.set(k, e);
+      ok = true;
+    } else if (!ok) {
+      this.avisar(`não voltou para ${cadeia.map(rotulo).join(" › ")}: ${this.resumo(esp)} → ${this.resumo(e)}`);
+    }
     this.atual = ok ? k : "";
     return ok;
+  }
+
+  private resumo(e: Estado) {
+    return `${e.url.replace(/^https?:\/\/[^/]+/, "")} d${e.dialogs} m${e.menus} l${e.listas}`;
+  }
+
+  private avisar(msg: string) {
+    if (this.avisos++ < 8) console.log(`[tour] ${this.modulo}/${this.tela}: ${msg}`);
   }
 
   private classificar(a: Estado, d: Estado, passo: Passo, ta: string, td: string, abaLike: boolean): Efeito {
@@ -331,7 +354,7 @@ export class Tour {
     const k = `${efeito}:${titulo}`;
     if (this.vistos.has(k)) return false;
     this.vistos.add(k);
-    const arquivo = `${String(++this.seq).padStart(3, "0")}-${efeito}-${slug(nomeCurto)}.png`;
+    const arquivo = `${String(++this.seq).padStart(3, "0")}-${efeito}-${slug(nomeCurto)}.jpg`;
     const rel = path.join(this.modulo, this.tela, arquivo);
     const abs = path.join(SAIDA, rel);
     fs.mkdirSync(path.dirname(abs), { recursive: true });
@@ -339,7 +362,7 @@ export class Tour {
     await p.waitForTimeout(250);
     const e = await this.estado();
     const inteira = ["tela", "nav", "aba", "estado"].includes(efeito) && e.dialogs + e.menus + e.listas === 0;
-    await p.screenshot({ path: abs, fullPage: inteira, animations: "disabled", timeout: 15_000 }).catch(() => undefined);
+    await p.screenshot({ path: abs, type: "jpeg", quality: 72, fullPage: inteira, animations: "disabled", timeout: 15_000 }).catch(() => undefined);
     this.registros.push({
       arquivo: rel,
       modulo: this.modulo,
@@ -447,7 +470,7 @@ export class Tour {
   }
 
   async rodar() {
-    const escopo = this.opts.escopo ?? "main";
+    const escopo: Escopo = this.opts.dialogoBase ? "dialog" : (this.opts.escopo ?? "main");
     try {
       const autos = await this.abrirBase();
       if (!(await this.page.locator(this.seletorMain).count())) {
@@ -456,8 +479,10 @@ export class Tour {
       if (!(await this.page.locator(this.seletorChrome).count())) {
         this.seletorChrome = (await this.page.locator("aside").count()) ? "aside" : "nav";
       }
-      if (autos > 0) await this.capturar("auto", [], "abriu-sozinho");
-      await this.fecharAutomaticos();
+      if (!this.opts.dialogoBase) {
+        if (autos > 0) await this.capturar("auto", [], "abriu-sozinho");
+        await this.fecharAutomaticos();
+      }
       const base = await this.estado();
       this.esperados.set(this.chave([]), base);
       this.atual = this.chave([]);
