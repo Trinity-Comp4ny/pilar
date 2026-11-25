@@ -1,0 +1,72 @@
+[
+ {
+  "arquivo": "geral/barra-lateral/001-tela-tela.jpg",
+  "modulo": "geral",
+  "tela": "barra-lateral",
+  "rota": "/inicio",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "geral/barra-lateral/002-dialog-control-k.jpg",
+  "modulo": "geral",
+  "tela": "barra-lateral",
+  "rota": "/inicio",
+  "efeito": "dialog",
+  "cadeia": [
+   "tecla: Control+k"
+  ],
+  "titulo": "Control+k",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "geral/barra-lateral/003-dialog-shift.jpg",
+  "modulo": "geral",
+  "tela": "barra-lateral",
+  "rota": "/inicio",
+  "efeito": "dialog",
+  "cadeia": [
+   "tecla: Shift+?"
+  ],
+  "titulo": "Atalhos de teclado",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "geral/barra-lateral/004-nav-gestao.jpg",
+  "modulo": "geral",
+  "tela": "barra-lateral",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Gestão"
+  ],
+  "titulo": "/gestao/tarefas",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "geral/barra-lateral/005-nav-projetos.jpg",
+  "modulo": "geral",
+  "tela": "barra-lateral",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Projetos"
+  ],
+  "titulo": "/projetos",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "geral/barra-lateral/006-nav-obras.jpg",
+  "modulo": "geral",
+  "tela": "barra-lateral",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Obras"
+  ],
+  "titulo": "/obras",
+  "url": "/obras"
+ }
+]

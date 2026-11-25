@@ -1,0 +1,122 @@
+[
+ {
+  "arquivo": "obras/fornecedores/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/002-nav-ferro-cia-materiais.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "nav",
+  "cadeia": [
+   "texto: Ferro & Cia Materiais"
+  ],
+  "titulo": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedores/003-nav-linha.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "nav",
+  "cadeia": [
+   "primeira linha da tabela"
+  ],
+  "titulo": "/gestao/fornecedores/00000000-0000-0000-0000-000000000641",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000641"
+ },
+ {
+  "arquivo": "obras/fornecedores/004-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/005-dialog-reconciliar.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Reconciliar"
+  ],
+  "titulo": "Reconciliar cotações",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/006-dialog-novo-fornecedor.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo fornecedor"
+  ],
+  "titulo": "Novo fornecedor",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/007-dialog-categorias.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Categorias"
+  ],
+  "titulo": "Categorias",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/008-menu-mais-acoes-de-autodesk.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais ações de Autodesk"
+  ],
+  "titulo": "Editar | Excluir",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/009-dialog-editar.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Autodesk",
+   "menuitem: Editar"
+  ],
+  "titulo": "Editar fornecedor",
+  "url": "/gestao/fornecedores"
+ },
+ {
+  "arquivo": "obras/fornecedores/010-dialog-excluir.jpg",
+  "modulo": "obras",
+  "tela": "fornecedores",
+  "rota": "/gestao/fornecedores",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Autodesk",
+   "menuitem: Excluir"
+  ],
+  "titulo": "Excluir fornecedor",
+  "url": "/gestao/fornecedores"
+ }
+]

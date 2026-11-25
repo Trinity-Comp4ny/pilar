@@ -1,0 +1,172 @@
+[
+ {
+  "arquivo": "comercial/clientes/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/002-nav-construtora-horizonte.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "nav",
+  "cadeia": [
+   "texto: Construtora Horizonte"
+  ],
+  "titulo": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/clientes/003-nav-linha.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "nav",
+  "cadeia": [
+   "primeira linha da tabela"
+  ],
+  "titulo": "/gestao/clientes/00000000-0000-0000-0000-000000000104",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000104"
+ },
+ {
+  "arquivo": "comercial/clientes/004-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/005-dialog-novo-cliente.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo cliente"
+  ],
+  "titulo": "Novo cliente",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/006-lista-origem.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo cliente",
+   "combobox: Origem"
+  ],
+  "titulo": "Indicação | Instagram | LinkedIn | Site | Google | WhatsApp | Evento | Outro",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/007-dialog-tipo.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Tipo"
+  ],
+  "titulo": "Tipo",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/008-dialog-origem.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Origem"
+  ],
+  "titulo": "Origem",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/009-dialog-projeto.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Projeto"
+  ],
+  "titulo": "Projeto",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/010-dialog-portal.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Portal"
+  ],
+  "titulo": "Portal",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/011-menu-mais-acoes-de-condominio-parque-das-agua.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais ações de Condomínio Parque das Águas"
+  ],
+  "titulo": "Enviar mensagem | Editar | Excluir",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/012-dialog-enviar-mensagem.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Condomínio Parque das Águas",
+   "menuitem: Enviar mensagem"
+  ],
+  "titulo": "Enviar mensagem",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/013-dialog-editar.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Condomínio Parque das Águas",
+   "menuitem: Editar"
+  ],
+  "titulo": "Editar cliente",
+  "url": "/gestao/clientes"
+ },
+ {
+  "arquivo": "comercial/clientes/014-dialog-excluir.jpg",
+  "modulo": "comercial",
+  "tela": "clientes",
+  "rota": "/gestao/clientes",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Condomínio Parque das Águas",
+   "menuitem: Excluir"
+  ],
+  "titulo": "Excluir cliente",
+  "url": "/gestao/clientes"
+ }
+]

@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "plataforma/ajuda/001-tela-tela.jpg",
+  "modulo": "plataforma",
+  "tela": "ajuda",
+  "rota": "/ultra-admin/ajuda",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/mfa/setup"
+ },
+ {
+  "arquivo": "plataforma/ajuda/002-estado-ja-tenho-o-app-instalado.jpg",
+  "modulo": "plataforma",
+  "tela": "ajuda",
+  "rota": "/ultra-admin/ajuda",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Já tenho o app instalado →"
+  ],
+  "titulo": "Já tenho o app instalado →",
+  "url": "/mfa/setup"
+ }
+]

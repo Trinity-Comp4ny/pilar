@@ -1,0 +1,156 @@
+[
+ {
+  "arquivo": "comercial/agenda/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/003-estado-semana.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Semana"
+  ],
+  "titulo": "Semana",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/004-dialog-criar-em-1-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 1 de novembro"
+  ],
+  "titulo": "Criar em 1 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/005-dialog-criar-em-2-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 2 de novembro"
+  ],
+  "titulo": "Criar em 2 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/006-dialog-criar-em-3-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 3 de novembro"
+  ],
+  "titulo": "Criar em 3 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/007-dialog-criar-em-4-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 4 de novembro"
+  ],
+  "titulo": "Criar em 4 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/008-dialog-criar-em-5-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 5 de novembro"
+  ],
+  "titulo": "Criar em 5 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/009-dialog-criar-em-6-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 6 de novembro"
+  ],
+  "titulo": "Criar em 6 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/010-dialog-criar-em-7-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 7 de novembro"
+  ],
+  "titulo": "Criar em 7 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/011-dialog-criar-em-8-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 8 de novembro"
+  ],
+  "titulo": "Criar em 8 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/012-dialog-criar-em-9-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 9 de novembro"
+  ],
+  "titulo": "Criar em 9 de novembro",
+  "url": "/gestao/agenda"
+ },
+ {
+  "arquivo": "comercial/agenda/013-dialog-criar-em-10-de-novembro.jpg",
+  "modulo": "comercial",
+  "tela": "agenda",
+  "rota": "/gestao/agenda",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Criar em 10 de novembro"
+  ],
+  "titulo": "Criar em 10 de novembro",
+  "url": "/gestao/agenda"
+ }
+]

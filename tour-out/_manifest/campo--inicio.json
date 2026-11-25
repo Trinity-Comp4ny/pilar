@@ -1,0 +1,84 @@
+[
+ {
+  "arquivo": "campo/inicio/001-tela-tela.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/inicio/002-dialog-gravar-o-que-foi-feito-fale-do-seu-jeito.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Gravar o que foi feito Fale do seu jeito. A gente organiza."
+  ],
+  "titulo": "O áudio fica guardado",
+  "url": "/campo/gravar"
+ },
+ {
+  "arquivo": "campo/inicio/003-dialog-escrever.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Escrever"
+  ],
+  "titulo": "Escrever um registro",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/inicio/004-nav-registrar-o-dia-formulario.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Registrar o dia (formulário)"
+  ],
+  "titulo": "/campo/dia",
+  "url": "/campo/dia"
+ },
+ {
+  "arquivo": "campo/inicio/005-dialog-ver-o-dia-24-11-2026.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver o dia 24/11/2026"
+  ],
+  "titulo": "24/11/2026",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/inicio/006-dialog-ver-o-dia-22-11-2026.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver o dia 22/11/2026"
+  ],
+  "titulo": "22/11/2026",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/inicio/007-dialog-ver-o-dia-20-11-2026.jpg",
+  "modulo": "campo",
+  "tela": "inicio",
+  "rota": "/campo",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver o dia 20/11/2026"
+  ],
+  "titulo": "20/11/2026",
+  "url": "/campo"
+ }
+]

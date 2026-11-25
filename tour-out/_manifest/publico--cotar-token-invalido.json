@@ -1,0 +1,12 @@
+[
+ {
+  "arquivo": "publico/cotar-token-invalido/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "cotar-token-invalido",
+  "rota": "/cotar/token-de-exemplo",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/cotar/token-de-exemplo"
+ }
+]

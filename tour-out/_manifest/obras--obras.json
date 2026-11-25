@@ -1,0 +1,134 @@
+[
+ {
+  "arquivo": "obras/obras/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/002-nav-obra-edificio-horizonte.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "nav",
+  "cadeia": [
+   "texto: Obra Edifício Horizonte"
+  ],
+  "titulo": "/obras/00000000-0000-0000-0000-000000000a01",
+  "url": "/obras/00000000-0000-0000-0000-000000000a01"
+ },
+ {
+  "arquivo": "obras/obras/003-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/004-nav-mapa.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Mapa"
+  ],
+  "titulo": "/projetos/mapa",
+  "url": "/projetos/mapa?ver=obras"
+ },
+ {
+  "arquivo": "obras/obras/005-dialog-fluxos.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Fluxos"
+  ],
+  "titulo": "Fluxos de obra",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/006-estado-novo-fluxo.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Fluxos",
+   "button: Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/007-dialog-nova-obra.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova obra"
+  ],
+  "titulo": "Como quer começar a obra?",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/008-dialog-responsavel.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Responsável"
+  ],
+  "titulo": "Responsável",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/009-menu-mais-opcoes.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais opções"
+  ],
+  "titulo": "Abrir obra | Mover para",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/010-menu-mover-para.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais opções",
+   "menuitem: Mover para"
+  ],
+  "titulo": "Planejada | Paralisada | Concluída",
+  "url": "/obras"
+ },
+ {
+  "arquivo": "obras/obras/011-nav-reforma-parque-das-aguas.jpg",
+  "modulo": "obras",
+  "tela": "obras",
+  "rota": "/obras",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Reforma Parque das Águas"
+  ],
+  "titulo": "/obras/00000000-0000-0000-0000-000000000a02",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ }
+]

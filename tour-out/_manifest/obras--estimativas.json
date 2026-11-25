@@ -1,0 +1,48 @@
+[
+ {
+  "arquivo": "obras/estimativas/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "estimativas",
+  "rota": "/obras/estimativas",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/obras/estimativas"
+ },
+ {
+  "arquivo": "obras/estimativas/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "estimativas",
+  "rota": "/obras/estimativas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/obras/estimativas"
+ },
+ {
+  "arquivo": "obras/estimativas/003-nav-tabela-de-precos.jpg",
+  "modulo": "obras",
+  "tela": "estimativas",
+  "rota": "/obras/estimativas",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Tabela de preços"
+  ],
+  "titulo": "/obras/estimativas/precos",
+  "url": "/obras/estimativas/precos"
+ },
+ {
+  "arquivo": "obras/estimativas/004-nav-nova-estimativa.jpg",
+  "modulo": "obras",
+  "tela": "estimativas",
+  "rota": "/obras/estimativas",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Nova estimativa"
+  ],
+  "titulo": "/obras/estimativas/nova",
+  "url": "/obras/estimativas/nova"
+ }
+]

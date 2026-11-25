@@ -1,0 +1,36 @@
+[
+ {
+  "arquivo": "publico/login/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "login",
+  "rota": "/login",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/login"
+ },
+ {
+  "arquivo": "publico/login/002-estado-entrar.jpg",
+  "modulo": "publico",
+  "tela": "login",
+  "rota": "/login",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Entrar"
+  ],
+  "titulo": "Entrar",
+  "url": "/login"
+ },
+ {
+  "arquivo": "publico/login/003-nav-continuar-com-google.jpg",
+  "modulo": "publico",
+  "tela": "login",
+  "rota": "/login",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Continuar com Google"
+  ],
+  "titulo": "/auth/v1/authorize",
+  "url": "/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A4174%2Fauth%2Fcallback"
+ }
+]

@@ -1,0 +1,367 @@
+[
+ {
+  "arquivo": "financeiro/rentabilidade/001-tela-tela.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/financeiro?tab=rentabilidade&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/002-aba-aba-visao-geral.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Visão Geral"
+  ],
+  "titulo": "aba-Visão Geral",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/003-aba-aba-lancamentos.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Lançamentos"
+  ],
+  "titulo": "aba-Lançamentos",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/004-aba-aba-folha-de-pagamento.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Folha de Pagamento"
+  ],
+  "titulo": "aba-Folha de Pagamento",
+  "url": "/gestao/financeiro?tab=folha-pagamento&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/005-aba-aba-carteira.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Carteira"
+  ],
+  "titulo": "aba-Carteira",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/006-aba-aba-relatorios.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Relatórios"
+  ],
+  "titulo": "aba-Relatórios",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/007-nav-financeiro.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Financeiro"
+  ],
+  "titulo": "/gestao/financeiro",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/008-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/financeiro?tab=rentabilidade&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/009-dialog-novo-lancamento.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo lançamento"
+  ],
+  "titulo": "Novo lançamento",
+  "url": "/gestao/financeiro?tab=rentabilidade&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/010-dialog-este-mes.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Visão Geral",
+   "button: Este mês"
+  ],
+  "titulo": "Este mês",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/011-estado-indicadores.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Visão Geral",
+   "button: Indicadores"
+  ],
+  "titulo": "Indicadores",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/012-estado-performance.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Visão Geral",
+   "button: Performance"
+  ],
+  "titulo": "Performance",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/013-estado-a-receber-x-a-pagar.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Visão Geral",
+   "button: A receber x a pagar"
+  ],
+  "titulo": "A receber x a pagar",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/014-dialog-ver-detalhes.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Visão Geral",
+   "button: Ver detalhes"
+  ],
+  "titulo": "Detalhamento de receitas",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/015-dialog-filtros.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/016-dialog-importar.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Importar"
+  ],
+  "titulo": "Importar lançamentos",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/017-dialog-editar-lancamento.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento"
+  ],
+  "titulo": "Editar Despesa",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/018-dialog-abrir-calendario.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/019-lista-choose-the-month.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/020-lista-choose-the-year.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1996 | 1997 | 1998 | 1999 | 2000 | 2001 | 2002 | 2003 | 2004 | 2005",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/021-aba-go-to-the-previous-month.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/022-aba-go-to-the-next-month.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/023-lista-projeto.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "combobox: Projeto"
+  ],
+  "titulo": "Edifício Comercial Horizonte | Reforma Parque das Águas | Residencial Vale Verde",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/024-lista-categoria.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "combobox: Categoria"
+  ],
+  "titulo": "Despesas de escritório | Folha de Pagamento | Folha e pró-labore | Serviços terceirizados | Software e licenças",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/025-estado-mais-opcoes.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Mais opções"
+  ],
+  "titulo": "Mais opções",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/026-dialog-excluir-lancamento.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Excluir lançamento"
+  ],
+  "titulo": "Excluir despesa",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/027-dialog-status.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Folha de Pagamento",
+   "button: Status"
+  ],
+  "titulo": "Status",
+  "url": "/gestao/financeiro?tab=folha-pagamento&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/rentabilidade/028-menu-pago.jpg",
+  "modulo": "financeiro",
+  "tela": "rentabilidade",
+  "rota": "/rentabilidade",
+  "efeito": "menu",
+  "cadeia": [
+   "tab: Folha de Pagamento",
+   "button: pago"
+  ],
+  "titulo": "Marcar como pendente | Marcar como pago | Cancelar pagamento",
+  "url": "/gestao/financeiro?tab=folha-pagamento&from=2026-11-01&to=2026-11-30"
+ }
+]

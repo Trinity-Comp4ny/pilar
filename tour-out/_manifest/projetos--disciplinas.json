@@ -1,0 +1,209 @@
+[
+ {
+  "arquivo": "projetos/disciplinas/001-tela-tela.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/003-dialog-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Disciplinas"
+  ],
+  "titulo": "Gerenciar Disciplinas",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/004-dialog-fluxos.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Fluxos"
+  ],
+  "titulo": "Fluxos de disciplinas",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/005-estado-novo-fluxo.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Fluxos",
+   "button: Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/006-dialog-novo-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo projeto"
+  ],
+  "titulo": "Novo projeto",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/007-lista-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/008-lista-placa.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/009-dialog-filtros.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/010-lista-filtrar-por-status.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Filtrar por status"
+  ],
+  "titulo": "Todos os status | Não Iniciado | Em Andamento | Concluído | Pendente",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/011-lista-filtrar-por-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Filtrar por projeto"
+  ],
+  "titulo": "Todos os projetos | Edifício Comercial Horizonte | Reforma Parque das Águas | Residencial Vale Verde",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/012-estado-expandir-tudo.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Expandir tudo"
+  ],
+  "titulo": "Expandir tudo",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/013-estado-tabela.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Tabela"
+  ],
+  "titulo": "Tabela",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/014-estado-estrutural-3-projetos-33-1-de-3-concluid.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Estrutural 3 projetos 33% 1 de 3 concluída (33%) 1 1"
+  ],
+  "titulo": "Estrutural 3 projetos 33% 1 de 3 concluída (33%) 1 1",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/015-menu-acoes-da-disciplina-estrutural.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Ações da disciplina Estrutural"
+  ],
+  "titulo": "Renomear | Excluir",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/016-dialog-renomear.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ações da disciplina Estrutural",
+   "menuitem: Renomear"
+  ],
+  "titulo": "Renomear disciplina",
+  "url": "/projetos/disciplinas"
+ },
+ {
+  "arquivo": "projetos/disciplinas/017-dialog-excluir.jpg",
+  "modulo": "projetos",
+  "tela": "disciplinas",
+  "rota": "/projetos/disciplinas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ações da disciplina Estrutural",
+   "menuitem: Excluir"
+  ],
+  "titulo": "Excluir disciplina?",
+  "url": "/projetos/disciplinas"
+ }
+]

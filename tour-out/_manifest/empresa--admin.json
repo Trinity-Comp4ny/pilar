@@ -1,0 +1,222 @@
+[
+ {
+  "arquivo": "empresa/admin/001-tela-tela.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/admin"
+ },
+ {
+  "arquivo": "empresa/admin/002-aba-aba-empresa.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Empresa"
+  ],
+  "titulo": "aba-Empresa",
+  "url": "/admin?tab=empresa"
+ },
+ {
+  "arquivo": "empresa/admin/003-aba-aba-auditoria.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Auditoria"
+  ],
+  "titulo": "aba-Auditoria",
+  "url": "/admin?tab=auditoria"
+ },
+ {
+  "arquivo": "empresa/admin/004-aba-aba-plano.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano"
+  ],
+  "titulo": "aba-Plano",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/005-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/admin"
+ },
+ {
+  "arquivo": "empresa/admin/006-dialog-convidar-usuario.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Convidar usuário"
+  ],
+  "titulo": "Convidar usuário",
+  "url": "/admin"
+ },
+ {
+  "arquivo": "empresa/admin/007-nav-admin-portal.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "nav",
+  "cadeia": [
+   "tab: Empresa",
+   "button: Admin Portal"
+  ],
+  "titulo": "/admin",
+  "url": "/admin?tab=usuarios"
+ },
+ {
+  "arquivo": "empresa/admin/008-estado-personalizacao.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Empresa",
+   "button: Personalização"
+  ],
+  "titulo": "Personalização",
+  "url": "/admin?tab=empresa"
+ },
+ {
+  "arquivo": "empresa/admin/009-dialog-categoria.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Auditoria",
+   "button: Categoria"
+  ],
+  "titulo": "Categoria",
+  "url": "/admin?tab=auditoria"
+ },
+ {
+  "arquivo": "empresa/admin/010-dialog-mudar-de-plano.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano"
+  ],
+  "titulo": "Configurações",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/011-aba-conta.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Conta"
+  ],
+  "titulo": "Conta",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/012-aba-seguranca.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Segurança"
+  ],
+  "titulo": "Segurança",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/013-aba-empresa.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Empresa"
+  ],
+  "titulo": "Empresa",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/014-aba-integracoes.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Integrações"
+  ],
+  "titulo": "Integrações",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/015-aba-uso.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Uso"
+  ],
+  "titulo": "Uso",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/016-aba-pagamento.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Pagamento"
+  ],
+  "titulo": "Pagamento",
+  "url": "/admin?tab=plano"
+ },
+ {
+  "arquivo": "empresa/admin/017-aba-privacidade.jpg",
+  "modulo": "empresa",
+  "tela": "admin",
+  "rota": "/admin",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Plano",
+   "button: Mudar de plano",
+   "button: Privacidade"
+  ],
+  "titulo": "Privacidade",
+  "url": "/admin?tab=plano"
+ }
+]

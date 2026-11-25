@@ -1,0 +1,12 @@
+[
+ {
+  "arquivo": "portal/dashboard/001-tela-tela.jpg",
+  "modulo": "portal",
+  "tela": "dashboard",
+  "rota": "/cliente/dashboard",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/cliente/dashboard"
+ }
+]

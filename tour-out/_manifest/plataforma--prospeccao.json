@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "plataforma/prospeccao/001-tela-tela.jpg",
+  "modulo": "plataforma",
+  "tela": "prospeccao",
+  "rota": "/ultra-admin/prospeccao",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/mfa/setup"
+ },
+ {
+  "arquivo": "plataforma/prospeccao/002-estado-ja-tenho-o-app-instalado.jpg",
+  "modulo": "plataforma",
+  "tela": "prospeccao",
+  "rota": "/ultra-admin/prospeccao",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Já tenho o app instalado →"
+  ],
+  "titulo": "Já tenho o app instalado →",
+  "url": "/mfa/setup"
+ }
+]

@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "plataforma/incidentes/001-tela-tela.jpg",
+  "modulo": "plataforma",
+  "tela": "incidentes",
+  "rota": "/ultra-admin/incidentes",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/mfa/setup"
+ },
+ {
+  "arquivo": "plataforma/incidentes/002-estado-ja-tenho-o-app-instalado.jpg",
+  "modulo": "plataforma",
+  "tela": "incidentes",
+  "rota": "/ultra-admin/incidentes",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Já tenho o app instalado →"
+  ],
+  "titulo": "Já tenho o app instalado →",
+  "url": "/mfa/setup"
+ }
+]

@@ -1,0 +1,241 @@
+[
+ {
+  "arquivo": "comercial/propostas/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/002-dialog-projeto-estrutural-edificio-residencial.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Projeto estrutural edifício residencial"
+  ],
+  "titulo": "Projeto estrutural edifício residencial",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/003-estado-anexar-pdf-da-versao.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "estado",
+  "cadeia": [
+   "texto: Projeto estrutural edifício residencial",
+   "button: Anexar PDF da versão"
+  ],
+  "titulo": "Anexar PDF da versão",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/004-estado-editar.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "estado",
+  "cadeia": [
+   "texto: Projeto estrutural edifício residencial",
+   "button: Editar"
+  ],
+  "titulo": "Editar",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/005-dialog-linha.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "primeira linha da tabela"
+  ],
+  "titulo": "Projeto completo Residencial Vale Verde",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/006-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/007-dialog-modelos-de-contrato.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Modelos de contrato"
+  ],
+  "titulo": "Modelos de contrato",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/008-dialog-nova-proposta.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova proposta"
+  ],
+  "titulo": "Nova proposta",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/009-lista-cliente.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova proposta",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/010-dialog-abrir-calendario.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova proposta",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/011-lista-choose-the-month.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova proposta",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/012-lista-choose-the-year.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova proposta",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1996 | 1997 | 1998 | 1999 | 2000 | 2001 | 2002 | 2003 | 2004 | 2005",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/013-aba-go-to-the-previous-month.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Nova proposta",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/014-aba-go-to-the-next-month.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Nova proposta",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/015-estado-cards.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Cards"
+  ],
+  "titulo": "Cards",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/016-dialog-status.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Status"
+  ],
+  "titulo": "Status",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/017-dialog-filtros.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/018-menu-mais-acoes-de-projeto-completo-residenci.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais ações de Projeto completo Residencial Vale Verde"
+  ],
+  "titulo": "Excluir",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/propostas/019-dialog-excluir.jpg",
+  "modulo": "comercial",
+  "tela": "propostas",
+  "rota": "/gestao/propostas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Projeto completo Residencial Vale Verde",
+   "menuitem: Excluir"
+  ],
+  "titulo": "Excluir proposta",
+  "url": "/gestao/propostas"
+ }
+]

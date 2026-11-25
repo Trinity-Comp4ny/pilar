@@ -1,0 +1,105 @@
+[
+ {
+  "arquivo": "comercial/metas/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/003-dialog-nova-meta.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova meta"
+  ],
+  "titulo": "Nova meta",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/004-dialog-abrir-calendario.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova meta",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/005-lista-choose-the-month.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova meta",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/006-lista-choose-the-year.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova meta",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1996 | 1997 | 1998 | 1999 | 2000 | 2001 | 2002 | 2003 | 2004 | 2005",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/007-aba-go-to-the-previous-month.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Nova meta",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/gestao/metas"
+ },
+ {
+  "arquivo": "comercial/metas/008-aba-go-to-the-next-month.jpg",
+  "modulo": "comercial",
+  "tela": "metas",
+  "rota": "/gestao/metas",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Nova meta",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/gestao/metas"
+ }
+]

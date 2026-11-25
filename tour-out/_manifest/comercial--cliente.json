@@ -1,0 +1,146 @@
+[
+ {
+  "arquivo": "comercial/cliente/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/002-aba-aba-projetos-1.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Projetos 1"
+  ],
+  "titulo": "aba-Projetos 1",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/003-aba-aba-propostas.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Propostas"
+  ],
+  "titulo": "aba-Propostas",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/004-aba-aba-financeiro.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Financeiro"
+  ],
+  "titulo": "aba-Financeiro",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/005-aba-aba-entregas.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Entregas"
+  ],
+  "titulo": "aba-Entregas",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/006-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/007-dialog-mensagem.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mensagem"
+  ],
+  "titulo": "Enviar mensagem",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/008-dialog-editar.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Editar"
+  ],
+  "titulo": "Editar cliente",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/009-lista-origem.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Origem"
+  ],
+  "titulo": "Indicação | Instagram | LinkedIn | Site | Google | WhatsApp | Evento | Outro",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/010-dialog-excluir.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Excluir"
+  ],
+  "titulo": "Excluir cliente",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/011-dialog-gerenciar-acessos.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Gerenciar acessos"
+  ],
+  "titulo": "Acesso ao portal do cliente",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ },
+ {
+  "arquivo": "comercial/cliente/012-estado-edificio-comercial-horizonte-em-andament.jpg",
+  "modulo": "comercial",
+  "tela": "cliente",
+  "rota": "/gestao/clientes/00000000-0000-0000-0000-000000000101",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Financeiro",
+   "button: Edifício Comercial Horizonte Em andamento"
+  ],
+  "titulo": "Edifício Comercial Horizonte Em andamento",
+  "url": "/gestao/clientes/00000000-0000-0000-0000-000000000101"
+ }
+]

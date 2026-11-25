@@ -1,0 +1,158 @@
+[
+ {
+  "arquivo": "empresa/config-empresa/001-tela-tela.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/002-aba-aba-usuarios-3.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Usuários 3"
+  ],
+  "titulo": "aba-Usuários 3",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/003-aba-aba-personalizacao.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Personalização"
+  ],
+  "titulo": "aba-Personalização",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/004-aba-aba-modulos.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Módulos"
+  ],
+  "titulo": "aba-Módulos",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/005-aba-conta.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Conta"
+  ],
+  "titulo": "Conta",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/006-aba-seguranca.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Segurança"
+  ],
+  "titulo": "Segurança",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/007-aba-empresa.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Empresa"
+  ],
+  "titulo": "Empresa",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/008-aba-integracoes.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Integrações"
+  ],
+  "titulo": "Integrações",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/009-aba-uso.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Uso"
+  ],
+  "titulo": "Uso",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/010-aba-pagamento.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Pagamento"
+  ],
+  "titulo": "Pagamento",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/011-aba-privacidade.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Privacidade"
+  ],
+  "titulo": "Privacidade",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/012-lista-funcao.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Usuários 3",
+   "combobox: Função"
+  ],
+  "titulo": "admin | user",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-empresa/013-menu-mais-acoes-de-dev-local.jpg",
+  "modulo": "empresa",
+  "tela": "config-empresa",
+  "rota": "/company",
+  "efeito": "menu",
+  "cadeia": [
+   "tab: Usuários 3",
+   "button: Mais ações de Dev Local"
+  ],
+  "titulo": "Editar | Remover",
+  "url": "/inicio"
+ }
+]

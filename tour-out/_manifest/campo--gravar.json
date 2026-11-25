@@ -1,0 +1,94 @@
+[
+ {
+  "arquivo": "campo/gravar/001-auto-abriu-sozinho.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "auto",
+  "cadeia": [],
+  "titulo": "O áudio fica guardado",
+  "url": "/campo/gravar"
+ },
+ {
+  "arquivo": "campo/gravar/002-tela-tela.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/gravar/003-dialog-gravar-o-que-foi-feito-fale-do-seu-jeito.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Gravar o que foi feito Fale do seu jeito. A gente organiza."
+  ],
+  "titulo": "O áudio fica guardado",
+  "url": "/campo/gravar"
+ },
+ {
+  "arquivo": "campo/gravar/004-dialog-escrever.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Escrever"
+  ],
+  "titulo": "Escrever um registro",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/gravar/005-nav-registrar-o-dia-formulario.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Registrar o dia (formulário)"
+  ],
+  "titulo": "/campo/dia",
+  "url": "/campo/dia"
+ },
+ {
+  "arquivo": "campo/gravar/006-dialog-ver-o-dia-24-11-2026.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver o dia 24/11/2026"
+  ],
+  "titulo": "24/11/2026",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/gravar/007-dialog-ver-o-dia-22-11-2026.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver o dia 22/11/2026"
+  ],
+  "titulo": "22/11/2026",
+  "url": "/campo"
+ },
+ {
+  "arquivo": "campo/gravar/008-dialog-ver-o-dia-20-11-2026.jpg",
+  "modulo": "campo",
+  "tela": "gravar",
+  "rota": "/campo/gravar",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver o dia 20/11/2026"
+  ],
+  "titulo": "20/11/2026",
+  "url": "/campo"
+ }
+]

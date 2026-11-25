@@ -1,0 +1,338 @@
+[
+ {
+  "arquivo": "projetos/projetos/001-tela-tela.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/002-dialog-edificio-comercial-horizonte.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte"
+  ],
+  "titulo": "Edifício Comercial Horizonte",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/003-nav-abrir-projeto-completo.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "nav",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte",
+   "button: Abrir projeto completo"
+  ],
+  "titulo": "/projetos/00000000-0000-0000-0000-000000000401",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projetos/004-menu-mais-opcoes.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "menu",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte",
+   "button: Mais opções"
+  ],
+  "titulo": "Editar dados | Excluir projeto",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/005-dialog-excluir-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte",
+   "button: Mais opções",
+   "menuitem: Excluir projeto"
+  ],
+  "titulo": "Excluir projeto",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/006-lista-ordenar-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte",
+   "combobox: Ordenar disciplinas"
+  ],
+  "titulo": "Ordem do fluxo | Previsão (mais próxima) | Prioridade (maior primeiro)",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/007-lista-status-de-estrutural.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte",
+   "combobox: Status de Estrutural"
+  ],
+  "titulo": "Não Iniciado | Em Andamento | Concluído | Pendente | Pausada",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/008-estado-instalacoes-mep-media-rafael-mendes-prev.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "estado",
+  "cadeia": [
+   "texto: Edifício Comercial Horizonte",
+   "button: Instalações (MEP) Média Rafael Mendes Previsão 24/01"
+  ],
+  "titulo": "Instalações (MEP) Média Rafael Mendes Previsão 24/01",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/009-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/010-dialog-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Disciplinas"
+  ],
+  "titulo": "Gerenciar Disciplinas",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/011-dialog-fluxos.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Fluxos"
+  ],
+  "titulo": "Fluxos de disciplinas",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/012-estado-novo-fluxo.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Fluxos",
+   "button: Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/013-dialog-novo-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo projeto"
+  ],
+  "titulo": "Novo projeto",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/014-lista-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/015-lista-placa.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/016-nav-lista.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Lista"
+  ],
+  "titulo": "/projetos",
+  "url": "/projetos?v=lista"
+ },
+ {
+  "arquivo": "projetos/projetos/017-dialog-filtros.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/018-menu-ordenar-por-prioridade.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Ordenar por Prioridade"
+  ],
+  "titulo": "Prioridade | Previsão | Valor | Nome | Criação | Alta primeiro | Baixa primeiro",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/019-menu-acoes-da-coluna.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Ações da coluna"
+  ],
+  "titulo": "Editar | Mover para esquerda | Mover para direita | Excluir coluna",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/020-dialog-editar.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ações da coluna",
+   "menuitem: Editar"
+  ],
+  "titulo": "Editar coluna",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/021-menu-mais-opcoes.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais opções"
+  ],
+  "titulo": "Abrir página completa | Editar dados | Excluir",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/022-dialog-editar-dados.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais opções",
+   "menuitem: Editar dados"
+  ],
+  "titulo": "Editar projeto",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/023-dialog-residencial-vale-verde.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Residencial Vale Verde"
+  ],
+  "titulo": "Residencial Vale Verde",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/024-nav-abrir-projeto-completo.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Residencial Vale Verde",
+   "button: Abrir projeto completo"
+  ],
+  "titulo": "/projetos/00000000-0000-0000-0000-000000000402",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projetos/025-dialog-reforma-parque-das-aguas.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Reforma Parque das Águas"
+  ],
+  "titulo": "Reforma Parque das Águas",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "projetos/projetos/026-nav-abrir-projeto-completo.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Reforma Parque das Águas",
+   "button: Abrir projeto completo"
+  ],
+  "titulo": "/projetos/00000000-0000-0000-0000-000000000403",
+  "url": "/projetos/00000000-0000-0000-0000-000000000403"
+ },
+ {
+  "arquivo": "projetos/projetos/027-estado-nova-coluna.jpg",
+  "modulo": "projetos",
+  "tela": "projetos",
+  "rota": "/projetos",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Nova coluna"
+  ],
+  "titulo": "Nova coluna",
+  "url": "/projetos"
+ }
+]

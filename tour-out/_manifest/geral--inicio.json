@@ -1,0 +1,84 @@
+[
+ {
+  "arquivo": "geral/inicio/001-tela-tela.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "geral/inicio/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "geral/inicio/003-estado-personalizar.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Personalizar"
+  ],
+  "titulo": "Personalizar",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "geral/inicio/004-nav-abrir-conversa-com-os-agentes.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Abrir conversa com os agentes"
+  ],
+  "titulo": "/agentes",
+  "url": "/agentes"
+ },
+ {
+  "arquivo": "geral/inicio/005-nav-2-projetos-ativos.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: 2 projetos ativos"
+  ],
+  "titulo": "/projetos",
+  "url": "/projetos"
+ },
+ {
+  "arquivo": "geral/inicio/006-nav-2-propostas-em-90-dias.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: 2 propostas em 90 dias"
+  ],
+  "titulo": "/gestao/propostas",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "geral/inicio/007-nav-aditivo-edificio-comercial-horizonte-0-d.jpg",
+  "modulo": "geral",
+  "tela": "inicio",
+  "rota": "/inicio",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Aditivo · Edifício Comercial Horizonte 0 d"
+  ],
+  "titulo": "/projetos/00000000-0000-0000-0000-000000000401",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ }
+]

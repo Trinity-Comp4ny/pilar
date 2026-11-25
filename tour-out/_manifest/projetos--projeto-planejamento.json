@@ -1,0 +1,399 @@
+[
+ {
+  "arquivo": "projetos/projeto-planejamento/001-tela-tela.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/002-aba-aba-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Disciplinas"
+  ],
+  "titulo": "aba-Disciplinas",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#disciplinas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/003-aba-aba-tarefas.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Tarefas"
+  ],
+  "titulo": "aba-Tarefas",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/004-aba-aba-revisoes.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Revisões"
+  ],
+  "titulo": "aba-Revisões",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#revisoes"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/005-aba-aba-atividades.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Atividades"
+  ],
+  "titulo": "aba-Atividades",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#atividades"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/006-aba-aba-arquivos.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Arquivos"
+  ],
+  "titulo": "aba-Arquivos",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#arquivos"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/007-aba-aba-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Cliente"
+  ],
+  "titulo": "aba-Cliente",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#cliente"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/008-aba-aba-pagamentos.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Pagamentos"
+  ],
+  "titulo": "aba-Pagamentos",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#pagamentos"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/009-aba-aba-escopo-e-aditivos.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Escopo e aditivos"
+  ],
+  "titulo": "aba-Escopo e aditivos",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#escopo"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/010-aba-aba-historico.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Histórico"
+  ],
+  "titulo": "aba-Histórico",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#historico"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/011-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/012-nav-cronograma.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Cronograma"
+  ],
+  "titulo": "/projetos/00000000-0000-0000-0000-000000000402",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#cronograma"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/013-dialog-pausar-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Pausar projeto"
+  ],
+  "titulo": "Pausar projeto",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/014-dialog-portal-do-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Portal do cliente"
+  ],
+  "titulo": "Acesso ao portal do cliente",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/015-dialog-editar.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Editar"
+  ],
+  "titulo": "Editar projeto",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/016-lista-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/017-lista-placa.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/018-lista-status-do-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Status do projeto"
+  ],
+  "titulo": "Planejamento | Em andamento | Revisão | Paralisado | Concluído | Cancelado",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/019-lista-prioridade-do-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Prioridade do projeto"
+  ],
+  "titulo": "Alta | Média | Baixa",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/020-dialog-abrir-calendario.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/021-lista-choose-the-month.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/022-lista-choose-the-year.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "2026 | 2027 | 2028 | 2029 | 2030 | 2031 | 2032 | 2033 | 2034 | 2035",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/023-aba-go-to-the-previous-month.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/024-aba-go-to-the-next-month.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/025-estado-gantt.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Disciplinas",
+   "button: Gantt"
+  ],
+  "titulo": "Gantt",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#disciplinas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/026-estado-fluxo.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Disciplinas",
+   "button: Fluxo"
+  ],
+  "titulo": "Fluxo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#disciplinas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/027-lista-filtrar-por-responsavel.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "combobox: Filtrar por responsável"
+  ],
+  "titulo": "Todos os responsáveis | Beatriz Rocha | Dev Local | Juliana Costa | Rafael Mendes | Thiago Alves",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/028-lista-filtrar-por-status.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "combobox: Filtrar por status"
+  ],
+  "titulo": "Todos os status | A fazer | Em andamento | Em revisão | Concluído | A fazer · sem coluna | Fazendo · sem coluna | Concluído · sem coluna",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/029-estado-em-atraso.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Em atraso"
+  ],
+  "titulo": "Em atraso",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/030-dialog-nova-tarefa.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa"
+  ],
+  "titulo": "Nova tarefa",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/031-lista-disciplina.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "combobox: Disciplina"
+  ],
+  "titulo": "Sem disciplina | Estrutural",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto-planejamento/032-dialog-publicar-revisao.jpg",
+  "modulo": "projetos",
+  "tela": "projeto-planejamento",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000402",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Revisões",
+   "button: Publicar revisão"
+  ],
+  "titulo": "Publicar revisão",
+  "url": "/projetos/00000000-0000-0000-0000-000000000402#revisoes"
+ }
+]

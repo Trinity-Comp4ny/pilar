@@ -1,0 +1,183 @@
+[
+ {
+  "arquivo": "projetos/calendario/001-tela-tela.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/003-dialog-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Disciplinas"
+  ],
+  "titulo": "Gerenciar Disciplinas",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/004-dialog-fluxos.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Fluxos"
+  ],
+  "titulo": "Fluxos de disciplinas",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/005-estado-novo-fluxo.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Fluxos",
+   "button: Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/006-dialog-novo-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo projeto"
+  ],
+  "titulo": "Novo projeto",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/007-lista-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/008-lista-placa.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/009-dialog-filtros.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/010-nav-meus-projetos.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Meus projetos"
+  ],
+  "titulo": "/projetos/cronograma",
+  "url": "/projetos/cronograma?meus=1"
+ },
+ {
+  "arquivo": "projetos/calendario/011-lista-filtrar-por-status.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Filtrar por status"
+  ],
+  "titulo": "Todos os status | Planejamento | Em andamento | Revisão | Paralisado | Concluído | Cancelado",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/012-dialog-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Cliente"
+  ],
+  "titulo": "Cliente",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/013-dialog-responsavel.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Responsável"
+  ],
+  "titulo": "Responsável",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/014-estado-semanas.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Semanas"
+  ],
+  "titulo": "Semanas",
+  "url": "/projetos/cronograma"
+ },
+ {
+  "arquivo": "projetos/calendario/015-dialog-legenda-das-cores.jpg",
+  "modulo": "projetos",
+  "tela": "calendario",
+  "rota": "/projetos/calendario",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Legenda das cores"
+  ],
+  "titulo": "Legenda das cores",
+  "url": "/projetos/cronograma"
+ }
+]

@@ -1,0 +1,250 @@
+[
+ {
+  "arquivo": "comercial/tarefas/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/002-dialog-revisar-memorial-de-calculo-estrutural.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural"
+  ],
+  "titulo": "Editar tarefa",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/003-dialog-abrir-calendario.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/004-lista-choose-the-month.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/005-lista-choose-the-year.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1996 | 1997 | 1998 | 1999 | 2000 | 2001 | 2002 | 2003 | 2004 | 2005",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/006-aba-go-to-the-previous-month.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "aba",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/007-aba-go-to-the-next-month.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "aba",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/008-lista-disciplina.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Revisar memorial de cálculo estrutural",
+   "combobox: Disciplina"
+  ],
+  "titulo": "Sem disciplina | Estrutural | Instalações (MEP) | Fundações",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/009-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/010-dialog-nova-tarefa.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova tarefa"
+  ],
+  "titulo": "Nova tarefa",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/011-estado-quadro.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Quadro"
+  ],
+  "titulo": "Quadro",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/012-dialog-filtrar-por-pessoa.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Filtrar por pessoa"
+  ],
+  "titulo": "Filtrar por pessoa",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/013-dialog-tipo.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Tipo"
+  ],
+  "titulo": "Tipo",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/014-dialog-projeto.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Projeto"
+  ],
+  "titulo": "Projeto",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/015-dialog-obra.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Obra"
+  ],
+  "titulo": "Obra",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/016-dialog-prioridade.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Prioridade"
+  ],
+  "titulo": "Prioridade",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/017-dialog-todo-o-periodo.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Todo o período"
+  ],
+  "titulo": "Todo o período",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/018-dialog-situacao.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Situação"
+  ],
+  "titulo": "Situação",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/019-menu-ordenar-por-previsao.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Ordenar por Previsão"
+  ],
+  "titulo": "Prioridade | Previsão | Nome | Criação | Mais próxima primeiro | Mais distante primeiro",
+  "url": "/gestao/tarefas"
+ },
+ {
+  "arquivo": "comercial/tarefas/020-menu-media.jpg",
+  "modulo": "comercial",
+  "tela": "tarefas",
+  "rota": "/gestao/tarefas",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Média"
+  ],
+  "titulo": "Alta | Média | Baixa",
+  "url": "/gestao/tarefas"
+ }
+]

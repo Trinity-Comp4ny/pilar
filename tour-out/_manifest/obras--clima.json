@@ -1,0 +1,36 @@
+[
+ {
+  "arquivo": "obras/clima/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "clima",
+  "rota": "/obras/clima",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/obras/clima"
+ },
+ {
+  "arquivo": "obras/clima/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "clima",
+  "rota": "/obras/clima",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/obras/clima"
+ },
+ {
+  "arquivo": "obras/clima/003-dialog-adicionar-cidade.jpg",
+  "modulo": "obras",
+  "tela": "clima",
+  "rota": "/obras/clima",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Adicionar cidade"
+  ],
+  "titulo": "Adicionar cidade",
+  "url": "/obras/clima"
+ }
+]

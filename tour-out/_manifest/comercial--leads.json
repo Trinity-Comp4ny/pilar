@@ -1,0 +1,312 @@
+[
+ {
+  "arquivo": "comercial/leads/001-tela-tela.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/002-dialog-patricia.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Patrícia"
+  ],
+  "titulo": "Patrícia Lima Novo",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/003-nav-editar-proposta.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "nav",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Editar proposta"
+  ],
+  "titulo": "/gestao/propostas",
+  "url": "/gestao/propostas"
+ },
+ {
+  "arquivo": "comercial/leads/004-dialog-adicionar-proposta-em-pdf.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Adicionar proposta em PDF"
+  ],
+  "titulo": "Adicionar proposta em PDF",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/005-dialog-abrir-calendario.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Adicionar proposta em PDF",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/006-dialog-anexar-pdf.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Anexar PDF"
+  ],
+  "titulo": "Anexar PDF à proposta",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/007-dialog-editar.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Editar"
+  ],
+  "titulo": "Editar lead",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/008-lista-responsavel.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Editar",
+   "combobox: Responsável"
+  ],
+  "titulo": "Admin Empresa | Dev Local | User Comum",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/009-lista-origem.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Patrícia",
+   "button: Editar",
+   "combobox: Origem"
+  ],
+  "titulo": "Indicação | Instagram | LinkedIn | Site | Google | WhatsApp | Evento | Outro",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/010-dialog-fernanda.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Fernanda"
+  ],
+  "titulo": "Fernanda Souza Ganho",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/011-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/012-dialog-novo-lead.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo lead"
+  ],
+  "titulo": "Novo lead",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/013-nav-lista.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Lista"
+  ],
+  "titulo": "/gestao/leads",
+  "url": "/gestao/leads?v=lista"
+ },
+ {
+  "arquivo": "comercial/leads/014-dialog-origem.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Origem"
+  ],
+  "titulo": "Origem",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/015-dialog-responsavel.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Responsável"
+  ],
+  "titulo": "Responsável",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/016-dialog-previsao.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Previsão"
+  ],
+  "titulo": "Previsão",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/017-menu-ordenar-por-criacao.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Ordenar por Criação"
+  ],
+  "titulo": "Previsão | Valor | Nome | Criação | Mais antigos primeiro | Mais recentes primeiro",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/018-estado-indicadores.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Indicadores"
+  ],
+  "titulo": "Indicadores",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/019-menu-acoes-da-coluna.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Ações da coluna"
+  ],
+  "titulo": "Editar | Mover para esquerda | Mover para direita | Excluir coluna",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/020-dialog-editar.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ações da coluna",
+   "menuitem: Editar"
+  ],
+  "titulo": "Editar coluna",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/021-estado-minimizar-coluna.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Minimizar coluna"
+  ],
+  "titulo": "Minimizar coluna",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/022-menu-mais-opcoes.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais opções"
+  ],
+  "titulo": "Editar | Excluir",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/023-dialog-excluir.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais opções",
+   "menuitem: Excluir"
+  ],
+  "titulo": "Excluir lead",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/024-dialog-roberto-nunes.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Roberto Nunes"
+  ],
+  "titulo": "Roberto Nunes Em Contato",
+  "url": "/gestao/leads"
+ },
+ {
+  "arquivo": "comercial/leads/025-dialog-carlos-pereira.jpg",
+  "modulo": "comercial",
+  "tela": "leads",
+  "rota": "/gestao/leads",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Carlos Pereira"
+  ],
+  "titulo": "Carlos Pereira Perdido Perdido",
+  "url": "/gestao/leads"
+ }
+]

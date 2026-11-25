@@ -1,0 +1,85 @@
+[
+ {
+  "arquivo": "obras/fornecedor/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedor/002-aba-aba-obras-1.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Obras 1"
+  ],
+  "titulo": "aba-Obras 1",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedor/003-aba-aba-compras-2.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Compras 2"
+  ],
+  "titulo": "aba-Compras 2",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedor/004-aba-aba-avaliacoes-0.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Avaliações 0"
+  ],
+  "titulo": "aba-Avaliações 0",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedor/005-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedor/006-estado-indicadores.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Indicadores"
+  ],
+  "titulo": "Indicadores",
+  "url": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642"
+ },
+ {
+  "arquivo": "obras/fornecedor/007-nav-obra-edificio-horizonte.jpg",
+  "modulo": "obras",
+  "tela": "fornecedor",
+  "rota": "/gestao/fornecedores/00000000-0000-0000-0000-000000000642",
+  "efeito": "nav",
+  "cadeia": [
+   "tab: Compras 2",
+   "button: Obra Edifício Horizonte"
+  ],
+  "titulo": "/obras/00000000-0000-0000-0000-000000000a01",
+  "url": "/obras/00000000-0000-0000-0000-000000000a01"
+ }
+]

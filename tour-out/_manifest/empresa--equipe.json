@@ -1,0 +1,231 @@
+[
+ {
+  "arquivo": "empresa/equipe/001-tela-tela.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/002-dialog-juliana-costa.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "texto: Juliana Costa"
+  ],
+  "titulo": "Juliana Costa CLT Ativo",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/003-lista-conta-de-login.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "lista",
+  "cadeia": [
+   "texto: Juliana Costa",
+   "combobox: Conta de login"
+  ],
+  "titulo": "Admin Empresa (admin@local.test) | User Comum (user@local.test)",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/004-estado-editar.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "estado",
+  "cadeia": [
+   "texto: Juliana Costa",
+   "button: Editar"
+  ],
+  "titulo": "Editar",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/005-dialog-linha.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "primeira linha da tabela"
+  ],
+  "titulo": "Beatriz Rocha Estagiário Ativo",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/006-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/007-dialog-nova-pessoa.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova pessoa"
+  ],
+  "titulo": "Nova pessoa",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/008-dialog-abrir-calendario.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Nova pessoa",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/009-lista-choose-the-month.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova pessoa",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/010-lista-choose-the-year.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova pessoa",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1940 | 1941 | 1942 | 1943 | 1944 | 1945 | 1946 | 1947 | 1948 | 1949",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/011-aba-go-to-the-previous-month.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Nova pessoa",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/012-aba-go-to-the-next-month.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Nova pessoa",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/013-lista-tipo-de-contrato.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova pessoa",
+   "combobox: Tipo de Contrato"
+  ],
+  "titulo": "CLT | PJ | Estagiário | Sócio | Terceirizado",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/014-lista-status.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Nova pessoa",
+   "combobox: Status"
+  ],
+  "titulo": "Ativo | Inativo | Afastado",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/015-dialog-cargo.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Cargo"
+  ],
+  "titulo": "Cargo",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/016-menu-mais-acoes-de-beatriz-rocha.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais ações de Beatriz Rocha"
+  ],
+  "titulo": "Editar | Excluir",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/017-dialog-editar.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Beatriz Rocha",
+   "menuitem: Editar"
+  ],
+  "titulo": "Editar pessoa",
+  "url": "/gestao/equipe"
+ },
+ {
+  "arquivo": "empresa/equipe/018-dialog-excluir.jpg",
+  "modulo": "empresa",
+  "tela": "equipe",
+  "rota": "/gestao/equipe",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Beatriz Rocha",
+   "menuitem: Excluir"
+  ],
+  "titulo": "Excluir pessoa",
+  "url": "/gestao/equipe"
+ }
+]

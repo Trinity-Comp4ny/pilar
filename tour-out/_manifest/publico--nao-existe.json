@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "publico/nao-existe/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "nao-existe",
+  "rota": "/rota-que-nao-existe",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/rota-que-nao-existe"
+ },
+ {
+  "arquivo": "publico/nao-existe/002-nav-pagina-anterior.jpg",
+  "modulo": "publico",
+  "tela": "nao-existe",
+  "rota": "/rota-que-nao-existe",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Página anterior"
+  ],
+  "titulo": "blank",
+  "url": "about:blank"
+ }
+]

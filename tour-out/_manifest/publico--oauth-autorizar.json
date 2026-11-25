@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "publico/oauth-autorizar/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "oauth-autorizar",
+  "rota": "/oauth/autorizar",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/oauth/autorizar"
+ },
+ {
+  "arquivo": "publico/oauth-autorizar/002-nav-ir-para-a-pilar.jpg",
+  "modulo": "publico",
+  "tela": "oauth-autorizar",
+  "rota": "/oauth/autorizar",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Ir para a Pilar"
+  ],
+  "titulo": "/login",
+  "url": "/login"
+ }
+]

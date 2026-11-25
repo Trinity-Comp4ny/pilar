@@ -1,0 +1,543 @@
+[
+ {
+  "arquivo": "projetos/projeto/001-tela-tela.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/002-aba-aba-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Disciplinas"
+  ],
+  "titulo": "aba-Disciplinas",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#disciplinas"
+ },
+ {
+  "arquivo": "projetos/projeto/003-aba-aba-tarefas.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Tarefas"
+  ],
+  "titulo": "aba-Tarefas",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/004-aba-aba-revisoes.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Revisões"
+  ],
+  "titulo": "aba-Revisões",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#revisoes"
+ },
+ {
+  "arquivo": "projetos/projeto/005-aba-aba-atividades.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Atividades"
+  ],
+  "titulo": "aba-Atividades",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#atividades"
+ },
+ {
+  "arquivo": "projetos/projeto/006-aba-aba-arquivos.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Arquivos"
+  ],
+  "titulo": "aba-Arquivos",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#arquivos"
+ },
+ {
+  "arquivo": "projetos/projeto/007-aba-aba-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Cliente"
+  ],
+  "titulo": "aba-Cliente",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#cliente"
+ },
+ {
+  "arquivo": "projetos/projeto/008-aba-aba-pagamentos.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Pagamentos"
+  ],
+  "titulo": "aba-Pagamentos",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#pagamentos"
+ },
+ {
+  "arquivo": "projetos/projeto/009-aba-aba-escopo-e-aditivos.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Escopo e aditivos"
+  ],
+  "titulo": "aba-Escopo e aditivos",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#escopo"
+ },
+ {
+  "arquivo": "projetos/projeto/010-aba-aba-historico.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Histórico"
+  ],
+  "titulo": "aba-Histórico",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#historico"
+ },
+ {
+  "arquivo": "projetos/projeto/011-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/012-nav-cronograma.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Cronograma"
+  ],
+  "titulo": "/projetos/00000000-0000-0000-0000-000000000401",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#cronograma"
+ },
+ {
+  "arquivo": "projetos/projeto/013-dialog-pausar-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Pausar projeto"
+  ],
+  "titulo": "Pausar projeto",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/014-dialog-portal-do-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Portal do cliente"
+  ],
+  "titulo": "Acesso ao portal do cliente",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/015-dialog-editar.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Editar"
+  ],
+  "titulo": "Editar projeto",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/016-lista-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/017-lista-placa.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/018-lista-status-do-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Status do projeto"
+  ],
+  "titulo": "Planejamento | Em andamento | Revisão | Paralisado | Concluído | Cancelado",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/019-lista-prioridade-do-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Prioridade do projeto"
+  ],
+  "titulo": "Alta | Média | Baixa",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/020-dialog-abrir-calendario.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/021-lista-choose-the-month.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/022-lista-choose-the-year.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "2026 | 2027 | 2028 | 2029 | 2030 | 2031 | 2032 | 2033 | 2034 | 2035",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/023-aba-go-to-the-previous-month.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/024-aba-go-to-the-next-month.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401"
+ },
+ {
+  "arquivo": "projetos/projeto/025-estado-gantt.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Disciplinas",
+   "button: Gantt"
+  ],
+  "titulo": "Gantt",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#disciplinas"
+ },
+ {
+  "arquivo": "projetos/projeto/026-estado-fluxo.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Disciplinas",
+   "button: Fluxo"
+  ],
+  "titulo": "Fluxo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#disciplinas"
+ },
+ {
+  "arquivo": "projetos/projeto/027-lista-filtrar-por-responsavel.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "combobox: Filtrar por responsável"
+  ],
+  "titulo": "Todos os responsáveis | Beatriz Rocha | Dev Local | Juliana Costa | Rafael Mendes | Thiago Alves",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/028-lista-filtrar-por-status.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "combobox: Filtrar por status"
+  ],
+  "titulo": "Todos os status | A fazer | Em andamento | Em revisão | Concluído | A fazer · sem coluna | Fazendo · sem coluna | Concluído · sem coluna",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/029-estado-em-atraso.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Em atraso"
+  ],
+  "titulo": "Em atraso",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/030-dialog-nova-tarefa.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa"
+  ],
+  "titulo": "Nova tarefa",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/031-lista-disciplina.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "combobox: Disciplina"
+  ],
+  "titulo": "Sem disciplina | Estrutural | Instalações (MEP) | Fundações",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/032-dialog-revisar-memorial-de-calculo-estrutural-j.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Revisar memorial de cálculo estrutural Juliana Costa 28/11/2026 Fazendo"
+  ],
+  "titulo": "Editar tarefa",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#tarefas"
+ },
+ {
+  "arquivo": "projetos/projeto/033-dialog-publicar-revisao.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Revisões",
+   "button: Publicar revisão"
+  ],
+  "titulo": "Publicar revisão",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#revisoes"
+ },
+ {
+  "arquivo": "projetos/projeto/034-dialog-registrar-visita.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Atividades",
+   "button: Registrar visita"
+  ],
+  "titulo": "Registrar visita",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#atividades"
+ },
+ {
+  "arquivo": "projetos/projeto/035-dialog-registrar-suporte.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Atividades",
+   "button: Registrar suporte"
+  ],
+  "titulo": "Registrar suporte",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#atividades"
+ },
+ {
+  "arquivo": "projetos/projeto/036-dialog-mencionar-alguem.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Atividades",
+   "button: Mencionar alguém"
+  ],
+  "titulo": "Mencionar alguém",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#atividades"
+ },
+ {
+  "arquivo": "projetos/projeto/037-dialog-solicitar-ao-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Cliente",
+   "button: Solicitar ao cliente"
+  ],
+  "titulo": "Nova solicitação ao cliente",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#cliente"
+ },
+ {
+  "arquivo": "projetos/projeto/038-menu-acoes-do-pagamento.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "menu",
+  "cadeia": [
+   "tab: Pagamentos",
+   "button: Ações do pagamento"
+  ],
+  "titulo": "Marcar como recebido",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#pagamentos"
+ },
+ {
+  "arquivo": "projetos/projeto/039-dialog-marcar-como-recebido.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Pagamentos",
+   "button: Ações do pagamento",
+   "menuitem: Marcar como recebido"
+  ],
+  "titulo": "Confirmar recebimento",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#pagamentos"
+ },
+ {
+  "arquivo": "projetos/projeto/040-dialog-novo-aditivo.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Escopo e aditivos",
+   "button: Novo aditivo"
+  ],
+  "titulo": "Novo aditivo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#escopo"
+ },
+ {
+  "arquivo": "projetos/projeto/041-dialog-rejeitar.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Escopo e aditivos",
+   "button: Rejeitar"
+  ],
+  "titulo": "Rejeitar aditivo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#escopo"
+ },
+ {
+  "arquivo": "projetos/projeto/042-dialog-aprovar.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Escopo e aditivos",
+   "button: Aprovar"
+  ],
+  "titulo": "Aprovar aditivo",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#escopo"
+ },
+ {
+  "arquivo": "projetos/projeto/043-lista-disciplina.jpg",
+  "modulo": "projetos",
+  "tela": "projeto",
+  "rota": "/projetos/00000000-0000-0000-0000-000000000401",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Histórico",
+   "combobox: Disciplina"
+  ],
+  "titulo": "Todas as disciplinas | Estrutural | Instalações (MEP) | Fundações",
+  "url": "/projetos/00000000-0000-0000-0000-000000000401#historico"
+ }
+]

@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "publico/cliente-login/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "cliente-login",
+  "rota": "/cliente/login",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/cliente/login"
+ },
+ {
+  "arquivo": "publico/cliente-login/002-estado-entrar.jpg",
+  "modulo": "publico",
+  "tela": "cliente-login",
+  "rota": "/cliente/login",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Entrar"
+  ],
+  "titulo": "Entrar",
+  "url": "/cliente/login"
+ }
+]

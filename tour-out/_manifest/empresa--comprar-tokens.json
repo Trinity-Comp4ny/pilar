@@ -1,0 +1,12 @@
+[
+ {
+  "arquivo": "empresa/comprar-tokens/001-tela-tela.jpg",
+  "modulo": "empresa",
+  "tela": "comprar-tokens",
+  "rota": "/comprar-tokens",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/comprar-tokens"
+ }
+]

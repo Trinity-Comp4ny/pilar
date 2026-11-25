@@ -1,0 +1,48 @@
+[
+ {
+  "arquivo": "geral/revisao-ia/001-tela-tela.jpg",
+  "modulo": "geral",
+  "tela": "revisao-ia",
+  "rota": "/revisao-ia",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/agentes"
+ },
+ {
+  "arquivo": "geral/revisao-ia/002-estado-pendencias-1.jpg",
+  "modulo": "geral",
+  "tela": "revisao-ia",
+  "rota": "/revisao-ia",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Pendências 1"
+  ],
+  "titulo": "Pendências 1",
+  "url": "/agentes"
+ },
+ {
+  "arquivo": "geral/revisao-ia/003-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "geral",
+  "tela": "revisao-ia",
+  "rota": "/revisao-ia",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/agentes"
+ },
+ {
+  "arquivo": "geral/revisao-ia/004-lista-escolher-projeto-em-foco.jpg",
+  "modulo": "geral",
+  "tela": "revisao-ia",
+  "rota": "/revisao-ia",
+  "efeito": "lista",
+  "cadeia": [
+   "combobox: Escolher projeto em foco"
+  ],
+  "titulo": "Edifício Comercial Horizonte | Residencial Vale Verde | Reforma Parque das Águas",
+  "url": "/agentes"
+ }
+]

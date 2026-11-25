@@ -1,0 +1,12 @@
+[
+ {
+  "arquivo": "publico/proposta-compartilhada/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "proposta-compartilhada",
+  "rota": "/proposta-compartilhada",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/proposta-compartilhada"
+ }
+]

@@ -1,0 +1,159 @@
+[
+ {
+  "arquivo": "projetos/mapa/001-tela-tela.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/003-dialog-disciplinas.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Disciplinas"
+  ],
+  "titulo": "Gerenciar Disciplinas",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/004-dialog-fluxos.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Fluxos"
+  ],
+  "titulo": "Fluxos de disciplinas",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/005-estado-novo-fluxo.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Fluxos",
+   "button: Novo fluxo"
+  ],
+  "titulo": "Novo fluxo",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/006-dialog-novo-projeto.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo projeto"
+  ],
+  "titulo": "Novo projeto",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/007-lista-cliente.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Cliente"
+  ],
+  "titulo": "Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/008-lista-placa.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Novo projeto",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/009-dialog-filtros.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/010-dialog-localizar.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Localizar"
+  ],
+  "titulo": "Localizar",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/011-dialog-mostrar.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mostrar"
+  ],
+  "titulo": "Mostrar",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/012-dialog-placa.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Placa"
+  ],
+  "titulo": "Placa",
+  "url": "/projetos/mapa"
+ },
+ {
+  "arquivo": "projetos/mapa/013-dialog-status.jpg",
+  "modulo": "projetos",
+  "tela": "mapa",
+  "rota": "/projetos/mapa",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Status"
+  ],
+  "titulo": "Status",
+  "url": "/projetos/mapa"
+ }
+]

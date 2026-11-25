@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "publico/cliente-convite/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "cliente-convite",
+  "rota": "/cliente/convite",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/cliente/convite"
+ },
+ {
+  "arquivo": "publico/cliente-convite/002-nav-ir-para-o-login.jpg",
+  "modulo": "publico",
+  "tela": "cliente-convite",
+  "rota": "/cliente/convite",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Ir para o login"
+  ],
+  "titulo": "/cliente/login",
+  "url": "/cliente/login"
+ }
+]

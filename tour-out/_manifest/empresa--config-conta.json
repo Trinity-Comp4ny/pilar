@@ -1,0 +1,84 @@
+[
+ {
+  "arquivo": "empresa/config-conta/001-tela-tela.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-conta/002-aba-seguranca.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Segurança"
+  ],
+  "titulo": "Segurança",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-conta/003-aba-empresa.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Empresa"
+  ],
+  "titulo": "Empresa",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-conta/004-aba-integracoes.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Integrações"
+  ],
+  "titulo": "Integrações",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-conta/005-aba-uso.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Uso"
+  ],
+  "titulo": "Uso",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-conta/006-aba-pagamento.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Pagamento"
+  ],
+  "titulo": "Pagamento",
+  "url": "/inicio"
+ },
+ {
+  "arquivo": "empresa/config-conta/007-aba-privacidade.jpg",
+  "modulo": "empresa",
+  "tela": "config-conta",
+  "rota": "/profile",
+  "efeito": "aba",
+  "cadeia": [
+   "button: Privacidade"
+  ],
+  "titulo": "Privacidade",
+  "url": "/inicio"
+ }
+]

@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "publico/campo-convite/001-tela-tela.jpg",
+  "modulo": "publico",
+  "tela": "campo-convite",
+  "rota": "/campo/convite",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/campo/convite"
+ },
+ {
+  "arquivo": "publico/campo-convite/002-nav-ir-para-o-login.jpg",
+  "modulo": "publico",
+  "tela": "campo-convite",
+  "rota": "/campo/convite",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Ir para o login"
+  ],
+  "titulo": "/campo/login",
+  "url": "/campo/login"
+ }
+]

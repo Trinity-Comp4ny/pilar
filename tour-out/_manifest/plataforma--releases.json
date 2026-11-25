@@ -1,0 +1,24 @@
+[
+ {
+  "arquivo": "plataforma/releases/001-tela-tela.jpg",
+  "modulo": "plataforma",
+  "tela": "releases",
+  "rota": "/ultra-admin/releases",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/mfa/setup"
+ },
+ {
+  "arquivo": "plataforma/releases/002-estado-ja-tenho-o-app-instalado.jpg",
+  "modulo": "plataforma",
+  "tela": "releases",
+  "rota": "/ultra-admin/releases",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Já tenho o app instalado →"
+  ],
+  "titulo": "Já tenho o app instalado →",
+  "url": "/mfa/setup"
+ }
+]

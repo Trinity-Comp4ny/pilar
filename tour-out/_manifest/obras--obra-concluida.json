@@ -1,0 +1,479 @@
+[
+ {
+  "arquivo": "obras/obra-concluida/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/002-aba-aba-diario.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Diário"
+  ],
+  "titulo": "aba-Diário",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/003-aba-aba-cronograma.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Cronograma"
+  ],
+  "titulo": "aba-Cronograma",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/004-aba-aba-tarefas.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Tarefas"
+  ],
+  "titulo": "aba-Tarefas",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/005-aba-aba-cotacoes.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Cotações"
+  ],
+  "titulo": "aba-Cotações",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/006-aba-aba-estoque.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Estoque"
+  ],
+  "titulo": "aba-Estoque",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/007-aba-aba-financeiro.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Financeiro"
+  ],
+  "titulo": "aba-Financeiro",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/008-aba-aba-relatorios.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Relatórios"
+  ],
+  "titulo": "aba-Relatórios",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/009-aba-aba-acessos.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Acessos"
+  ],
+  "titulo": "aba-Acessos",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/010-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/011-dialog-editar.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Editar"
+  ],
+  "titulo": "Editar obra",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/012-lista-status.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Status"
+  ],
+  "titulo": "Planejada | Em andamento | Paralisada | Concluída",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/013-lista-responsavel.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Responsável"
+  ],
+  "titulo": "Ninguém | Beatriz Rocha | Dev Local | Juliana Costa | Rafael Mendes | Thiago Alves",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/014-lista-cobranca.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Cobrança"
+  ],
+  "titulo": "Administração | Preço fechado",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/015-lista-projeto-opcional.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Projeto (opcional)"
+  ],
+  "titulo": "Sem projeto | Edifício Comercial Horizonte | Reforma Parque das Águas | Residencial Vale Verde",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/016-lista-cliente.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Cliente"
+  ],
+  "titulo": "Sem cliente | Condomínio Parque das Águas | Construtora Horizonte | Incorporadora Vale Verde | Marcelo",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/017-lista-placa.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "button: Editar",
+   "combobox: Placa"
+  ],
+  "titulo": "Não instalada | Instalada | Retirada",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/018-dialog-excluir.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Excluir"
+  ],
+  "titulo": "Excluir obra?",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/019-estado-registrar-dia.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Registrar dia"
+  ],
+  "titulo": "Registrar dia",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/020-dialog-gravar-registro.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Diário",
+   "button: Gravar registro"
+  ],
+  "titulo": "Gravar registro",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/021-dialog-registrar-dia.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Diário",
+   "button: Registrar dia"
+  ],
+  "titulo": "Registrar dia",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/022-lista-clima.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Diário",
+   "button: Registrar dia",
+   "combobox: Clima"
+  ],
+  "titulo": "Não informado | Ensolarado | Nublado | Chuvoso | Chuva forte",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/023-lista-condicao-de-trabalho.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Diário",
+   "button: Registrar dia",
+   "combobox: Condição de trabalho"
+  ],
+  "titulo": "Não informado | Trabalho normal | Trabalho parcial | Obra paralisada",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/024-dialog-importar-de-planilha.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Cronograma",
+   "button: Importar de planilha"
+  ],
+  "titulo": "Importar cronograma",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/025-dialog-filtrar-por-pessoa.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Filtrar por pessoa"
+  ],
+  "titulo": "Filtrar por pessoa",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/026-dialog-prioridade.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Prioridade"
+  ],
+  "titulo": "Prioridade",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/027-dialog-todo-o-periodo.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Todo o período"
+  ],
+  "titulo": "Todo o período",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/028-dialog-situacao.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Situação"
+  ],
+  "titulo": "Situação",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/029-menu-ordenar-por-previsao.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "menu",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Ordenar por Previsão"
+  ],
+  "titulo": "Prioridade | Previsão | Nome | Criação | Mais próxima primeiro | Mais distante primeiro",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/030-dialog-nova-tarefa.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa"
+  ],
+  "titulo": "Nova tarefa",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/031-dialog-abrir-calendario.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/032-lista-choose-the-month.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/033-lista-choose-the-year.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1996 | 1997 | 1998 | 1999 | 2000 | 2001 | 2002 | 2003 | 2004 | 2005",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/034-aba-go-to-the-previous-month.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/035-aba-go-to-the-next-month.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Nova tarefa",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/036-estado-montar-no-cronograma.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Tarefas",
+   "button: Montar no cronograma"
+  ],
+  "titulo": "Montar no cronograma",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ },
+ {
+  "arquivo": "obras/obra-concluida/037-dialog-nova-cotacao.jpg",
+  "modulo": "obras",
+  "tela": "obra-concluida",
+  "rota": "/obras/00000000-0000-0000-0000-000000000a02",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Cotações",
+   "button: Nova cotação"
+  ],
+  "titulo": "Nova cotação",
+  "url": "/obras/00000000-0000-0000-0000-000000000a02"
+ }
+]

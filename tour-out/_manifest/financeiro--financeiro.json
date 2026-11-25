@@ -1,0 +1,493 @@
+[
+ {
+  "arquivo": "financeiro/financeiro/001-tela-tela.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/002-aba-aba-lancamentos.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Lançamentos"
+  ],
+  "titulo": "aba-Lançamentos",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/003-aba-aba-folha-de-pagamento.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Folha de Pagamento"
+  ],
+  "titulo": "aba-Folha de Pagamento",
+  "url": "/gestao/financeiro?tab=folha-pagamento&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/004-aba-aba-carteira.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Carteira"
+  ],
+  "titulo": "aba-Carteira",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/005-aba-aba-relatorios.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Relatórios"
+  ],
+  "titulo": "aba-Relatórios",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/006-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/007-dialog-novo-lancamento.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Novo lançamento"
+  ],
+  "titulo": "Novo lançamento",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/008-dialog-este-mes.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Este mês"
+  ],
+  "titulo": "Este mês",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/009-estado-indicadores.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Indicadores"
+  ],
+  "titulo": "Indicadores",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/010-estado-performance.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "button: Performance"
+  ],
+  "titulo": "Performance",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/011-estado-a-receber-x-a-pagar.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "button: A receber x a pagar"
+  ],
+  "titulo": "A receber x a pagar",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/012-dialog-ver-detalhes.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Ver detalhes"
+  ],
+  "titulo": "Detalhamento de receitas",
+  "url": "/gestao/financeiro?tab=visao-geral&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/013-nav-ver-todos.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "nav",
+  "cadeia": [
+   "button: Ver todos"
+  ],
+  "titulo": "/gestao/financeiro",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/014-dialog-filtros.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Filtros"
+  ],
+  "titulo": "Filtros",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/015-dialog-importar.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Importar"
+  ],
+  "titulo": "Importar lançamentos",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/016-dialog-editar-lancamento.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento"
+  ],
+  "titulo": "Editar Despesa",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/017-dialog-abrir-calendario.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário"
+  ],
+  "titulo": "Abrir calendário",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/018-lista-choose-the-month.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "combobox: Choose the Month"
+  ],
+  "titulo": "janeiro | fevereiro | março | abril | maio | junho | julho | agosto | setembro | outubro",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/019-lista-choose-the-year.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "combobox: Choose the Year"
+  ],
+  "titulo": "1996 | 1997 | 1998 | 1999 | 2000 | 2001 | 2002 | 2003 | 2004 | 2005",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/020-aba-go-to-the-previous-month.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "button: Go to the Previous Month"
+  ],
+  "titulo": "Go to the Previous Month",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/021-aba-go-to-the-next-month.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "aba",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Abrir calendário",
+   "button: Go to the Next Month"
+  ],
+  "titulo": "Go to the Next Month",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/022-lista-projeto.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "combobox: Projeto"
+  ],
+  "titulo": "Edifício Comercial Horizonte | Reforma Parque das Águas | Residencial Vale Verde",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/023-lista-categoria.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "combobox: Categoria"
+  ],
+  "titulo": "Despesas de escritório | Folha e pró-labore | Serviços terceirizados | Software e licenças",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/024-estado-mais-opcoes.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Editar lançamento",
+   "button: Mais opções"
+  ],
+  "titulo": "Mais opções",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/025-dialog-excluir-lancamento.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Lançamentos",
+   "button: Excluir lançamento"
+  ],
+  "titulo": "Excluir despesa",
+  "url": "/gestao/financeiro?tab=lancamentos&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/026-dialog-status.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Folha de Pagamento",
+   "button: Status"
+  ],
+  "titulo": "Status",
+  "url": "/gestao/financeiro?tab=folha-pagamento&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/027-menu-pago.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "menu",
+  "cadeia": [
+   "tab: Folha de Pagamento",
+   "button: pago"
+  ],
+  "titulo": "Marcar como pendente | Marcar como pago | Cancelar pagamento",
+  "url": "/gestao/financeiro?tab=folha-pagamento&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/028-dialog-adicionar-conta.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Carteira",
+   "button: Adicionar conta"
+  ],
+  "titulo": "Adicionar conta bancária",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/029-estado-it-conta-corrente-r-213-5-mil.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Carteira",
+   "button: IT Conta Corrente R$ 213,5 mil"
+  ],
+  "titulo": "IT Conta Corrente R$ 213,5 mil",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/030-estado-cartao-corporativo-vence-em-41d.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Carteira",
+   "button: Cartão Corporativo vence em 41d"
+  ],
+  "titulo": "Cartão Corporativo vence em 41d",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/031-estado-nu-conta-reserva-r-120-mil.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Carteira",
+   "button: NU Conta Reserva R$ 120 mil"
+  ],
+  "titulo": "NU Conta Reserva R$ 120 mil",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/032-dialog-cartao-corporativo-dezembro-vence-05-01-.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Carteira",
+   "button: Cartão Corporativo Dezembro · vence 05/01 vence em 41d R$ 3.980,00"
+  ],
+  "titulo": "Fatura Dezembro 2026",
+  "url": "/gestao/financeiro?tab=carteira&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/033-lista-tipo-de-relatorio.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "lista",
+  "cadeia": [
+   "tab: Relatórios",
+   "combobox: Tipo de relatório"
+  ],
+  "titulo": "Financeiro (Receitas e Despesas) | Receitas | Despesas | Rentabilidade por projeto | Rentabilidade por cliente",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/034-dialog-todo-o-periodo.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "dialog",
+  "cadeia": [
+   "tab: Relatórios",
+   "button: Todo o período"
+  ],
+  "titulo": "Todo o período",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/035-estado-financeiro-receitas-e-despesas-do-period.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Relatórios",
+   "button: Financeiro Receitas e despesas do período, com saldo"
+  ],
+  "titulo": "Financeiro Receitas e despesas do período, com saldo",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/036-estado-receitas-so-as-entradas-do-periodo.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Relatórios",
+   "button: Receitas Só as entradas do período"
+  ],
+  "titulo": "Receitas Só as entradas do período",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/037-estado-despesas-so-as-saidas-do-periodo.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Relatórios",
+   "button: Despesas Só as saídas do período"
+  ],
+  "titulo": "Despesas Só as saídas do período",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ },
+ {
+  "arquivo": "financeiro/financeiro/038-estado-rentabilidade-por-cliente-margem-por-cli.jpg",
+  "modulo": "financeiro",
+  "tela": "financeiro",
+  "rota": "/gestao/financeiro",
+  "efeito": "estado",
+  "cadeia": [
+   "tab: Relatórios",
+   "button: Rentabilidade por cliente Margem por cliente"
+  ],
+  "titulo": "Rentabilidade por cliente Margem por cliente",
+  "url": "/gestao/financeiro?tab=relatorios&from=2026-11-01&to=2026-11-30"
+ }
+]

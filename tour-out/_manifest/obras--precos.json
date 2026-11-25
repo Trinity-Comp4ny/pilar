@@ -1,0 +1,49 @@
+[
+ {
+  "arquivo": "obras/precos/001-tela-tela.jpg",
+  "modulo": "obras",
+  "tela": "precos",
+  "rota": "/obras/estimativas/precos",
+  "efeito": "tela",
+  "cadeia": [],
+  "titulo": "tela",
+  "url": "/obras/estimativas/precos"
+ },
+ {
+  "arquivo": "obras/precos/002-dialog-duvidas-sobre-esta-tela.jpg",
+  "modulo": "obras",
+  "tela": "precos",
+  "rota": "/obras/estimativas/precos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Dúvidas sobre esta tela"
+  ],
+  "titulo": "Dúvidas sobre a Pilar",
+  "url": "/obras/estimativas/precos"
+ },
+ {
+  "arquivo": "obras/precos/003-menu-mais-acoes-de-fundacao.jpg",
+  "modulo": "obras",
+  "tela": "precos",
+  "rota": "/obras/estimativas/precos",
+  "efeito": "menu",
+  "cadeia": [
+   "button: Mais ações de Fundação"
+  ],
+  "titulo": "Definir valor",
+  "url": "/obras/estimativas/precos"
+ },
+ {
+  "arquivo": "obras/precos/004-dialog-definir-valor.jpg",
+  "modulo": "obras",
+  "tela": "precos",
+  "rota": "/obras/estimativas/precos",
+  "efeito": "dialog",
+  "cadeia": [
+   "button: Mais ações de Fundação",
+   "menuitem: Definir valor"
+  ],
+  "titulo": "Valor da sua empresa: Fundação",
+  "url": "/obras/estimativas/precos"
+ }
+]
