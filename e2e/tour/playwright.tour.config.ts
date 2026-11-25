@@ -32,7 +32,7 @@ export default defineConfig({
     },
     {
       name: "authenticated",
-      testMatch: /tour[\\/](app|ultra|portal|campo)\.tour\.ts$/,
+      testMatch: /tour[\\/](app|ultra|portal|campo|roteiros)\.tour\.ts$/,
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
