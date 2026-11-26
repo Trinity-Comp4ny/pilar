@@ -69,6 +69,7 @@ REVOKE ALL ON FUNCTION public.gerar_resumo_financeiro_dia() FROM PUBLIC, anon, a
 CREATE OR REPLACE FUNCTION public.gerar_resumo_financeiro_dia_monitored()
 RETURNS void
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 DECLARE
   v_check_in_id uuid;
