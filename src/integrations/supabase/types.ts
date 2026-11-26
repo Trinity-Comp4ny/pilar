@@ -11737,6 +11737,8 @@ export type Database = {
       }
       gerar_notificacoes_ambient: { Args: never; Returns: number }
       gerar_notificacoes_ambient_monitored: { Args: never; Returns: undefined }
+      gerar_resumo_financeiro_dia: { Args: never; Returns: number }
+      gerar_resumo_financeiro_dia_monitored: { Args: never; Returns: undefined }
       get_cliente_obra_detail: {
         Args: { p_obra_id: string; p_token: string }
         Returns: Json
