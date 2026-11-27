@@ -629,11 +629,11 @@ describe("Leads: filtros, busca e visão em lista", () => {
   it("filtra pela previsão de fechamento: 7 dias, vencida e este mês", async () => {
     const user = userEvent.setup();
     abrir();
-    await escolher(user, "Previsão", "Fecham em 7 dias");
+    await escolher(user, "Fechamento", "Fecham em 7 dias");
     expect(visiveis()).toEqual(["Carla"]);
-    await escolher(user, "Previsão", "Previsão vencida");
+    await escolher(user, "Fechamento", "Fechamento vencido");
     expect(visiveis()).toEqual(["Dani"]);
-    await escolher(user, "Previsão", "Fecham este mês");
+    await escolher(user, "Fechamento", "Fecham este mês");
     expect(visiveis()).toEqual(["Carla", "Elis"]);
   });
 

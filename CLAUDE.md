@@ -6,6 +6,7 @@
 npm run dev           # ambiente local completo: Supabase + migrations pendentes + functions + app + LP marketing
 npm run dev:app        # só o Vite do app (sem Supabase/functions/LP)
 npm run dev:marketing  # só o Vite da LP (apps/marketing)
+npm run dev:mock       # tela ao vivo SEM Docker: Supabase simulado com dado seed (docs/design/DEV_MOCK.md)
 npm run dev:all        # app + LP juntos, sem Supabase (front puro, mais rápido, não exige Docker)
 npm run dev:local      # Supabase + migrations pendentes + functions + app (sem LP marketing)
 npm run build:strict # Build com typecheck
