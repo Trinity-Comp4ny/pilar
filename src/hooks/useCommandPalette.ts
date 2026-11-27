@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { EVENTO_ABRIR_PALETA } from "@/lib/paletaComandosEvento";
+import { isShortcutEventBlocked } from "@/lib/teclado";
 
 /**
  * Hook que controla o estado de abertura da Command Palette
@@ -13,6 +14,7 @@ export function useCommandPalette() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (isShortcutEventBlocked(e) || e.altKey) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         toggle();
