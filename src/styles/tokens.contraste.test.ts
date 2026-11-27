@@ -56,3 +56,25 @@ describe("tokens.css: pares fill e texto por cima", () => {
     expect(contraste([0, 0, 10], [0, 0, 100])).toBeGreaterThan(16);
   });
 });
+
+describe("tokens.css: texto forte e médio sobre a superfície suave da família", () => {
+  const SUAVES = ["success", "danger", "info", "warning", "attention", "highlight"];
+  it.each(SUAVES)("text-%s-strong e text-%s-mid passam AA sobre surface-%s-soft", (f) => {
+    const fundo = hslDe(`surface-${f}-soft`);
+    for (const nivel of ["strong", "mid"]) {
+      const razao = contraste(hslDe(`text-${f}-${nivel}`), fundo);
+      expect(razao, `${f}-${nivel}: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("valor positivo e negativo passam AA sobre branco", () => {
+    for (const t of ["positive-strong", "negative-strong"]) {
+      const razao = contraste(hslDe(t), [0, 0, 100]);
+      expect(razao, `${t}: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("tinta sobre o verde da marca passa AA", () => {
+    expect(contraste(hslDe("text-on-brand"), hslDe("brand-accent"))).toBeGreaterThanOrEqual(4.5);
+  });
+});

@@ -60,7 +60,7 @@
     --accent-orange: var(--c-brand-500);
 
     --destructive: var(--c-red-500);
-    --destructive-foreground: var(--c-paper-0);
+    --destructive-foreground: var(--c-ink-900);
 
     --border: var(--c-gray-200);
     --input: var(--c-gray-200);

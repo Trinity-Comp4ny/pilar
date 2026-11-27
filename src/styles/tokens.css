@@ -47,66 +47,66 @@
   --c-modulo-obra-strong: 28 66% 32%;
 
   /* Greens */
-  --c-green-50: 138 76% 97%;
-  --c-green-100: 141 79% 85%;
-  --c-green-200: 141 74% 73%;
-  --c-green-400: 142 69% 58%;
-  --c-green-500: 142 71% 45%;
-  --c-green-600: 142 76% 36%;
-  --c-green-700: 142 72% 29%;
-  --c-green-800: 143 64% 24%;
-  --c-green-900: 142 61% 21%;
+  --c-green-50: 152 100% 96%;
+  --c-green-100: 152 100% 91%;
+  --c-green-200: 152 100% 83%;
+  --c-green-400: 152 85% 64%;
+  --c-green-500: 152 85% 58%;
+  --c-green-600: 152 85% 37%;
+  --c-green-700: 152 85% 27%;
+  --c-green-800: 152 85% 21%;
+  --c-green-900: 152 80% 15%;
 
   /* Reds */
-  --c-red-50: 0 93% 94%;
-  --c-red-100: 0 96% 89%;
-  --c-red-200: 0 94% 82%;
-  --c-red-400: 0 91% 71%;
-  --c-red-500: 0 84% 60%;
-  --c-red-600: 0 74% 50%;
-  --c-red-700: 0 74% 42%;
-  --c-red-900: 0 63% 31%;
+  --c-red-50: 352 100% 96%;
+  --c-red-100: 352 100% 91%;
+  --c-red-200: 352 100% 83%;
+  --c-red-400: 352 100% 72%;
+  --c-red-500: 352 100% 66%;
+  --c-red-600: 352 85% 54%;
+  --c-red-700: 352 85% 44%;
+  --c-red-900: 352 80% 32%;
 
   /* Outras cores de gráfico */
-  --c-emerald-500: 160 84% 39%;
-  --c-lime-500: 85 85% 45%;
+  --c-emerald-500: 165 85% 50%;
+  --c-lime-500: 85 90% 55%;
   --c-yellow-100: 55 97% 88%;
-  --c-yellow-400: 48 96% 53%;
+  --c-yellow-400: 50 100% 58%;
   --c-yellow-600: 35 92% 33%;
   --c-yellow-800: 28 73% 26%;
-  --c-amber-50: 48 100% 96%;
-  --c-amber-100: 48 96% 89%;
-  --c-amber-200: 48 97% 77%;
-  --c-amber-500: 48 96% 47%;
-  --c-amber-600: 38 92% 50%;
-  --c-amber-700: 26 90% 37%;
-  --c-amber-800: 23 83% 31%;
-  --c-orange-50: 33 100% 96%;
-  --c-orange-100: 34 100% 92%;
-  --c-orange-200: 32 98% 83%;
-  --c-orange-500: 25 95% 53%;
-  --c-orange-600: 21 90% 48%;
-  --c-orange-700: 17 88% 40%;
-  --c-orange-800: 15 79% 34%;
-  --c-blue-50: 214 100% 97%;
-  --c-blue-100: 214 95% 93%;
-  --c-blue-200: 213 97% 87%;
-  --c-blue-400: 213 94% 68%;
-  --c-blue-500: 217 91% 60%;
-  --c-blue-600: 221 83% 53%;
-  --c-blue-700: 224 76% 48%;
-  --c-blue-800: 226 71% 40%;
-  --c-indigo-500: 239 84% 67%;
-  --c-violet-500: 262 83% 67%;
-  --c-purple-50: 270 100% 98%;
-  --c-purple-100: 269 100% 95%;
-  --c-purple-200: 269 100% 92%;
-  --c-purple-500: 271 91% 65%;
-  --c-purple-600: 271 81% 56%;
-  --c-purple-700: 272 72% 47%;
-  --c-purple-800: 273 67% 39%;
-  --c-pink-500: 330 81% 60%;
-  --c-cyan-500: 189 94% 43%;
+  --c-amber-50: 44 100% 96%;
+  --c-amber-100: 44 100% 91%;
+  --c-amber-200: 44 100% 83%;
+  --c-amber-500: 44 100% 58%;
+  --c-amber-600: 38 100% 52%;
+  --c-amber-700: 34 85% 33%;
+  --c-amber-800: 34 85% 27%;
+  --c-orange-50: 24 100% 96%;
+  --c-orange-100: 24 100% 91%;
+  --c-orange-200: 24 100% 83%;
+  --c-orange-500: 24 100% 62%;
+  --c-orange-600: 21 95% 52%;
+  --c-orange-700: 20 85% 39%;
+  --c-orange-800: 20 85% 33%;
+  --c-blue-50: 206 100% 96%;
+  --c-blue-100: 206 100% 91%;
+  --c-blue-200: 206 100% 83%;
+  --c-blue-400: 206 100% 68%;
+  --c-blue-500: 206 100% 62%;
+  --c-blue-600: 210 85% 52%;
+  --c-blue-700: 210 85% 42%;
+  --c-blue-800: 210 85% 36%;
+  --c-indigo-500: 232 100% 76%;
+  --c-violet-500: 256 100% 77%;
+  --c-purple-50: 270 100% 96%;
+  --c-purple-100: 270 100% 91%;
+  --c-purple-200: 270 100% 83%;
+  --c-purple-500: 270 100% 74%;
+  --c-purple-600: 268 85% 56%;
+  --c-purple-700: 268 85% 46%;
+  --c-purple-800: 268 85% 40%;
+  --c-pink-500: 322 100% 72%;
+  --c-cyan-500: 182 90% 52%;
 
   /* Neutros */
   --c-gray-200: 220 13% 91%;
@@ -210,16 +210,16 @@
  * tokens.contraste.test.ts: todos >= 4,5:1). Diferente das
    * tinted surfaces (-soft), que são fundo suave. Consumir via classes bg-fill-X
    * com o par text-fill-X-foreground. */
-  --fill-danger: var(--c-red-600); /* banner urgente / destrutivo cheio */
-  --fill-danger-fg: 0 0% 100%; /* branco (4,8:1 sobre red-600) */
+  --fill-danger: var(--c-red-500); /* banner urgente / destrutivo cheio (coral neon) */
+  --fill-danger-fg: var(--c-ink-900); /* tinta: branco não passa em fill neon */
   --fill-warning: var(--c-amber-500); /* aviso sólido */
   --fill-warning-fg: var(--c-ink-900); /* tinta (amarelo pede texto escuro) */
   --fill-attention: var(--c-orange-500); /* atenção sólida */
   --fill-attention-fg: var(--c-ink-900); /* tinta (6,3:1); branco dava 2,8:1 sobre o laranja */
-  --fill-info: var(--c-blue-600); /* info sólida */
-  --fill-info-fg: 0 0% 100%;
-  --fill-success: var(--c-green-700); /* sucesso sólido (green-600 dava 3,3:1 com branco) */
-  --fill-success-fg: 0 0% 100%; /* branco (5,1:1 sobre green-700) */
+  --fill-info: var(--c-blue-500); /* info sólida (céu neon) */
+  --fill-info-fg: var(--c-ink-900);
+  --fill-success: var(--c-green-500); /* sucesso sólido (menta neon) */
+  --fill-success-fg: var(--c-ink-900); /* tinta (neon pede texto escuro) */
 
   /* ── Tinted surfaces / strong text para KPIs e badges ─────── */
   /* Cada família expõe três aliases:

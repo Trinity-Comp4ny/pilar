@@ -11,6 +11,18 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-27 · Paleta neon para as cores semânticas (combina com o verde fluorescente da marca)
+
+**Decisão:** as cores de sucesso, atenção, erro, info, laranja e violeta passam a ser neon leve, na mesma energia do
+verde da marca (`#A6EC88`), em vez da paleta saturada tipo Tailwind. Matizes: menta (sucesso), âmbar, coral (erro),
+céu (info), laranja e violeta. Regra de uso: neon só como fill (botão, ponto, barra, badge sólido) com texto
+`ink-900` por cima; texto colorido usa sempre os tons 700/800, que passam AA. Área grande usa as lavagens 50/100,
+nunca o fill cheio. Os nomes dos tokens não mudaram, só os valores das primitivas e os pares `fill-*-fg`
+(branco sobre neon não passa, então o texto virou tinta).
+
+Supera a paleta anterior (verde `142`, vermelho `0`, azul `221`). O teste `tokens.contraste.test.ts` agora cobre
+fill/fg, texto strong/mid sobre a superfície suave e valor positivo/negativo sobre branco.
+
 ## 2026-11-24 · Nova tagline, três tipos de negócio e landing reorganizada para planos e demonstração
 
 **Decisão:** a frase principal passa a ser **"Gestão de projetos e obras, com agentes de IA."**, sem citar nicho. O
