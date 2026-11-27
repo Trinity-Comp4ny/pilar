@@ -79,15 +79,19 @@ export function resolverDependencias(nos: readonly NoDependenciasFluxo[]): Recor
     nos.map((n) => {
       const explicitas = (n.dependeDe ?? []).filter((k) => keys.has(k) && k !== n.key);
       const idx = colunas.indexOf(n.coluna);
+      if (explicitas.length > 0) return [n.key, explicitas];
       const anteriores = idx > 0 ? (porColuna.get(colunas[idx - 1]) ?? []) : [];
-      return [n.key, explicitas.length > 0 ? explicitas : anteriores];
+      return [n.key, anteriores];
     })
   );
 }
 
+type ProblemaNo = "chave_vazia" | "chave_duplicada" | "coluna_invalida";
+type ProblemaAresta = "dependencia_inexistente" | "autodependencia" | "dependencia_duplicada";
+
 export type ProblemaDependenciaFluxo =
-  | { tipo: "chave_vazia" | "chave_duplicada" | "coluna_invalida"; key: string }
-  | { tipo: "dependencia_inexistente" | "autodependencia" | "dependencia_duplicada"; key: string; dependencia: string }
+  | { tipo: ProblemaNo; key: string }
+  | { tipo: ProblemaAresta; key: string; dependencia: string }
   | { tipo: "ciclo"; bloqueadas: string[] };
 
 export type ValidacaoDependenciasFluxo =
@@ -116,8 +120,9 @@ export function validarDependenciasFluxo(nos: readonly NoDependenciasFluxo[]): V
   for (const no of nos) {
     const vistas = new Set<string>();
     for (const dependencia of no.dependeDe ?? []) {
-      if (dependencia === no.key) problemas.push({ tipo: "autodependencia", key: no.key, dependencia });
-      else if (!keys.has(dependencia)) {
+      if (dependencia === no.key) {
+        problemas.push({ tipo: "autodependencia", key: no.key, dependencia });
+      } else if (!keys.has(dependencia)) {
         problemas.push({ tipo: "dependencia_inexistente", key: no.key, dependencia });
       }
       if (vistas.has(dependencia)) {
@@ -130,7 +135,10 @@ export function validarDependenciasFluxo(nos: readonly NoDependenciasFluxo[]): V
 
   const deps = resolverDependencias(nos);
   const grau = new Map(nos.map((no) => [no.key, deps[no.key].length]));
-  const dependentes = new Map(nos.map((no) => [no.key, [] as string[]]));
+  const dependentes = new Map<string, string[]>();
+  for (const no of nos) {
+    dependentes.set(no.key, []);
+  }
   for (const [key, predecessoras] of Object.entries(deps)) {
     for (const anterior of predecessoras) dependentes.get(anterior)!.push(key);
   }
