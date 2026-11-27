@@ -71,8 +71,9 @@ type DisciplinaParaCascata = Pick<
  * com o mesmo `ordem` rodam em paralelo, sem entidade "etapa" nomeada — ver
  * spec 071). O grupo seguinte só recebe data_inicio quando todas as
  * disciplinas do grupo anterior tiverem data_previsao calculada; a maior
- * data_previsao entre elas manda (a mais lenta do grupo). Disciplina sem
- * duração efetiva fica sem data_previsao e não participa desse "maior".
+ * data_previsao entre elas manda (a mais lenta do grupo). Se uma disciplina
+ * ainda não tem duração, mantém as previsões conhecidas da própria coluna,
+ * mas não antecipa as colunas seguintes com uma data parcial.
  */
 export function calcularDatasFluxo(
   disciplinas: DisciplinaParaCascata[],
@@ -86,21 +87,25 @@ export function calcularDatasFluxo(
   let cursorInicio: string | undefined = dataInicioProjeto;
 
   for (const ordem of ordens) {
+    if (!cursorInicio) break;
     let maiorPrevisao: string | undefined;
+    let todasComPrevisao = true;
 
     disciplinas.forEach((d, i) => {
       if (d.ordem !== ordem) return;
       const inicio = cursorInicio;
       const duracao = duracaoEfetiva(d);
       let previsao: string | undefined;
-      if (inicio && duracao && duracao > 0) {
+      if (inicio && duracao && Number.isFinite(duracao) && duracao > 0) {
         previsao = formatDateLocal(addBusinessDays(parseDateLocal(inicio), duracao));
         if (!maiorPrevisao || previsao > maiorPrevisao) maiorPrevisao = previsao;
+      } else {
+        todasComPrevisao = false;
       }
       porIndice.set(i, { ordem, nome: d.nome, data_inicio: inicio, data_previsao: previsao });
     });
 
-    cursorInicio = maiorPrevisao;
+    cursorInicio = todasComPrevisao ? maiorPrevisao : undefined;
   }
 
   return disciplinas.map((d, i) => porIndice.get(i) ?? { ordem: d.ordem, nome: d.nome });
