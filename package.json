@@ -14,6 +14,7 @@
     "typecheck:marketing": "npm run typecheck --workspace=apps/marketing",
     "dev": "bash scripts/dev-full.sh",
     "dev:app": "vite",
+    "dev:mock": "vite --config vite.mock.config.ts",
     "dev:local": "bash scripts/dev-local.sh",
     "seed:local": "bash scripts/seed-local.sh",
     "seed:demo": "bash scripts/seed-demo.sh",
