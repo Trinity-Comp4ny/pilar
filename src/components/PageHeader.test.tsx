@@ -91,6 +91,30 @@ describe("PageHeader", () => {
     expect(document.activeElement).toBe(outro);
   });
 
+  it("atalho / não rouba foco de diálogo, composição ou evento já tratado", () => {
+    renderAt(
+      "/clientes",
+      <>
+        <div role="dialog" aria-label="Editar cliente">
+          <button type="button">Confirmar</button>
+        </div>
+        <PageHeader title="Clientes" search={{ value: "", onChange: vi.fn() }} />
+      </>
+    );
+    const confirmar = screen.getByRole("button", { name: "Confirmar" });
+    confirmar.focus();
+    fireEvent.keyDown(confirmar, { key: "/" });
+    expect(confirmar).toHaveFocus();
+    confirmar.blur();
+    const busca = screen.getByRole("textbox", { name: "Buscar" });
+    fireEvent.keyDown(window, { key: "/", isComposing: true });
+    fireEvent.keyDown(window, { key: "/", repeat: true });
+    const tratado = new KeyboardEvent("keydown", { key: "/", cancelable: true });
+    tratado.preventDefault();
+    window.dispatchEvent(tratado);
+    expect(busca).not.toHaveFocus();
+  });
+
   it("Esc limpa a busca", () => {
     const onChange = vi.fn();
     renderAt("/clientes", <PageHeader title="Clientes" search={{ value: "abc", onChange }} />);
