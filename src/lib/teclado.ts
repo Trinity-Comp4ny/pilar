@@ -6,10 +6,9 @@
 /** Foco num campo em edição: atalho de uma tecla só ("/", "?") não pode roubar a digitação. */
 export function isTypingTarget(el: Element | null): boolean {
   if (!el) return false;
-  return (
-    el.closest('input, textarea, select, [role="textbox"], [role="searchbox"], [role="combobox"], [role="spinbutton"]') !==
-      null || (el as HTMLElement).isContentEditable === true
-  );
+  const campoNativo = el.closest("input, textarea, select");
+  const campoComposto = el.closest('[role="textbox"], [role="searchbox"], [role="combobox"], [role="spinbutton"]');
+  return !!campoNativo || !!campoComposto || (el as HTMLElement).isContentEditable === true;
 }
 
 /** Eventos já tratados, composição IME e repetição não disparam atalhos globais. */
