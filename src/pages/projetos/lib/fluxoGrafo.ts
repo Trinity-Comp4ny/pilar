@@ -40,6 +40,8 @@ export interface ProjecaoFluxo {
   caminhoCritico: string[];
   /** Disciplinas sem previsão gravada: ficam fora da projeção. */
   semData: number;
+  /** Diagnóstico de dependências inválidas no legado. Não é permissão para publicar um novo fluxo. */
+  problemasDependencia?: ProblemaDependenciaFluxo[];
 }
 
 /** Dias úteis no intervalo (de, ate]: quantos `addBusinessDays` levam de `de` até `ate`. */
@@ -62,8 +64,10 @@ function maiorData(a: string | undefined, b: string | undefined): string | undef
   return a >= b ? a : b;
 }
 
+type NoDependenciasFluxo = Pick<NoFluxo, "key" | "coluna" | "dependeDe">;
+
 /** Dependências efetivas: as explícitas, ou toda a coluna anterior existente. */
-export function resolverDependencias(nos: NoFluxo[]): Record<string, string[]> {
+export function resolverDependencias(nos: readonly NoDependenciasFluxo[]): Record<string, string[]> {
   const keys = new Set(nos.map((n) => n.key));
   const colunas = Array.from(new Set(nos.map((n) => n.coluna))).sort((a, b) => a - b);
   const porColuna = new Map<number, string[]>();
@@ -71,17 +75,77 @@ export function resolverDependencias(nos: NoFluxo[]): Record<string, string[]> {
     porColuna.set(n.coluna, [...(porColuna.get(n.coluna) ?? []), n.key]);
   }
 
-  const deps: Record<string, string[]> = {};
-  for (const n of nos) {
-    const explicitas = (n.dependeDe ?? []).filter((k) => keys.has(k) && k !== n.key);
-    if (explicitas.length > 0) {
-      deps[n.key] = explicitas;
-      continue;
-    }
-    const idx = colunas.indexOf(n.coluna);
-    deps[n.key] = idx > 0 ? (porColuna.get(colunas[idx - 1]) ?? []) : [];
+  return Object.fromEntries(
+    nos.map((n) => {
+      const explicitas = (n.dependeDe ?? []).filter((k) => keys.has(k) && k !== n.key);
+      const idx = colunas.indexOf(n.coluna);
+      return [n.key, explicitas.length > 0 ? explicitas : idx > 0 ? (porColuna.get(colunas[idx - 1]) ?? []) : []];
+    })
+  );
+}
+
+export type ProblemaDependenciaFluxo =
+  | { tipo: "chave_vazia" | "chave_duplicada" | "coluna_invalida"; key: string }
+  | { tipo: "dependencia_inexistente" | "autodependencia" | "dependencia_duplicada"; key: string; dependencia: string }
+  | { tipo: "ciclo"; bloqueadas: string[] };
+
+export type ValidacaoDependenciasFluxo =
+  | { valido: true; ordemTopologica: string[] }
+  | { valido: false; problemas: ProblemaDependenciaFluxo[] };
+
+/**
+ * Validação estrita para o editor de Fluxos e a linha de base de propostas.
+ * Não normaliza silenciosamente IDs inválidos, nem publica um caminho parcial.
+ * Mantém a semântica atual: sem dependências explícitas, a coluna anterior
+ * inteira é predecessora. A ordem topológica respeita as dependências e a
+ * ordem de entrada nos empates, sem usar datas, status ou IA.
+ */
+export function validarDependenciasFluxo(nos: readonly NoDependenciasFluxo[]): ValidacaoDependenciasFluxo {
+  const problemas: ProblemaDependenciaFluxo[] = [];
+  const keys = new Set<string>();
+  for (const no of nos) {
+    if (!no.key.trim()) problemas.push({ tipo: "chave_vazia", key: no.key });
+    if (keys.has(no.key)) problemas.push({ tipo: "chave_duplicada", key: no.key });
+    keys.add(no.key);
+    if (!Number.isInteger(no.coluna) || no.coluna < 0) problemas.push({ tipo: "coluna_invalida", key: no.key });
   }
-  return deps;
+
+  for (const no of nos) {
+    const vistas = new Set<string>();
+    for (const dependencia of no.dependeDe ?? []) {
+      if (dependencia === no.key) problemas.push({ tipo: "autodependencia", key: no.key, dependencia });
+      else if (!keys.has(dependencia)) problemas.push({ tipo: "dependencia_inexistente", key: no.key, dependencia });
+      if (vistas.has(dependencia)) problemas.push({ tipo: "dependencia_duplicada", key: no.key, dependencia });
+      vistas.add(dependencia);
+    }
+  }
+  if (problemas.length > 0) return { valido: false, problemas };
+
+  const deps = resolverDependencias(nos);
+  const grau = new Map(nos.map((no) => [no.key, deps[no.key].length]));
+  const dependentes = new Map(nos.map((no) => [no.key, [] as string[]]));
+  for (const [key, predecessoras] of Object.entries(deps)) {
+    for (const anterior of predecessoras) dependentes.get(anterior)!.push(key);
+  }
+
+  // Kahn: evita recursão e retorna as disciplinas bloqueadas pelo ciclo
+  // (inclusive dependentes transitivas). Sem ordem completa, não há publicação.
+  const fila = nos.filter((no) => grau.get(no.key) === 0).map((no) => no.key);
+  for (let i = 0; i < fila.length; i++) {
+    for (const dependente of dependentes.get(fila[i])!) {
+      const restante = grau.get(dependente)! - 1;
+      grau.set(dependente, restante);
+      if (restante === 0) fila.push(dependente);
+    }
+  }
+
+  if (fila.length !== nos.length) {
+    return {
+      valido: false,
+      problemas: [{ tipo: "ciclo", bloqueadas: nos.filter((no) => grau.get(no.key)! > 0).map((no) => no.key) }],
+    };
+  }
+  return { valido: true, ordemTopologica: fila };
 }
 
 /** Dependentes diretos (o inverso de `resolverDependencias`). */
@@ -95,6 +159,7 @@ export function resolverDependentes(deps: Record<string, string[]>): Record<stri
 }
 
 export function projetarFluxo(nos: NoFluxo[], hoje: string): ProjecaoFluxo {
+  const validacao = validarDependenciasFluxo(nos);
   const deps = resolverDependencias(nos);
   const porKey = new Map(nos.map((n) => [n.key, n]));
   const resultado: Record<string, ProjecaoNo & { determinante?: string }> = {};
@@ -192,5 +257,6 @@ export function projetarFluxo(nos: NoFluxo[], hoje: string): ProjecaoFluxo {
     conclusaoEstimada: fimDoFluxo?.fimEstimado,
     caminhoCritico: caminho,
     semData: nos.filter((n) => n.status !== "concluido" && !n.dataPrevisao).length,
+    ...(!validacao.valido ? { problemasDependencia: validacao.problemas } : {}),
   };
 }
