@@ -223,6 +223,48 @@ describe("Propostas: criar", () => {
     expect(payload.tipo).toBe("obra");
   });
 
+  it("impede salvar item sem descrição com valor e preserva o formulário para correção", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(novaProposta());
+    const f = form();
+    await user.click(within(f).getByRole("radio", { name: "Obra / serviço" }));
+    await user.type(within(f).getByLabelText("Título *"), "Reforma");
+    await user.click(within(f).getByRole("button", { name: "Adicionar item" }));
+    const descricao = within(f).getByPlaceholderText("Ex.: Marcenaria, Instalação");
+    const linha = descricao.closest("tr")!;
+    const [, valor] = within(linha).getAllByRole("textbox");
+    await user.type(valor, "150000");
+    await user.click(within(f).getByRole("button", { name: "Criar proposta" }));
+
+    expect(toastError).toHaveBeenCalledWith("Preencha a descrição das linhas com valores ou remova essas linhas.");
+    expect(mocks.create.mutate).not.toHaveBeenCalled();
+    expect(mocks.disciplinas.mutate).not.toHaveBeenCalled();
+
+    await user.type(descricao, "Instalação");
+    await user.click(within(f).getByRole("button", { name: "Criar proposta" }));
+    expect(mocks.create.mutate).toHaveBeenCalledWith(expect.objectContaining({ valor_proposto: 1500 }), expect.anything());
+    expect(mocks.disciplinas.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        disciplinas: [expect.objectContaining({ disciplina: "Instalação", valor_venda: 1500 })],
+      }),
+      expect.anything()
+    );
+  });
+
+  it("ignora uma linha de rascunho totalmente vazia", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(novaProposta());
+    const f = form();
+    await user.type(within(f).getByLabelText("Título *"), "Residência");
+    await user.click(within(f).getByRole("button", { name: "Adicionar disciplina" }));
+    await user.click(within(f).getByRole("button", { name: "Criar proposta" }));
+
+    expect(mocks.create.mutate).toHaveBeenCalledTimes(1);
+    expect(mocks.disciplinas.mutate).not.toHaveBeenCalled();
+  });
+
   it("valor e prazo não aceitam negativo", async () => {
     const user = userEvent.setup();
     abrir();
