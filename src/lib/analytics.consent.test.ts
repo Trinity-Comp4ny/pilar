@@ -63,6 +63,7 @@ function readConsentCookieRaw(): string | null {
 
 let analytics: typeof import("./analytics").analytics;
 let applyCookieConsent: typeof import("./analytics").applyCookieConsent;
+let applyLegitimateInterest: typeof import("./analytics").applyLegitimateInterest;
 let getCookieConsent: typeof import("./cookieConsent").getCookieConsent;
 let hasCookieDecision: typeof import("./cookieConsent").hasCookieDecision;
 
@@ -70,7 +71,7 @@ let hasCookieDecision: typeof import("./cookieConsent").hasCookieDecision;
 // dentro de beforeAll garante essa ordem (import estático seria avaliado cedo demais).
 beforeAll(async () => {
   vi.stubEnv("VITE_POSTHOG_KEY", "test-key");
-  ({ analytics, applyCookieConsent } = await import("./analytics"));
+  ({ analytics, applyCookieConsent, applyLegitimateInterest } = await import("./analytics"));
   ({ getCookieConsent, hasCookieDecision } = await import("./cookieConsent"));
 });
 
@@ -200,5 +201,41 @@ describe("cookieConsent: armazenamento em cookie (ADR 0032)", () => {
     document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify({ decidedAt: "x" }))}; path=/`;
 
     expect(getCookieConsent()).toBeNull();
+  });
+});
+
+describe("analytics: legítimo interesse dentro do app", () => {
+  beforeEach(() => {
+    analytics.reset();
+    localStorage.clear();
+    clearConsentCookie();
+    initMock.mockClear();
+    captureMock.mockClear();
+  });
+
+  it("liga a medição sem decisão prévia", async () => {
+    applyLegitimateInterest();
+    await vi.dynamicImportSettled();
+    analytics.track("cliente_criado");
+    expect(captureMock).toHaveBeenCalledWith("cliente_criado", { origin: "app" });
+    expect(getCookieConsent()).toBeNull();
+  });
+
+  it("objeção explícita vence o legítimo interesse", async () => {
+    applyLegitimateInterest();
+    await vi.dynamicImportSettled();
+    applyCookieConsent(false);
+    captureMock.mockClear();
+    analytics.track("lead_criado");
+    await vi.dynamicImportSettled();
+    expect(captureMock).not.toHaveBeenCalled();
+  });
+
+  it("sair da conta desfaz o legítimo interesse", async () => {
+    applyLegitimateInterest();
+    analytics.reset();
+    analytics.track("lead_criado");
+    await vi.dynamicImportSettled();
+    expect(captureMock).not.toHaveBeenCalled();
   });
 });

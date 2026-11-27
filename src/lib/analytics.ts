@@ -104,8 +104,26 @@ let posthog: PostHog | null = null;
 let posthogLoading: Promise<PostHog | null> | null = null;
 let posthogInitialized = false;
 
+/**
+ * Medição de uso dentro do app (PostHog) se apoia em legítimo interesse (LGPD Art. 7, IX), não em
+ * consentimento: a pessoa aceita os Termos e a Política no cadastro, que informam a medição, e pode
+ * se opor em Configurações → Privacidade. Uma decisão explícita (aceite ou objeção, no cookie ou na
+ * conta) sempre vence. Sem decisão e fora do app logado, segue fail-closed (landing pede consentimento).
+ * O Google Tag Manager continua só com consentimento.
+ */
+let legitimoInteresse = false;
+
 function hasAnalyticsConsent(): boolean {
-  return getCookieConsent()?.analytics === true;
+  const decisao = getCookieConsent();
+  if (decisao) return decisao.analytics;
+  return legitimoInteresse;
+}
+
+/** Liga a medição por legítimo interesse para quem está logado e nunca decidiu nem se opôs. */
+export function applyLegitimateInterest() {
+  if (legitimoInteresse) return;
+  legitimoInteresse = true;
+  analytics.init();
 }
 
 function loadPosthog(): Promise<PostHog | null> {
@@ -201,6 +219,7 @@ const posthogAnalytics: Analytics = {
     });
   },
   reset() {
+    legitimoInteresse = false;
     posthogGeneration++;
     if (posthogInitialized) posthog?.reset();
   },

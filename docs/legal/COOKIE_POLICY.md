@@ -52,6 +52,12 @@ do seu navegador (CPF, CNPJ, senha, token nunca são enviados).
 **Não usamos.** Se isso mudar no futuro, esta política e o banner de
 consentimento serão atualizados antes de qualquer cookie desse tipo ser ativado.
 
+> **Atualização 27/11/2026 (Política v2.2):** dentro do app logado, a medição de uso do PostHog passa a
+> se apoiar em legítimo interesse (LGPD Art. 7, IX), com direito de oposição em Configurações → Privacidade,
+> e não pede mais caixa de consentimento no cadastro. O site público e o Google Tag Manager seguem só com
+> consentimento. Decisão do dono; pendente de revisão jurídica e de teste de legítimo interesse
+> (finalidade, necessidade, balanceamento) registrado no RIPD.
+
 ## Como o consentimento funciona
 
 Na primeira visita, um banner pergunta se você aceita cookies de análise.

@@ -5,7 +5,7 @@
  * automaticamente (fora de escopo da v1, ver spec).
  */
 export const TERMS_VERSION = "2.0";
-export const PRIVACY_VERSION = "2.1";
+export const PRIVACY_VERSION = "2.2";
 
 /**
  * Data em que a versão atual dos Termos passa a valer para quem aceitou uma anterior

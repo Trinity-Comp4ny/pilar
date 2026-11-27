@@ -26,7 +26,6 @@ vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
 vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
-vi.mock("@/components/AceiteAnaliseCard", () => ({ AceiteAnaliseCard: () => <div data-testid="aceite-analise" /> }));
 vi.mock("@/components/AceiteTermosBanner", () => ({
   AceiteTermosBanner: ({ modo }: { modo?: string }) => <div data-testid="aceite-termos" data-modo={modo} />,
 }));
@@ -72,11 +71,9 @@ describe("Layout", () => {
   it("avisos e checklist dividem uma só coluna fixa no canto inferior direito, nunca no topo", async () => {
     renderLayout();
     const termos = await screen.findByTestId("aceite-termos");
-    const analise = await screen.findByTestId("aceite-analise");
     expect(termos).toHaveAttribute("data-modo", "faixa");
     const canto = termos.parentElement!;
     expect(canto).toHaveClass("fixed", "right-4", "z-50", "flex-col");
-    expect(canto).toContainElement(analise);
     expect(canto).toContainElement(await screen.findByTestId("checklist"));
     expect(screen.getByRole("main")).not.toContainElement(canto);
   });

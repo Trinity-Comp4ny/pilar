@@ -244,9 +244,10 @@ describe("Signup", () => {
   });
 });
 
-describe("Signup: caixa opcional de análise de uso", () => {
-  it("começa desmarcada e separada dos Termos", () => {
+describe("Signup: medição de uso junto do aceite", () => {
+  it("tem um só aceite (Termos e Política) e avisa da medição, sem caixa própria", () => {
     renderPage();
-    expect(screen.getByRole("checkbox", { name: /medir como uso a Pilar/ })).not.toBeChecked();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(screen.getByText(/Medimos como a Pilar é usada/)).toBeInTheDocument();
   });
 });

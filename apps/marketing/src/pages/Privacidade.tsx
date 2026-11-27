@@ -13,8 +13,8 @@ import { EMPRESA } from "../lib/empresa";
  * sistema não faz é pior do que política curta (LGPD art. 6º, VI).
  */
 
-const ATUALIZADA_EM = "10 de novembro de 2026";
-const VERSAO = "2.1";
+const ATUALIZADA_EM = "27 de novembro de 2026";
+const VERSAO = "2.2";
 
 type Linha = string[];
 
@@ -80,7 +80,7 @@ const DADOS: Linha[] = [
   [
     "Navegação no site e no aplicativo: páginas, cliques em botões e identificador pseudônimo",
     "Entender o uso e melhorar o produto",
-    "Consentimento (art. 7º, I), só se você aceitar os cookies de análise",
+    "Legítimo interesse (art. 7º, IX) dentro do aplicativo, com direito de oposição em Configurações → Privacidade; no site público, consentimento (art. 7º, I), só se você aceitar os cookies de análise",
   ],
   [
     "Origem da visita: parâmetros de campanha (UTM), site que trouxe você, identificador de clique em anúncio",
@@ -114,7 +114,11 @@ const OPERADORES: Linha[] = [
   ],
   ["Resend", "E-mails do serviço (convite, recuperação de senha, avisos)", "EUA"],
   ["Sentry", "Registro de falhas técnicas", "EUA"],
-  ["PostHog", "Análise de uso, só com seu consentimento", "EUA"],
+  [
+    "PostHog",
+    "Análise de uso: no aplicativo por legítimo interesse (você pode se opor); no site, só com seu consentimento",
+    "EUA",
+  ],
   ["Google (Tag Manager e Analytics)", "Análise de uso no aplicativo, só com seu consentimento", "EUA"],
   ["Asaas", "Cobrança da assinatura e dos créditos de IA", "Brasil"],
   ["Cloudflare (Turnstile)", "Proteção contra robôs em formulários", "Global"],
@@ -222,7 +226,11 @@ export function Privacidade() {
             </p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Não vendemos dados. Nenhum fornecedor usa seus dados para treinar modelo de IA.</li>
-              <li>Cookies de análise só funcionam se você aceitar. Recusar não muda nada no uso do produto.</li>
+              <li>
+                Medimos o uso do aplicativo (telas, cliques e gravação da tela com todo texto e campo escondidos, nunca
+                nomes, valores ou documentos) por legítimo interesse. Você pode desligar quando quiser em Configurações
+                → Privacidade, sem mudar nada no uso do produto. No site público, só com seu aceite.
+              </li>
               <li>Parte dos fornecedores fica fora do Brasil (seção 5).</li>
               <li>Você pode exportar ou excluir seus dados pelo próprio aplicativo.</li>
             </ul>
@@ -318,8 +326,10 @@ export function Privacidade() {
               <h2 className="text-xl font-medium tracking-tight">7. Cookies</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Cookies essenciais funcionam sempre: sem eles o login e a navegação não funcionam (legítimo interesse e
-                execução de contrato). Cookies de análise só são gravados depois que você aceita, e nada é enviado ao
-                PostHog ou ao Google antes disso. Não usamos cookies de publicidade. Hoje:{" "}
+                execução de contrato). No site público, cookies de análise só são gravados depois que você aceita, e
+                nada é enviado ao PostHog ou ao Google antes disso. No aplicativo, com a conta logada, a medição de uso
+                do PostHog segue por legítimo interesse até você desligar em Configurações → Privacidade; o Google Tag
+                Manager só carrega com seu aceite. Não usamos cookies de publicidade. Hoje:{" "}
                 <strong className="text-foreground">
                   {analyticsConsent ? "cookies de análise aceitos" : "cookies de análise recusados"}
                 </strong>
