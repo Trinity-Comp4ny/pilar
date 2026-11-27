@@ -264,6 +264,15 @@ export default function Propostas() {
       toast.error("Título é obrigatório");
       return;
     }
+    // Linhas totalmente vazias são rascunhos descartáveis; uma linha com valores
+    // não pode entrar no total e desaparecer ao salvar a proposta.
+    const temLinhaSemDescricao = disciplinasRows.some(
+      (d) => !d.disciplina.trim() && (d.horas_estimadas !== 0 || d.custo_hora !== 0 || d.valor_venda !== 0)
+    );
+    if (temLinhaSemDescricao) {
+      toast.error("Preencha a descrição das linhas com valores ou remova essas linhas.");
+      return;
+    }
     const disciplinasValidas = disciplinasRows.filter((d) => d.disciplina.trim() !== "");
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
