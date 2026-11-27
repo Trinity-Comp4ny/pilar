@@ -31,6 +31,21 @@ describe("useCommandPalette", () => {
     expect(e.defaultPrevented).toBe(false);
   });
 
+  it("não alterna repetidamente nem durante composição ou evento já tratado", () => {
+    const { result } = renderHook(() => useCommandPalette());
+    tecla({ key: "k", ctrlKey: true });
+    expect(result.current.open).toBe(true);
+    expect(tecla({ key: "k", ctrlKey: true, repeat: true }).defaultPrevented).toBe(false);
+    expect(tecla({ key: "k", metaKey: true, isComposing: true }).defaultPrevented).toBe(false);
+    expect(tecla({ key: "k", ctrlKey: true, altKey: true }).defaultPrevented).toBe(false);
+    const tratado = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, cancelable: true });
+    tratado.preventDefault();
+    act(() => {
+      window.dispatchEvent(tratado);
+    });
+    expect(result.current.open).toBe(true);
+  });
+
   it("toggle, close e setOpen", () => {
     const { result } = renderHook(() => useCommandPalette());
     act(() => result.current.toggle());
