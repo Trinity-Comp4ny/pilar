@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useRegistrarAviso } from "@/lib/avisosCanto";
 
 /**
  * Cartão de aviso do canto inferior direito: o lugar de todo aviso que não bloqueia a tela
@@ -18,6 +19,7 @@ export function AvisoCanto({
   children: ReactNode;
   acoes: ReactNode;
 }) {
+  useRegistrarAviso();
   return (
     <div
       role="status"
