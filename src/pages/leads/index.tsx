@@ -10,8 +10,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
@@ -64,9 +63,9 @@ import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 type PeriodoFilter = "todos" | "prox7" | "atrasados" | "mes";
 const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
-  { value: "todos", label: "Qualquer previsão" },
+  { value: "todos", label: "Qualquer fechamento" },
   { value: "prox7", label: "Fecham em 7 dias" },
-  { value: "atrasados", label: "Previsão vencida" },
+  { value: "atrasados", label: "Fechamento vencido" },
   { value: "mes", label: "Fecham este mês" },
 ];
 
@@ -523,7 +522,7 @@ export default function Leads() {
         ]}
       />
       <FilterSelect
-        label="Previsão"
+        label="Fechamento"
         icon={CalendarClock}
         value={periodo}
         emptyValue="todos"
@@ -535,18 +534,14 @@ export default function Leads() {
   );
 
   return (
-    <PageLayout
+    <PilarPage
+      title="Leads"
+      search={{ value: searchQuery, onChange: setSearchQuery, placeholder: "Buscar por nome, empresa ou email" }}
+      primaryAction={{ label: "Novo lead", onClick: () => setIsDialogOpen(true), icon: Plus, feature: "leads" }}
       toolbar={toolbar}
       className="md:overflow-y-hidden"
       containerClassName={CONTAINER_TELA_DADOS}
       density="compact"
-      header={
-        <PageHeader
-          title="Leads"
-          search={{ value: searchQuery, onChange: setSearchQuery, placeholder: "Buscar por nome, empresa ou email" }}
-          primaryAction={{ label: "Novo lead", onClick: () => setIsDialogOpen(true), icon: Plus, feature: "leads" }}
-        />
-      }
     >
       <CollapsibleKpiSection
         storageKey="leads"
@@ -818,6 +813,6 @@ export default function Leads() {
         onExcluir={gestao.confirmarExcluirEtapa}
         excluindo={gestao.excluindo}
       />
-    </PageLayout>
+    </PilarPage>
   );
 }
