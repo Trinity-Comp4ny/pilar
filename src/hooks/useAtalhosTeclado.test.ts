@@ -47,6 +47,24 @@ describe("useAtalhosTeclado", () => {
     editor.remove();
   });
 
+  it("ignora composição, repetição e foco em diálogo", () => {
+    const { result } = renderHook(() => useAtalhosTeclado());
+    apertarInterrogacao({ isComposing: true });
+    apertarInterrogacao({ repeat: true });
+    const dialogo = document.createElement("div");
+    dialogo.setAttribute("role", "dialog");
+    const botao = document.createElement("button");
+    dialogo.appendChild(botao);
+    document.body.appendChild(dialogo);
+    try {
+      botao.focus();
+      apertarInterrogacao();
+      expect(result.current.open).toBe(false);
+    } finally {
+      dialogo.remove();
+    }
+  });
+
   it("abre pelo evento global (item da paleta ⌘K)", () => {
     const { result } = renderHook(() => useAtalhosTeclado());
     act(() => abrirAtalhosTeclado());
