@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { isTypingTarget } from "@/lib/teclado";
+import { isSingleKeyShortcutBlocked } from "@/lib/teclado";
 
 /** Evento global que abre o painel de atalhos (ex.: item "Atalhos de teclado" da paleta ⌘K). */
 export const ABRIR_ATALHOS_EVENT = "atalhos:abrir";
@@ -17,8 +17,7 @@ export function useAtalhosTeclado() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "?" || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
-      if (isTypingTarget(document.activeElement)) return;
+      if (e.key !== "?" || isSingleKeyShortcutBlocked(e)) return;
       e.preventDefault();
       setOpen(true);
     };
