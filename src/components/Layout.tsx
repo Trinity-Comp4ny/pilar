@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PilhaDoCanto } from "@/components/PilhaDoCanto";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
 import { useRouteEnter } from "@/components/motion/useRouteEnter";
@@ -92,7 +93,6 @@ function LayoutContent() {
       </a>
       <Suspense fallback={null}>
         <FaixasDoTopo left={sidebarOffset(state, isMobile)} />
-        <AvisosDoCanto />
       </Suspense>
       <AppSidebar />
       <div style={{ marginLeft: sidebarOffset(state, isMobile), paddingTop: "var(--faixas-h, 0px)" }}>
@@ -121,12 +121,17 @@ function LayoutContent() {
       <VeilExit />
       <CommandPaletteMount />
       <AtalhosTecladoMount />
+      <PilhaDoCanto>
+        <Suspense fallback={null}>
+          <AvisosDoCanto />
+          <NpsCard />
+          <OnboardingChecklist />
+        </Suspense>
+      </PilhaDoCanto>
       <Suspense fallback={null}>
-        <OnboardingChecklist />
         <OnboardingTourController />
         <OQueMudou />
         <AgenteAjuda />
-        <NpsCard />
         <RegistroDispositivo />
         <ComunicadoModal />
       </Suspense>

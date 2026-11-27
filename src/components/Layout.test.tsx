@@ -68,12 +68,13 @@ describe("Layout", () => {
     expect(screen.queryByText(/para comandos/)).not.toBeInTheDocument();
   });
 
-  it("aviso de Termos fica num bloco fixo no canto inferior direito, nunca no topo", async () => {
+  it("avisos e checklist dividem uma só coluna fixa no canto inferior direito, nunca no topo", async () => {
     renderLayout();
     const termos = await screen.findByTestId("aceite-termos");
     expect(termos).toHaveAttribute("data-modo", "faixa");
     const canto = termos.parentElement!;
-    expect(canto).toHaveClass("fixed", "bottom-36", "right-4", "z-50");
+    expect(canto).toHaveClass("fixed", "right-4", "z-50", "flex-col");
+    expect(canto).toContainElement(await screen.findByTestId("checklist"));
     expect(screen.getByRole("main")).not.toContainElement(canto);
   });
 

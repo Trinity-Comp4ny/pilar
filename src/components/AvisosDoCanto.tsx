@@ -6,15 +6,12 @@ const AceiteTermosBanner = lazy(() =>
 );
 
 /**
- * Canto inferior direito do app: os avisos que não bloqueiam a tela, empilhados (Termos atualizados). Fica acima do botão do checklist de início (que mora no mesmo canto) e, no celular, também da barra de navegação; z-50 para não ficar atrás do PageLayout (fixo, opaco, z-40). O contêiner não
- * captura toque; só os cartões capturam.
+ * Canto inferior direito do app: os avisos que não bloqueiam a tela, (Termos atualizados). Quem posiciona é a `PilhaDoCanto`, junto com NPS e checklist.
  */
 export function AvisosDoCanto() {
   return (
-    <div className="pointer-events-none fixed bottom-36 right-4 z-50 flex flex-col gap-3 md:bottom-20">
-      <Suspense fallback={null}>
-        <AceiteTermosBanner modo="faixa" />
-      </Suspense>
-    </div>
+    <Suspense fallback={null}>
+      <AceiteTermosBanner modo="faixa" />
+    </Suspense>
   );
 }

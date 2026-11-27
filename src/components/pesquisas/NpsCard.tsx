@@ -48,7 +48,7 @@ export function NpsCard() {
     return (
       <div
         role="status"
-        className="fixed bottom-32 right-4 z-40 w-[360px] max-w-[calc(100vw-2rem)] rounded-xl border border-black/10 bg-surface-card p-4 text-sm text-ink shadow-elegant"
+        className="pointer-events-auto w-[360px] max-w-[calc(100vw-2rem)] rounded-xl border border-black/10 bg-surface-card p-4 text-sm text-ink shadow-elegant"
       >
         Obrigado. Sua resposta chega direto ao time da Pilar.
         <button
@@ -77,7 +77,7 @@ export function NpsCard() {
   return (
     <section
       aria-label="Pesquisa de satisfação"
-      className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-[360px] max-w-[calc(100vw-2rem)] space-y-3 rounded-xl border border-black/10 bg-surface-card p-4 shadow-elegant md:bottom-32"
+      className="pointer-events-auto w-[360px] max-w-[calc(100vw-2rem)] space-y-3 rounded-xl border border-black/10 bg-surface-card p-4 shadow-elegant md:bottom-32"
     >
       <div className="flex items-start gap-2">
         <p className="flex-1 text-sm font-medium text-ink">
