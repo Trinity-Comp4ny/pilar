@@ -6,8 +6,24 @@
 /** Foco num campo em edição: atalho de uma tecla só ("/", "?") não pode roubar a digitação. */
 export function isTypingTarget(el: Element | null): boolean {
   if (!el) return false;
-  const tag = el.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (el as HTMLElement).isContentEditable === true;
+  return (
+    el.closest('input, textarea, select, [role="textbox"], [role="searchbox"], [role="combobox"], [role="spinbutton"]') !==
+      null || (el as HTMLElement).isContentEditable === true
+  );
+}
+
+/** Eventos já tratados, composição IME e repetição não disparam atalhos globais. */
+export function isShortcutEventBlocked(event: KeyboardEvent): boolean {
+  return event.defaultPrevented || event.isComposing || event.repeat;
+}
+
+/** Atalhos de uma tecla só respeitam campos em edição e o contexto de um diálogo. */
+export function isSingleKeyShortcutBlocked(event: KeyboardEvent): boolean {
+  if (isShortcutEventBlocked(event) || event.metaKey || event.ctrlKey || event.altKey) return true;
+  const target = event.target instanceof Element ? event.target : null;
+  const focused = document.activeElement;
+  const inDialog = (el: Element | null) => !!el?.closest('[role="dialog"], [role="alertdialog"], dialog[open]');
+  return isTypingTarget(target) || isTypingTarget(focused) || inDialog(target) || inDialog(focused);
 }
 
 /** Mac/iOS usam ⌘ no lugar de Ctrl. */
