@@ -2,6 +2,13 @@
 
 Posicionamento, cliente-alvo, roadmap, precificação e concorrência. ← [voltar ao índice](../README.md)
 
+## Nova direção — novembro de 2026
+
+- [Memória estratégica e discovery](NOVA_DIRECAO_PILAR_2026-11.md) — síntese das reuniões e da auditoria, hipóteses, princípios e decisões pendentes.
+- [Plano por módulo](NOVA_PILAR_PLANO_POR_MODULO_2026-11.md) — refinamento dos 29 cards, dependências e critérios de aceite.
+
+Documentos de planejamento; `DECISOES.md` permanece fonte de verdade para decisões vigentes.
+
 | Documento                                                                                  | O que é                                                                                                                                                                                                    | Data       |
 | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | [STRATEGY_V2.md](./STRATEGY_V2.md)                                                         | **Estratégia atual** — quick wins + roadmap 90 dias (substitui o diagnóstico anterior)                                                                                                                     | 2026-04-23 |
