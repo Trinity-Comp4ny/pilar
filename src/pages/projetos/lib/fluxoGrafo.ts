@@ -79,7 +79,8 @@ export function resolverDependencias(nos: readonly NoDependenciasFluxo[]): Recor
     nos.map((n) => {
       const explicitas = (n.dependeDe ?? []).filter((k) => keys.has(k) && k !== n.key);
       const idx = colunas.indexOf(n.coluna);
-      return [n.key, explicitas.length > 0 ? explicitas : idx > 0 ? (porColuna.get(colunas[idx - 1]) ?? []) : []];
+      const anteriores = idx > 0 ? (porColuna.get(colunas[idx - 1]) ?? []) : [];
+      return [n.key, explicitas.length > 0 ? explicitas : anteriores];
     })
   );
 }
@@ -107,15 +108,21 @@ export function validarDependenciasFluxo(nos: readonly NoDependenciasFluxo[]): V
     if (!no.key.trim()) problemas.push({ tipo: "chave_vazia", key: no.key });
     if (keys.has(no.key)) problemas.push({ tipo: "chave_duplicada", key: no.key });
     keys.add(no.key);
-    if (!Number.isInteger(no.coluna) || no.coluna < 0) problemas.push({ tipo: "coluna_invalida", key: no.key });
+    if (!Number.isInteger(no.coluna) || no.coluna < 0) {
+      problemas.push({ tipo: "coluna_invalida", key: no.key });
+    }
   }
 
   for (const no of nos) {
     const vistas = new Set<string>();
     for (const dependencia of no.dependeDe ?? []) {
       if (dependencia === no.key) problemas.push({ tipo: "autodependencia", key: no.key, dependencia });
-      else if (!keys.has(dependencia)) problemas.push({ tipo: "dependencia_inexistente", key: no.key, dependencia });
-      if (vistas.has(dependencia)) problemas.push({ tipo: "dependencia_duplicada", key: no.key, dependencia });
+      else if (!keys.has(dependencia)) {
+        problemas.push({ tipo: "dependencia_inexistente", key: no.key, dependencia });
+      }
+      if (vistas.has(dependencia)) {
+        problemas.push({ tipo: "dependencia_duplicada", key: no.key, dependencia });
+      }
       vistas.add(dependencia);
     }
   }
@@ -140,10 +147,8 @@ export function validarDependenciasFluxo(nos: readonly NoDependenciasFluxo[]): V
   }
 
   if (fila.length !== nos.length) {
-    return {
-      valido: false,
-      problemas: [{ tipo: "ciclo", bloqueadas: nos.filter((no) => grau.get(no.key)! > 0).map((no) => no.key) }],
-    };
+    const bloqueadas = nos.filter((no) => grau.get(no.key)! > 0).map((no) => no.key);
+    return { valido: false, problemas: [{ tipo: "ciclo", bloqueadas }] };
   }
   return { valido: true, ordemTopologica: fila };
 }
