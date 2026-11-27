@@ -10,6 +10,7 @@ import {
   type OnboardingSectionView,
   type OnboardingStepView,
 } from "@/hooks/useOnboardingProgress";
+import { useTemAvisoNoCanto } from "@/lib/avisosCanto";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import type { OnboardingPilar } from "@/lib/onboarding/steps";
 
@@ -25,7 +26,10 @@ export function OnboardingChecklist() {
   const { hasEmpresa, loading, sections, doneSteps, totalSteps, percent, allDone } = useOnboardingProgress();
   const { state, dismiss, setCompleted } = useOnboardingState();
 
-  const [open, setOpen] = useState(true);
+  const [aberto, setOpen] = useState(true);
+  const temAviso = useTemAvisoNoCanto();
+  // Com aviso na tela, o checklist vira pílula para os dois caberem no canto.
+  const open = aberto && !temAviso;
   // Só a primeira seção com passo pendente vem aberta: a lista inteira passava da altura da tela.
   // O que a pessoa abrir ou fechar à mão vale por cima disso.
   const [manual, setManual] = useState<Map<OnboardingPilar, boolean>>(new Map());
@@ -49,7 +53,7 @@ export function OnboardingChecklist() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
+        className="pointer-events-auto flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
       >
         <Rocket className="h-4 w-4" />
         <span className="text-sm font-medium">Primeiros passos</span>
@@ -62,7 +66,7 @@ export function OnboardingChecklist() {
 
   if (allDone) {
     return (
-      <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 w-[340px] max-w-[calc(100vw-2rem)]">
+      <div className="pointer-events-auto w-[340px] max-w-[calc(100vw-2rem)]">
         <Card className="border-success-soft-border bg-success-soft">
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="flex items-center gap-3">
@@ -84,8 +88,8 @@ export function OnboardingChecklist() {
   }
 
   return (
-    <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 w-[360px] max-w-[calc(100vw-2rem)]">
-      <Card className="border-brand/30 shadow-elegant">
+    <div className="pointer-events-auto w-[360px] max-w-[calc(100vw-2rem)]">
+      <Card className="max-h-[calc(100dvh-2rem)] overflow-y-auto border-brand/30 shadow-elegant">
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
