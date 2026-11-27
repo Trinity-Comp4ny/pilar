@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { diasUteisEntre, projetarFluxo, resolverDependencias, resolverDependentes, type NoFluxo } from "./fluxoGrafo";
+import {
+  diasUteisEntre,
+  projetarFluxo,
+  resolverDependencias,
+  resolverDependentes,
+  validarDependenciasFluxo,
+  type NoFluxo,
+} from "./fluxoGrafo";
 
 // Semana de referência sem feriado nacional: seg 2026-03-02 a sex 2026-03-13.
 const HOJE = "2026-03-11"; // quarta
@@ -35,6 +42,74 @@ describe("resolverDependencias", () => {
     ]);
     expect(deps.c).toEqual(["a"]);
     expect(resolverDependentes(deps)).toEqual({ a: ["c"], b: [], c: [] });
+  });
+});
+
+describe("validarDependenciasFluxo", () => {
+  it("ordena disciplinas paralelas e dependências explícitas sem depender da ordem de entrada", () => {
+    const r = validarDependenciasFluxo([
+      { key: "entrega", coluna: 3, dependeDe: ["a", "b"] },
+      { key: "a", coluna: 2, dependeDe: ["briefing"] },
+      { key: "b", coluna: 2, dependeDe: ["briefing"] },
+      { key: "briefing", coluna: 1 },
+    ]);
+    expect(r).toEqual({ valido: true, ordemTopologica: ["briefing", "a", "b", "entrega"] });
+  });
+
+  it("mantém dependência implícita da coluna anterior, inclusive com lacunas", () => {
+    expect(
+      validarDependenciasFluxo([
+        { key: "c", coluna: 4 },
+        { key: "a", coluna: 1 },
+        { key: "b", coluna: 1 },
+      ])
+    ).toEqual({ valido: true, ordemTopologica: ["a", "b", "c"] });
+  });
+
+  it("rejeita referências ausentes, repetidas e autodependências sem normalizar", () => {
+    const r = validarDependenciasFluxo([
+      { key: "a", coluna: 1 },
+      { key: "b", coluna: 2, dependeDe: ["a", "a", "fantasma", "b"] },
+    ]);
+    expect(r).toEqual({
+      valido: false,
+      problemas: [
+        { tipo: "dependencia_duplicada", key: "b", dependencia: "a" },
+        { tipo: "dependencia_inexistente", key: "b", dependencia: "fantasma" },
+        { tipo: "autodependencia", key: "b", dependencia: "b" },
+      ],
+    });
+  });
+
+  it("rejeita identificadores vazios, duplicados e colunas inválidas", () => {
+    expect(
+      validarDependenciasFluxo([
+        { key: "", coluna: 0 },
+        { key: "a", coluna: 1 },
+        { key: "a", coluna: 1.5 },
+      ])
+    ).toEqual({
+      valido: false,
+      problemas: [
+        { tipo: "chave_vazia", key: "" },
+        { tipo: "chave_duplicada", key: "a" },
+        { tipo: "coluna_invalida", key: "a" },
+      ],
+    });
+  });
+
+  it("detecta ciclo entre dependência explícita e implícita e indica bloqueadas transitivas", () => {
+    const r = validarDependenciasFluxo([
+      { key: "a", coluna: 1, dependeDe: ["b"] },
+      { key: "b", coluna: 2 },
+      { key: "c", coluna: 3 },
+      { key: "independente", coluna: 1 },
+    ]);
+    expect(r).toEqual({ valido: false, problemas: [{ tipo: "ciclo", bloqueadas: ["a", "b", "c"] }] });
+  });
+
+  it("fluxo vazio é um grafo sem dependências inválidas", () => {
+    expect(validarDependenciasFluxo([])).toEqual({ valido: true, ordemTopologica: [] });
   });
 });
 
@@ -148,6 +223,7 @@ describe("projetarFluxo", () => {
     );
     expect(r.conclusaoEstimada).toBeDefined();
     expect(r.caminhoCritico.length).toBeGreaterThan(0);
+    expect(r.problemasDependencia).toEqual([{ tipo: "ciclo", bloqueadas: ["a", "b"] }]);
   });
 
   it("fluxo vazio não quebra", () => {
