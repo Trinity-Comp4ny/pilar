@@ -14,7 +14,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type { Feature } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { AjudaDaTela } from "@/components/ajuda/AjudaDaTela";
-import { isTypingTarget } from "@/lib/teclado";
+import { isSingleKeyShortcutBlocked } from "@/lib/teclado";
 
 /**
  * Header fino padrão (spec 002-header-padrao).
@@ -79,8 +79,7 @@ export function PageHeader({ title, breadcrumbs, children, search, center, acoes
   useEffect(() => {
     if (!temBusca) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (isTypingTarget(document.activeElement)) return;
+      if (e.key !== "/" || isSingleKeyShortcutBlocked(e)) return;
       e.preventDefault();
       if (isMobile) setMobileSearchOpen(true);
       searchRef.current?.focus();
