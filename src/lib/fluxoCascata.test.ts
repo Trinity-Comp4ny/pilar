@@ -55,6 +55,39 @@ describe("calcularDatasFluxo", () => {
     expect(r[1]).toEqual({ ordem: 2, nome: "B" });
   });
 
+  it("não antecipa a próxima coluna quando apenas parte das paralelas tem duração", () => {
+    const r = calcularDatasFluxo(
+      [
+        { ordem: 1, nome: "Arquitetônico", duracao_dias_uteis: 5 },
+        { ordem: 1, nome: "Hidráulico" },
+        { ordem: 2, nome: "Compatibilização", duracao_dias_uteis: 2 },
+        { ordem: 3, nome: "Entrega", duracao_dias_uteis: 1 },
+      ],
+      "2026-08-20"
+    );
+
+    expect(r[0].data_previsao).toBe("2026-08-27");
+    expect(r[1].data_inicio).toBe("2026-08-20");
+    expect(r[1].data_previsao).toBeUndefined();
+    expect(r[2]).toEqual({ ordem: 2, nome: "Compatibilização" });
+    expect(r[3]).toEqual({ ordem: 3, nome: "Entrega" });
+  });
+
+  it("não calcula datas com duração infinita, mesmo quando há outra disciplina em paralelo", () => {
+    const r = calcularDatasFluxo(
+      [
+        { ordem: 1, nome: "A", duracao_dias_uteis: Infinity },
+        { ordem: 1, nome: "B", duracao_dias_uteis: 2 },
+        { ordem: 2, nome: "C", duracao_dias_uteis: 1 },
+      ],
+      "2026-08-20"
+    );
+
+    expect(r[0].data_previsao).toBeUndefined();
+    expect(r[1].data_previsao).toBe("2026-08-24");
+    expect(r[2]).toEqual({ ordem: 2, nome: "C" });
+  });
+
   it("sem data_inicio do projeto, nenhuma disciplina recebe data", () => {
     const r = calcularDatasFluxo([{ ordem: 1, nome: "A", duracao_dias_uteis: 2 }], undefined);
 
@@ -145,6 +178,22 @@ describe("planejarAplicacaoFluxo", () => {
       responsavel_ids: [],
     });
     expect(r.novas[1]).toMatchObject({ nome: "Estrutural", ordem_etapa: 2, responsavel_ids: ["p1"] });
+  });
+
+  it("mantém datas pendentes ao aplicar um fluxo com coluna incompleta ao projeto", () => {
+    const r = planejarAplicacaoFluxo(
+      [
+        { ordem: 1, nome: "Arquitetônico", duracao_dias_uteis: 2 },
+        { ordem: 1, nome: "Elétrico" },
+        { ordem: 2, nome: "Compatibilização", duracao_dias_uteis: 1 },
+      ],
+      [],
+      "2026-08-20"
+    );
+
+    expect(r.novas[0].data_fim).toBe("2026-08-24");
+    expect(r.novas[1].data_fim).toBeNull();
+    expect(r.novas[2]).toMatchObject({ data_inicio: null, data_fim: null });
   });
 
   it("disciplina que já existe (nome com caixa/acento diferente) só ganha a coluna, sem duplicar", () => {
