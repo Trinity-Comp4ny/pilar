@@ -30,8 +30,7 @@ import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
 import { ROTULOS_CADASTRO_CONVIDADO, ROTULOS_CADASTRO_DONO } from "@/lib/onboarding/etapasCadastro";
 import { ROLE_LABEL } from "@/lib/permissions";
 import { analytics } from "@/lib/analytics";
-import { AnaliseOptIn } from "@/components/AnaliseOptIn";
-import { setAnalyticsConsent } from "@/lib/cookieConsentSync";
+import { AvisoMedicaoUso } from "@/components/AvisoMedicaoUso";
 
 /**
  * Quem está entrando (SPEC 149). O dono configura o escritório depois desta
@@ -77,7 +76,6 @@ export default function ProfileSetup() {
 
   const password = form.watch("password");
   const termsAccepted = form.watch("termsAccepted");
-  const [analiseAceita, setAnaliseAceita] = useState(false);
   const ehConvidado = entrada.tipo === "convidado";
 
   // Dono: acesso, contato, escritório e plano. Convidado: só as duas primeiras.
@@ -195,9 +193,6 @@ export default function ProfileSetup() {
         // O banner de reaceite já consultou (e guardou "sem aceite") enquanto esta tela estava aberta;
         // sem isto, conta recém-criada via checkout via "Atualizamos os Termos" no primeiro acesso.
         await queryClient.invalidateQueries({ queryKey: ["aceite-termos", user.id] });
-        // Primeiro acesso (Google, convite, checkout): a decisão de análise sai junto com o aceite.
-        // Falha aqui não pode travar o onboarding: o cartão do app pergunta de novo.
-        await setAnalyticsConsent(user.id, analiseAceita).catch(() => undefined);
       }
 
       // 3. Só então gravar o perfil e concluir o onboarding.
@@ -441,7 +436,7 @@ export default function ProfileSetup() {
                     />
                   )}
 
-                  {hasAcceptedTerms === false && <AnaliseOptIn checked={analiseAceita} onChange={setAnaliseAceita} />}
+                  {hasAcceptedTerms === false && <AvisoMedicaoUso />}
 
                   {hasAcceptedTerms === true && (
                     <p className="text-xs text-ink-soft">

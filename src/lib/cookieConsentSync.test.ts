@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-const { maybeSingleMock, insertMock, applyMock, getSessionMock } = vi.hoisted(() => ({
+const { maybeSingleMock, insertMock, applyMock, legitimoMock, getSessionMock } = vi.hoisted(() => ({
+  legitimoMock: vi.fn(),
   getSessionMock: vi.fn(),
   maybeSingleMock: vi.fn(),
   insertMock: vi.fn(),
@@ -20,7 +21,7 @@ vi.mock("@/integrations/supabase/client", () => {
   return { supabase: { from: () => chain, auth: { getSession: getSessionMock } } };
 });
 
-vi.mock("./analytics", () => ({ applyCookieConsent: applyMock }));
+vi.mock("./analytics", () => ({ applyCookieConsent: applyMock, applyLegitimateInterest: legitimoMock }));
 
 const COOKIE_NAME = "pilar_cookie_consent";
 
@@ -63,13 +64,23 @@ describe("cookieConsentSync (SPEC 059)", () => {
     expect(insertMock).toHaveBeenCalledWith({ user_id: "user-1", analytics: true, source: "carryover" });
   });
 
-  it("sem registro e sem cookie, não decide nada por conta própria", async () => {
+  it("sem registro e sem cookie, liga a medição por legítimo interesse sem gravar consentimento", async () => {
     maybeSingleMock.mockResolvedValue({ data: null, error: null });
 
     await syncConsentForUser("user-1");
 
+    expect(legitimoMock).toHaveBeenCalledTimes(1);
     expect(applyMock).not.toHaveBeenCalled();
     expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("objeção gravada na conta vence o legítimo interesse", async () => {
+    maybeSingleMock.mockResolvedValue({ data: { analytics: false }, error: null });
+
+    await syncConsentForUser("user-1");
+
+    expect(applyMock).toHaveBeenCalledWith(false);
+    expect(legitimoMock).not.toHaveBeenCalled();
   });
 
   it("falha de leitura não liga o rastreamento nem propaga erro", async () => {
@@ -78,6 +89,7 @@ describe("cookieConsentSync (SPEC 059)", () => {
 
     await expect(syncConsentForUser("user-1")).resolves.toBeUndefined();
     expect(applyMock).not.toHaveBeenCalled();
+    expect(legitimoMock).not.toHaveBeenCalled();
   });
 
   it("sem sessão ativa do usuário, não consulta nem grava nada (PILAR-G)", async () => {

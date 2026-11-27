@@ -40,7 +40,7 @@ de quem usa o produto e do site.
 
 - IP, user agent
 - Cookies estritamente necessários (sessão), sempre ativos
-- Cookies de análise (PostHog), **só com consentimento explícito**, ver seção 8
+- Medição de uso (PostHog): no app, por **legítimo interesse** com oposição em Configurações → Privacidade; no site, só com consentimento explícito. Ver seção 8
 
 **Não coletamos:** dados de saúde, origem racial, opinião política, biometria.
 
@@ -58,7 +58,8 @@ de quem usa o produto e do site.
 - **Execução de contrato** (Art. 7, V): serviço básico da plataforma
 - **Obrigação legal** (Art. 7, II): retenção fiscal
 - **Legítimo interesse** (Art. 7, IX): segurança, prevenção de fraude, auditoria
-- **Consentimento** (Art. 7, I): cookies de análise, comunicações de marketing
+- **Consentimento** (Art. 7, I): cookies de análise no site público, Google Tag Manager, comunicações de marketing
+- **Legítimo interesse** (Art. 7, IX), medição de uso no app logado (PostHog, gravação com texto e campos escondidos): informado no cadastro, desligável em Configurações → Privacidade
 
 ## 4. Compartilhamento
 

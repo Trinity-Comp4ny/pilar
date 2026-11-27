@@ -26,7 +26,6 @@ vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
 vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
-vi.mock("@/components/AceiteAnaliseCard", () => ({ AceiteAnaliseCard: () => <div data-testid="aceite-analise" /> }));
 vi.mock("@/components/AceiteTermosBanner", () => ({
   AceiteTermosBanner: ({ modo }: { modo?: string }) => <div data-testid="aceite-termos" data-modo={modo} />,
 }));
@@ -69,14 +68,12 @@ describe("Layout", () => {
     expect(screen.queryByText(/para comandos/)).not.toBeInTheDocument();
   });
 
-  it("avisos de Termos e de análise ficam num bloco fixo no canto inferior direito, nunca no topo", async () => {
+  it("aviso de Termos fica num bloco fixo no canto inferior direito, nunca no topo", async () => {
     renderLayout();
     const termos = await screen.findByTestId("aceite-termos");
-    const analise = await screen.findByTestId("aceite-analise");
     expect(termos).toHaveAttribute("data-modo", "faixa");
     const canto = termos.parentElement!;
     expect(canto).toHaveClass("fixed", "bottom-36", "right-4", "z-50");
-    expect(canto).toContainElement(analise);
     expect(screen.getByRole("main")).not.toContainElement(canto);
   });
 

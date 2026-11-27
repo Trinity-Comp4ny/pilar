@@ -11,6 +11,21 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-27 · Medição de uso no app por legítimo interesse, um aceite só no cadastro
+
+**Decisão:** o cadastro (e o primeiro acesso) tem **um único aceite**: Termos de Uso e Política de Privacidade.
+A medição de uso dentro do app (PostHog, gravação com texto e campos escondidos) deixa de depender de caixa de
+consentimento e passa a se apoiar em **legítimo interesse (LGPD Art. 7, IX)**, informada no cadastro e na Política
+v2.2, com oposição em Configurações → Privacidade. O cartão "Podemos medir como você usa a Pilar?" sai. Site público
+e Google Tag Manager seguem só com consentimento.
+
+Contexto: consentimento embutido no aceite do contrato tende a ser anulado (Art. 8, §4º); por isso a troca de base legal
+em vez de juntar as caixas. A Política prometia "só com consentimento", então a mudança é material: exige aviso por
+e-mail aos administradores antes de valer e revisão de advogado, mais o teste de legítimo interesse no RIPD. Supera a
+decisão do ADR 0022/0032 só para o app logado.
+
+---
+
 ## 2026-11-24 · Nova tagline, três tipos de negócio e landing reorganizada para planos e demonstração
 
 **Decisão:** a frase principal passa a ser **"Gestão de projetos e obras, com agentes de IA."**, sem citar nicho. O

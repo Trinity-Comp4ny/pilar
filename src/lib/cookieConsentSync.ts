@@ -11,7 +11,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { applyCookieConsent } from "./analytics";
+import { applyCookieConsent, applyLegitimateInterest } from "./analytics";
 import { getCookieConsent } from "./cookieConsent";
 
 type ConsentSource = "carryover" | "settings";
@@ -55,7 +55,11 @@ export async function syncConsentForUser(userId: string, aindaAtual = () => true
     }
 
     const local = getCookieConsent();
-    if (!local) return;
+    // Sem decisão nem objeção: a medição de uso segue por legítimo interesse (ver analytics.ts).
+    if (!local) {
+      applyLegitimateInterest();
+      return;
+    }
 
     await insertConsent(userId, local.analytics, "carryover");
   } catch {

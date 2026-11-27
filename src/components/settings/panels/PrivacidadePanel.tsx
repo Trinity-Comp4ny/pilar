@@ -32,11 +32,11 @@ export function PrivacidadePanel() {
   const [open, setOpen] = useState(false);
   const [exportSubmitting, setExportSubmitting] = useState(false);
   const [exportRequested, setExportRequested] = useState(false);
-  const [analyticsConsent, setAnalyticsConsentState] = useState(() => getCookieConsent()?.analytics ?? false);
+  const [analyticsConsent, setAnalyticsConsentState] = useState(() => getCookieConsent()?.analytics ?? true);
   const [consentSaving, setConsentSaving] = useState(false);
 
   useEffect(() => {
-    const onConsentChanged = () => setAnalyticsConsentState(getCookieConsent()?.analytics ?? false);
+    const onConsentChanged = () => setAnalyticsConsentState(getCookieConsent()?.analytics ?? true);
     window.addEventListener(CONSENT_CHANGED_EVENT, onConsentChanged);
     return () => window.removeEventListener(CONSENT_CHANGED_EVENT, onConsentChanged);
   }, []);
@@ -50,7 +50,7 @@ export function PrivacidadePanel() {
     } catch (err) {
       // Reverte o toggle: o PostHog já foi ligado/desligado, mas a preferência
       // não ficou registrada na conta e voltaria no próximo login.
-      setAnalyticsConsentState(getCookieConsent()?.analytics ?? false);
+      setAnalyticsConsentState(getCookieConsent()?.analytics ?? true);
       toast.error("Não foi possível salvar a preferência", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -216,17 +216,18 @@ export function PrivacidadePanel() {
             Cookies
           </CardTitle>
           <CardDescription>
-            Cookies essenciais mantêm sua sessão e não podem ser desligados. Os de análise são opcionais.
+            Cookies essenciais mantêm sua sessão e não podem ser desligados. A medição de uso você pode desligar.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <label htmlFor="analytics-consent" className="text-sm font-medium">
-                Cookies de análise
+                Medir o uso da Pilar
               </label>
               <p className="text-sm text-muted-foreground">
-                Medem como o produto é usado para orientar melhorias. Vale em todos os seus dispositivos.
+                Telas e cliques, sem nomes, valores ou documentos, para orientar melhorias. Vem ligada; ao desligar,
+                vale em todos os seus dispositivos.
               </p>
             </div>
             <Switch
